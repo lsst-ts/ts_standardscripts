@@ -39,3 +39,6 @@ Python API reference
 .. automodapi:: lsst.ts.standardscripts
    :no-main-docstr:
    :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.bobhoskins
+   :no-inheritance-diagram:

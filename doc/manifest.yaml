@@ -4,6 +4,7 @@
 # For each module there is a corresponding module doc subdirectory.
 modules:
   - "lsst.ts.standardscripts"
+  - "lsst.ts.standardscripts.bobhoskins"
 
 # Name of the static content directories (subdirectories of `_static`).
 # Static content directories are usually named after the package.
