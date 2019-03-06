@@ -6,6 +6,9 @@ config.log
 # Built by sconsUtils
 version.py
 
+# OpenSplice logs
+ospl-*.log
+
 # Pytest
 tests/.tests
 pytest_session.txt
