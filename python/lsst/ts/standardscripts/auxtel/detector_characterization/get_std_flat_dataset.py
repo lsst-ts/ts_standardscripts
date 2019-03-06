@@ -77,6 +77,10 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         self.grating = None
         self.linear_stage = None
 
+        # FIXME: Get this parameter from the camera configuration once late joiner is working
+        # on the open network.
+        self.maximum_exp_time = 401.  # Maximum exposure time in seconds.
+
     async def configure(self,
                         n_dark=10,
                         t_dark=400.,
@@ -123,10 +127,11 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         else:
             raise RuntimeError(f"Number of dark frames must be larger than 0, got {n_dark}")
 
-        if t_dark > 0.:
+        if 0. < t_dark <= self.maximum_exp_time:
             self.t_dark = t_dark
         else:
-            raise RuntimeError(f"Dark exptime must be larger than 0., got {t_dark}")
+            raise RuntimeError(f"Dark exptime must be in the range "
+                               f"(0.,{self.maximum_exp_time}], got {t_dark}")
 
         if n_bias > 0:
             self.n_bias = n_bias
@@ -147,6 +152,16 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         if flat_dn_range is not None:
             self.flat_dn_range = np.array(flat_dn_range, dtype=float)
 
+        if np.any(self.flat_dn_range <= 0.):
+            n_bad = len(np.where(self.flat_dn_range <= 0.)[0])
+            raise RuntimeError(f"'flat_dn_range' must be larger than zero. "
+                               f"Got {n_bad} bad values.")
+
+        larger_flat_exptime = np.max(self.flat_dn_range)*self.flat_base_exptime
+        if larger_flat_exptime > self.maximum_exp_time:
+            raise RuntimeError(f"Flat field maximum exposure time {larger_flat_exptime}s "
+                               f"above maximum allowed {self.maximum_exp_time}s.")
+
         if filter_id is not None:
             self.filter = filter_id
 
@@ -159,7 +174,7 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         if read_out_time > 0.:
             self.read_out_time = read_out_time
         else:
-            self.log.warning(f"Read out time must be larger than one, got {read_out_time}. "
+            self.log.warning(f"Read out time must be larger than 0., got {read_out_time}. "
                              f"Using default value, {self.read_out_time}s.")
 
     async def run(self):
