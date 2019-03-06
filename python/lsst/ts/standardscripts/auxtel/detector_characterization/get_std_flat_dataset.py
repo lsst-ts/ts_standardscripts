@@ -72,7 +72,7 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         self.n_bias = 10
         self.n_flat = 2
         self.flat_base_exptime = 0.5
-        self.flat_dn_range = np.array([1., 2., 4., 8., 16., 32., 64., 128., 256., 512.])
+        self.flat_dn_range = np.array([1., 2., 4., 8., 16., 32., 64., 128.])
         self.filter = None
         self.grating = None
         self.linear_stage = None
