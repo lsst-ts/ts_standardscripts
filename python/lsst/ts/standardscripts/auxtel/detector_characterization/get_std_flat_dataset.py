@@ -82,11 +82,11 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         self.maximum_exp_time = 401.  # Maximum exposure time in seconds.
 
     async def configure(self,
-                        n_dark=10,
-                        t_dark=400.,
-                        n_bias=10,
-                        n_flat=2,
-                        flat_base_exptime=10.,
+                        n_dark=None,
+                        t_dark=None,
+                        n_bias=None,
+                        n_flat=None,
+                        flat_base_exptime=None,
                         flat_dn_range=None,
                         filter_id=None,
                         grating_id=None,
@@ -122,30 +122,30 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
 
         """
 
-        if n_dark > 0:
+        if n_dark is not None and n_dark > 0:
             self.n_dark = n_dark
-        else:
+        elif n_dark is not None:
             raise RuntimeError(f"Number of dark frames must be larger than 0, got {n_dark}")
 
-        if 0. < t_dark <= self.maximum_exp_time:
+        if t_dark is not None and 0. < t_dark <= self.maximum_exp_time:
             self.t_dark = t_dark
-        else:
+        elif n_dark is not None:
             raise RuntimeError(f"Dark exptime must be in the range "
                                f"(0.,{self.maximum_exp_time}], got {t_dark}")
 
-        if n_bias > 0:
+        if n_bias is not None and n_bias > 0:
             self.n_bias = n_bias
-        else:
+        elif n_bias is not None:
             raise RuntimeError(f"Number of bias frames must be larger than 0, got {n_bias}")
 
-        if n_flat > 0:
+        if n_flat is not None and n_flat > 0:
             self.n_flat = n_flat
-        else:
+        elif n_flat is not None:
             raise RuntimeError(f"Number of flat field frames must be larger than 0, got {n_flat}")
 
-        if flat_base_exptime > 0.:
+        if flat_base_exptime is not None and flat_base_exptime > 0.:
             self.flat_base_exptime = flat_base_exptime
-        else:
+        elif flat_base_exptime is not None:
             raise RuntimeError(f"Base flat field exposure time must be larger than 0., "
                                f"got {flat_base_exptime}")
 
