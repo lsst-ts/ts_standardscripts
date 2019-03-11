@@ -136,8 +136,7 @@ class CalSysTakeData(scriptqueue.BaseScript):
         self.log.info("Configure completed")
 
     def set_metadata(self, metadata):
-        """Compute estimated duration based on number of components plus number of
-        state transitions.
+        """Compute estimated duration.
 
         Parameters
         ----------

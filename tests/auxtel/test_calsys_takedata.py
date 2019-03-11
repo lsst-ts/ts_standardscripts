@@ -136,7 +136,8 @@ class TestATCalSysTakeData(unittest.TestCase):
                 self.assertIs(type(arg), np.ndarray)
                 self.assertEqual(len(arg), 1)
 
-            # if configured with an array then every element has the same length
+            # if configured with an array then
+            # every element has the same length
             await script.configure(wavelengths=[100, 200], integration_times=31)
             assert_array_equal(script.wavelengths, np.array([100, 200], dtype=float))
             assert_array_equal(script.integration_times, np.array([31, 31], dtype=int))
