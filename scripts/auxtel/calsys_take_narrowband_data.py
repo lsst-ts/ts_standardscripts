@@ -85,7 +85,9 @@ class CalSysTakeNarrowbandData(scriptqueue.BaseScript):
                         latiss_stage_pos=60,
                         nimages_per_wavelength=1,
                         shutter=1,
-                        image_sequence_name="test"
+                        image_sequence_name="test",
+                        take_image=True,
+                        setup_spectrograph=True
                         ):
         """Configure the script.
 
@@ -145,13 +147,13 @@ class CalSysTakeNarrowbandData(scriptqueue.BaseScript):
         self.mono_exit_slit_widths = as_array(mono_exit_slit_widths, dtype=float, nelt=nelt)
         self.image_types = as_array(image_types, dtype=str, nelt=nelt)
         self.lamps = as_array(lamps, dtype=str, nelt=nelt)
-        #Fiber spectrograph
+        # Fiber spectrograph
         self.fiber_spectrometer_delays = as_array(fiber_spectrometer_delays, dtype=float, nelt=nelt)
-        #ATSpectrograph Setup
+        # ATSpectrograph Setup
         self.latiss_filter = as_array(latiss_filter, dtype=int, nelt=nelt)
         self.latiss_grating = as_array(latiss_grating, dtype=int, nelt=nelt)
         self.latiss_stage_pos = as_array(latiss_stage_pos, dtype=int, nelt=nelt)
-        #ATCamera
+        # ATCamera
         self.image_sequence_name = as_array(image_sequence_name, dtype=str, nelt=nelt)
         self.shutter = as_array(shutter, dtype=int, nelt=nelt)
         self.nimages_per_wavelength = as_array(nimages_per_wavelength, dtype=int, nelt=nelt)
@@ -167,7 +169,7 @@ class CalSysTakeNarrowbandData(scriptqueue.BaseScript):
         """
         nimages = len(self.lamps)
         metadata.duration = self.change_grating_time*nimages + \
-                            np.sum((self.integration_times+2)*self.nimages_per_wavelength)
+            np.sum((self.integration_times+2)*self.nimages_per_wavelength)
 
     async def run(self):
         """Run script."""
@@ -215,7 +217,6 @@ class CalSysTakeNarrowbandData(scriptqueue.BaseScript):
                                              expTime=self.integration_times[i],
                                              imageSequenceName=self.image_sequence_name[i])
 
-
             await self.checkpoint("expose")
 
             # The electrometer startScanDt command is not reported as done
@@ -226,7 +227,7 @@ class CalSysTakeNarrowbandData(scriptqueue.BaseScript):
             coro1 = self.electrometer.cmd_startScanDt.start()
             coro2 = self.start_take_spectrum(i)
             coro3 = self.atcamera.cmd_takeImages.start(timeout=self.cmd_timeout)
-            await asyncio.gather(coro1, coro2)
+            await asyncio.gather(coro1, coro2, coro3)
 
     async def start_take_spectrum(self, index):
         """Wait for `self.fiber_spectrometer_delays` then take a spectral image.

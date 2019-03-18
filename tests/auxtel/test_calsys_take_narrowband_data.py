@@ -138,9 +138,10 @@ class Harness:
     async def takeImages(self, id_data):
         """Callback for ATCamera changeDisperser command."""
         data = self.atcamera.cmd_takeImages.DataType()
-        for fieldname in ("numImages", "expTime","shutter","imageSequenceName"):
+        for fieldname in ("numImages", "expTime", "shutter", "imageSequenceName"):
             setattr(data, fieldname, getattr(id_data.data, fieldname))
         self.take_images.append(data)
+
 
 class TestATCalSysTakeData(unittest.TestCase):
     def setUp(self):
@@ -207,7 +208,7 @@ class TestATCalSysTakeData(unittest.TestCase):
             harness = Harness()
             wavelengths = [500, 600]
             integration_times = [5, 2]
-            mono_grating_types = [1, 2] # do physical tests on 1,1
+            mono_grating_types = [1, 2]  # do physical tests on 1,1
             mono_entrance_slit_widths = [3.1, 3.2]
             mono_exit_slit_widths = [3.3, 3.4]
             image_types = ["test1", "test2"]
@@ -260,8 +261,8 @@ class TestATCalSysTakeData(unittest.TestCase):
             assert_array_almost_equal([imd.integrationTime for imd in harness.image_data], integration_times)
             self.assertEqual([imd.lamp for imd in harness.image_data], lamps)
             assert_array_almost_equal(harness.wavelengths, wavelengths)
-            assert_array_almost_equal(harness.grating_types, mono_grating_types) # Why almost?
-            #Verify slits have proper slit widths
+            assert_array_almost_equal(harness.grating_types, mono_grating_types)  # Why almost?
+            # Verify slits have proper slit widths
             desired_slits = []
             desired_slit_widths = []
             for i in range(nimages):
@@ -272,12 +273,12 @@ class TestATCalSysTakeData(unittest.TestCase):
             self.assertEqual([sd.slit for sd in harness.slit_data], desired_slits)
             assert_array_almost_equal([sd.slitWidth for sd in harness.slit_data], desired_slit_widths)
             self.assertEqual(harness.grating_types, mono_grating_types)
-            #Verify ATSpectrograph has the proper setup
+            # Verify ATSpectrograph has the proper setup
             self.assertEqual(harness.latiss_grating_pos, latiss_grating)
             self.assertEqual(harness.latiss_filter_pos, latiss_filter)
             self.assertEqual(harness.latiss_linear_stage_pos, latiss_stage_pos)
 
-            #Verify ATCamera took proper images
+            # Verify ATCamera took proper images
             desired_exptime = []
             desired_shutter = []
             desired_numImages = []
@@ -286,9 +287,8 @@ class TestATCalSysTakeData(unittest.TestCase):
             for i in range(nimages):
                 desired_exptime.append(integration_times[i])
                 desired_shutter.append(shutter[i])
-                desired_numImages.append(1) # hardcoded for now
+                desired_numImages.append(1)  # hardcoded for now
                 desired_imageSequenceName.append(image_sequence_name[i])
-
 
             self.assertAlmostEqual([imd.expTime for imd in harness.take_images], desired_exptime)
             self.assertEqual([imd.shutter for imd in harness.take_images], desired_shutter)
