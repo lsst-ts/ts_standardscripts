@@ -89,13 +89,15 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
             await salobj.enable_csc(self.atmcs)
         else:
             data = self.atmcs.evt_summaryState.get()
-            self.assertEqual("ATMCS summaryState", data.state, salobj.State.ENABLED, "ENABLED")
+            self.assertEqual("ATMCS summaryState", data.summaryState, salobj.State.ENABLED,
+                             "ENABLED")
         if self.enable_atptg:
             self.log.info("Enable ATPtg")
             await salobj.enable_csc(self.atptg)
         else:
             data = self.atptg.evt_summaryState.get()
-            self.assertEqual("ATPtg summaryState", data.state, salobj.State.ENABLED, "ENABLED")
+            self.assertEqual("ATPtg summaryState", data.summaryState, salobj.State.ENABLED,
+                             "ENABLED")
 
         # Report current az/alt
         data = await self.atmcs.tel_mountEncoders.next(flush=False, timeout=1)
