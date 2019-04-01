@@ -57,7 +57,7 @@ class TestATCalSysTakeData(unittest.TestCase):
             data = await script.atdome.evt_summaryState.next(flush=False, timeout=20)
             self.assertEqual(data.summaryState, salobj.State.STANDBY)
             print("*** Wait for ATDomeTrajectory to start up")
-            data = await script.atdometraj.evt_summaryState.next(flush=False, timeout=20)
+            data = await script.atdometraj.evt_summaryState.next(flush=False, timeout=30)
             self.assertEqual(data.summaryState, salobj.State.STANDBY)
 
             print("*** Configure script")
