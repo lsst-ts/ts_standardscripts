@@ -21,5 +21,4 @@
 
 from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
 
-if __name__ == "__main__":
-    DomeTrajectoryMCS.main()
+DomeTrajectoryMCS.main()

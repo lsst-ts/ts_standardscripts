@@ -21,5 +21,4 @@
 
 from lsst.ts.standardscripts.auxtel.integration_tests import ATPtgATMcsIntegration
 
-if __name__ == "__main__":
-    ATPtgATMcsIntegration.main()
+ATPtgATMcsIntegration.main()
