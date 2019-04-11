@@ -20,10 +20,16 @@
 
 import asyncio
 import logging
+import os
+import pathlib
 import unittest
 
 from lsst.ts import salobj
 from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
+
+import SALPY_Script
+
+index_gen = salobj.index_generator()
 
 
 class TestATCalSysTakeData(unittest.TestCase):
@@ -68,6 +74,31 @@ class TestATCalSysTakeData(unittest.TestCase):
             print("*** Run script")
             await script.do_run(None)
             print("*** Script succeeded")
+
+        asyncio.get_event_loop().run_until_complete(doit())
+
+    def test_executable(self):
+        index = next(index_gen)
+
+        script_name = "dometrajectory_mcs.py"
+        script_dir = pathlib.Path(__file__).resolve().parents[3] / "scripts" / "auxtel" / "integration_tests"
+        script_path = script_dir / script_name
+        self.assertTrue(script_path.is_file())
+
+        remote = salobj.Remote(SALPY_Script, index=index)
+
+        async def doit():
+            initial_path = os.environ["PATH"]
+            try:
+                os.environ["PATH"] = str(script_dir) + ":" + initial_path
+                process = await asyncio.create_subprocess_exec(script_name, str(index))
+
+                state = await remote.evt_state.next(flush=False, timeout=60)
+                self.assertEqual(state.state, scriptqueue.ScriptState.UNCONFIGURED)
+
+                process.terminate()
+            finally:
+                os.environ["PATH"] = initial_path
 
         asyncio.get_event_loop().run_until_complete(doit())
 
