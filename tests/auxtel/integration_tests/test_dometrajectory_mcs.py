@@ -25,6 +25,7 @@ import pathlib
 import unittest
 
 from lsst.ts import salobj
+from lsst.ts import scriptqueue
 from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
 
 import SALPY_Script
@@ -73,7 +74,7 @@ class TestATCalSysTakeData(unittest.TestCase):
             await script.do_configure(config_id_data)
             print("*** Run script")
             await script.do_run(None)
-            print("*** Script succeeded")
+            self.assertEqual(script.state.state, scriptqueue.ScriptState.DONE)
 
         asyncio.get_event_loop().run_until_complete(doit())
 
