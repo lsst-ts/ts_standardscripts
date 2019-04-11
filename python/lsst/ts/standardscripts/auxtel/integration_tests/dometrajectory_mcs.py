@@ -96,15 +96,23 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
         - Slew the telescope by more than the dome tolerance / cos(el)
         - Check that the dome did move
         """
+        domeAzCmdState_Stop = SALPY_ATDome.ATDome_shared_AzimuthCommandedState_Stop
+        domeAzCmdState_GoToPosition = SALPY_ATDome.ATDome_shared_AzimuthCommandedState_GoToPosition
         self.log.setLevel(20)
         # Disable ATDomeTrajectory
         self.log.info("Disable ATDomeTrajectory")
         await salobj.set_summary_state(self.atdometraj, salobj.State.DISABLED)
 
         # Enable ATDome and stop dome motion
+        self.atdome.evt_azimuthCommandedState.flush()
         self.log.info("Enable ATDome and stop motion")
         await salobj.set_summary_state(self.atdome, salobj.State.ENABLED)
+
+        self.atdome.evt_azimuthCommandedState.flush()
         await self.atdome.cmd_stopMotion.start(timeout=STD_TIMEOUT)
+        dome_az_cmd_state = await self.atdome.evt_azimuthCommandedState.next(flush=False, timeout=STD_TIMEOUT)
+        assert dome_az_cmd_state.commandedState == domeAzCmdState_Stop, \
+            f"ATDome commanded state={dome_az_cmd_state.commandedState} != Stop={domeAzCmdState_Stop}"
 
         # Enable ATMCS and stop tracking
         self.log.info("Enable ATMCS and stop tracking")
@@ -183,19 +191,24 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
         assert abs(target.azimuth - self.track_elaz[1]) < 0.01
 
         # Enable ATDomeTrajectory
-        # This should not move the dome because the telescope
-        # is slewing to the same azimuth as the dome
+        # This commands a move because the commanded dome azimuth is unknown
+        # (due to being stopped), but it should be to the telescope azimuth
         self.log.info("Enable ATDomeTrajectory")
         await self.atdometraj.cmd_enable.start(timeout=STD_TIMEOUT)
 
         # Commanded dome azimuth should match target azimuth
         dome_pos = await self.atdome.tel_position.next(flush=True, timeout=STD_TIMEOUT)
+        dome_az_cmd_state = await self.atdome.evt_azimuthCommandedState.next(flush=False, timeout=STD_TIMEOUT)
         self.log.info(f"As telescope slew starts: "
-                      f"dome azimuthPositionSet={dome_pos.azimuthPositionSet:0.2f}; "
-                      f"azimuthPosition={dome_pos.azimuthPosition:0.2f}")
-        if abs(dome_pos.azimuthPositionSet - self.track_elaz[1]) > 0.1:
-            raise RuntimeError(f"Dome azimuthPositionSet={dome_pos.azimuthPositionSet:0.2f} != "
-                               f"{self.track_elaz[1]:0.2f} = telescope target azimuth")
+                      f"dome commanded state={dome_az_cmd_state.commandedState}; "
+                      f"commanded azimuth={dome_az_cmd_state.azimuth:0.2f}; "
+                      f"current azimuth={dome_pos.azimuthPosition:0.2f}")
+        assert dome_az_cmd_state.commandedState == domeAzCmdState_GoToPosition, \
+            f"ATDome azimuth commanded state={dome_az_cmd_state.commandedState} != " \
+            f"GoToPosition={domeAzCmdState_GoToPosition}"
+        assert abs(dome_pos.azimuthPosition - self.track_elaz[1]) <= 0.1, \
+            f"Dome current azimuth={dome_pos.azimuthPosition:0.2f} != " \
+            f"{self.track_elaz[1]:0.2f} = telescope target azimuth"
 
         # Wait for elevation and azimuth; ignore rotators and M3
         data = self.atmcs.evt_elevationInPosition.get()
@@ -203,29 +216,30 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
             # the axis needs to slew
             self.log.info("Wait for telescope elevation axis to finish slewing")
             data = await self.atmcs.evt_elevationInPosition.next(flush=False, timeout=SLEW_TIMEOUT)
-            if not data.inPosition:
-                raise RuntimeError("Got unexpected elevationInPosition event")
+            assert data.inPosition, "Got unexpected elevationInPosition event"
         data = self.atmcs.evt_azimuthInPosition.get()
         if not data.inPosition:
             self.log.info("Wait for telescope azimuth axis to finish slewing")
             data = await self.atmcs.evt_azimuthInPosition.next(flush=False, timeout=SLEW_TIMEOUT)
-            if not data.inPosition:
-                raise RuntimeError("Got unexpected azimuthInPosition event")
+            assert data.inPosition, "Got unexpected azimuthInPosition event"
 
         # Check that the dome command still matches target azimuth
         # and that the dome has not moved significantly;
         # for the latter allow some slop
         dome_pos = await self.atdome.tel_position.next(flush=True, timeout=STD_TIMEOUT)
+        try:
+            await self.atdome.evt_azimuthCommandedState.next(flush=False, timeout=0.1)
+        except asyncio.TimeoutError:
+            # this is what we want: no new azimuthCommandedState event
+            pass
+        else:
+            raise AssertionError("Dome moved unexpectedly")
         self.log.info(f"After telescope slew: "
-                      f"dome azimuthPositionSet={dome_pos.azimuthPositionSet:0.2f}; "
-                      f"azimuthPosition={dome_pos.azimuthPosition:0.2f}")
-        if abs(dome_pos.azimuthPositionSet - self.track_elaz[1]) > 0.1:
-            raise RuntimeError(f"Dome azimuthPositionSet={dome_pos.azimuthPositionSet:0.2f} != "
-                               f"{self.track_elaz[1]:0.2f} = telescope target azimuth")
-        if abs(dome_pos.azimuthPosition - self.track_elaz[1]) > 0.5:
-            raise RuntimeError(f"Dome dome azimuthPosition={dome_pos.azimuthPositionSet:0.2f} != "
-                               f"{self.track_elaz[1]:0.2f} = telescope target azimuth")
-        cmd_dome_az_before_big_move = dome_pos.azimuthPositionSet
+                      f"dome current azimuth={dome_pos.azimuthPosition:0.2f}")
+        assert abs(dome_pos.azimuthPosition - self.track_elaz[1]) <= 0.5, \
+            f"Dome dome azimuthPosition={dome_pos.azimuthPosition:0.2f} != " \
+            f"{self.track_elaz[1]:0.2f} = telescope target azimuth"
+        dome_cmd_az_before_big_move = dome_az_cmd_state.azimuth
 
         # Offset telescope azimuth relative to dome position
         # by more than the ATDomeTrajectory azimuth dead band/cos(el)
@@ -239,11 +253,17 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
 
         # Commanded dome azimuth should have changed
         dome_pos = await self.atdome.tel_position.next(flush=True, timeout=STD_TIMEOUT)
-        self.log.info(f"As large offset starts: dome azimuthPositionSet={dome_pos.azimuthPositionSet:0.2f}; "
-                      f"azimuthPosition={dome_pos.azimuthPosition:0.2f}")
-        if abs(dome_pos.azimuthPositionSet - cmd_dome_az_before_big_move) < 0.1:
-            raise RuntimeError(f"Dome azimuthPositionSet={dome_pos.azimuthPositionSet:0.2f} == "
-                               f"{cmd_dome_az_before_big_move:0.2f} = previous value ")
+        dome_az_cmd_state = await self.atdome.evt_azimuthCommandedState.next(flush=False, timeout=STD_TIMEOUT)
+        self.log.info(f"As large offset starts: "
+                      f"dome commanded state={dome_az_cmd_state.commandedState}; "
+                      f"commanded azimuth={dome_az_cmd_state.azimuth:0.2f}; "
+                      f"current azimuth={dome_pos.azimuthPosition:0.2f}")
+        assert dome_az_cmd_state.commandedState == domeAzCmdState_GoToPosition, \
+            f"ATDome azimuth commanded state={dome_az_cmd_state.commandedState} != " \
+            f"GoToPosition={domeAzCmdState_GoToPosition}"
+        assert abs(dome_az_cmd_state.azimuth - dome_cmd_az_before_big_move) >= 0.1, \
+            f"Dome commanded azimuth={dome_az_cmd_state.azimuth:0.2f} == " \
+            f"{dome_cmd_az_before_big_move:0.2f}=previous value "
         data = await self.atdome.evt_azimuthState.next(flush=False, timeout=STD_TIMEOUT)
         if daz > 0:
             expected_az_state = SALPY_ATDome.ATDome_shared_AzimuthState_MovingCW
@@ -255,7 +275,7 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
         data = await self.atmcs.evt_azimuthInPosition.next(flush=False, timeout=SLEW_TIMEOUT)
         assert data.inPosition, "Telescope azimuth not in position but slew should be done"
 
-        cmd_dome_az_after_big_move = dome_pos.azimuthPositionSet
+        dome_cmd_az_after_big_move = dome_az_cmd_state.azimuth
 
         # Wait for dome to finish moving
         data = await self.atdome.evt_azimuthState.next(flush=False, timeout=SLEW_TIMEOUT)
@@ -274,21 +294,30 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
 
         # Commanded dome azimuth should not have changed
         dome_pos = await self.atdome.tel_position.next(flush=True, timeout=STD_TIMEOUT)
-        self.log.info(f"As small offset starts: dome azimuthPositionSet={dome_pos.azimuthPositionSet:0.2f}; "
-                      f"azimuthPosition={dome_pos.azimuthPosition:0.2f}")
-        if abs(dome_pos.azimuthPositionSet - cmd_dome_az_after_big_move) > 0.1:
-            raise RuntimeError(f"Dome azimuthPositionSet={dome_pos.azimuthPositionSet:0.2f} != "
-                               f"{cmd_dome_az_after_big_move:0.2f} = previous value ")
+        self.log.info(f"As small offset starts: dome azimuth position={dome_pos.azimuthPosition:0.2f}")
+        try:
+            await self.atdome.evt_azimuthCommandedState.next(flush=False, timeout=0.1)
+        except asyncio.TimeoutError:
+            # this is what we want: no new azimuthCommandedState event
+            pass
+        else:
+            raise AssertionError("Dome moved unexpectedly")
 
         data = await self.atmcs.evt_azimuthInPosition.next(flush=False, timeout=SLEW_TIMEOUT)
         assert data.inPosition, "Telescope azimuth not in position but slew should be done"
 
         dome_pos = await self.atdome.tel_position.next(flush=True, timeout=STD_TIMEOUT)
-        self.log.info(f"After small offset: dome azimuthPositionSet={dome_pos.azimuthPositionSet:0.2f}; "
-                      f"azimuthPosition={dome_pos.azimuthPosition:0.2f}")
-        if abs(dome_pos.azimuthPositionSet - cmd_dome_az_after_big_move) > 0.1:
-            raise RuntimeError(f"Dome azimuthPositionSet={dome_pos.azimuthPositionSet:0.2f} != "
-                               f"{cmd_dome_az_after_big_move:0.2f} = previous value ")
+        self.log.info(f"After small offset: dome azimuth position={dome_pos.azimuthPosition:0.2f}")
+        assert abs(dome_pos.azimuthPosition - dome_cmd_az_after_big_move) <= 0.1, \
+            f"Dome azimuthPosition={dome_pos.azimuthPosition:0.2f} != " \
+            f"{dome_cmd_az_after_big_move:0.2f} = previous value "
+        try:
+            await self.atdome.evt_azimuthCommandedState.next(flush=False, timeout=0.1)
+        except asyncio.TimeoutError:
+            # this is what we want: no new azimuthCommandedState event
+            pass
+        else:
+            raise AssertionError("Dome moved unexpectedly")
 
         # Stop tracking
         self.log.info("Stop telescope tracking")
