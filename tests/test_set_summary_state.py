@@ -25,7 +25,7 @@ import yaml
 import numpy as np
 
 from lsst.ts import salobj
-
+from lsst.ts import scriptqueue
 from lsst.ts.standardscripts import SetSummaryState
 
 import SALPY_Script
@@ -166,7 +166,7 @@ class TestSetSummaryState(unittest.TestCase):
 
         asyncio.get_event_loop().run_until_complete(doit())
 
-    def test_run(self):
+    def test_do_run(self):
         """Set one remote to two states, including settings.
 
         Transition FAULT -standby> STANDBY -start> DISABLED -enable> ENABLED
@@ -198,6 +198,7 @@ class TestSetSummaryState(unittest.TestCase):
             self.assertEqual(controller.n_exitControl, 0)
             self.assertEqual(len(controller.settings), 1)
             self.assertEqual(controller.settings[0], settings)
+            self.assertEqual(harness.script.state.state, scriptqueue.ScriptState.DONE)
 
         asyncio.get_event_loop().run_until_complete(doit())
 
