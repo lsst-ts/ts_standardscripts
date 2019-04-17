@@ -19,6 +19,6 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from lsst.ts.standardscripts.auxtel.integration_tests import ATPtgATMcsIntegration
+from lsst.ts.standardscripts import SetSummaryState
 
-ATPtgATMcsIntegration.main()
+SetSummaryState.main()

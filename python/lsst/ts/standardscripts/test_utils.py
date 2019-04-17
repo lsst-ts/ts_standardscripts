@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Data Management System.
@@ -19,6 +18,11 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from lsst.ts.standardscripts.auxtel.integration_tests import ATPtgATMcsIntegration
+__all__ = ["get_scripts_dir"]
 
-ATPtgATMcsIntegration.main()
+import pathlib
+
+
+def get_scripts_dir():
+    # 3 for python/lsst/ts/standardscripts
+    return pathlib.Path(__file__).resolve().parents[4] / "scripts"

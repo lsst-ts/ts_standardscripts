@@ -21,5 +21,4 @@
 
 from lsst.ts.standardscripts.auxtel.detector_characterization import ATGetStdFlatDataset
 
-if __name__ == "__main__":
-    ATGetStdFlatDataset.main()
+ATGetStdFlatDataset.main()

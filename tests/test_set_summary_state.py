@@ -20,13 +20,14 @@
 
 import asyncio
 import unittest
+import os
 import yaml
 
 import numpy as np
 
 from lsst.ts import salobj
-
-from lsst.ts.standardscripts import SetSummaryState
+from lsst.ts import scriptqueue
+from lsst.ts.standardscripts import SetSummaryState, get_scripts_dir
 
 import SALPY_Script
 import SALPY_Test
@@ -81,7 +82,6 @@ class Harness:
     def __init__(self):
         self.index = next(index_gen)
         self.test_index = next(index_gen)
-        salobj.test_utils.set_random_lsst_dds_domain()
         self.script = SetSummaryState(index=self.index)
         self.controllers = []
 
@@ -92,6 +92,8 @@ class Harness:
 
 
 class TestSetSummaryState(unittest.TestCase):
+    def setUp(self):
+        salobj.test_utils.set_random_lsst_dds_domain()
 
     def test_configure_errors(self):
         """Test error handling in the configure method.
@@ -166,7 +168,7 @@ class TestSetSummaryState(unittest.TestCase):
 
         asyncio.get_event_loop().run_until_complete(doit())
 
-    def test_run(self):
+    def test_do_run(self):
         """Set one remote to two states, including settings.
 
         Transition FAULT -standby> STANDBY -start> DISABLED -enable> ENABLED
@@ -198,6 +200,32 @@ class TestSetSummaryState(unittest.TestCase):
             self.assertEqual(controller.n_exitControl, 0)
             self.assertEqual(len(controller.settings), 1)
             self.assertEqual(controller.settings[0], settings)
+            self.assertEqual(harness.script.state.state, scriptqueue.ScriptState.DONE)
+
+        asyncio.get_event_loop().run_until_complete(doit())
+
+    def test_executable(self):
+        index = next(index_gen)
+
+        script_name = "set_summary_state.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / script_name
+        self.assertTrue(script_path.is_file())
+
+        remote = salobj.Remote(SALPY_Script, index=index)
+
+        async def doit():
+            initial_path = os.environ["PATH"]
+            try:
+                os.environ["PATH"] = str(scripts_dir) + ":" + initial_path
+                process = await asyncio.create_subprocess_exec(script_name, str(index))
+
+                state = await remote.evt_state.next(flush=False, timeout=60)
+                self.assertEqual(state.state, scriptqueue.ScriptState.UNCONFIGURED)
+
+                process.terminate()
+            finally:
+                os.environ["PATH"] = initial_path
 
         asyncio.get_event_loop().run_until_complete(doit())
 

@@ -209,5 +209,4 @@ class CalSysTakeData(scriptqueue.BaseScript):
         return await self.fiber_spectrograph.cmd_captureSpectImage.start(timeout=timeout)
 
 
-if __name__ == '__main__':
-    CalSysTakeData.main()
+CalSysTakeData.main()
