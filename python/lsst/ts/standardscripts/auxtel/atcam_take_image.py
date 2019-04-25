@@ -37,7 +37,7 @@ class ATCamTakeImage(BaseScript):
         # large because of an issue with one of the components
 
     async def configure(self, nimages=1, exp_times=0., shutter=False,
-                        image_sequence_name='',
+                        groupid='',
                         filter=None,
                         grating=None,
                         linear_stage=None):
@@ -46,24 +46,27 @@ class ATCamTakeImage(BaseScript):
         Parameters
         ----------
         nimages : `int`
-            Number of images to be taken on the stress test (>0).
+            Number of images to be taken on the stress test, must be
+            larger than zero.
             Ignored if ``exp_times`` is a sequence.
         exp_times : `float` or `List` [ `float` ]
             Exposure times (in seconds) for the image sequence.
             Either a single float (same exposure time for all images)
             or a list with the exposure times of each image.
-            If exp_times is a list, nimages is ignored (>= 0.).
+            If exp_times is a list, nimages is ignored, must be equal to or
+            larger then zero.
         shutter : `bool`
             Open the shutter?
-        image_sequence_name : `str`
-            Image id.
+        groupid : `str`
+            A string that will be mapped to the GROUPID entry in the image
+            header.
         filter : `None` or `int` or `str`
-            Filter id or name. If `None` (default), ignore setting filter.
+            Filter id or name. If `None` (default), do not change the filter.
         grating : `None` or `int` or `str`
-            Grating id or name.  If `None` (default), ignore setting grating.
+            Grating id or name.  If `None` (default), do not change the grating.
         linear_stage : `None` or `float`
-            Linear stage position.  If `None` (default), ignore setting linear
-            stage.
+            Linear stage position.  If `None` (default), do not change the
+            linear stage.
 
         Raises
         ------
@@ -86,18 +89,18 @@ class ATCamTakeImage(BaseScript):
             raise ValueError(f"Exposure times {exp_times} must be >= 0")
 
         self.shutter = bool(shutter)
-        self.imageSequenceName = str(image_sequence_name)
+        self.imageSequenceName = str(groupid)
 
-        self.latiss_filter = filter
-        self.latiss_grating = grating
-        self.latiss_linear_stage = linear_stage
+        self.filter = filter
+        self.grating = grating
+        self.linear_stage = linear_stage
 
         self.log.info(f"exposure times={self.exp_times}, "
                       f"shutter={self.shutter}, "
                       f"image_name={self.imageSequenceName}"
-                      f"filter={self.latiss_filter}"
-                      f"grating={self.latiss_grating}"
-                      f"linear_stage={self.latiss_linear_stage}")
+                      f"filter={self.filter}"
+                      f"grating={self.grating}"
+                      f"linear_stage={self.linear_stage}")
 
     def set_metadata(self, metadata):
         nimages = len(self.exp_times)
@@ -112,7 +115,7 @@ class ATCamTakeImage(BaseScript):
             end_readout = await self.latiss.take_image(exptime=exposure,
                                                        shutter=self.shutter,
                                                        image_seq_name=self.imageSequenceName,
-                                                       latiss_filter=self.latiss_filter,
-                                                       latiss_grating=self.latiss_grating,
-                                                       latiss_linear_stage=self.latiss_linear_stage)
+                                                       filter=self.filter,
+                                                       grating=self.grating,
+                                                       linear_stage=self.linear_stage)
             self.log.debug(f"Took {end_readout.imageName}")

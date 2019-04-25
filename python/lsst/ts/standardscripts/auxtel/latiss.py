@@ -6,13 +6,16 @@ __all__ = ['LATISS']
 
 
 class LATISS:
-    """Implement high level ATCamera functionality.
+    """LSST Auxiliary Telescope Image and Slit less Spectrograph.
+
+    Implement high level functionality for LATISS, a high level instrument
+    which is the combination of ATCamera and ATSpectrograph CSCs.
 
     Parameters
     ----------
-    atcam : `salobj.Remote(SALPY_ATCam)`
+    atcam : `lsst.ts.salobj.Remote`
         Remote for the ATCamera.
-    atspec : `salobj.Remote(SALPY_ATSpectrograph)`
+    atspec : `lsst.ts.salobj.Remote`
         Remote for the ATSpectrograph.
     """
 
@@ -37,8 +40,8 @@ class LATISS:
         nbias : `int`
             Number of bias frames to take.
         checkpoint : `coro`
-            A optional coroutine that accepts one string argument that is
-            called before each bias is taken.
+            A optional awaitable callback that accepts one string argument
+            that is called before each bias is taken.
 
         """
         for i in range(nbias):
@@ -51,7 +54,7 @@ class LATISS:
                               science=True, guide=False, wfs=False)
 
     async def take_darks(self, exptime, ndarks, checkpoint=None):
-        """Take a series of bias images.
+        """Take a series of dark images.
 
         Parameters
         ----------
@@ -60,8 +63,8 @@ class LATISS:
         ndarks : `int`
             Number of dark frames to take.
         checkpoint : `coro`
-            A optional coroutine that accepts one string argument that is
-            called before each dark is taken.
+            A optional awaitable callback that accepts one string argument
+            that is called before each bias is taken.
 
         """
         for i in range(ndarks):
@@ -73,7 +76,7 @@ class LATISS:
                               science=True, guide=False, wfs=False)
 
     async def take_flats(self, exptime, nflats,
-                         latiss_filter=None, latiss_grating=None, latiss_linear_stage=None,
+                         filter=None, grating=None, linear_stage=None,
                          checkpoint=None):
         """Take a series of flat field images.
 
@@ -83,15 +86,15 @@ class LATISS:
             Exposure time for flats.
         nflats : `int`
             Number of flat frames to take.
-        latiss_filter : `None` or `int` or `str`
-            Filter id or name. If None, ignore setting filter.
-        latiss_grating : `None` or `int` or `str`
-            Grating id or name.  If None, ignore setting grating.
-        latiss_linear_stage : `None` or `float`
-            Linear stage position.  If None, ignore setting linear stage.
+        filter : `None` or `int` or `str`
+            Filter id or name. If None, do not change the filter.
+        grating : `None` or `int` or `str`
+            Grating id or name.  If None, do not change the grating.
+        linear_stage : `None` or `float`
+            Linear stage position.  If None, do not change the linear stage.
         checkpoint : `coro`
-            A optional coroutine that accepts one string argument that is
-            called before each flat field image is taken.
+            A optional awaitable callback that accepts one string argument
+            that is called before each bias is taken.
 
         """
         for i in range(nflats):
@@ -99,15 +102,15 @@ class LATISS:
             if checkpoint is not None:
                 await checkpoint(tag)
             await self.take_image(exptime=exptime, shutter=True, image_seq_name=tag,
-                                  latiss_filter=latiss_filter, latiss_grating=latiss_grating,
-                                  latiss_linear_stage=latiss_linear_stage)
+                                  filter=filter, grating=grating,
+                                  linear_stage=linear_stage)
 
     async def take_image(self, exptime, shutter, image_seq_name,
-                         latiss_filter=None, latiss_grating=None, latiss_linear_stage=None,
+                         filter=None, grating=None, linear_stage=None,
                          science=True, guide=False, wfs=False,
                          ):
-        """Encapsulates the action of setting up the spectrograph and taking
-        images.
+        """Set up the spectrograph and take a series of images.
+
 
         Setting up the spectrograph and taking images cannot be done
         concurrently. One needs first to setup the spectrograph then,
@@ -121,12 +124,12 @@ class LATISS:
             Should activate the shutter? (False for bias and dark)
         image_seq_name : `str`
             A string to identify the image.
-        latiss_filter : `None` or `int` or `str`
-            Filter id or name. If None, ignore setting filter.
-        latiss_grating : `None` or `int` or `str`
-            Grating id or name.  If None, ignore setting grating.
-        latiss_linear_stage : `None` or `float`
-            Linear stage position.  If None, ignore setting linear stage.
+        filter : `None` or `int` or `str`
+            Filter id or name. If None, do not change the filter.
+        grating : `None` or `int` or `str`
+            Grating id or name.  If None, do not change the grating.
+        linear_stage : `None` or `float`
+            Linear stage position.  If None, do not change the linear stage.
         science : `bool`
             Mark image as science (default=True)?
         guide : `bool`
@@ -140,9 +143,9 @@ class LATISS:
 
         """
 
-        await self.setup_atspec(latiss_filter=latiss_filter,
-                                latiss_grating=latiss_grating,
-                                latiss_linear_stage=latiss_linear_stage)
+        await self.setup_atspec(filter=filter,
+                                grating=grating,
+                                linear_stage=linear_stage)
 
         return await self.expose(exp_time=exptime, shutter=shutter, image_seq_name=image_seq_name,
                                  science=science, guide=guide, wfs=wfs)
@@ -195,48 +198,48 @@ class LATISS:
             await self.atcam.cmd_takeImages.start(timeout=timeout+exp_time)
             return await end_readout_coro
 
-    async def setup_atspec(self, latiss_filter=None, latiss_grating=None,
-                           latiss_linear_stage=None):
+    async def setup_atspec(self, filter=None, grating=None,
+                           linear_stage=None):
         """Encapsulates commands to setup spectrograph.
 
         Parameters
         ----------
-        latiss_filter : `None` or `int` or `str`
-            Filter id or name. If None, ignore setting filter.
-        latiss_grating : `None` or `int` or `str`
-            Grating id or name.  If None, ignore setting grating.
-        latiss_linear_stage : `None` or `float`
-            Linear stage position.  If None, ignore setting linear stage.
+        filter : `None` or `int` or `str`
+            Filter id or name. If None, do not change the filter.
+        grating : `None` or `int` or `str`
+            Grating id or name.  If None, do not change the grating.
+        linear_stage : `None` or `float`
+            Linear stage position.  If None, do not change the linear stage.
 
         """
 
         setup_coroutines = []
-        if latiss_filter is not None:
-            if np.issubdtype(type(latiss_filter), int):
-                self.atspec.cmd_changeFilter.set(filter=latiss_filter,
+        if filter is not None:
+            if np.issubdtype(type(filter), int):
+                self.atspec.cmd_changeFilter.set(filter=filter,
                                                  name='')
-            elif type(latiss_filter) == str:
+            elif type(filter) == str:
                 self.atspec.cmd_changeFilter.set(filter=0,
-                                                 name=latiss_filter)
+                                                 name=filter)
             else:
                 raise RuntimeError(f"Filter must be a string or an int, got "
-                                   f"{type(latiss_filter)}:{latiss_filter}")
+                                   f"{type(filter)}:{filter}")
             setup_coroutines.append(self.atspec.cmd_changeFilter.start(timeout=self.cmd_timeout))
 
-        if latiss_grating is not None:
-            if np.issubdtype(type(latiss_grating), int):
-                self.atspec.cmd_changeDisperser.set(disperser=latiss_grating,
+        if grating is not None:
+            if np.issubdtype(type(grating), int):
+                self.atspec.cmd_changeDisperser.set(disperser=grating,
                                                     name='')
-            elif type(latiss_grating) == str:
+            elif type(grating) == str:
                 self.atspec.cmd_changeDisperser.set(disperser=0,
-                                                    name=latiss_grating)
+                                                    name=grating)
             else:
                 raise RuntimeError(f"Grating must be a string or an int, got "
-                                   f"{type(latiss_grating)}:{latiss_grating}")
+                                   f"{type(grating)}:{grating}")
             setup_coroutines.append(self.atspec.cmd_changeDisperser.start(timeout=self.cmd_timeout))
 
-        if latiss_linear_stage is not None:
-            self.atspec.cmd_moveLinearStage.set(distanceFromHome=float(latiss_linear_stage))
+        if linear_stage is not None:
+            self.atspec.cmd_moveLinearStage.set(distanceFromHome=float(linear_stage))
             setup_coroutines.append(self.atspec.cmd_moveLinearStage.start(timeout=self.cmd_timeout))
 
         if len(setup_coroutines) > 0:

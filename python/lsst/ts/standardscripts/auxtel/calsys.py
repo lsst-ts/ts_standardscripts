@@ -10,17 +10,17 @@ class ATCalSys:
 
     Parameters
     ----------
-    electr : `salobj.Remote(SALPY_Electrometer, ID)`
+    electr : `lsst.ts.salobj.Remote`
         Remote for the Electrometer.
-    monochr : `salobj.Remote(SALPY_ATMonochromator)`
+    monochr : `lsst.ts.salobj.Remote`
         Remote for the Monochromator.
-    fiber_spec : `salobj.Remote(SALPY_FiberSpectrograph)`
+    fiber_spec : `lsst.ts.salobj.Remote`
         Remote for the FiberSpectrograph.
-    atcam : `salobj.Remote(SALPY_ATCam)`
+    atcam : `lsst.ts.salobj.Remote`
         Remote for the ATCamera.
-    atspec : `salobj.Remote(SALPY_ATSpectrograph)`
+    atspec : `lsst.ts.salobj.Remote`
         Remote for the ATSpectrograph.
-    atarch : `salobj.Remote(SALPY_ATArchiver)`
+    atarch : `lsst.ts.salobj.Remote`
         Remote for the ATArchiver.
     """
     def __init__(self, electr, monochr, fiber_spec, atcam, atspec, atarch):
@@ -82,15 +82,14 @@ class ATCalSys:
         return await lfo_coro
 
     async def take_fiber_spectrum_after(self, delay, image_type, integration_time, lamp, evt=None):
-        """By default, this method will wait for `delay` seconds then start
+        """Wait, then start an acquisition with the fiber spectrograph.
+
+        By default, this method will wait for `delay` seconds then start
         an acquisition with the fiber spectrograph. Optionally the user may
         provide a coroutine that will be awaited before the delay starts.
 
         Parameters
         ----------
-        evt : `coro`
-            An awaitable that will be waited before delay and processing. If
-            None, ignored.
         delay : `float`
             Seconds to wait before starting fiber spectrograph acquisition.
         image_type : `str`
@@ -99,6 +98,10 @@ class ATCalSys:
             Integration time for the fiber spectrum (seconds).
         lamp : `str`
             Name of lamp for each image.
+        evt : `coro`
+            An awaitable that will be waited before delay and processing. If
+            None, ignored.
+
         Returns
         -------
         cmd_captureSpectImage.start : `SALPY_FiberSpectrograph.

@@ -21,6 +21,11 @@ class Harness:
         self.atcam = salobj.Controller(SALPY_ATCamera)
         self.atspec = salobj.Controller(SALPY_ATSpectrograph)
 
+        self.atcam.cmd_takeImages.callback = self.cmd_take_images_callback
+        self.atspec.cmd_changeFilter.callback = self.cmd_changeFilter_callback
+        self.atspec.cmd_changeDisperser.callback = self.cmd_changeDisperser_callback
+        self.atspec.cmd_moveLinearStage.callback = self.cmd_moveLinearStage_callback
+
         self.readout_time = 2.
         self.shutter_time = 1.
 
@@ -68,7 +73,7 @@ class TestLATISS(unittest.TestCase):
     def test_take_bias(self):
         async def doit():
             harness = Harness()
-            harness.atcam.cmd_takeImages.callback = harness.cmd_take_images_callback
+
             nbias = 10
             await harness.latiss.take_bias(nbias=nbias)
             self.assertEqual(harness.nimages, nbias)
@@ -84,7 +89,7 @@ class TestLATISS(unittest.TestCase):
     def test_take_darks(self):
         async def doit():
             harness = Harness()
-            harness.atcam.cmd_takeImages.callback = harness.cmd_take_images_callback
+
             ndarks = 10
             exptime = 5.
             await harness.latiss.take_darks(ndarks=ndarks,
@@ -102,10 +107,6 @@ class TestLATISS(unittest.TestCase):
     def test_take_flats(self):
         async def doit():
             harness = Harness()
-            harness.atcam.cmd_takeImages.callback = harness.cmd_take_images_callback
-            harness.atspec.cmd_changeFilter.callback = harness.cmd_changeFilter_callback
-            harness.atspec.cmd_changeDisperser.callback = harness.cmd_changeDisperser_callback
-            harness.atspec.cmd_moveLinearStage.callback = harness.cmd_moveLinearStage_callback
 
             nflats = 10
             exptime = 5.
@@ -115,9 +116,9 @@ class TestLATISS(unittest.TestCase):
 
             await harness.latiss.take_flats(nflats=nflats,
                                             exptime=exptime,
-                                            latiss_filter=filter_id,
-                                            latiss_grating=grating_id,
-                                            latiss_linear_stage=linear_stage)
+                                            filter=filter_id,
+                                            grating=grating_id,
+                                            linear_stage=linear_stage)
             self.assertEqual(harness.nimages, nflats)
             self.assertEqual(len(harness.exptime_list), nflats)
             for i in range(nflats):

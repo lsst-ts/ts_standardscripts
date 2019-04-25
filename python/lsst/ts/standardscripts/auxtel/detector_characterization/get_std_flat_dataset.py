@@ -192,9 +192,9 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         for i in range(len(self.flat_dn_range)):
             await self.latiss.take_flats(exptime=self.flat_base_exptime * self.flat_dn_range[i],
                                          nflats=self.n_flat,
-                                         latiss_filter=self.filter,
-                                         latiss_grating=self.grating,
-                                         latiss_linear_stage=self.linear_stage,
+                                         filter=self.filter,
+                                         grating=self.grating,
+                                         linear_stage=self.linear_stage,
                                          checkpoint=self.checkpoint)
 
         self.log.info(f"Taking {self.n_bias} bias images...")
