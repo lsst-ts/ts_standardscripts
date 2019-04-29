@@ -24,6 +24,7 @@ import numpy as np
 
 from lsst.ts import salobj
 from lsst.ts import scriptqueue
+from lsst.ts.standardscripts.auxtel.latiss import LATISS
 
 import SALPY_ATCamera
 import SALPY_ATSpectrograph
@@ -69,23 +70,14 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
                                                                          "changeDisperser",
                                                                          "moveLinearStage"])))
 
+        self.latiss = LATISS(atcam=self.atcam, atspec=self.atspec)
+
+        self.read_out_time = self.latiss.read_out_time
         self.cmd_timeout = 30.
         self.end_readout_timeout = 120.
 
-        self.read_out_time = None
-        self.n_dark = None
-        self.t_dark = None
-        self.n_bias = None
-        self.n_flat = None
-        self.flat_base_exptime = None
-        self.flat_dn_range = None
-        self.filter = None
-        self.grating = None
-        self.linear_stage = None
-
         # FIXME: Get this parameter from the camera configuration once late
-        # joiner is working
-        # on the open network.
+        # joiner is working on the open network.
         self.maximum_exp_time = 401.  # Maximum exposure time in seconds.
 
     async def configure(self,
@@ -175,112 +167,42 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         self.linear_stage = linear_stage
 
         if float(read_out_time) > 0.:
-            self.read_out_time = float(read_out_time)
+            self.latiss.read_out_time = float(read_out_time)
         else:
             self.log.warning(f"Read out time must be larger than 0., got {read_out_time}. "
-                             f"Using default value, {self.read_out_time}s.")
+                             f"Using default value, {self.latiss.read_out_time}s.")
 
     async def run(self):
         """Run method.
         """
 
-        await self.checkpoint("setup")
-
-        if self.filter is not None:
-            await self.checkpoint(f"Configuring ATSpec filter; {self.filter}")
-            self.atspec.cmd_changeFilter.set(filter=self.filter)
-            await self.atspec.cmd_changeFilter.start(timeout=self.cmd_timeout)
-
-        if self.grating is not None:
-            await self.checkpoint(f"Configuring ATSpec grating; {self.grating}")
-            self.atspec.cmd_changeDisperser.set(disperser=self.grating)
-            await self.atspec.cmd_changeDisperser.start(timeout=self.cmd_timeout)
-
-        if self.linear_stage is not None:
-            await self.checkpoint(f"Configuring ATSpec linear stage; {self.linear_stage}")
-            self.atspec.cmd_moveLinearStage.set(distanceFromHome=self.linear_stage)
-            await self.atspec.cmd_moveLinearStage.start(timeout=self.cmd_timeout)
-
-        await self.take_dark_sequence()
-
-        await self.take_bias_sequence()
-
-        await self.take_flat_sequence()
-
-        await self.take_bias_sequence()
-
-        await self.checkpoint("done")
-
-    async def take_dark_sequence(self):
-        """Take the intended sequence of darks.
-        """
         self.log.info(f"Taking {self.n_dark} dark images...")
 
-        for i in range(self.n_dark):
-            await self.take_image(exp_time=self.t_dark,
-                                  shutter=False,
-                                  image_seq_name=f"dark_{i+1:04d}_{self.n_dark:04d}")
+        await self.latiss.take_darks(exptime=self.t_dark,
+                                     ndarks=self.n_dark,
+                                     checkpoint=self.checkpoint)
 
-    async def take_bias_sequence(self):
-        """Take the intended sequence of bias.
-        """
         self.log.info(f"Taking {self.n_bias} bias images...")
 
-        for i in range(self.n_bias):
-            await self.take_image(exp_time=0.,
-                                  shutter=False,
-                                  image_seq_name=f"bias_{i+1:04d}_{self.n_bias:04d}")
+        await self.latiss.take_bias(nbias=self.n_bias,
+                                    checkpoint=self.checkpoint)
 
-    async def take_flat_sequence(self):
-        """Take the intended sequence of flats.
-        """
         self.log.info("Taking flat-field sequence...")
 
         for i in range(len(self.flat_dn_range)):
-            for j in range(self.n_flat):
-                await self.take_image(exp_time=self.flat_base_exptime * self.flat_dn_range[i],
-                                      shutter=True,
-                                      image_seq_name=f"flat_{i+1:04d}_"
-                                                     f"{len(self.flat_dn_range):04d}_"
-                                                     f"{j+1:04d}_"
-                                                     f"{self.n_flat:04d}")
+            await self.latiss.take_flats(exptime=self.flat_base_exptime * self.flat_dn_range[i],
+                                         nflats=self.n_flat,
+                                         filter=self.filter,
+                                         grating=self.grating,
+                                         linear_stage=self.linear_stage,
+                                         checkpoint=self.checkpoint)
 
-    async def take_image(self, exp_time, shutter, image_seq_name):
-        """Encapsulates the take image routine.
+        self.log.info(f"Taking {self.n_bias} bias images...")
 
-        This basically consists of configuring and sending a takeImages
-        command to the camera and waiting for a endReadout event.
+        await self.latiss.take_bias(nbias=self.n_bias,
+                                    checkpoint=self.checkpoint)
 
-        Parameters
-        ----------
-        exp_time : `float`
-            The exposure time for the image, in seconds.
-        shutter : `bool`
-            Should activate the shutter? (False for bias and dark)
-        image_seq_name : `str`
-            A string to identify the image.
-
-        Returns
-        -------
-
-        """
-        # FIXME: Current version of ATCamera software is not set up to take
-        # images with numImages > 1, so this is fixed at 1 for now and we
-        # loop through any set of images we want to take. (2019/03/11)
-        self.atcam.cmd_takeImages.set(numImages=1,
-                                      expTime=exp_time,
-                                      shutter=shutter,
-                                      imageSequenceName=str(image_seq_name))
-
-        timeout = self.read_out_time + self.cmd_timeout + self.end_readout_timeout
-
-        end_readout_coro = self.atcam.evt_endReadout.next(flush=True,
-                                                          timeout=timeout)
-
-        await self.checkpoint(f"Take image {image_seq_name}")
-
-        await self.atcam.cmd_takeImages.start(timeout=timeout+exp_time)
-        await end_readout_coro
+        await self.checkpoint("done")
 
     def set_metadata(self, metadata):
         dark_time = self.n_dark * (self.read_out_time + self.t_dark)
