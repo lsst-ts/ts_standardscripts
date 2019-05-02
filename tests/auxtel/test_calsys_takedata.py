@@ -109,7 +109,7 @@ class TestATCalSysTakeData(unittest.TestCase):
     def setUp(self):
         salobj.test_utils.set_random_lsst_dds_domain()
 
-    def xtest_configure(self):
+    def test_configure(self):
         index = next(index_gen)
 
         argnames = ("wavelengths", "integration_times", "grating_types",
