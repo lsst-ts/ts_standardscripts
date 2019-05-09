@@ -20,9 +20,13 @@
 
 __all__ = ["ATPtgATMcsIntegration"]
 
+import yaml
+import asyncio
+import logging
+
 import astropy.units as u
 from astropy.time import Time
-from astropy.coordinates import AltAz, ICRS, EarthLocation
+from astropy.coordinates import AltAz, ICRS, EarthLocation, Angle
 
 from lsst.ts import salobj
 from lsst.ts import scriptqueue
@@ -51,7 +55,10 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
                                                     lat=-30.244728*u.deg,
                                                     height=2663.0*u.m)
 
-    async def configure(self, el=30, az=0, max_sep=1,
+        self.pool_time = 10.  # wait time in tracking test loop (seconds)
+
+    async def configure(self, el=45., az=45., max_sep=1.,
+                        track_duration=0.02, max_track_error=5.,
                         enable_atmcs=True, enable_atptg=True):
         """Configure the script.
 
@@ -65,6 +72,11 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
             Maximum allowed on-sky separation between expected az/alt
             and the target az/alt computed by ATPtg (deg).
             This need not be tiny; it is meant as a sanity check.
+        track_duration : `float`
+            How long to track after slewing to position (hour).
+        max_track_error : `float`
+            Maximum allowed on-sky separation between commanded and
+            measured az/el (arcsec).
         enable_atmcs : `bool` (optional)
             Enable the ATMCS CSC?
         enable_atptg : `bool` (optional)
@@ -72,7 +84,9 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
         """
         self.el = float(el)*u.deg
         self.az = float(az)*u.deg
-        self.max_sep = max_sep*u.deg
+        self.max_sep = float(max_sep)*u.deg
+        self.track_duration = float(track_duration)*u.hour
+        self.max_track_error = float(max_track_error)*u.arcsec
         self.enable_atmcs = bool(enable_atmcs)
         self.enable_atptg = bool(enable_atptg)
 
@@ -88,14 +102,14 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
             self.log.info(f"Enable ATMCS")
             await salobj.enable_csc(self.atmcs)
         else:
-            data = self.atmcs.evt_summaryState.get()
+            data = await self.atmcs.evt_summaryState.next(flush=False)
             self.assertEqual("ATMCS summaryState", data.summaryState, salobj.State.ENABLED,
                              "ENABLED")
         if self.enable_atptg:
             self.log.info("Enable ATPtg")
             await salobj.enable_csc(self.atptg)
         else:
-            data = self.atptg.evt_summaryState.get()
+            data = await self.atptg.evt_summaryState.next(flush=False)
             self.assertEqual("ATPtg summaryState", data.summaryState, salobj.State.ENABLED,
                              "ENABLED")
 
@@ -117,16 +131,14 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
         cmd_radec = cmd_elaz.transform_to(ICRS)
 
         # Start tracking
-        # TODO: remove the next line when ATPtg does this
-        await self.atmcs.cmd_startTracking.start(timeout=2)
         self.atptg.cmd_raDecTarget.set(
             targetName="atptg_atmcs_integration",
             targetInstance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
             frame=SALPY_ATPtg.ATPtg_shared_CoordFrame_icrs,
             epoch=2000,  # should be ignored: no parallax or proper motion
             equinox=2000,  # should be ignored for ICRS
-            ra=cmd_radec.ra.to_string(u.hour, decimal=True),
-            declination=cmd_radec.dec.to_string(u.deg, decimal=True),
+            ra=cmd_radec.ra.hour,
+            declination=cmd_radec.dec.deg,
             parallax=0,
             pmRA=0,
             pmDec=0,
@@ -140,6 +152,7 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
         self.log.info(f"raDecTarget ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
                       f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg")
         self.atmcs.evt_target.flush()
+        self.atmcs.evt_allAxesInPosition.flush()
         ack_id = await self.atptg.cmd_raDecTarget.start(timeout=2)
         self.log.info(f"raDecTarget command result: {ack_id.ack.result}")
 
@@ -177,25 +190,88 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
         sep0 = cmd_elaz.separation(curr_elaz0).to(u.arcsec)
         sep1 = cmd_elaz.separation(curr_elaz1).to(u.arcsec)
         if sep0 <= sep1:
-            raise RuntimeError(f"az/alt separation between commanded and current is not decreasing: "
-                               f"sep0 = {sep0}; sep1 = {sep1}")
+            raise RuntimeError(f"az/alt separation between commanded and current is not "
+                               f"decreasing: sep0 = {sep0}; sep1 = {sep1}")
+
+        # Monitor tracking for the specified duration
+
+        if self.track_duration == 0.:
+            self.log.info("Skipping track test...")
+            return
+
+        self.log.info(f"Monitoring tracking for {self.track_duration}. Wait for "
+                      f"allAxesInPosition event.")
+        while True:
+            in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False, timeout=10)
+            self.log.debug(f"Got {in_position.inPosition}")
+            if in_position.inPosition:
+                break
+
+        start_time = Time.now()
+
+        while Time.now()-start_time < self.track_duration:
+
+            mount_data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
+            current_target = await self.atptg.tel_currentTargetStatus.next(flush=True, timeout=1)
+
+            mount_azel = AltAz(alt=mount_data.elevationCalculatedAngle*u.deg,
+                               az=mount_data.azimuthCalculatedAngle*u.deg,
+                               obstime=Time.now(), location=self.location)
+
+            demand_azel = AltAz(alt=Angle(current_target.demandEl, unit=u.deg),
+                                az=Angle(current_target.demandAz, unit=u.deg),
+                                obstime=Time.now(), location=self.location)
+
+            self.log.info(f"Mount: el={mount_azel.alt}, "
+                          f"az={mount_azel.az}")
+
+            self.log.info(f"ATPtg demand: el={demand_azel.alt}, "
+                          f"az={demand_azel.az}")
+
+            track_error = mount_azel.separation(demand_azel).to(u.arcsec)
+            self.log.info(f"Track error: {track_error}")
+
+            if track_error > self.max_track_error:
+                raise RuntimeError(f"Track error={track_error} > {self.max_track_error}")
+            else:
+                self.log.info(f"Track error={track_error}; max={self.max_track_error}")
+
+            await asyncio.sleep(self.pool_time)
 
     def set_metadata(self, metadata):
         metadata.duration = 60  # rough estimate
 
     async def cleanup(self):
         # Stop tracking
-        # TODO DM-17961: change to send stopTracking to ATPtg on error
         self.log.info("cleanup")
         try:
-            await self.atptg.cmd_disable.start(timeout=1)
+            await self.atptg.cmd_stopTracking.start(timeout=1)
         except salobj.AckError as e:
-            self.log.error(f"ATPtg disable failed with {e}")
+            self.log.error(f"ATPtg stopTracking failed with {e}")
         else:
-            self.log.info("Disabled ATPtg")
-        try:
-            await self.atmcs.cmd_stopTracking.start(timeout=1)
-        except salobj.AckError as e:
-            self.log.error(f"cleanup: ATMCS stopTracking failed with {e}")
-        else:
-            self.log.info("Stopped tracking in ATMCS")
+            self.log.info("Tracking stopped")
+
+
+async def main():
+
+    script = ATPtgATMcsIntegration(index=10)
+
+    script.log.setLevel(logging.INFO)
+    script.log.addHandler(logging.StreamHandler())
+
+    config_dict = dict(enable_atmcs=False, enable_atptg=False)
+
+    print("*** configure")
+    config_data = script.cmd_configure.DataType()
+    config_data.config = yaml.safe_dump(config_dict)
+    config_id_data = salobj.CommandIdData(1, config_data)
+    await script.do_configure(config_id_data)
+
+    print("*** run")
+    await script.do_run(None)
+    print("*** done")
+
+
+if __name__ == '__main__':
+
+    asyncio.get_event_loop().run_until_complete(main())
