@@ -92,10 +92,11 @@ class Harness:
         self.controllers.append(controller)
 
     async def __aenter__(self):
+        await self.script.start_task
         return self
 
     async def __aexit__(self, *args):
-        await self.script.start_task
+        await self.script.close()
 
 
 class TestSetSummaryState(unittest.TestCase):
