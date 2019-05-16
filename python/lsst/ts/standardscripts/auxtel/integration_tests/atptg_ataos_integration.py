@@ -155,13 +155,13 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
 
         # Start tracking
         self.atptg.cmd_raDecTarget.set(
-            targetName="atptg_atmcs_integration",
+            targetName="atptg_ataos_integration",
             targetInstance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
             frame=SALPY_ATPtg.ATPtg_shared_CoordFrame_icrs,
             epoch=2000,  # should be ignored: no parallax or proper motion
             equinox=2000,  # should be ignored for ICRS
-            ra=cmd_radec.ra.to_string(u.hour, decimal=True),
-            declination=cmd_radec.dec.to_string(u.deg, decimal=True),
+            ra=cmd_radec.ra.hour,
+            declination=cmd_radec.dec.deg,
             parallax=0,
             pmRA=0,
             pmDec=0,
