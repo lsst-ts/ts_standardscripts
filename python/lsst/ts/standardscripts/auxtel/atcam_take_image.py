@@ -8,9 +8,6 @@ from lsst.ts.standardscripts.auxtel.latiss import LATISS
 from lsst.ts.scriptqueue.base_script import BaseScript
 from lsst.ts import salobj
 
-import SALPY_ATCamera
-import SALPY_ATSpectrograph
-
 
 class ATCamTakeImage(BaseScript):
     """ Take a series of images with the ATCamera with set exposure times.
