@@ -31,6 +31,7 @@ from lsst.ts import scriptqueue
 
 import SALPY_ATAOS
 import SALPY_ATPtg
+import SALPY_ATMCS
 
 
 class ATPtgATAOSIntegration(scriptqueue.BaseScript):
@@ -47,7 +48,8 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
         super().__init__(index=index,
                          descr="Test integration between ATPtg and ATAOS",
                          remotes_dict=dict(ataos=salobj.Remote(SALPY_ATAOS),
-                                           atptg=salobj.Remote(SALPY_ATPtg)))
+                                           atptg=salobj.Remote(SALPY_ATPtg),
+                                           atmcs=salobj.Remote(SALPY_ATMCS)))
         self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
                                                     lat=-30.244728*u.deg,
                                                     height=2663.0*u.m)
@@ -56,11 +58,12 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
         self.az = None
         self.enable_ataos = False
         self.enable_atptg = False
+        self.enable_atmcs = False
 
         self.timeout = 30.  # general timeout in seconds.
 
     async def configure(self, el=30, az=0,
-                        enable_ataos=True, enable_atptg=True):
+                        enable_ataos=True, enable_atptg=True,enable_atmcs=True):
         """Configure the script.
 
         Parameters
@@ -78,6 +81,7 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
         self.az = float(az)*u.deg
         self.enable_ataos = bool(enable_ataos)
         self.enable_atptg = bool(enable_atptg)
+        self.enable_atmcs = bool(enable_atmcs)
 
     def assertEqual(self, what, val1, val2, more=""):
         if val1 != val2:
@@ -118,6 +122,24 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
             data = self.atptg.evt_summaryState.get()
             self.assertEqual("ATPtg summaryState",
                              data.summaryState, salobj.State.ENABLED, "ENABLED")
+        if self.enable_atmcs:
+            self.log.info("Enable ATMCS")
+            try:
+                await self.atmcs.cmd_start.start()
+            except Exception as e:
+                self.log.exception(e)
+            try:
+                await self.atmcs.cmd_enable.start()
+            except Exception as e:
+                self.log.exception(e)
+        else:
+            data = self.atmcs.evt_summaryState.get()
+            self.assertEqual(
+                    "ATMCS summaryState",
+                    data.summaryState,
+                    salobj.State.ENABLED,
+                    "ENABLED"
+                    )
 
         await self.checkpoint("start_tracking")
         # Docker containers can have serious clock drift,
@@ -160,8 +182,9 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
 
         # make sure at least one current Target status was published...
         self.log.debug("Waiting for currentTargetStatus to be published.")
-        target_status = await self.atptg.tel_currentTargetStatus.next(flush=True,
-                                                                      timeout=self.timeout)
+        target_status = await self.atmcs.evt_target.next(
+                flush=True,
+                timeout=self.timeout)
         self.log.debug(f"Got {target_status.demandRaString} {target_status.demandDecString}.")
 
         await self.checkpoint("apply_correction_manually")
@@ -179,7 +202,7 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
         ack_id = await self.ataos.cmd_enableCorrection.start(timeout=self.timeout)
         self.log.info(f"enableCorrections command result: {ack_id.ack.result}")
 
-        # Wait until ATAOS publishes that corrections where performed
+        # Wait until ATAOS publishes that corrections were performed
         hexapod_completed = self.ataos.evt_hexapodCorrectionCompleted.next(flush=True,
                                                                            timeout=self.timeout)
         m1_completed = self.ataos.evt_m1CorrectionCompleted.next(flush=True,
@@ -224,6 +247,20 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
             self.log.error(f"ATAOS disable failed with {e}")
         else:
             self.log.info("ATAOS standby")
+
+        try:
+            await self.atmcs.cmd_disable.start(timeout=5)
+        except salobj.AckError as e:
+            self.log.error(f"ATMCS disable failed with {e}")
+        else:
+            self.log.info("ATMCS Disabled")
+
+        try:
+            await self.atmcs.cmd_standby.start(timeout=5)
+        except salobj.AckError as e:
+            self.log.error(f"ATMCS standby failed with {e}")
+        else:
+            self.log.info("ATMCS standby")
 
 
 async def main(index):
