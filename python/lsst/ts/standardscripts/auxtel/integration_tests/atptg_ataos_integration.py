@@ -185,7 +185,7 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
         target_status = await self.atmcs.evt_target.next(
                 flush=True,
                 timeout=self.timeout)
-        self.log.debug(f"Got {target_status.demandRaString} {target_status.demandDecString}.")
+        self.log.debug(f"Got {target_status.azimuth} {target_status.elevation}.")
 
         await self.checkpoint("apply_correction_manually")
 
