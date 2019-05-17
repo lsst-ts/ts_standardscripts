@@ -24,5 +24,5 @@ import pathlib
 
 
 def get_scripts_dir():
-    # 3 for python/lsst/ts/standardscripts
+    # 4 for python/lsst/ts/standardscripts
     return pathlib.Path(__file__).resolve().parents[4] / "scripts"

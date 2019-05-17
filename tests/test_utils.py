@@ -24,7 +24,7 @@ import unittest
 from lsst.ts import standardscripts
 
 
-class TestTestUtils(unittest.TestCase):
+class TestUtils(unittest.TestCase):
     def test_get_scripts_dir(self):
         scripts_dir = standardscripts.get_scripts_dir()
         self.assertTrue(scripts_dir.is_dir())
