@@ -1,6 +1,5 @@
 
 import asyncio
-import numpy as np
 
 __all__ = ['LATISS']
 
@@ -191,12 +190,9 @@ class LATISS:
                                           )
 
             timeout = self.read_out_time + self.cmd_timeout + self.end_readout_timeout
-
-            end_readout_coro = self.atcam.evt_endReadout.next(flush=True,
-                                                              timeout=timeout)
-
+            self.atcam.evt_endReadout.flush()
             await self.atcam.cmd_takeImages.start(timeout=timeout+exp_time)
-            return await end_readout_coro
+            return await self.atcam.evt_endReadout.next(flush=False, timeout=timeout)
 
     async def setup_atspec(self, filter=None, grating=None,
                            linear_stage=None):
@@ -215,7 +211,7 @@ class LATISS:
 
         setup_coroutines = []
         if filter is not None:
-            if np.issubdtype(type(filter), int):
+            if isinstance(filter, int):
                 self.atspec.cmd_changeFilter.set(filter=filter,
                                                  name='')
             elif type(filter) == str:
@@ -227,7 +223,7 @@ class LATISS:
             setup_coroutines.append(self.atspec.cmd_changeFilter.start(timeout=self.cmd_timeout))
 
         if grating is not None:
-            if np.issubdtype(type(grating), int):
+            if isinstance(grating, int):
                 self.atspec.cmd_changeDisperser.set(disperser=grating,
                                                     name='')
             elif type(grating) == str:
