@@ -31,7 +31,7 @@ class TestTestUtils(unittest.TestCase):
 
         pkg_path = pathlib.Path(__file__).resolve().parent.parent
         predicted_path = pkg_path / "scripts"
-        self.assertEqual(scripts_dir.samefile(predicted_path))
+        self.assertTrue(scripts_dir.samefile(predicted_path))
 
 
 if __name__ == '__main__':
