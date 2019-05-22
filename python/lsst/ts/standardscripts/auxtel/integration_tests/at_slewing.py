@@ -48,7 +48,7 @@ class ATSlewing(scriptqueue.BaseScript):
         atpneumatics=salobj.Remote(SALPY_ATPneumatics)
 
         super().__init__(index=index,
-                         descr="integration test for components involved in slewing operations
+                         descr="integration test for components involved in slewing operations"
                          remotes_dict=dict(atmcs=atmcs,
                              atptg=atptg,
                              ataos=ataos,
