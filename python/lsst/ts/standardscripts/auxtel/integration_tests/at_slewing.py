@@ -313,7 +313,7 @@ class ATSlewing(scriptqueue.BaseScript):
 
 async def main():
 
-    script = ATTracking(index=10)
+    script = ATSlewing(index=10)
 
 
     script.log.setLevel(logging.INFO)
