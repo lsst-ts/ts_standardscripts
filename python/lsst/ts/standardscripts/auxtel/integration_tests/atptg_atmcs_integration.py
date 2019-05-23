@@ -20,19 +20,17 @@
 
 __all__ = ["ATPtgATMcsIntegration"]
 
-import yaml
 import asyncio
 import logging
 
 import astropy.units as u
 from astropy.time import Time
 from astropy.coordinates import AltAz, ICRS, EarthLocation, Angle
+import yaml
 
 from lsst.ts import salobj
+from lsst.ts.idl.enums import ATPtg
 from lsst.ts import scriptqueue
-
-import SALPY_ATMCS
-import SALPY_ATPtg
 
 
 class ATPtgATMcsIntegration(scriptqueue.BaseScript):
@@ -46,72 +44,100 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        atmcs = salobj.Remote(SALPY_ATMCS, 0)
-        atptg = salobj.Remote(SALPY_ATPtg, 0)
         super().__init__(index=index,
-                         descr="Test integration between ATPtg and ATMCS",
-                         remotes_dict=dict(atmcs=atmcs, atptg=atptg))
+                         descr="Test integration between ATPtg and ATMCS")
+        self.atmcs = salobj.Remote(domain=self.domain, name="ATMCS")
+        self.atptg = salobj.Remote(domain=self.domain, name="ATPtg")
         self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
                                                     lat=-30.244728*u.deg,
                                                     height=2663.0*u.m)
 
-        self.pool_time = 10.  # wait time in tracking test loop (seconds)
+        self.poll_time = 10.  # wait time in tracking test loop (seconds)
 
-    async def configure(self, el=45., az=45., max_sep=1.,
-                        track_duration=0.02, max_track_error=5.,
-                        enable_atmcs=True, enable_atptg=True):
+    @property
+    def schema(self):
+        schema_yaml = """
+            $schema: http://json-schema.org/draft-07/schema#
+            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/ATPtgATMcsIntegration.yaml
+            title: ATPtgATMcsIntegration v1
+            description: Configuration for ATPtgATMcsIntegration
+            type: object
+            properties:
+              el:
+                description: Approximate elevation of target (deg)
+                type: number
+                default: 45
+              az:
+                description: Approximate azimuth of target (deg)
+                type: number
+                default: 45
+              max_sep:
+                description: Maximum allowed on-sky separation between expected az/alt
+                  and the target az/alt computed by ATPtg (deg).
+                  This need not be tiny; it is meant as a sanity check.
+                type: number
+                default: 1
+              track_duration:
+                description: How long to track after slewing to position (hour).
+                type: number
+                default: 0.02
+              max_track_error:
+                description: Maximum allowed on-sky separation between commanded
+                  and measured az/el (arcsec).
+                type: number
+                default: 5
+              enable_atmcs:
+                description: Enable the ATMCS CSC?
+                type: boolean
+                default: True
+              enable_atptg:
+                description: Enable the ATPtg CSC?
+                type: boolean
+                default: True
+            required: [el, az, max_sep, track_duration, max_track_error, enable_atmcs, enable_atptg]
+            additionalProperties: false
+        """
+        return yaml.safe_load(schema_yaml)
+
+    async def configure(self, config):
         """Configure the script.
 
         Parameters
         ----------
-        el : `float`
-            Approximate elevation of target (deg).
-        az : `float`
-            Approximate azimuth of target (deg).
-        max_sep : `float`
-            Maximum allowed on-sky separation between expected az/alt
-            and the target az/alt computed by ATPtg (deg).
-            This need not be tiny; it is meant as a sanity check.
-        track_duration : `float`
-            How long to track after slewing to position (hour).
-        max_track_error : `float`
-            Maximum allowed on-sky separation between commanded and
-            measured az/el (arcsec).
-        enable_atmcs : `bool` (optional)
-            Enable the ATMCS CSC?
-        enable_atptg : `bool` (optional)
-            Enable the ATPtg CSC?
+        config : `types.SimpleNamespace`
+            Script configuration, as defined by `schema`.
         """
-        self.el = float(el)*u.deg
-        self.az = float(az)*u.deg
-        self.max_sep = float(max_sep)*u.deg
-        self.track_duration = float(track_duration)*u.hour
-        self.max_track_error = float(max_track_error)*u.arcsec
-        self.enable_atmcs = bool(enable_atmcs)
-        self.enable_atptg = bool(enable_atptg)
-
-    def assertEqual(self, what, val1, val2, more=""):
-        if val1 != val2:
-            raise RuntimeError(f"{what} = {val1}; should be {val2} {more}")
+        units_dict = dict(
+            el=u.deg,
+            az=u.deg,
+            max_sep=u.deg,
+            track_duration=u.hour,
+            max_track_error=u.arcsec,
+        )
+        for field, units in units_dict.items():
+            setattr(config, field, getattr(config, field)*units)
+        self.config = config
 
     async def run(self):
         self.log.setLevel(20)
         # Enable ATMCS and ATPgt, if requested, else check they are enabled
         await self.checkpoint("enable_cscs")
-        if self.enable_atmcs:
+        if self.config.enable_atmcs:
             self.log.info(f"Enable ATMCS")
-            await salobj.enable_csc(self.atmcs)
+            await salobj.set_summary_state(self.atmcs, salobj.State.ENABLED)
         else:
-            data = await self.atmcs.evt_summaryState.next(flush=False)
-            self.assertEqual("ATMCS summaryState", data.summaryState, salobj.State.ENABLED,
-                             "ENABLED")
-        if self.enable_atptg:
+            data = self.atmcs.evt_summaryState.get()
+            if data.summaryState != salobj.State.ENABLED:
+                raise salobj.ExpectedError(f"ATMCS summaryState={data.summaryState} != "
+                                           f"{salobj.State.ENABLED!r}")
+        if self.config.enable_atptg:
             self.log.info("Enable ATPtg")
-            await salobj.enable_csc(self.atptg)
+            await salobj.set_summary_state(self.atptg, salobj.State.ENABLED)
         else:
-            data = await self.atptg.evt_summaryState.next(flush=False)
-            self.assertEqual("ATPtg summaryState", data.summaryState, salobj.State.ENABLED,
-                             "ENABLED")
+            data = self.atptg.evt_summaryState.get()
+            if data.summaryState != salobj.State.ENABLED:
+                raise salobj.ExpectedError(f"ATPtg summaryState={data.summaryState} != "
+                                           f"{salobj.State.ENABLED!r}")
 
         # Report current az/alt
         data = await self.atmcs.tel_mountEncoders.next(flush=False, timeout=1)
@@ -127,14 +153,15 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
         self.log.info(f"Time error={time_err.sec:0.2f} sec")
 
         # Compute RA/Dec for commanded az/el
-        cmd_elaz = AltAz(alt=self.el, az=self.az, obstime=curr_time_atptg.tai, location=self.location)
+        cmd_elaz = AltAz(alt=self.config.el, az=self.config.az, obstime=curr_time_atptg.tai,
+                         location=self.location)
         cmd_radec = cmd_elaz.transform_to(ICRS)
 
         # Start tracking
         self.atptg.cmd_raDecTarget.set(
             targetName="atptg_atmcs_integration",
-            targetInstance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
-            frame=SALPY_ATPtg.ATPtg_shared_CoordFrame_icrs,
+            targetInstance=ATPtg.TargetInstances.CURRENT,
+            frame=ATPtg.CoordFrame.ICRS,
             epoch=2000,  # should be ignored: no parallax or proper motion
             equinox=2000,  # should be ignored for ICRS
             ra=cmd_radec.ra.hour,
@@ -146,8 +173,8 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
             dRA=0,
             dDec=0,
             rotPA=0,
-            rotFrame=SALPY_ATPtg.ATPtg_shared_RotFrame_target,
-            rotMode=SALPY_ATPtg.ATPtg_shared_RotMode_field,
+            rotFrame=ATPtg.RotFrame.TARGET,
+            rotMode=ATPtg.RotMode.FIELD,
         )
         self.log.info(f"raDecTarget ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
                       f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg")
@@ -166,16 +193,16 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
         self.log.info(f"target event time={data.time:0.2f}; "
                       f"current tai unix ={curr_time_local.tai.unix:0.2f}; "
                       f"diff={dtime:0.2f} sec")
-        self.log.info(f"desired el={self.el.value:0.2f}, az={self.az.value:0.2f}; "
+        self.log.info(f"desired el={self.config.el.value:0.2f}, az={self.config.az.value:0.2f}; "
                       f"target el={data.elevation:0.2f}, az={data.azimuth:0.2f} deg")
         self.log.info(f"target velocity el={data.elevationVelocity:0.4f}, az={data.azimuthVelocity:0.4f}")
         target_elaz = AltAz(alt=data.elevation*u.deg, az=data.azimuth*u.deg,
                             obstime=target_time, location=self.location)
 
         separation = cmd_elaz.separation(target_elaz).to(u.arcsec)
-        self.log.info(f"el/az separation={separation}; max={self.max_sep}")
-        if separation > self.max_sep:
-            raise RuntimeError(f"az/el separation={separation} > {self.max_sep}")
+        self.log.info(f"el/az separation={separation}; max={self.config.max_sep}")
+        if separation > self.config.max_sep:
+            raise RuntimeError(f"az/el separation={separation} > {self.config.max_sep}")
 
         # Check that the telescope is heading towards the target
         data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
@@ -195,11 +222,11 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
 
         # Monitor tracking for the specified duration
 
-        if self.track_duration == 0.:
+        if self.config.track_duration == 0.:
             self.log.info("Skipping track test...")
             return
 
-        self.log.info(f"Monitoring tracking for {self.track_duration}. Wait for "
+        self.log.info(f"Monitoring tracking for {self.config.track_duration}. Wait for "
                       f"allAxesInPosition event.")
         while True:
             in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False, timeout=10)
@@ -209,7 +236,7 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
 
         start_time = Time.now()
 
-        while Time.now()-start_time < self.track_duration:
+        while Time.now()-start_time < self.config.track_duration:
 
             mount_data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
             current_target = await self.atptg.tel_currentTargetStatus.next(flush=True, timeout=1)
@@ -231,12 +258,12 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
             track_error = mount_azel.separation(demand_azel).to(u.arcsec)
             self.log.info(f"Track error: {track_error}")
 
-            if track_error > self.max_track_error:
-                raise RuntimeError(f"Track error={track_error} > {self.max_track_error}")
+            if track_error > self.config.max_track_error:
+                raise RuntimeError(f"Track error={track_error} > {self.config.max_track_error}")
             else:
-                self.log.info(f"Track error={track_error}; max={self.max_track_error}")
+                self.log.info(f"Track error={track_error}; max={self.config.max_track_error}")
 
-            await asyncio.sleep(self.pool_time)
+            await asyncio.sleep(self.poll_time)
 
     def set_metadata(self, metadata):
         metadata.duration = 60  # rough estimate
