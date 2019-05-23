@@ -25,12 +25,11 @@ import asyncio
 import astropy.units as u
 from astropy.time import Time
 from astropy.coordinates import AltAz, ICRS, EarthLocation
+import yaml
 
 from lsst.ts import salobj
+from lsst.ts.idl.enums import ATPtg
 from lsst.ts import scriptqueue
-
-import SALPY_ATAOS
-import SALPY_ATPtg
 
 
 class ATPtgATAOSIntegration(scriptqueue.BaseScript):
@@ -45,79 +44,77 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
 
     def __init__(self, index):
         super().__init__(index=index,
-                         descr="Test integration between ATPtg and ATAOS",
-                         remotes_dict=dict(ataos=salobj.Remote(SALPY_ATAOS),
-                                           atptg=salobj.Remote(SALPY_ATPtg)))
+                         descr="Test integration between ATPtg and ATAOS")
+        self.ataos = salobj.Remote(domain=self.domain, name="ATAOS")
+        self.atptg = salobj.Remote(domain=self.domain, name="ATPtg")
         self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
                                                     lat=-30.244728*u.deg,
                                                     height=2663.0*u.m)
 
-        self.el = None
-        self.az = None
-        self.enable_ataos = False
-        self.enable_atptg = False
+        self.timeout = 30  # general timeout in seconds.
 
-        self.timeout = 30.  # general timeout in seconds.
+    @property
+    def schema(self):
+        schema_yaml = """
+            $schema: http://json-schema.org/draft-07/schema#
+            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/ATPtgATMcsIntegration.yaml
+            title: ATPtgATMcsIntegration v1
+            description: Configuration for ATPtgATMcsIntegration
+            type: object
+            properties:
+              el:
+                description: Approximate elevation of target (deg)
+                type: number
+                default: 30
+              az:
+                description: Approximate azimuth of target (deg)
+                type: number
+                default: 0
+              enable_ataos:
+                description: Enable the ATAOS CSC?
+                type: boolean
+                default: True
+              enable_atptg:
+                description: Enable the ATPtg CSC?
+                type: boolean
+                default: True
+            required: [el, az, enable_ataos, enable_atptg]
+            additionalProperties: false
+        """
+        return yaml.safe_load(schema_yaml)
 
-    async def configure(self, el=30, az=0,
-                        enable_ataos=True, enable_atptg=True):
+    async def configure(self, config):
         """Configure the script.
 
         Parameters
         ----------
-        el : `float`
-            Approximate elevation of target (deg).
-        az : `float`
-            Approximate azimuth of target (deg).
-        enable_ataos : `bool` (optional)
-            Enable the ATAOS CSC?
-        enable_atptg : `bool` (optional)
-            Enable the ATPtg CSC?
+        config : `types.SimpleNamespace`
+            Script configuration, as defined by `schema`.
         """
-        self.el = float(el)*u.deg
-        self.az = float(az)*u.deg
-        self.enable_ataos = bool(enable_ataos)
-        self.enable_atptg = bool(enable_atptg)
-
-    def assertEqual(self, what, val1, val2, more=""):
-        if val1 != val2:
-            raise RuntimeError(f"{what} = {val1}; should be {val2} {more}")
+        config.el = config.el*u.deg
+        config.az = config.az*u.deg
+        self.config = config
 
     async def run(self):
         # Enable ATAOS and ATPgt, if requested, else check they are enabled
         await self.checkpoint("enable_cscs")
-        if self.enable_ataos:
+        if self.config.enable_ataos:
             self.log.info(f"Enable ATAOS")
-            try:
-                await self.ataos.cmd_start.start()
-            except Exception as e:
-                self.log.exception(e)
-
-            try:
-                await self.ataos.cmd_enable.start()
-            except Exception as e:
-                self.log.exception(e)
+            await salobj.set_summary_state(self.ataos, salobj.State.ENABLED)
         else:
             data = self.ataos.evt_summaryState.get()
-            self.assertEqual("ATAOS summaryState",
-                             salobj.State(data.summaryState),
-                             salobj.State.ENABLED, "ENABLED")
+            if data.summaryState != salobj.State.ENABLED:
+                raise salobj.ExpectedError(f"ATAOS summaryState={data.summaryState} != "
+                                           f"{salobj.State.ENABLED!r}")
 
-        if self.enable_atptg:
-            self.log.info("Enable ATPtg")
-            try:
-                await self.atptg.cmd_start.start()
-            except Exception as e:
-                self.log.exception(e)
-
-            try:
-                await self.atptg.cmd_enable.start()
-            except Exception as e:
-                self.log.exception(e)
+        if self.config.enable_atptg:
+            self.log.info(f"Enable ATPtg")
+            await salobj.set_summary_state(self.atptg, salobj.State.ENABLED)
         else:
             data = self.atptg.evt_summaryState.get()
-            self.assertEqual("ATPtg summaryState",
-                             data.summaryState, salobj.State.ENABLED, "ENABLED")
+            if data.summaryState != salobj.State.ENABLED:
+                raise salobj.ExpectedError(f"ATPtg summaryState={data.summaryState} != "
+                                           f"{salobj.State.ENABLED!r}")
 
         await self.checkpoint("start_tracking")
         # Docker containers can have serious clock drift,
@@ -128,14 +125,15 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
         self.log.info(f"Time error={time_err.sec:0.2f} sec")
 
         # Compute RA/Dec for commanded az/el
-        cmd_elaz = AltAz(alt=self.el, az=self.az, obstime=curr_time_atptg.tai, location=self.location)
+        cmd_elaz = AltAz(alt=self.config.el, az=self.config.az, obstime=curr_time_atptg.tai,
+                         location=self.location)
         cmd_radec = cmd_elaz.transform_to(ICRS)
 
         # Start tracking
         self.atptg.cmd_raDecTarget.set(
             targetName="atptg_atmcs_integration",
-            targetInstance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
-            frame=SALPY_ATPtg.ATPtg_shared_CoordFrame_icrs,
+            targetInstance=ATPtg.TargetInstances.CURRENT,
+            frame=ATPtg.CoordFrame.ICRS,
             epoch=2000,  # should be ignored: no parallax or proper motion
             equinox=2000,  # should be ignored for ICRS
             ra=cmd_radec.ra.to_string(u.hour, decimal=True),
@@ -147,16 +145,13 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
             dRA=0,
             dDec=0,
             rotPA=0,
-            rotFrame=SALPY_ATPtg.ATPtg_shared_RotFrame_target,
-            rotMode=SALPY_ATPtg.ATPtg_shared_RotMode_field,
+            rotFrame=ATPtg.RotFrame.TARGET,
+            rotMode=ATPtg.RotMode.FIELD,
         )
         self.log.info(f"raDecTarget ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
                       f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg")
 
-        ack_id = await self.atptg.cmd_raDecTarget.start(timeout=self.timeout)
-        self.assertEqual("raDecTarget command result",
-                         ack_id.ack.error, 0)
-        self.log.info(f"raDecTarget command result: {ack_id.ack.result}")
+        await self.atptg.cmd_raDecTarget.start(timeout=self.timeout)
 
         # make sure at least one current Target status was published...
         self.log.debug("Waiting for currentTargetStatus to be published.")
@@ -167,17 +162,14 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
         await self.checkpoint("apply_correction_manually")
 
         self.ataos.cmd_disableCorrection.set(disableAll=True)
-        ack_id = await self.ataos.cmd_disableCorrection.start(timeout=self.timeout)
-        self.log.info(f"disableCorrections command result: {ack_id.ack.result}")
+        await self.ataos.cmd_disableCorrection.start(timeout=self.timeout)
 
-        ack_id = await self.ataos.cmd_applyCorrection.start(timeout=self.timeout)
-        self.log.info(f"applyCorrection command result: {ack_id.ack.result}")
+        await self.ataos.cmd_applyCorrection.start(timeout=self.timeout)
 
         await self.checkpoint("enable_all_corrections")
         # Enable all corrections for ATAOS
         self.ataos.cmd_enableCorrection.set(enableAll=True)
-        ack_id = await self.ataos.cmd_enableCorrection.start(timeout=self.timeout)
-        self.log.info(f"enableCorrections command result: {ack_id.ack.result}")
+        await self.ataos.cmd_enableCorrection.start(timeout=self.timeout)
 
         # Wait until ATAOS publishes that corrections where performed
         hexapod_completed = self.ataos.evt_hexapodCorrectionCompleted.next(flush=True,
@@ -198,52 +190,15 @@ class ATPtgATAOSIntegration(scriptqueue.BaseScript):
         # Stop tracking
         self.log.info("cleanup")
         try:
-            await self.atptg.cmd_disable.start(timeout=1)
+            await salobj.set_summary_state(self.atptg, salobj.State.DISABLED)
         except salobj.AckError as e:
             self.log.error(f"ATPtg disable failed with {e}")
         else:
             self.log.info("Disabled ATPtg")
 
         try:
-            await self.atptg.cmd_standby.start(timeout=1)
-        except salobj.AckError as e:
-            self.log.error(f"ATPtg disable failed with {e}")
-        else:
-            self.log.info("ATPtg standby")
-
-        try:
-            await self.ataos.cmd_disable.start(timeout=1)
+            await salobj.set_summary_state(self.ataos, salobj.State.DISABLED)
         except salobj.AckError as e:
             self.log.error(f"ATAOS disable failed with {e}")
         else:
             self.log.info("Disabled ATAOS")
-
-        try:
-            await self.ataos.cmd_standby.start(timeout=1)
-        except salobj.AckError as e:
-            self.log.error(f"ATAOS disable failed with {e}")
-        else:
-            self.log.info("ATAOS standby")
-
-
-async def main(index):
-    import logging
-
-    print("*** initializing script")
-    script = ATPtgATAOSIntegration(index=index)
-    script.log.setLevel(logging.DEBUG)
-    script.log.addHandler(logging.StreamHandler())
-    script.ataos.cmd_setLogLevel.set(level=logging.DEBUG)
-    await script.ataos.cmd_setLogLevel.start()
-    print("*** configure")
-    config_data = script.cmd_configure.DataType()
-    config_data.config = ""
-    config_id_data = salobj.CommandIdData(1, config_data)
-    await script.do_configure(config_id_data)
-    print("*** run")
-    await script.do_run(None)
-    print("*** done")
-
-
-if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(main(index=1))
