@@ -24,6 +24,7 @@ import yaml
 import asyncio
 import logging
 
+
 import astropy.units as u
 from astropy.time import Time
 from astropy.coordinates import AltAz, ICRS, EarthLocation, Angle
@@ -44,8 +45,8 @@ class ATSlewing(scriptqueue.BaseScript):
         atmcs = salobj.Remote(SALPY_ATMCS, 0)
         atptg = salobj.Remote(SALPY_ATPtg, 0)
         ataos = salobj.Remote(SALPY_ATAOS)
-        athexapod=salobj.Remote(SALPY_ATHexapod)
-        atpneumatics=salobj.Remote(SALPY_ATPneumatics)
+        athexapod = salobj.Remote(SALPY_ATHexapod)
+        atpneumatics = salobj.Remote(SALPY_ATPneumatics)
 
         super().__init__(index=index,
                          descr="integration test for components involved in slewing operations",
@@ -57,16 +58,14 @@ class ATSlewing(scriptqueue.BaseScript):
         self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
                                                     lat=-30.244728*u.deg,
                                                     height=2663.0*u.m)
-        self.athexapod.evt_summaryState.callback = self.fault_check
-        self.atpneumatics.evt_summaryState.callback = self.fault_check
         self.pool_time = 10.  # wait time in tracking test loop (seconds)
 
     async def configure(self,
-            el=45.,
-            az=45.,
+            startEl=45.,
+            startAz=45.,
+            endEl=75.,
+            endAz=135.,
             max_sep=1.,
-            track_duration=0.02, 
-            max_track_error=5.,
             enable_atmcs=True,
             enable_atptg=True,
             enable_ataos=True,
@@ -83,21 +82,16 @@ class ATSlewing(scriptqueue.BaseScript):
             Maximum allowed on-sky separation between expected az/alt
             and the target az/alt computed by ATPtg (deg).
             This need not be tiny; it is meant as a sanity check.
-        track_duration : `float`
-            How long to track after slewing to position (hour).
-        max_track_error : `float`
-            Maximum allowed on-sky separation between commanded and
-            measured az/el (arcsec).
         enable_atmcs : `bool` (optional)
             Enable the ATMCS CSC?
         enable_atptg : `bool` (optional)
             Enable the ATPtg CSC?
         """
-        self.el = float(el)*u.deg
-        self.az = float(az)*u.deg
+        self.startEl = float(startEl)*u.deg
+        self.startAz = float(startAz)*u.deg
+        self.endEl = float(endEl)*u.deg
+        self.endAz = float(endAz)*u.deg
         self.max_sep = float(max_sep)*u.deg
-        self.track_duration = float(track_duration)*u.hour
-        self.max_track_error = float(max_track_error)*u.arcsec
         self.enable_atmcs = bool(enable_atmcs)
         self.enable_atptg = bool(enable_atptg)
         self.enable_ataos = bool(enable_ataos)
@@ -160,7 +154,7 @@ class ATSlewing(scriptqueue.BaseScript):
         self.log.info(f"telescope initial el={data.elevationCalculatedAngle}, "
                       f"az={data.azimuthCalculatedAngle}")
 
-        await self.checkpoint("start_tracking")
+        await self.checkpoint("start_slewing")
         # Docker containers can have serious clock drift,
         # so just the time reported by ATPtg
         time_data = await self.atptg.tel_timeAndDate.next(flush=False, timeout=2)
@@ -168,19 +162,24 @@ class ATSlewing(scriptqueue.BaseScript):
         time_err = curr_time_atptg - Time.now()
         self.log.info(f"Time error={time_err.sec:0.2f} sec")
 
-        # Compute RA/Dec for commanded az/el
-        cmd_elaz = AltAz(alt=self.el, az=self.az, obstime=curr_time_atptg.tai, location=self.location)
-        cmd_radec = cmd_elaz.transform_to(ICRS)
+        # Compute RA/Dec for starting az/el
+        cmd_startelaz = AltAz(alt=self.startEl, az=self.startAz, obstime=curr_time_atptg.tai, location=self.location)
+        cmd_startradec = cmd_startelaz.transform_to(ICRS)
 
-        # Start tracking
+         # Compute RA/Dec for ending az/el
+        cmd_endelaz = AltAz(alt=self.endEl, az=self.endAz, obstime=curr_time_atptg.tai, location=self.location)
+        cmd_endradec = cmd_endelaz.transform_to(ICRS)
+
+        # move to starting position
+        print("move to starting position")
         self.atptg.cmd_raDecTarget.set(
-            targetName="atptg_atmcs_integration",
+            targetName="slew_integration_startposition",
             targetInstance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
             frame=SALPY_ATPtg.ATPtg_shared_CoordFrame_icrs,
             epoch=2000,  # should be ignored: no parallax or proper motion
             equinox=2000,  # should be ignored for ICRS
-            ra=cmd_radec.ra.hour,
-            declination=cmd_radec.dec.deg,
+            ra=cmd_startradec.ra.hour,
+            declination=cmd_startradec.dec.deg,
             parallax=0,
             pmRA=0,
             pmDec=0,
@@ -191,13 +190,18 @@ class ATSlewing(scriptqueue.BaseScript):
             rotFrame=SALPY_ATPtg.ATPtg_shared_RotFrame_target,
             rotMode=SALPY_ATPtg.ATPtg_shared_RotMode_field,
         )
-        self.log.info(f"raDecTarget ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
+        self.log.info(f"raDecTargetStart ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
                       f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg")
         self.atmcs.evt_target.flush()
         self.atmcs.evt_allAxesInPosition.flush()
         ack_id = await self.atptg.cmd_raDecTarget.start(timeout=2)
         self.log.info(f"raDecTarget command result: {ack_id.ack.result}")
-
+        while True:
+            in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False, timeout=150)
+            if in_position.inPosition:
+                self.log.info("finished slew to start pos")
+                break
+        await asyncio.sleep(10)
         # Check the target el/az
         # Use time from the target event, since that is the time at which
         # the position was specified.
@@ -208,13 +212,13 @@ class ATSlewing(scriptqueue.BaseScript):
         self.log.info(f"target event time={data.time:0.2f}; "
                       f"current tai unix ={curr_time_local.tai.unix:0.2f}; "
                       f"diff={dtime:0.2f} sec")
-        self.log.info(f"desired el={self.el.value:0.2f}, az={self.az.value:0.2f}; "
+        self.log.info(f"desired starting el={self.startEl.value:0.2f}, az={self.startAz.value:0.2f}; "
                       f"target el={data.elevation:0.2f}, az={data.azimuth:0.2f} deg")
         self.log.info(f"target velocity el={data.elevationVelocity:0.4f}, az={data.azimuthVelocity:0.4f}")
         target_elaz = AltAz(alt=data.elevation*u.deg, az=data.azimuth*u.deg,
                             obstime=target_time, location=self.location)
 
-        separation = cmd_elaz.separation(target_elaz).to(u.arcsec)
+        separation = cmd_startelaz.separation(target_elaz).to(u.arcsec)
         self.log.info(f"el/az separation={separation}; max={self.max_sep}")
         if separation > self.max_sep:
             raise RuntimeError(f"az/el separation={separation} > {self.max_sep}")
@@ -229,68 +233,49 @@ class ATSlewing(scriptqueue.BaseScript):
             print(f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}")
         curr_elaz1 = AltAz(alt=data.elevationCalculatedAngle*u.deg, az=data.azimuthCalculatedAngle*u.deg,
                            obstime=Time.now(), location=self.location)
-        sep0 = cmd_elaz.separation(curr_elaz0).to(u.arcsec)
-        sep1 = cmd_elaz.separation(curr_elaz1).to(u.arcsec)
-        if sep0 <= sep1:
-            raise RuntimeError(f"az/alt separation between commanded and current is not "
-                               f"decreasing: sep0 = {sep0}; sep1 = {sep1}")
+        sep0 = cmd_startelaz.separation(curr_elaz0).to(u.arcsec)
+        sep1 = cmd_startelaz.separation(curr_elaz1).to(u.arcsec)
+        #if sep0 <= sep1:
+         #   raise RuntimeError(f"az/alt separation between commanded and current is not "
+          #                     f"decreasing: sep0 = {sep0}; sep1 = {sep1}")
 
-        # Monitor tracking for the specified duration
-
-        if self.track_duration == 0.:
-            self.log.info("Skipping track test...")
-            return
-
-        self.log.info(f"Monitoring tracking for {self.track_duration}. Wait for "
-                      f"allAxesInPosition event.")
+        # move to ending position
+        await self.atptg.cmd_stopTracking.start(timeout=5)
+        print("moving to ending position")
+        self.atptg.cmd_raDecTarget.set(
+            targetName="slew_integration_endposition",
+            targetInstance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
+            frame=SALPY_ATPtg.ATPtg_shared_CoordFrame_icrs,
+            epoch=2000,  # should be ignored: no parallax or proper motion
+            equinox=2000,  # should be ignored for ICRS
+            ra=cmd_endradec.ra.hour,
+            declination=cmd_endradec.dec.deg,
+            parallax=0,
+            pmRA=0,
+            pmDec=0,
+            rv=0,
+            dRA=0,
+            dDec=0,
+            rotPA=0,
+            rotFrame=SALPY_ATPtg.ATPtg_shared_RotFrame_target,
+            rotMode=SALPY_ATPtg.ATPtg_shared_RotMode_field,
+        )
+        self.log.info(f"raDecTargetEnd ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
+                      f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg")
+        self.atmcs.evt_target.flush()
+        self.atmcs.evt_allAxesInPosition.flush()
+        ack_id = await self.atptg.cmd_raDecTarget.start(timeout=2)
+        self.log.info(f"raDecTarget command result: {ack_id.ack.result}")
         while True:
-            in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False, timeout=10)
-            self.log.debug(f"Got {in_position.inPosition}")
+            in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False, timeout=150)
             if in_position.inPosition:
+                self.log.info("finished slew to end pos")
                 break
-
-        start_time = Time.now()
-
-        while Time.now()-start_time < self.track_duration:
-
-            mount_data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
-            current_target = await self.atptg.tel_currentTargetStatus.next(flush=True, timeout=1)
-
-            mount_azel = AltAz(alt=mount_data.elevationCalculatedAngle*u.deg,
-                               az=mount_data.azimuthCalculatedAngle*u.deg,
-                               obstime=Time.now(), location=self.location)
-
-            demand_azel = AltAz(alt=Angle(current_target.demandEl, unit=u.deg),
-                                az=Angle(current_target.demandAz, unit=u.deg),
-                                obstime=Time.now(), location=self.location)
-
-            self.log.info(f"Mount: el={mount_azel.alt}, "
-                          f"az={mount_azel.az}")
-
-            self.log.info(f"ATPtg demand: el={demand_azel.alt}, "
-                          f"az={demand_azel.az}")
-
-            track_error = mount_azel.separation(demand_azel).to(u.arcsec)
-            self.log.info(f"Track error: {track_error}")
-
-            if track_error > self.max_track_error:
-                raise RuntimeError(f"Track error={track_error} > {self.max_track_error}")
-            else:
-                self.log.info(f"Track error={track_error}; max={self.max_track_error}")
-
-            athexapod_inposition = self.athexapod.evt_inPosition.next(flush=True, timeout=1)
-            athexapod_positionupdate= self.athexapod.evt_positionUpdate.next(flush=True,timeout=1)
-            ataos_hexapod_correction_completed=self.ataos.evt_hexapodCorrectionCompleted.next(flush=True,timeout=1)
-            atpneumatic_m1_set_pressure= self.atpneumatics.evt_m1SetPressure(flush=True, timeout=1)
-            atpneumatics_m2_set_pressure=self.atpneumatics.evt_m2SetPressure(flush=True, timeout=1)
-            results = await asyncio.gather(athexapod_inposition,athexapod_positionupdate,atpneumatic_m1_set_pressure,atpneumatics_m2_set_pressure,ataos_hexapod_correction_completed)
-            hexapod_position=results[1]
-            hexapod_correction=results[4]
-            
-            if self.in_fault:
-                raise RuntimeError("Fault state in CSC")
-
-            await asyncio.sleep(self.pool_time)
+    
+        # Report current az/alt
+        data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
+        self.log.info(f"telescope final el={data.elevationCalculatedAngle}, "
+                      f"az={data.azimuthCalculatedAngle}")
 
     def set_metadata(self, metadata):
         metadata.duration = 60  # rough estimate
@@ -304,7 +289,8 @@ class ATSlewing(scriptqueue.BaseScript):
         # Stop tracking
         self.log.info("cleanup")
         try:
-            await self.atptg.cmd_stopTracking.start(timeout=1)
+            await self.atptg.cmd_stopTracking.start(timeout=150)
+            pass
         except salobj.AckError as e:
             self.log.error(f"ATPtg stopTracking failed with {e}")
         else:
