@@ -52,8 +52,8 @@ class testATTCS(unittest.TestCase):
 
         async def runtest():
             harness = Harness()
-            harness.attcs.slew(45., 45.)
-            slewResult = await harness.attcs.atmcs.tel_mountEncoders.next(flush=False, timeout=10)
+            harness.atmcs.slew(45., 45.)
+            slewResult = await harness.attcs.atmcs.tel_mountEncoders.next(flush=False, timeout=15)
             assert isclose(slewResult.elevationCalculatedAngle, 45.0, rel_tol=0.03)
             assert isclose(slewResult.azimuthCalculatedAngle, 45.0, rel_tol=0.03)
         asyncio.get_event_loop().run_until_complete(runtest())
@@ -63,7 +63,7 @@ class testATTCS(unittest.TestCase):
 
         async def runtest():
             harness = Harness()
-            self.atptg.evt_summaryState.set_put(summaryState=salobj.State.FAULT)
+            harness.atptg.evt_summaryState.set_put(summaryState=salobj.State.FAULT)
             await harness.attcs.slew(45., 45.)
 
         with self.assertRaises(RuntimeError):
@@ -74,7 +74,7 @@ class testATTCS(unittest.TestCase):
 
         async def runtest():
             harness = Harness()
-            self.atmcs.evt_summaryState.set_put(summaryState=salobj.State.FAULT)
+            harness.atmcs.evt_summaryState.set_put(summaryState=salobj.State.FAULT)
             await harness.attcs.slew(45., 45.)
 
         with self.assertRaises(RuntimeError):
