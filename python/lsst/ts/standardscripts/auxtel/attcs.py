@@ -36,18 +36,21 @@ class ATTCS:
     def __init__(
             self,
             atmcs,
+            atptg,
             ataos,
             atpneumatics,
             athexapod,
             atdome,
             atdometrajectory):
         self.atmcs = atmcs
+        self.atptg = atptg
         self.ataos = ataos
         self.atpneumatics = atpneumatics
         self.athexapod = athexapod
         self.atdome = atdome
         self.atdometrajectory = atdometrajectory
         self.log = logging.getLogger("ATTCS")
+        self.within=within
 
     async def slew(
             self,
@@ -154,32 +157,47 @@ class ATTCS:
                 raise RuntimeError(f"ATPtg state is {salobj.State(summary_state.summaryState)}")
 
     async def check_athexapod_state(self):
+        """
+        Check athexapod state and raise exeception if in other state than enabled.
+        """
         while True:
             summary_state = await self.athexapod.evt_summaryState.next(flush=False)
             if summary_state.summaryState != salobj.State.ENABLED:
                 raise RuntimeError(f"ATHexapod state is {salobj.State(summary_state.summaryState)}")
 
     async def check_atpneumatics_state(self):
+        """
+        Check atpneumatics state and raise exception if in other state than enabled.
+        """
         while True:
             summary_state = await self.atpneumatics.evt_summaryState.next(flush=False)
             if summary_state.summaryState != salobj.State.ENABLED:
                 raise RuntimeError(f"ATPneumatics state is {salobj.State(summary_state.summaryState)}")
 
     async def check_ataos_state(self):
+        """
+        Check ataos state and raise exception if in other state than enabled.
+        """
         while True:
             summary_state = await self.ataos.evt_summaryState.next(flush=False)
             if summary_state.summaryState != salobj.State.ENABLED:
                 raise RuntimeError(f"ATAOS state is {salobj.State(summary_state.summaryState)}")
 
     async def check_atdome_state(self):
+        """
+        Check atdome state and raise exception if in other state than enabled.
+        """
         while True:
             summary_state = await self.atdome.evt_summaryState.next(flush=False)
             if summary_state.summaryState != salobj.State.ENABLED:
                 raise RuntimeError(f"ATDome state is {salobj.State(summary_state.summaryState)}")
 
     async def check_atdometrajectory_state(self):
+        """
+        Check atdometrajectory state and raise exception if in other state than enabled.
+        """
         while True:
-            summary_state = await self.atdome.evt_summaryState.next(flush=False)
+            summary_state = await self.atdometrajectory.evt_summaryState.next(flush=False)
             if summary_state.summaryState != salobj.State.ENABLED:
                 raise RuntimeError(f"ATDometrajectory state is {salobj.State(summary_state.summaryState)}")
 
@@ -226,6 +244,9 @@ class ATTCS:
                     break
 
     async def check_target_status(self):
+        """
+        Checks the targeting status of the atmcs. 
+        """
         while True:
             in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False)
             self.log.debug(f"Got {in_position.inPosition}")
@@ -233,6 +254,9 @@ class ATTCS:
                 raise RuntimeError(f"ATMCS is no longer tracking.")
 
     async def verify_hexapod(self):
+        """
+        Verifies that the hexapod commanded values are close to the actual values being returned by the hexapod.
+        """
         athexapod_inposition = self.athexapod.evt_inPosition.next(flush=True, timeout=60)
         athexapod_positionupdate = self.athexapod.evt_positionUpdate.next(flush=True, timeout=60)
         ataos_hexapod_correction_completed = self.ataos.evt_hexapodCorrectionCompleted.next(
@@ -247,6 +271,9 @@ class ATTCS:
         self.hexapod_check_values(hexapod_position, hexapod_correction, self.within)
 
     async def verify_pneumatics(self):
+        """
+        Verifies that the pneumatics mirror pressures are close to the commanded values.
+        """
         atpneumatic_m1_set_pressure = self.atpneumatics.evt_m1SetPressure.next(flush=True, timeout=120)
         atpneumatics_m2_set_pressure = self.atpneumatics.evt_m2SetPressure.next(flush=True, timeout=120)
         ataos_m1_correction_started = self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=120)
@@ -259,7 +286,10 @@ class ATTCS:
         self.pneumatics_check_values(results2[0], results2[1], self.within)
         self.pneumatics_check_values(results2[2], results2[3], self.within)
 
-    def hexapod_check_values(self, athex_position, athex_correction, within=0.03):
+    def hexapod_check_values(self, athex_position, athex_correction, within=self.within):
+        """
+        Performs the actual check of the hexapod.
+        """
         self.log.info(f"Checking hexapod correction within {within*100} percent tolerance")
         c1 = math.isclose(athex_position.positionX, athex_correction.hexapod_x, rel_tol=within)
         self.log.info(
@@ -276,7 +306,10 @@ class ATTCS:
         if (c1 or c2 or c3) is False:
             raise RuntimeError(f"Hexapod not corrected within {within*100} percent tolerance")
 
-    def pneumatics_check_values(self, atpne_pre, atpneu_post, within=0.03):
+    def pneumatics_check_values(self, atpne_pre, atpneu_post, within=self.within):
+        """
+        Performs the actual check of the pneumatics.
+        """
         self.log.info(f"checking pneumatics correction within {within*100} percent tolerance")
         c1 = math.isclose(atpne_pre.pressure, atpneu_post.pressure, rel_tol=within)
         self.log.info(f"pneumatics is {c1}")
