@@ -66,7 +66,7 @@ class ATTCS:
             dRA=0,
             dDec=0,
             rotFrame=SALPY_ATPtg.ATPtg_shared_RotFrame_target,
-            rotMode=SALPY_ATPtg.AtPtg_shared_RotMode_field):
+            rotMode=SALPY_ATPtg.ATPtg_shared_RotMode_field):
         """
         Slew the telescope
 
