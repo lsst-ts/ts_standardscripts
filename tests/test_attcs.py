@@ -74,7 +74,7 @@ class testATTCS(unittest.TestCase):
 
         async def runtest():
             harness = Harness()
-            harness.atmcs.evt_summaryState.set_put(summaryState=salobj.State.FAULT)
+            harness.attcs.evt_summaryState.set_put(summaryState=salobj.State.FAULT)
             await harness.attcs.slew(45., 45.)
 
         with self.assertRaises(RuntimeError):
