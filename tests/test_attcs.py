@@ -52,7 +52,7 @@ class testATTCS(unittest.TestCase):
 
         async def runtest():
             harness = Harness()
-            harness.attcs.slew(45., 45.)
+            await harness.attcs.slew(45., 45.)
             slewResult = await harness.attcs.atmcs.tel_mountEncoders.next(flush=False, timeout=15)
             assert isclose(slewResult.elevationCalculatedAngle, 45.0, rel_tol=0.03)
             assert isclose(slewResult.azimuthCalculatedAngle, 45.0, rel_tol=0.03)
