@@ -1,37 +1,17 @@
 import logging
-import pathlib
 import random
-import sys
 import unittest
 import asyncio
 
 import yaml
 
 from lsst.ts import salobj
-from lsst.ts import scriptqueue
-
-import SALPY_Script
-import SALPY_ATPtg
-import SALPY_ATMCS
+from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts.standardscripts.auxtel import SlewTelescopeIcrs
 
 random.seed(47)
 
 index_gen = salobj.index_generator()
-
-
-def make_script(index):
-    tests_dir = pathlib.Path(__file__).resolve().parent.parent.parent
-    script_dir = tests_dir / "scripts" / "auxtel"
-    orig_path = sys.path
-    try:
-        sys.path.append(str(script_dir))
-        import slew_telescope_icrs
-        script = slew_telescope_icrs.SlewTelescopeIcrs(index=index)
-    finally:
-        sys.path[:] = orig_path
-    script.log.setLevel(logging.INFO)
-    script.log.addHandler(logging.StreamHandler())
-    return script
 
 
 class Harness:
@@ -40,36 +20,31 @@ class Harness:
 
         self.test_index = next(index_gen)
 
-        self.script = make_script(index=self.index)
+        self.script = SlewTelescopeIcrs(index=self.index)
+        self.script.log.addHandler(logging.StreamHandler())
 
-        # mock controllers that use callback functions defined below
+        # mock controller that uses callback functions defined below
         # to handle the expected commands
-        self.atptg = salobj.Controller(SALPY_ATPtg)
-        self.atmcs = salobj.Controller(SALPY_ATMCS)
+        self.atptg = salobj.Controller("ATPtg")
         self.atptg.evt_summaryState.set_put(summaryState=salobj.State.ENABLED)
-        self.atmcs.evt_summaryState.set_put(summaryState=salobj.State.ENABLED)
-
-        self.n_mcs_start_tracking_calls = 0
-        self.n_mcs_stop_tracking_calls = 0
         self.atptg_target = None
 
         # assign the command callback functions
-        self.atmcs.cmd_startTracking.callback = self.startTracking
-        self.atmcs.cmd_stopTracking.callback = self.stopTracking
         self.atptg.cmd_raDecTarget.callback = self.raDecTarget
 
-    async def startTracking(self, id_data):
-        """Callback for ATMCS startTracking command."""
-        self.n_mcs_start_tracking_calls += 1
-
-    async def stopTracking(self, id_data):
-        """Callback for ATMCS stopTracking command."""
-        self.n_mcs_stop_tracking_calls += 1
-
-    async def raDecTarget(self, id_data):
+    async def raDecTarget(self, data):
         """Callback for ATPtg raDecTarget command.
         """
-        self.atptg_target = id_data.data
+        self.atptg_target = data
+
+    async def __aenter__(self):
+        await self.script.start_task
+        await self.atptg.start_task
+        return self
+
+    async def __aexit__(self, *args):
+        await self.script.close()
+        await self.atptg.close()
 
 
 class TestSlewTelescopeIcrs(unittest.TestCase):
@@ -77,165 +52,94 @@ class TestSlewTelescopeIcrs(unittest.TestCase):
         salobj.test_utils.set_random_lsst_dds_domain()
 
         # arbitrary sample data for use by most tests
-        self.ra = 100
-        self.dec = 5
+        self.ra = 8
+        self.dec = 15
         self.rot_pa = 1
         self.target_name = "test target"
 
-    def make_config_data(self, send_start_tracking):
+    def make_config_data(self):
         """Make config data using the default ra, dec, etc.
-
-        Parameters
-        ----------
-        send_start_tracking : `bool` (optional)
-            Issue the ``startTracking`` command to ATMCS?
 
         Returns
         -------
-        config_data : `SALPY_Script.Script_command_configureC`
-            Data for the script's config command.
+        config : `str`
+            Yaml-encoded configuration data for the
+            script's do_configure command.
         """
         config_kwargs = dict(
             ra=self.ra,
             dec=self.dec,
             rot_pa=self.rot_pa,
             target_name=self.target_name,
-            send_start_tracking=send_start_tracking,
         )
-        config_data = SALPY_Script.Script_command_configureC()
-        config_data.config = yaml.safe_dump(config_kwargs)
-        return config_data
+        return yaml.safe_dump(config_kwargs)
 
-    def test_configure(self):
-        index = next(index_gen)
-
+    def test_configure_errors(self):
+        """Test error handling in the do_configure method.
+        """
         async def doit():
-            script = make_script(index=index)
-
-            # configure requires ra and dec
-            with self.assertRaises(TypeError):
-                await script.configure()
-            with self.assertRaises(TypeError):
-                await script.configure(ra=100)
-            with self.assertRaises(TypeError):
-                await script.configure(dec=100)
-            with self.assertRaises(ValueError):
-                await script.configure(ra="strings instead of", dec="floats")
-
-            await script.configure(ra=5, dec=6)
-            self.assertEqual(script.ra, 5)
-            self.assertEqual(script.dec, 6)
-            self.assertEqual(script.rot_pa, 0)
-            self.assertEqual(script.target_name, "")
-            self.assertTrue(script.send_start_tracking)
-
-            await script.configure(ra=7, dec=8, rot_pa=-9, target_name="target", send_start_tracking=False)
-            self.assertEqual(script.ra, 7)
-            self.assertEqual(script.dec, 8)
-            self.assertEqual(script.rot_pa, -9)
-            self.assertEqual(script.target_name, "target")
-            self.assertFalse(script.send_start_tracking)
+            async with Harness() as harness:
+                config_data = harness.script.cmd_configure.DataType()
+                for bad_config in (
+                    'ra: 5',  # dec missing
+                    'dec: 45',  # ra missing
+                    'ra: -0.001\ndec: 45',  # ra too small
+                    'ra: 24.001\ndec: 45',  # ra too big
+                    'ra: "5"\ndec: 45',  # ra not a float
+                    'ra: 5\ndec: 90.0001',  # dec too big
+                    'ra: 5\ndec: -90.0001',  # dec too small
+                    'ra: 5\ndec: "45"',  # dec not a float
+                    'ra: 5\ndec: 45\nrot_pa="5"',  # rot_pa not a float
+                ):
+                    with self.subTest(bad_config=bad_config):
+                        config_data.config = bad_config
+                        with self.assertRaises(salobj.ExpectedError):
+                            await harness.script.do_configure(config_data)
 
         asyncio.get_event_loop().run_until_complete(doit())
 
-    def xtest_run_with_start_tracking(self):
+    def test_configure_with_defaults(self):
         async def doit():
-            harness = Harness()
-            config_data = self.make_config_data(send_start_tracking=True)
-            await harness.script.do_configure(id_data=salobj.CommandIdData(cmd_id=1, data=config_data))
-            self.assertEqual(harness.script.state.state, scriptqueue.ScriptState.CONFIGURED)
-
-            await harness.script.do_run(id_data=salobj.CommandIdData(cmd_id=2, data=None))
-            await harness.script.done_task
-            self.assertEqual(harness.script.state.state, scriptqueue.ScriptState.DONE)
-
-            self.assertEqual(harness.n_mcs_start_tracking_calls, 1)
-            self.assertEqual(harness.n_mcs_stop_tracking_calls, 0)
-            self.assertEqual(harness.atptg_target.ra, self.ra)
-            self.assertEqual(harness.atptg_target.declination, self.dec)
-            self.assertEqual(harness.atptg_target.rotPA, self.rot_pa)
-            self.assertEqual(harness.atptg_target.targetName, self.target_name)
+            async with Harness() as harness:
+                config_data = harness.script.cmd_configure.DataType()
+                config_data.config = "ra: 5.1\ndec: 36.2"
+                await harness.script.do_configure(config_data)
+                self.assertEqual(harness.script.config.ra, 5.1)
+                self.assertEqual(harness.script.config.dec, 36.2)
+                self.assertEqual(harness.script.config.rot_pa, 0)
+                self.assertEqual(harness.script.config.target_name, "")
 
         asyncio.get_event_loop().run_until_complete(doit())
 
-    def test_run_without_start_tracking(self):
+    def test_configure_no_defaults(self):
         async def doit():
-            harness = Harness()
-            config_data = self.make_config_data(send_start_tracking=False)
-            await harness.script.do_configure(id_data=salobj.CommandIdData(cmd_id=1, data=config_data))
-            self.assertEqual(harness.script.state.state, scriptqueue.ScriptState.CONFIGURED)
-
-            await harness.script.do_run(id_data=salobj.CommandIdData(cmd_id=2, data=None))
-            await harness.script.done_task
-            self.assertEqual(harness.script.state.state, scriptqueue.ScriptState.DONE)
-
-            self.assertEqual(harness.n_mcs_start_tracking_calls, 0)
-            self.assertEqual(harness.n_mcs_stop_tracking_calls, 0)
-            self.assertEqual(harness.atptg_target.ra, self.ra)
-            self.assertEqual(harness.atptg_target.declination, self.dec)
-            self.assertEqual(harness.atptg_target.rotPA, self.rot_pa)
-            self.assertEqual(harness.atptg_target.targetName, self.target_name)
+            async with Harness() as harness:
+                config_data = harness.script.cmd_configure.DataType()
+                config_data.config = "ra: 5.1\ndec: 36.2\nrot_pa: -9.2\ntarget_name: a target"
+                await harness.script.do_configure(config_data)
+                self.assertEqual(harness.script.config.ra, 5.1)
+                self.assertEqual(harness.script.config.dec, 36.2)
+                self.assertEqual(harness.script.config.rot_pa, -9.2)
+                self.assertEqual(harness.script.config.target_name, "a target")
 
         asyncio.get_event_loop().run_until_complete(doit())
 
-    def test_run_atmcs_not_enabled(self):
+    def test_run(self):
         async def doit():
-            harness = Harness()
-            harness.atmcs.evt_summaryState.set_put(summaryState=salobj.State.DISABLED)
-            # the value of send_start_tracking should not matter
-            config_data = self.make_config_data(send_start_tracking=False)
-            await harness.script.do_configure(id_data=salobj.CommandIdData(cmd_id=1, data=config_data))
-            self.assertEqual(harness.script.state.state, scriptqueue.ScriptState.CONFIGURED)
+            async with Harness() as harness:
+                config_data = harness.script.cmd_configure.DataType()
+                config_data.config = self.make_config_data()
+                await harness.script.do_configure(data=config_data)
+                self.assertEqual(harness.script.state.state, ScriptState.CONFIGURED)
 
-            await harness.script.do_run(id_data=salobj.CommandIdData(cmd_id=2, data=None))
-            await harness.script.done_task
-            self.assertEqual(harness.script.state.state, scriptqueue.ScriptState.FAILED)
+                await harness.script.do_run(data=None)
+                await harness.script.done_task
+                self.assertEqual(harness.script.state.state, ScriptState.DONE)
 
-            self.assertEqual(harness.n_mcs_start_tracking_calls, 0)
-            self.assertEqual(harness.n_mcs_stop_tracking_calls, 0)
-            self.assertIsNone(harness.atptg_target)
-
-        asyncio.get_event_loop().run_until_complete(doit())
-
-    def xtest_run_atptg_not_enabled(self):
-        async def doit():
-            harness = Harness()
-            harness.atptg.evt_summaryState.set_put(summaryState=salobj.State.DISABLED)
-            # the value of send_start_tracking should not matter
-            config_data = self.make_config_data(send_start_tracking=False)
-            await harness.script.do_configure(id_data=salobj.CommandIdData(cmd_id=1, data=config_data))
-            self.assertEqual(harness.script.state.state, scriptqueue.ScriptState.CONFIGURED)
-
-            await harness.script.do_run(id_data=salobj.CommandIdData(cmd_id=2, data=None))
-            await harness.script.done_task
-            self.assertEqual(harness.script.state.state, scriptqueue.ScriptState.FAILED)
-
-            self.assertEqual(harness.n_mcs_start_tracking_calls, 0)
-            self.assertEqual(harness.n_mcs_stop_tracking_calls, 0)
-            self.assertIsNone(harness.atptg_target)
-
-        asyncio.get_event_loop().run_until_complete(doit())
-
-    def test_run_stop_early(self):
-        async def doit():
-            harness = Harness()
-            # Set send_start_tracking True so stopTracking will be sent
-            # when the script stops early
-            config_data = self.make_config_data(send_start_tracking=True)
-            await harness.script.do_configure(id_data=salobj.CommandIdData(cmd_id=1, data=config_data))
-            self.assertEqual(harness.script.state.state, scriptqueue.ScriptState.CONFIGURED)
-
-            # set the script to stop at the "slew" checkpoint; this should
-            # result in one startTracking and stopTracking call to ATMCS
-            harness.script.evt_checkpoints.set(stop="slew")
-
-            await harness.script.do_run(id_data=salobj.CommandIdData(cmd_id=2, data=None))
-            await harness.script.done_task
-            self.assertEqual(harness.script.state.state, scriptqueue.ScriptState.STOPPED)
-
-            self.assertEqual(harness.n_mcs_start_tracking_calls, 1)
-            self.assertEqual(harness.n_mcs_stop_tracking_calls, 1)
-            self.assertIsNone(harness.atptg_target)
+                self.assertEqual(harness.atptg_target.ra, self.ra)
+                self.assertEqual(harness.atptg_target.declination, self.dec)
+                self.assertEqual(harness.atptg_target.rotPA, self.rot_pa)
+                self.assertEqual(harness.atptg_target.targetName, self.target_name)
 
         asyncio.get_event_loop().run_until_complete(doit())
 

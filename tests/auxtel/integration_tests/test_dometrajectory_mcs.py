@@ -24,11 +24,9 @@ import os
 import unittest
 
 from lsst.ts import salobj
-from lsst.ts import scriptqueue
+from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
-
-import SALPY_Script
 
 index_gen = salobj.index_generator()
 
@@ -67,14 +65,20 @@ class TestATCalSysTakeData(unittest.TestCase):
             data = await script.atdometraj.evt_summaryState.next(flush=False, timeout=30)
             self.assertEqual(data.summaryState, salobj.State.STANDBY)
 
+            async def wait_script_state(state):
+                while script.state.state != state:
+                    await asyncio.sleep(0.1)
+
+            print("*** Wait for the script to be ready to be configured")
+            await asyncio.wait_for(wait_script_state(ScriptState.UNCONFIGURED), timeout=2)
             print("*** Configure script")
             config_data = script.cmd_configure.DataType()
             config_data.config = ""
-            config_id_data = salobj.CommandIdData(1, config_data)
-            await script.do_configure(config_id_data)
+            await script.do_configure(config_data)
+            self.assertEqual(script.state.state, ScriptState.CONFIGURED)
             print("*** Run script")
             await script.do_run(None)
-            self.assertEqual(script.state.state, scriptqueue.ScriptState.DONE)
+            self.assertEqual(script.state.state, ScriptState.DONE)
 
         asyncio.get_event_loop().run_until_complete(doit())
 
@@ -86,20 +90,21 @@ class TestATCalSysTakeData(unittest.TestCase):
         script_path = scripts_dir / script_name
         self.assertTrue(script_path.is_file())
 
-        remote = salobj.Remote(SALPY_Script, index=index)
-
         async def doit():
-            initial_path = os.environ["PATH"]
-            try:
-                os.environ["PATH"] = str(scripts_dir) + ":" + initial_path
-                process = await asyncio.create_subprocess_exec(script_name, str(index))
+            async with salobj.Domain() as domain:
+                remote = salobj.Remote(domain=domain, name="Script", index=index)
 
-                state = await remote.evt_state.next(flush=False, timeout=60)
-                self.assertEqual(state.state, scriptqueue.ScriptState.UNCONFIGURED)
+                initial_path = os.environ["PATH"]
+                try:
+                    os.environ["PATH"] = str(scripts_dir) + ":" + initial_path
+                    process = await asyncio.create_subprocess_exec(script_name, str(index))
 
-                process.terminate()
-            finally:
-                os.environ["PATH"] = initial_path
+                    state = await remote.evt_state.next(flush=False, timeout=60)
+                    self.assertEqual(state.state, ScriptState.UNCONFIGURED)
+
+                    process.terminate()
+                finally:
+                    os.environ["PATH"] = initial_path
 
         asyncio.get_event_loop().run_until_complete(doit())
 

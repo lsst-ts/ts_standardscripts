@@ -21,54 +21,50 @@
 __all__ = ["ATGetStdFlatDataset"]
 
 import numpy as np
+import yaml
 
 from lsst.ts import salobj
 from lsst.ts import scriptqueue
 from lsst.ts.standardscripts.auxtel.latiss import LATISS
 
-import SALPY_ATCamera
-import SALPY_ATSpectrograph
-
 
 class ATGetStdFlatDataset(scriptqueue.BaseScript):
     """Implement script to get sensor characterization data.
-
-    The definition is spelled out in https://jira.lsstcorp.org/browse/CAP-203
-    and https://jira.lsstcorp.org/browse/CAP-206.
-
-    Basically, this script will:
-
-    1 - Take a set `n_dark` (default=10) dark images (shutter closed) with
-        `t_dark` (default=400s) exposure time
-    2 - Take a set of `n_bias` (default=10) bias
-    3 - Flat field data:
-        - Take a set of pairs of flat fields at a set of approximately
-        logarithmically spaced intensity
-        levels starting at 500 DN and increasing by a factor of 2 (i.e. 500,
-        1000, 2000, ...).
-        The exact levels are not important, but they must be well known; both
-        the flux level and shutter time must be well measured (if shutter is
-        opened before/closed after the lamp
-        is turned on then the shutter time need not be well measured).
-        - Take a set of `nb` biases after the entire flat sequence is complete
 
     Parameters
     ----------
     index : `int`
         Index of Script SAL component.
+
+    Notes
+    -----
+    The definition is spelled out in https://jira.lsstcorp.org/browse/CAP-203
+    and https://jira.lsstcorp.org/browse/CAP-206.
+
+    This script does the following:
+
+    - Take a set of dark images (shutter closed).
+    - Take a set of bias images.
+    - Take a sequence of flat field iamges, as follows:
+
+        - Take a set of pairs of flat fields at a set of approximately
+          logarithmically spaced intensity levels starting at 500 DN
+          and increasing by a factor of 2 (i.e. 500, 1000, 2000, ...).
+          The exact levels are not important, but they must be well known;
+          both the flux level and shutter time must be well measured
+          (if shutter is opened before and closed after the lamp is turned on
+          then the shutter time need not be well measured).
+    - Take another set of bias images.
     """
 
     def __init__(self, index):
 
         super().__init__(index=index,
-                         descr="Take Flat field sensor characterization data.",
-                         remotes_dict=dict(atcam=salobj.Remote(SALPY_ATCamera,
-                                                               include=["takeImages",
-                                                                        "endReadout"]),
-                                           atspec=salobj.Remote(SALPY_ATSpectrograph,
-                                                                include=["changeFilter",
-                                                                         "changeDisperser",
-                                                                         "moveLinearStage"])))
+                         descr="Take Flat field sensor characterization data.")
+        self.atcam = salobj.Remote(domain=self.domain, name="ATCamera",
+                                   include=["takeImages", "endReadout"])
+        self.atspec = salobj.Remote(domain=self.domain, name="ATSpectrograph",
+                                    include=["changeFilter", "changeDisperser", "moveLinearStage"])
 
         self.latiss = LATISS(atcam=self.atcam, atspec=self.atspec)
 
@@ -80,135 +76,131 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         # joiner is working on the open network.
         self.maximum_exp_time = 401.  # Maximum exposure time in seconds.
 
-    async def configure(self,
-                        n_dark=10,
-                        t_dark=400.,
-                        n_bias=10,
-                        n_flat=2,
-                        flat_base_exptime=0.5,
-                        flat_dn_range=(1., 2., 4., 8., 16., 32., 64., 128.),
-                        filter_id=None,
-                        grating_id=None,
-                        linear_stage=None,
-                        read_out_time=2.):
-        """Configure script.
+    @property
+    def schema(self):
+        schema_yaml = f"""
+            $schema: http://json-schema.org/draft-07/schema#
+            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/ATGetStdFlatDataset.yaml
+            title: ATGetStdFlatDataset v1
+            description: Configuration for ATGetStdFlatDataset
+            type: object
+            properties:
+              n_dark:
+                description: Number of dark images.
+                type: integer
+                default: 10
+                minimum: 1
+              t_dark:
+                description: Exposure time for each dark image (sec).
+                type: number
+                default: 400
+                exclusiveMinimum: 0
+                exclusiveMinimum: {self.maximum_exp_time}
+              n_bias:
+                description: Number of bias images.
+                type: integer
+                default: 10
+                minimum: 1
+              n_flat:
+                description: Number of sets of flat images.
+                type: integer
+                default: 2
+                minimum: 1
+              flat_base_exptime:
+                description: Base exposure time flat images (sec).
+                type: number
+                default: 0.5
+                exclusiveMinimum: 0
+              flat_dn_range:
+                description: Multipliers for flat exposure time (sec).
+                  Flat exposure times = flat_base_exptime * flat_dn_range.
+                type: array
+                items:
+                    type: float
+                    exclusiveMinimum: 0
+                default: [1, 2, 4, 8, 16, 32, 64, 128],
+              filter_id:
+                description: ATSpectrograph filter name or ID. Omit to leave unchanged.
+                anyOf:
+                  - type: string
+                  - type: integer
+                    minimum: 1
+                  - type: "null"
+                default: null
+              grating_id:
+                description: ATSpectrograph grating name or ID. Omit to leave unchanged.
+                anyOf:
+                  - type: string
+                  - type: integer
+                    minimum: 1
+                  - type: "null"
+                default: null
+              linear_stage:
+                description: Position of ATSpectrograph linear stage. Omit to leave unchanged.
+                anyOf:
+                  - type: number
+                  - type: "null"
+                default: null
+              read_out_time:
+                description: Approximate readout time of camera (sec).
+                  Used to estimate script duration.
+                type: number
+                default: {self.latiss.read_out_time}
+                exclusiveMinimum: 0
+
+            required: [n_dark, t_dark, n_bias, n_flat, flat_base_exptime, flat_dn_range,
+            filter_id, grating_id, linear_stage, read_out_time]
+            additionalProperties: false
+        """
+        return yaml.safe_load(schema_yaml)
+
+    async def configure(self, config):
+        """Configure the script.
 
         Parameters
         ----------
-        n_dark : `int` (optional)
-            Number of dark images to be taken.
-        t_dark : `float` (optional)
-            Exposure time for the dark images in seconds.
-        n_bias : `int` (optional)
-            Number of bias images to be taken.
-        n_flat : `int` (optional)
-            Number of flat field images to take for each exposure time.
-        flat_base_exptime : `float` (optional)
-            The exposure time for the first flat field image set (in seconds).
-        flat_dn_range : `list(float)` (optional)
-            List of values that multiply the `flat_base_exptime`. For instance,
-            if you want to take two sets of flat with exposure times
-            `flat_base_exptime, 2*flat_base_exptime, 4*flat_dn_range`,
-            `flat_dn_range = [1., 2., 4.]`.
-        filter_id : `int` (optional)
-            Id of the filter to use in the ATSpectrograph. If `None` (default)
-            will ignore the setup step.
-        grating_id : `int` (optional)
-            Id of the grating to use in the ATSpectrograph. If `None`
-            (default) will ignore the setup step.
-        linear_stage : `float` (optional)
-            Position of the linear stage in the ATSpectrograph. If `None`
-            (default) will ignore the
-            setup step.
-        read_out_time :`float` (optional)
-            The read out time of the camera, in seconds. Used to estimate
-            script duration.
-
+        config : `types.SimpleNamespace`
+            Script configuration, as defined by `schema`.
         """
+        self.config = config
+        self.flat_exp_times = self.config.flat_base_exptime * np.array(self.config.flat_dn_range, dtype=float)
+        self.n_flats = len(self.flat_exp_times) * self.config.n_flats
 
-        if int(n_dark) <= 0:
-            raise RuntimeError(f"Number of dark frames must be larger than 0, got {n_dark}")
-        self.n_dark = int(n_dark)
-
-        if not (0. < float(t_dark) <= self.maximum_exp_time):
-            raise RuntimeError(f"Dark exptime must be in the range "
-                               f"(0.,{self.maximum_exp_time}], got {t_dark}")
-        self.t_dark = float(t_dark)
-
-        if int(n_bias) <= 0:
-            raise RuntimeError(f"Number of bias frames must be larger than 0, got {n_bias}")
-        self.n_bias = int(n_bias)
-
-        if int(n_flat) <= 0:
-            raise RuntimeError(f"Number of flat field frames must be larger than 0, got {n_flat}")
-        self.n_flat = int(n_flat)
-
-        if float(flat_base_exptime) < 0.:
-            raise RuntimeError(f"Base flat field exposure time must be larger than 0., "
-                               f"got {flat_base_exptime}.")
-        self.flat_base_exptime = float(flat_base_exptime)
-
-        self.flat_dn_range = np.array(flat_dn_range, dtype=float)
-
-        if np.any(self.flat_dn_range <= 0.):
-            n_bad = len(np.where(self.flat_dn_range <= 0.)[0])
-            raise RuntimeError(f"'flat_dn_range' must be larger than zero. "
-                               f"Got {n_bad} bad values.")
-
-        larger_flat_exptime = np.max(self.flat_dn_range)*self.flat_base_exptime
-        if larger_flat_exptime > self.maximum_exp_time:
-            raise RuntimeError(f"Flat field maximum exposure time {larger_flat_exptime}s "
-                               f"above maximum allowed {self.maximum_exp_time}s.")
-
-        self.filter = filter_id
-
-        self.grating = grating_id
-
-        self.linear_stage = linear_stage
-
-        if float(read_out_time) > 0.:
-            self.latiss.read_out_time = float(read_out_time)
-        else:
-            self.log.warning(f"Read out time must be larger than 0., got {read_out_time}. "
-                             f"Using default value, {self.latiss.read_out_time}s.")
+        max_flat_time = self.flat_exp_times.max()
+        if max_flat_time > self.maximum_exp_time:
+            raise ValueError(f"Maximum flat time = {max_flat_time:0.2f} > "
+                             f"maximum allowed={self.maximum_exp_time} (sec)")
 
     async def run(self):
-        """Run method.
+        """Run the script.
         """
-
-        self.log.info(f"Taking {self.n_dark} dark images...")
-
-        await self.latiss.take_darks(exptime=self.t_dark,
-                                     ndarks=self.n_dark,
+        self.log.info(f"Taking {self.config.n_dark} dark images...")
+        await self.latiss.take_darks(exptime=self.config.t_dark,
+                                     ndarks=self.config.n_dark,
                                      checkpoint=self.checkpoint)
 
-        self.log.info(f"Taking {self.n_bias} bias images...")
-
-        await self.latiss.take_bias(nbias=self.n_bias,
+        self.log.info(f"Taking {self.config.n_bias} pre-flat bias images...")
+        await self.latiss.take_bias(nbias=self.config.n_bias,
                                     checkpoint=self.checkpoint)
 
-        self.log.info("Taking flat-field sequence...")
-
-        for i in range(len(self.flat_dn_range)):
-            await self.latiss.take_flats(exptime=self.flat_base_exptime * self.flat_dn_range[i],
-                                         nflats=self.n_flat,
-                                         filter=self.filter,
-                                         grating=self.grating,
-                                         linear_stage=self.linear_stage,
+        self.log.info(f"Taking {self.n_flats} flat-field images")
+        for flat_exp_time in self.flat_exp_times:
+            await self.latiss.take_flats(exptime=flat_exp_time,
+                                         nflats=self.config.n_flat,
+                                         filter=self.config.filter_id,
+                                         grating=self.config.grating,
+                                         linear_stage=self.config.linear_stage,
                                          checkpoint=self.checkpoint)
 
-        self.log.info(f"Taking {self.n_bias} bias images...")
-
-        await self.latiss.take_bias(nbias=self.n_bias,
+        self.log.info(f"Taking {self.config.n_bias} post-flat bias images...")
+        await self.latiss.take_bias(nbias=self.config.n_bias,
                                     checkpoint=self.checkpoint)
 
         await self.checkpoint("done")
 
     def set_metadata(self, metadata):
-        dark_time = self.n_dark * (self.read_out_time + self.t_dark)
-        # Note, bias is taken twice, once at the beginning then at the end of
-        # the sequence.
-        bias_time = 2. * self.n_bias * self.read_out_time
-        flat_time = np.sum(self.n_flat * self.flat_dn_range * (self.read_out_time +
-                                                               self.flat_base_exptime))
+        dark_time = self.config.n_dark * (self.read_out_time + self.config.t_dark)
+        # Note, biases are taken twice: before flats and after flats
+        bias_time = 2 * self.config.n_bias * self.read_out_time
+        flat_time = self.n_flats*(self.read_out_time + self.flat_exp_times.mean())
         metadata.duration = dark_time + bias_time + flat_time

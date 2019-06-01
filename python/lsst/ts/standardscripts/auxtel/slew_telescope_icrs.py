@@ -20,11 +20,11 @@
 
 __all__ = ["SlewTelescopeIcrs"]
 
-from lsst.ts import salobj
-from lsst.ts import scriptqueue
+import yaml
 
-import SALPY_ATMCS
-import SALPY_ATPtg
+from lsst.ts import salobj
+from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts import scriptqueue
 
 
 class SlewTelescopeIcrs(scriptqueue.BaseScript):
@@ -41,9 +41,6 @@ class SlewTelescopeIcrs(scriptqueue.BaseScript):
 
     * slew: just before sending the ``raDecTarget`` to ATPtg.
         This is primarily intended for unit testing.
-        Warning: if you configure the script with ``send_start_tracking=True``
-        and pause at the "slew" checkpoint you will send ATPtg
-        into a FAULT state!
 
     **Details**
 
@@ -58,35 +55,50 @@ class SlewTelescopeIcrs(scriptqueue.BaseScript):
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        atmcs = salobj.Remote(SALPY_ATMCS, 0)
-        atptg = salobj.Remote(SALPY_ATPtg, 0)
-        super().__init__(index=index,
-                         descr="Test integration between ATPtg and ATMCS",
-                         remotes_dict=dict(atmcs=atmcs, atptg=atptg))
+        super().__init__(index=index, descr="Slew the auxiliary telescope to an ICRS position")
+        self.atptg = salobj.Remote(domain=self.domain, name="ATPtg")
         self.tracking_started = False
 
-    async def configure(self, ra, dec, rot_pa=0, target_name="",
-                        send_start_tracking=True):
+    @property
+    def schema(self):
+        schema_yaml = """
+            $schema: http://json-schema.org/draft-07/schema#
+            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/SlewTelescopeIcrs.yaml
+            title: SlewTelescopeIcrs v1
+            description: Configuration for SlewTelescopeIcrs
+            type: object
+            properties:
+              ra:
+                description: ICRS right ascension (hour)
+                type: number
+                minimum: 0
+                maximum: 24
+              dec:
+                description: ICRS declination (deg)
+                type: number
+                minimum: -90
+                maximum: 90
+              rot_pa:
+                description: Desired instrument position angle, Eastwards from North (deg)
+                type: number
+                default: 0
+              target_name:
+                type: string
+                default: ""
+            required: [ra, dec, rot_pa, target_name]
+            additionalProperties: false
+        """
+        return yaml.safe_load(schema_yaml)
+
+    async def configure(self, config):
         """Configure the script.
 
         Parameters
         ----------
-        ra : `float`
-            Right ascension (deg).
-        dec : `float`
-            Declination (deg).
-        rot_pa : `float` (optional)
-            Position angle (deg).
-        send_start_tracking : `bool` (optional)
-            Issue the ``startTracking`` command to ATMCS?
-            This is presently necessary but ATPtg will soon do it.
-            TODO: remote this argument once ATPtg is updated.
+        config : `types.SimpleNamespace`
+            Configuration
         """
-        self.dec = float(dec)
-        self.ra = float(ra)
-        self.rot_pa = float(rot_pa)
-        self.target_name = str(target_name)
-        self.send_start_tracking = send_start_tracking
+        self.config = config
 
     def set_metadata(self, metadata):
         """Compute estimated duration.
@@ -98,42 +110,30 @@ class SlewTelescopeIcrs(scriptqueue.BaseScript):
         metadata.duration = 1
 
     async def run(self):
-        for csc in (self.atmcs, self.atptg):
-            data = csc.evt_summaryState.get()
-            if data.summaryState != salobj.State.ENABLED:
-                raise RuntimeError(f"{csc.salinfo.name} in state {data.summaryState} "
-                                   f"instead of {salobj.State.ENABLED!r}")
-
-        if self.send_start_tracking:
-            self.log.info("Send startTracking to ATMCS")
-            await self.atmcs.cmd_startTracking.start(timeout=2)
-            self.tracking_started = True
-
-        await self.checkpoint("slew")
         self.atptg.cmd_raDecTarget.set(
-            targetName=self.target_name,
-            targetInstance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
-            frame=SALPY_ATPtg.ATPtg_shared_CoordFrame_icrs,
+            targetName=self.config.target_name,
+            targetInstance=1,  # TargetInstances_current
+            frame=2,  # CoordFrame_icrs
             epoch=2000,  # should be ignored: no parallax or proper motion
             equinox=2000,  # should be ignored for ICRS
-            ra=self.ra,
-            declination=self.dec,
+            ra=self.config.ra,
+            declination=self.config.dec,
             parallax=0,
             pmRA=0,
             pmDec=0,
             rv=0,
             dRA=0,
             dDec=0,
-            rotPA=self.rot_pa,
-            rotFrame=SALPY_ATPtg.ATPtg_shared_RotFrame_target,
-            rotMode=SALPY_ATPtg.ATPtg_shared_RotMode_field,
+            rotPA=self.config.rot_pa,
+            rotFrame=1,  # RotFrame_target
+            rotMode=2,  # RotMode_field
         )
-        self.log.info(f"Start tracking target_name={self.target_name}; "
-                      f"ra={self.ra}, dec={self.dec}; rot_pa={self.rot_pa}")
+        self.log.info(f"Start tracking target_name={self.config.target_name}; "
+                      f"ra={self.config.ra}, dec={self.config.dec}; rot_pa={self.config.rot_pa}")
         await self.atptg.cmd_raDecTarget.start(timeout=2)
 
     async def cleanup(self):
-        if self.state.state != scriptqueue.ScriptState.ENDING:
+        if self.state.state != ScriptState.ENDING:
             # abnormal termination
             if self.tracking_started:
                 self.log.warning(f"Terminating with state={self.state.state}: sending stopTracking to ATMCS")

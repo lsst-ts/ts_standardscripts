@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Data Management System.
@@ -18,21 +19,6 @@
 #
 # You should have received a copy of the GNU General Public License
 
-import pathlib
-import unittest
+from lsst.ts.standardscripts.auxtel.integration_tests import ATPtgATAOSIntegration
 
-from lsst.ts import standardscripts
-
-
-class TestTestUtils(unittest.TestCase):
-    def test_get_scripts_dir(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        self.assertTrue(scripts_dir.is_dir())
-
-        pkg_path = pathlib.Path(__file__).resolve().parent.parent
-        predicted_path = pkg_path / "scripts"
-        self.assertEqual(scripts_dir.samefile(predicted_path))
-
-
-if __name__ == '__main__':
-    unittest.main()
+ATPtgATAOSIntegration.main()

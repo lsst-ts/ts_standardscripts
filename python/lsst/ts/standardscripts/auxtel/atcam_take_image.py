@@ -3,13 +3,11 @@ __all__ = ["ATCamTakeImage"]
 import collections
 
 import numpy as np
+import yaml
 
 from lsst.ts.standardscripts.auxtel.latiss import LATISS
 from lsst.ts.scriptqueue.base_script import BaseScript
 from lsst.ts import salobj
-
-import SALPY_ATCamera
-import SALPY_ATSpectrograph
 
 
 class ATCamTakeImage(BaseScript):
@@ -27,95 +25,125 @@ class ATCamTakeImage(BaseScript):
     * exposure {n} of {m}: before sending the ATCamera ``takeImages`` command
     """
     def __init__(self, index):
-        super().__init__(index=index, descr="Test ATCamTakeImage",
-                         remotes_dict=dict(atcam=salobj.Remote(SALPY_ATCamera),
-                                           atspec=salobj.Remote(SALPY_ATSpectrograph)))
+        super().__init__(index=index, descr="Test ATCamTakeImage")
+        self.atcam = salobj.Remote(domain=self.domain, name="ATCamera")
+        self.atspec = salobj.Remote(domain=self.domain, name="ATSpectrograph")
 
         self.latiss = LATISS(atcam=self.atcam,
                              atspec=self.atspec)
         self.cmd_timeout = 60.  # command timeout (sec)
         # large because of an issue with one of the components
 
-    async def configure(self, nimages=1, exp_times=0., shutter=False,
-                        groupid='',
-                        filter=None,
-                        grating=None,
-                        linear_stage=None):
+    @property
+    def schema(self):
+        schema_yaml = """
+            $schema: http://json-schema.org/draft-07/schema#
+            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/ATCamTakeImage.yaml
+            title: ATCamTakeImage v1
+            description: Configuration for ATCamTakeImage.
+            type: object
+            properties:
+              nimages:
+                description: The number of images to take; if omitted then use the length of exp_times
+                    or take a single exposure if exp_times is a scalar.
+                anyOf:
+                  - type: integer
+                    minimum: 1
+                  - type: "null"
+                default: null
+              exp_times:
+                description: The exposure time of each image (sec). If a single value,
+                  then the same exposure time is used for each exposure.
+                anyOf:
+                  - type: array
+                    minItems: 1
+                    items:
+                      type: number
+                      minimum: 0
+                  - type: number
+                    default: 0
+                    minimum: 0
+              shutter:
+                description: Open the shutter?
+                type: boolean
+                default: false
+              groupid:
+                description: Value for the GROUPID entry in the image header.
+                type: string
+                default: ""
+              filter:
+                description: Filter name or ID; if omitted the filter is not changed.
+                anyOf:
+                  - type: string
+                  - type: integer
+                    minimum: 1
+                  - type: "null"
+                default: null
+              grating:
+                description: Grating name; if omitted the grating is not changed.
+                anyOf:
+                  - type: string
+                  - type: integer
+                    minimum: 1
+                  - type: "null"
+                default: null
+              linear_stage:
+                description: Linear stage position; if omitted the linear stage is not moved.
+                anyOf:
+                  - type: number
+                  - type: "null"
+                default: null
+            required: [nimages, exp_times, shutter, groupid, filter, grating, linear_stage]
+            additionalProperties: false
+        """
+        return yaml.safe_load(schema_yaml)
+
+    async def configure(self, config):
         """Configure script.
 
         Parameters
         ----------
-        nimages : `int`
-            Number of images to be taken on the stress test, must be
-            larger than zero.
-            Ignored if ``exp_times`` is a sequence.
-        exp_times : `float` or `List` [ `float` ]
-            Exposure times (in seconds) for the image sequence.
-            Either a single float (same exposure time for all images)
-            or a list with the exposure times of each image.
-            If exp_times is a list, nimages is ignored, must be equal to or
-            larger then zero.
-        shutter : `bool`
-            Open the shutter?
-        groupid : `str`
-            A string that will be mapped to the GROUPID entry in the image
-            header.
-        filter : `None` or `int` or `str`
-            Filter id or name. If `None` (default), do not change the filter.
-        grating : `None` or `int` or `str`
-            Grating id or name.  If `None` (default), do not change the grating.
-        linear_stage : `None` or `float`
-            Linear stage position.  If `None` (default), do not change the
-            linear stage.
-
-        Raises
-        ------
-        ValueError
-            If input parameters outside valid ranges.
+        config : `types.SimpleNamespace`
+            Script configuration, as defined by `schema`.
         """
         self.log.info("Configure started")
 
-        # make exposure time a list with size = nimages, if it is not
-        if isinstance(exp_times, collections.Iterable):
-            if len(exp_times) == 0:
-                raise ValueError(f"exp_times={exp_times}; must provide at least one value")
-            self.exp_times = [float(t) for t in exp_times]
+        self.config = config
+
+        nimages = config.nimages
+        if isinstance(config.exp_times, collections.Iterable):
+            if nimages is not None:
+                if len(config.exp_times) != nimages:
+                    raise ValueError(f"nimages={nimages} specified and exp_times={config.exp_times} "
+                                     "is an array, but the length does not match nimages")
         else:
-            if nimages < 1:
-                raise ValueError(f"nimages={nimages} must be > 0")
-            self.exp_times = [float(exp_times)]*nimages
+            # exp_time is a scalar; if nimages is specified then
+            # take that many images, else take 1 image
+            if nimages is None:
+                nimages = 1
+            config.exp_times = [config.exp_times]*nimages
 
-        if np.min(self.exp_times) < 0:
-            raise ValueError(f"Exposure times {exp_times} must be >= 0")
-
-        self.shutter = bool(shutter)
-        self.imageSequenceName = str(groupid)
-
-        self.filter = filter
-        self.grating = grating
-        self.linear_stage = linear_stage
-
-        self.log.info(f"exposure times={self.exp_times}, "
-                      f"shutter={self.shutter}, "
-                      f"image_name={self.imageSequenceName}"
-                      f"filter={self.filter}"
-                      f"grating={self.grating}"
-                      f"linear_stage={self.linear_stage}")
+        self.log.info(f"exposure times={self.config.exp_times}, "
+                      f"shutter={self.config.shutter}, "
+                      f"image_name={self.config.groupid}"
+                      f"filter={self.config.filter}"
+                      f"grating={self.config.grating}"
+                      f"linear_stage={self.config.linear_stage}")
 
     def set_metadata(self, metadata):
-        nimages = len(self.exp_times)
-        mean_exptime = np.mean(self.exp_times)
+        nimages = len(self.config.exp_times)
+        mean_exptime = np.mean(self.config.exp_times)
         metadata.duration = (mean_exptime + self.readout_time +
-                             self.shutter_time*2 if self.shutter else 0) * nimages
+                             self.config.shutter_time*2 if self.config.shutter else 0) * nimages
 
     async def run(self):
-        nimages = len(self.exp_times)
-        for i, exposure in enumerate(self.exp_times):
+        nimages = len(self.config.exp_times)
+        for i, exposure in enumerate(self.config.exp_times):
             await self.checkpoint(f"exposure {i+1} of {nimages}")
             end_readout = await self.latiss.take_image(exptime=exposure,
-                                                       shutter=self.shutter,
-                                                       image_seq_name=self.imageSequenceName,
-                                                       filter=self.filter,
-                                                       grating=self.grating,
-                                                       linear_stage=self.linear_stage)
+                                                       shutter=self.config.shutter,
+                                                       image_seq_name=self.config.groupid,
+                                                       filter=self.config.filter,
+                                                       grating=self.config.grating,
+                                                       linear_stage=self.config.linear_stage)
             self.log.debug(f"Took {end_readout.imageName}")
