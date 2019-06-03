@@ -6,6 +6,7 @@ from astropy.time import Time
 
 from lsst.ts import salobj
 import SALPY_ATPtg
+import types
 
 
 class ATTCS:
@@ -23,6 +24,10 @@ class ATTCS:
     athexapod: salobj.Remote
     atdome: salobj.Remote
     atdometrajectory: salobj.Remote
+    check: dict
+        A dictionary of csc names as the keys with either true or false as the value.
+    within: float
+        The relative tolerance of the values to compare.
 
     Attributes
     ----------
@@ -32,6 +37,9 @@ class ATTCS:
     athexapod: salobj.Remote
     atdome: salobj.Remote
     atdometrajectory: salobj.Remote
+    check: SimpleNamespace
+    log: logging.Logger
+    within: float
     """
     def __init__(
             self,
@@ -41,7 +49,9 @@ class ATTCS:
             atpneumatics,
             athexapod,
             atdome,
-            atdometrajectory):
+            atdometrajectory,
+            check,
+            within=0.02):
         self.atmcs = atmcs
         self.atptg = atptg
         self.ataos = ataos
@@ -49,6 +59,7 @@ class ATTCS:
         self.athexapod = athexapod
         self.atdome = atdome
         self.atdometrajectory = atdometrajectory
+        self.check=SimpleNamespace(check)
         self.log = logging.getLogger("ATTCS")
         self.within=within
 
@@ -147,6 +158,16 @@ class ATTCS:
             if summary_state.summaryState != salobj.State.ENABLED:
                 raise RuntimeError(f"ATMCS state is {salobj.State(summary_state.summaryState)}")
 
+    async def check_csc_heartbeat(self,csc):
+        counter=0
+        while counter <= 6:
+            heartbeat = await getattr(self,csc).evt_heartbeat.next(flush=False)
+            if heartbeat is None:
+                counter+= 1
+            else:
+                counter=0
+        raise RuntimeError(f"{csc} not responsive after {counter} heartbeats.")
+
     async def check_atptg_state(self):
         """
         check atptg state and raise exception if in other state than enabled.
@@ -155,6 +176,15 @@ class ATTCS:
             summary_state = await self.atptg.evt_summaryState.next(flush=False)
             if summary_state.summaryState != salobj.State.ENABLED:
                 raise RuntimeError(f"ATPtg state is {salobj.State(summary_state.summaryState)}")
+
+    async def check_atptg_heartbeat(self):
+        while country <=6:
+            heartbeat = await self.atptg.evt_heartbeat.next(flush=False)
+            if heartbeat is None:
+                counter += 1
+            else:
+                counter=0
+        raise RuntimeError("CSC not responsive")
 
     async def check_athexapod_state(self):
         """
@@ -214,20 +244,30 @@ class ATTCS:
 
     async def check_track(
             self,
-            track_duration=None,
-            check_atpneumatics=False,
-            check_athexapod=False,
-            check_target=False):
+            track_duration=None):
+        """
+        Check the state of tracking.
+        """
         start_time = Time.now()
         while Time.now() - start_time < track_duration:
             coro_list = [
                 asyncio.ensure_future(self.check_atmcs_state),
+                asyncio.ensure_future(self.check_csc_heartbeat("atmcs")),
                 asyncio.ensure_future(self.check_atptg_state),
+                asyncio.ensure_future(self.check_csc_heartbeat("atptg")),
                 asyncio.ensure_future(self.check_target_status)]
-            if check_atpneumatics:
+            if self.check.atpneumatics:
                 coro_list.append(asyncio.ensure_future(self.check_atpneumatics_state))
-            if check_athexapod:
+                coro_list.append(asyncio.ensure_future(self.check_csc_heartbeat("atpneumatics")))
+            if self.check.athexapod:
                 coro_list.append(asyncio.ensure_future(self.check_athexapod_state))
+                coro_list.append(asyncio.ensure_future(self.check_csc_heartbeat("athexapod")))
+            if self.check.atdome:
+                coro_list.append(asyncio.ensure_future(self.check_atdome_state))
+                coro_list.append(asyncio.ensure_future(self.check_csc_state("atdome")))
+            if self.check.atdometrajectory:
+                coro_list.append(asyncio.ensure_future(self.check_atdometrajectory))
+                coro_list.append(asyncio.ensure_future(self.check_csc_state("atdometrajectory")))
             for res in asyncio.as_completed((coro_list)):
                 try:
                     await res
@@ -315,3 +355,16 @@ class ATTCS:
         self.log.info(f"pneumatics is {c1}")
         if c1 is False:
             raise RuntimeError(f"Pneumatics not corrected within {within*100} percent tolerance")
+
+    async def verify_dome(self):
+        atdome_commanded=self.atdome.evt_azimuthCommandedState.next(flush=True, timeout=120)
+        atdome_actual=self.atdome.tel_position.next(flush=True)
+        atdome_result=await asyncio.gather(atdome_commanded, atdome_actual)
+        self.dome_check_values(atdome_result[0], atdome_result[1], within=self.within)
+
+    def dome_check_values(self, atdomecommanded, atdomeactual, within=self.within):
+        self.log.info(f"checking atdome position within {within*100} percent tolerance")
+        c1 = math.isclose(atdomecommanded.azimuth, atdomeactual.azimuthPosition, rel_tol=within)
+        self.log.info(f"Dome azimuth is {c1}")
+        if c1 is False:
+            raise RuntimeError(f"Dome azimuth is not within {within*100} percent tolerance")
