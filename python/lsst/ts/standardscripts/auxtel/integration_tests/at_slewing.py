@@ -276,7 +276,7 @@ class ATSlewing(scriptqueue.BaseScript):
         self.log.info(f"telescope final el={data.elevationCalculatedAngle}, "
                       f"az={data.azimuthCalculatedAngle}")
 
-        Test that we are in the state we want to be in 
+        # Test that we are in the state we want to be in 
         print("checking m1 correction az/el")
         data = await self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=35)
         self.log.info(f"AOS M1 Correction reported el={data.elevation}, "
