@@ -103,7 +103,6 @@ class ATSlewing(scriptqueue.BaseScript):
             raise RuntimeError(f"{what} = {val1}; should be {val2} {more}")
 
     async def run(self):
-        self.log.setLevel(20)
         # Enable ATMCS and ATPgt, if requested, else check they are enabled
         await self.checkpoint("enable_cscs")
         if self.enable_atmcs:
@@ -150,6 +149,7 @@ class ATSlewing(scriptqueue.BaseScript):
 
 
         # Report current az/alt
+        self.log.debug("here")
         data = await self.atmcs.tel_mountEncoders.next(flush=False, timeout=1)
         self.log.info(f"telescope initial el={data.elevationCalculatedAngle}, "
                       f"az={data.azimuthCalculatedAngle}")
@@ -270,16 +270,22 @@ class ATSlewing(scriptqueue.BaseScript):
             if in_position.inPosition:
                 self.log.info("finished slew to end pos")
                 break
-    
+
         # Report current az/alt
         data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
         self.log.info(f"telescope final el={data.elevationCalculatedAngle}, "
                       f"az={data.azimuthCalculatedAngle}")
 
-        # Test that we are in the state we want to be in 
-        print("checking m1 correction az/el")
-        data = await self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=35)
-        self.log.info(f"AOS M1 Correction reported el={data.elevation}, "
+        # Test that we are in the state we want to be in
+        try:
+            print("checking m1 correction az/el")
+            data = await self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=75)
+        except(TimeoutError):
+            print("m1 correction start timed out")
+        self.log.info(f"AOS M1 Correction start reported el={data.elevation}, "
+                      f"az={data.azimuth}")
+        data = await self.ataos.evt_m1CorrectionCompleted.next(flush=True, timeout=75)
+        self.log.info(f"AOS M1 Correction start reported el={data.elevation}, "
                       f"az={data.azimuth}")
 
     def set_metadata(self, metadata):
