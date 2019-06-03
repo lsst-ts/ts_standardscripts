@@ -233,11 +233,10 @@ class ATSlewing(scriptqueue.BaseScript):
             print(f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}")
         curr_elaz1 = AltAz(alt=data.elevationCalculatedAngle*u.deg, az=data.azimuthCalculatedAngle*u.deg,
                            obstime=Time.now(), location=self.location)
-        sep0 = cmd_startelaz.separation(curr_elaz0).to(u.arcsec)
-        sep1 = cmd_startelaz.separation(curr_elaz1).to(u.arcsec)
-        #if sep0 <= sep1:
-         #   raise RuntimeError(f"az/alt separation between commanded and current is not "
-          #                     f"decreasing: sep0 = {sep0}; sep1 = {sep1}")
+        #enable ATAOS correction loop
+        self.ataos.cmd_enableCorrection.set(enableAll=True)
+        await self.ataos.cmd_enableCorrection.start(timeout=10)
+
 
         # move to ending position
         await self.atptg.cmd_stopTracking.start(timeout=5)
@@ -277,8 +276,21 @@ class ATSlewing(scriptqueue.BaseScript):
         self.log.info(f"telescope final el={data.elevationCalculatedAngle}, "
                       f"az={data.azimuthCalculatedAngle}")
 
+        Test that we are in the state we want to be in 
+        print("checking m1 correction az/el")
+        data = await self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=35)
+        self.log.info(f"AOS M1 Correction reported el={data.elevation}, "
+                      f"az={data.azimuth}")
+
     def set_metadata(self, metadata):
         metadata.duration = 60  # rough estimate
+
+    async def waitForSlew(self):
+        while True:
+            in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False, timeout=150)
+            if in_position.inPosition:
+                self.log.info("finished slew to end pos")
+                break
 
     @staticmethod
     def fault_check(summary_state_evt):
