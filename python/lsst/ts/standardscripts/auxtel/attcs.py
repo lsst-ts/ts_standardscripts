@@ -59,9 +59,9 @@ class ATTCS:
         self.athexapod = athexapod
         self.atdome = atdome
         self.atdometrajectory = atdometrajectory
-        self.check=SimpleNamespace(check)
+        self.check = types.SimpleNamespace(check)
         self.log = logging.getLogger("ATTCS")
-        self.within=within
+        self.within = within
 
     async def slew(
             self,
@@ -158,14 +158,14 @@ class ATTCS:
             if summary_state.summaryState != salobj.State.ENABLED:
                 raise RuntimeError(f"ATMCS state is {salobj.State(summary_state.summaryState)}")
 
-    async def check_csc_heartbeat(self,csc):
-        counter=0
+    async def check_csc_heartbeat(self, csc):
+        counter = 0
         while counter <= 6:
-            heartbeat = await getattr(self,csc).evt_heartbeat.next(flush=False)
+            heartbeat = await getattr(self, csc).evt_heartbeat.next(flush=False)
             if heartbeat is None:
-                counter+= 1
+                counter += 1
             else:
-                counter=0
+                counter = 0
         raise RuntimeError(f"{csc} not responsive after {counter} heartbeats.")
 
     async def check_atptg_state(self):
@@ -176,15 +176,6 @@ class ATTCS:
             summary_state = await self.atptg.evt_summaryState.next(flush=False)
             if summary_state.summaryState != salobj.State.ENABLED:
                 raise RuntimeError(f"ATPtg state is {salobj.State(summary_state.summaryState)}")
-
-    async def check_atptg_heartbeat(self):
-        while country <=6:
-            heartbeat = await self.atptg.evt_heartbeat.next(flush=False)
-            if heartbeat is None:
-                counter += 1
-            else:
-                counter=0
-        raise RuntimeError("CSC not responsive")
 
     async def check_athexapod_state(self):
         """
@@ -242,7 +233,7 @@ class ATTCS:
                 self.logo.info(f"Telescope slew finished")
                 break
 
-    async def check_track(
+    async def check_tracking(
             self,
             track_duration=None):
         """
@@ -259,9 +250,11 @@ class ATTCS:
             if self.check.atpneumatics:
                 coro_list.append(asyncio.ensure_future(self.check_atpneumatics_state))
                 coro_list.append(asyncio.ensure_future(self.check_csc_heartbeat("atpneumatics")))
+                coro_list.append(asyncio.ensure_future(self.verify_pneumatics))
             if self.check.athexapod:
                 coro_list.append(asyncio.ensure_future(self.check_athexapod_state))
                 coro_list.append(asyncio.ensure_future(self.check_csc_heartbeat("athexapod")))
+                coro_list.append(asyncio.ensure_future(self.verify_hexapod))
             if self.check.atdome:
                 coro_list.append(asyncio.ensure_future(self.check_atdome_state))
                 coro_list.append(asyncio.ensure_future(self.check_csc_state("atdome")))
@@ -285,7 +278,7 @@ class ATTCS:
 
     async def check_target_status(self):
         """
-        Checks the targeting status of the atmcs. 
+        Checks the targeting status of the atmcs.
         """
         while True:
             in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False)
@@ -295,7 +288,8 @@ class ATTCS:
 
     async def verify_hexapod(self):
         """
-        Verifies that the hexapod commanded values are close to the actual values being returned by the hexapod.
+        Verifies that the hexapod commanded values are close to the actual values being returned
+        by the hexapod.
         """
         athexapod_inposition = self.athexapod.evt_inPosition.next(flush=True, timeout=60)
         athexapod_positionupdate = self.athexapod.evt_positionUpdate.next(flush=True, timeout=60)
@@ -326,7 +320,7 @@ class ATTCS:
         self.pneumatics_check_values(results2[0], results2[1], self.within)
         self.pneumatics_check_values(results2[2], results2[3], self.within)
 
-    def hexapod_check_values(self, athex_position, athex_correction, within=self.within):
+    def hexapod_check_values(self, athex_position, athex_correction, within):
         """
         Performs the actual check of the hexapod.
         """
@@ -346,23 +340,23 @@ class ATTCS:
         if (c1 or c2 or c3) is False:
             raise RuntimeError(f"Hexapod not corrected within {within*100} percent tolerance")
 
-    def pneumatics_check_values(self, atpne_pre, atpneu_post, within=self.within):
+    def pneumatics_check_values(self, atpne_pre, atpneu_post, within):
         """
         Performs the actual check of the pneumatics.
         """
         self.log.info(f"checking pneumatics correction within {within*100} percent tolerance")
         c1 = math.isclose(atpne_pre.pressure, atpneu_post.pressure, rel_tol=within)
-        self.log.info(f"pneumatics is {c1}")
+        self.log.info(f"pneumatics is {c1}, difference is {atpne_pre.pressure - atpneu_post.pressure}")
         if c1 is False:
             raise RuntimeError(f"Pneumatics not corrected within {within*100} percent tolerance")
 
     async def verify_dome(self):
-        atdome_commanded=self.atdome.evt_azimuthCommandedState.next(flush=True, timeout=120)
-        atdome_actual=self.atdome.tel_position.next(flush=True)
-        atdome_result=await asyncio.gather(atdome_commanded, atdome_actual)
+        atdome_commanded = self.atdome.evt_azimuthCommandedState.next(flush=True, timeout=120)
+        atdome_actual = self.atdome.tel_position.next(flush=True)
+        atdome_result = await asyncio.gather(atdome_commanded, atdome_actual)
         self.dome_check_values(atdome_result[0], atdome_result[1], within=self.within)
 
-    def dome_check_values(self, atdomecommanded, atdomeactual, within=self.within):
+    def dome_check_values(self, atdomecommanded, atdomeactual, within):
         self.log.info(f"checking atdome position within {within*100} percent tolerance")
         c1 = math.isclose(atdomecommanded.azimuth, atdomeactual.azimuthPosition, rel_tol=within)
         self.log.info(f"Dome azimuth is {c1}")
