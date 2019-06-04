@@ -138,6 +138,7 @@ class ATTracking(scriptqueue.BaseScript):
         self.enable_atpneumatics = bool(enable_atpneumatics)
         self.within = float(within)
         self.attcs.within = self.within
+        self.attcs.check = types.SimpleNamespace(**check)
 
     def assertEqual(self, what, val1, val2, more=""):
         if val1 != val2:
