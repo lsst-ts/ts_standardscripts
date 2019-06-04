@@ -27,7 +27,8 @@ import logging
 
 import astropy.units as u
 from astropy.time import Time
-from astropy.coordinates import AltAz, ICRS, EarthLocation, Angle
+from astropy.coordinates import AltAz, ICRS, EarthLocation
+from math import isclose
 
 from lsst.ts import salobj
 from lsst.ts import scriptqueue
@@ -47,30 +48,31 @@ class ATSlewing(scriptqueue.BaseScript):
         ataos = salobj.Remote(SALPY_ATAOS)
         athexapod = salobj.Remote(SALPY_ATHexapod)
         atpneumatics = salobj.Remote(SALPY_ATPneumatics)
-
+        self.timeout = 5
+        self.tolerance = 0.5
         super().__init__(index=index,
                          descr="integration test for components involved in slewing operations",
                          remotes_dict=dict(atmcs=atmcs,
-                             atptg=atptg,
-                             ataos=ataos,
-                             athexapod=athexapod,
-                             atpneumatics=atpneumatics))
+                                           atptg=atptg,
+                                           ataos=ataos,
+                                           athexapod=athexapod,
+                                           atpneumatics=atpneumatics))
         self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
                                                     lat=-30.244728*u.deg,
                                                     height=2663.0*u.m)
         self.pool_time = 10.  # wait time in tracking test loop (seconds)
 
     async def configure(self,
-            startEl=45.,
-            startAz=45.,
-            endEl=75.,
-            endAz=135.,
-            max_sep=1.,
-            enable_atmcs=True,
-            enable_atptg=True,
-            enable_ataos=True,
-            enable_athexapod=True,
-            enable_atpneumatics=True):
+                        startEl=45.,
+                        startAz=45.,
+                        endEl=75.,
+                        endAz=135.,
+                        max_sep=1.,
+                        enable_atmcs=True,
+                        enable_atptg=True,
+                        enable_ataos=True,
+                        enable_athexapod=True,
+                        enable_atpneumatics=True):
         """Configure the script.
         Parameters
         ----------
@@ -104,49 +106,50 @@ class ATSlewing(scriptqueue.BaseScript):
 
     async def run(self):
         # Enable ATMCS and ATPgt, if requested, else check they are enabled
+        print("here")
         await self.checkpoint("enable_cscs")
+        print("waited for csc enables")
         if self.enable_atmcs:
             self.log.info(f"Enable ATMCS")
-            await salobj.enable_csc(self.atmcs)
+            await salobj.set_summary_state(self.atmcs, salobj.State.ENABLED)
         else:
-            data = await self.atmcs.evt_summaryState.next(flush=False)
+            data = await self.atmcs.evt_summaryState.next(flush=False, timeout=self.timeout)
             self.assertEqual("ATMCS summaryState", data.summaryState, salobj.State.ENABLED,
                              "ENABLED")
         if self.enable_atptg:
             self.log.info("Enable ATPtg")
             await salobj.enable_csc(self.atptg)
         else:
-            data = await self.atptg.evt_summaryState.next(flush=False)
+            data = await self.atptg.evt_summaryState.next(flush=False, timeout=self.timeout)
             self.assertEqual("ATPtg summaryState", data.summaryState, salobj.State.ENABLED,
                              "ENABLED")
         if self.enable_ataos:
             self.log.info("Enable ATAOS")
             await salobj.enable_csc(self.ataos)
         else:
-            data = await self.ataos.evt_summaryState.next(flush=False)
+            data = await self.ataos.evt_summaryState.next(flush=False, timeout=self.timeout)
             self.assertEqual("ATAOS summaryState",
-                    data.summaryState,
-                    salobj.State.ENABLED,
-                    "ENABLED")
+                             data.summaryState,
+                             salobj.State.ENABLED,
+                             "ENABLED")
         if self.enable_athexapod:
             self.log.info("Enable ATHexapod")
             await salobj.enable_csc(self.athexapod)
         else:
-            data = await self.athexapod.evt_summaryState.next(flush=False)
+            data = await self.athexapod.evt_summaryState.next(flush=False, timeout=self.timeout)
             self.assertEqual("ATHexapod summaryState",
-                    data.summaryState,
-                    salobj.State.ENABLED,
-                    "ENABLED")
+                             data.summaryState,
+                             salobj.State.ENABLED,
+                             "ENABLED")
         if self.enable_atpneumatics:
             self.log.info("Enable ATPneumatics")
             await salobj.enable_csc(self.atpneumatics)
         else:
-            data = await self.atpneumatics.evt_summaryState.next(flush=False)
+            data = await self.atpneumatics.evt_summaryState.next(flush=False, timeout=self.timeout)
             self.assertEqual("ATPneumatics summaryState",
-                    data.summaryState,
-                    salobj.State.ENABLED,
-                    "ENABLED")
-
+                             data.summaryState,
+                             salobj.State.ENABLED,
+                             "ENABLED")
 
         # Report current az/alt
         self.log.debug("here")
@@ -163,11 +166,13 @@ class ATSlewing(scriptqueue.BaseScript):
         self.log.info(f"Time error={time_err.sec:0.2f} sec")
 
         # Compute RA/Dec for starting az/el
-        cmd_startelaz = AltAz(alt=self.startEl, az=self.startAz, obstime=curr_time_atptg.tai, location=self.location)
+        cmd_startelaz = AltAz(alt=self.startEl, az=self.startAz, obstime=curr_time_atptg.tai,
+                              location=self.location)
         cmd_startradec = cmd_startelaz.transform_to(ICRS)
 
-         # Compute RA/Dec for ending az/el
-        cmd_endelaz = AltAz(alt=self.endEl, az=self.endAz, obstime=curr_time_atptg.tai, location=self.location)
+        # Compute RA/Dec for ending az/el
+        cmd_endelaz = AltAz(alt=self.endEl, az=self.endAz, obstime=curr_time_atptg.tai,
+                            location=self.location)
         cmd_endradec = cmd_endelaz.transform_to(ICRS)
 
         # move to starting position
@@ -226,17 +231,12 @@ class ATSlewing(scriptqueue.BaseScript):
         # Check that the telescope is heading towards the target
         data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
         print(f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}")
-        curr_elaz0 = AltAz(alt=data.elevationCalculatedAngle*u.deg, az=data.azimuthCalculatedAngle*u.deg,
-                           obstime=Time.now(), location=self.location)
         for i in range(5):
             data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
             print(f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}")
-        curr_elaz1 = AltAz(alt=data.elevationCalculatedAngle*u.deg, az=data.azimuthCalculatedAngle*u.deg,
-                           obstime=Time.now(), location=self.location)
-        #enable ATAOS correction loop
+        # enable ATAOS correction loop
         self.ataos.cmd_enableCorrection.set(enableAll=True)
         await self.ataos.cmd_enableCorrection.start(timeout=10)
-
 
         # move to ending position
         await self.atptg.cmd_stopTracking.start(timeout=5)
@@ -277,16 +277,39 @@ class ATSlewing(scriptqueue.BaseScript):
                       f"az={data.azimuthCalculatedAngle}")
 
         # Test that we are in the state we want to be in
-        try:
-            print("checking m1 correction az/el")
-            data = await self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=75)
-        except(TimeoutError):
-            print("m1 correction start timed out")
+        print("checking ATAOS events reporting az/el consistent with target")
+        data = await self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=75)
         self.log.info(f"AOS M1 Correction start reported el={data.elevation}, "
                       f"az={data.azimuth}")
+        assert isclose(self.endEl.value, data.elevation, abs_tol=self.tolerance)
+        assert isclose(self.endAz.value, data.azimuth, abs_tol=self.tolerance)
         data = await self.ataos.evt_m1CorrectionCompleted.next(flush=True, timeout=75)
-        self.log.info(f"AOS M1 Correction start reported el={data.elevation}, "
+        self.log.info(f"AOS M1 Correction complete reported el={data.elevation}, "
                       f"az={data.azimuth}")
+        assert isclose(self.endEl.value, data.elevation, abs_tol=self.tolerance)
+        assert isclose(self.endAz.value, data.azimuth, abs_tol=self.tolerance)
+
+        data = await self.ataos.evt_m2CorrectionStarted.next(flush=True, timeout=75)
+        self.log.info(f"AOS M2 Correction start reported el={data.elevation}, "
+                      f"az={data.azimuth}")
+        assert isclose(self.endEl.value, data.elevation, abs_tol=self.tolerance)
+        assert isclose(self.endAz.value, data.azimuth, abs_tol=self.tolerance)
+        data = await self.ataos.evt_m2CorrectionCompleted.next(flush=True, timeout=75)
+        self.log.info(f"AOS M2 Correction complete reported el={data.elevation}, "
+                      f"az={data.azimuth}")
+        assert isclose(self.endEl.value, data.elevation, abs_tol=self.tolerance)
+        assert isclose(self.endAz.value, data.azimuth, abs_tol=self.tolerance)
+
+        data = await self.ataos.evt_hexapodCorrectionStarted.next(flush=True, timeout=75)
+        self.log.info(f"AOS hexapod Correction start reported el={data.elevation}, "
+                      f"az={data.azimuth}")
+        assert isclose(self.endEl.value, data.elevation, abs_tol=self.tolerance)
+        assert isclose(self.endAz.value, data.azimuth, abs_tol=self.tolerance)
+        data = await self.ataos.evt_hexapodCorrectionCompleted.next(flush=True, timeout=75)
+        self.log.info(f"AOS hexapod Correction complete reported el={data.elevation}, "
+                      f"az={data.azimuth}")
+        assert isclose(self.endEl.value, data.elevation, abs_tol=self.tolerance)
+        assert isclose(self.endAz.value, data.azimuth, abs_tol=self.tolerance)
 
     def set_metadata(self, metadata):
         metadata.duration = 60  # rough estimate
@@ -319,8 +342,7 @@ async def main():
 
     script = ATSlewing(index=10)
 
-
-    script.log.setLevel(logging.INFO)
+    script.log.setLevel(logging.DEBUG)
     script.log.addHandler(logging.StreamHandler())
 
     config_dict = dict(enable_atmcs=True, enable_atptg=False, enable_athexapod=False)
