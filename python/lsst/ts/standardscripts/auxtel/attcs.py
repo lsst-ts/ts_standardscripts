@@ -59,7 +59,7 @@ class ATTCS:
         self.athexapod = athexapod
         self.atdome = atdome
         self.atdometrajectory = atdometrajectory
-        self.check = types.SimpleNamespace(check)
+        self.check = types.SimpleNamespace(**check)
         self.log = logging.getLogger("ATTCS")
         self.within = within
 

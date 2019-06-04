@@ -28,7 +28,7 @@ class ATTCSSlewIntegration(scriptqueue.BaseScript):
         atAosRem = salobj.Remote(SALPY_ATAOS)
         atPneuRem = salobj.Remote(SALPY_ATPneumatics)
         atHexRem = salobj.Remote(SALPY_ATHexapod)
-        atDomeRem = salobj.Remote(SALPY_ATDome)
+        atDomeRem = salobj.Remote(SALPY_ATDome, index=13)
         atDomeTrajRem = salobj.Remote(SALPY_ATDomeTrajectory)
 
         super().__init__(index=index,
@@ -43,10 +43,16 @@ class ATTCSSlewIntegration(scriptqueue.BaseScript):
         self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
                                                     lat=-30.244728*u.deg,
                                                     height=2663.0*u.m)
-
+        check_dict = dict(ATAOS=True,
+                          ATMCS=True,
+                          ATPtg=True,
+                          ATDome=True,
+                          ATDomeTrajectory=True,
+                          ATHexapod=True,
+                          ATPneumatics=True)
         self.attcs = ATTCS(atMcsRem, atPtgRem, atAosRem, 
                            atPneuRem, atHexRem, atDomeRem,
-                           atHexRem)
+                           atHexRem, check_dict)
 
     async def configure(self,
                         startEl=45.,
@@ -89,6 +95,9 @@ class ATTCSSlewIntegration(scriptqueue.BaseScript):
         self.enable_atpneumatics = bool(enable_atpneumatics)
         self.enable_atdome = bool(enable_atdome)
         self.enable_atdometrajectory = bool(enable_atdometrajectory)
+
+    def set_metadata(self, metadata):
+        metadata.duration = 60  # rough estimate
 
     async def run(self):
         # Enable components if requested, else check they are enabled
