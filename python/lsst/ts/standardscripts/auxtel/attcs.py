@@ -219,7 +219,7 @@ class ATTCS:
             in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False)
             self.log.debug(f"Got {in_position.inPosition}")
             if in_position.inPosition:
-                self.logo.info(f"Telescope slew finished")
+                self.log.info(f"Telescope slew finished")
                 break
 
     async def check_tracking(self, track_duration=None):
