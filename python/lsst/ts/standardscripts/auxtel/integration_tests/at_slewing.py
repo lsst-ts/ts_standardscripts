@@ -237,6 +237,9 @@ class ATSlewing(scriptqueue.BaseScript):
         # enable ATAOS correction loop
         self.ataos.cmd_enableCorrection.set(enableAll=True)
         await self.ataos.cmd_enableCorrection.start(timeout=10)
+
+        # run checks
+        await self.checkPosition(self.startAz, self.startEl)
         
         self.log.debug("Wait for correction to complete.")
         # Wait for correction to complete
