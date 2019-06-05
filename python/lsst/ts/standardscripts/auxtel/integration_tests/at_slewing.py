@@ -106,9 +106,8 @@ class ATSlewing(scriptqueue.BaseScript):
 
     async def run(self):
         # Enable ATMCS and ATPgt, if requested, else check they are enabled
-        print("here")
+
         await self.checkpoint("enable_cscs")
-        print("waited for csc enables")
         if self.enable_atmcs:
             self.log.info(f"Enable ATMCS")
             await salobj.set_summary_state(self.atmcs, salobj.State.ENABLED)
@@ -176,7 +175,7 @@ class ATSlewing(scriptqueue.BaseScript):
         cmd_endradec = cmd_endelaz.transform_to(ICRS)
 
         # move to starting position
-        print("move to starting position")
+        self.log.info("move to starting position")
         self.atptg.cmd_raDecTarget.set(
             targetName="slew_integration_startposition",
             targetInstance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
@@ -230,10 +229,10 @@ class ATSlewing(scriptqueue.BaseScript):
 
         # Check that the telescope is heading towards the target
         data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
-        print(f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}")
+        self.log.info(f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}")
         for i in range(5):
             data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
-            print(f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}")
+            self.log.info(f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}")
         # enable ATAOS correction loop
         self.ataos.cmd_enableCorrection.set(enableAll=True)
         await self.ataos.cmd_enableCorrection.start(timeout=10)
@@ -253,7 +252,7 @@ class ATSlewing(scriptqueue.BaseScript):
 
         # move to ending position
         await self.atptg.cmd_stopTracking.start(timeout=5)
-        print("moving to ending position")
+        self.log.info("moving to ending position")
         self.atptg.cmd_raDecTarget.set(
             targetName="slew_integration_endposition",
             targetInstance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
@@ -301,7 +300,6 @@ class ATSlewing(scriptqueue.BaseScript):
         metadata.duration = 60  # rough estimate
 
     async def checkPosition(self, refAz, refEl):
-        print("checking ATAOS events reporting az/el consistent with target")
 
         data = await self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=75)
         wrappedAz = Angle(data.azimuth*u.deg).wrap_at(360*u.deg).degree
@@ -391,15 +389,13 @@ async def main():
 
     config_dict = dict(enable_atmcs=True, enable_atptg=False, enable_athexapod=False)
 
-    print("*** configure")
     config_data = script.cmd_configure.DataType()
     config_data.config = yaml.safe_dump(config_dict)
     config_id_data = salobj.CommandIdData(1, config_data)
     await script.do_configure(config_id_data)
 
-    print("*** run")
     await script.do_run(None)
-    print("*** done")
+
 
 
 if __name__ == '__main__':
