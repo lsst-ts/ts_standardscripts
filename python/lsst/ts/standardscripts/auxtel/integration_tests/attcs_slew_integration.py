@@ -54,6 +54,8 @@ class ATTCSSlewIntegration(scriptqueue.BaseScript):
                            atPneuRem, atHexRem, atDomeRem,
                            atHexRem, check_dict)
 
+        self.timeout = 10
+
     async def configure(self,
                         startEl=45.,
                         startAz=45.,
@@ -98,6 +100,10 @@ class ATTCSSlewIntegration(scriptqueue.BaseScript):
 
     def set_metadata(self, metadata):
         metadata.duration = 60  # rough estimate
+
+    def assertEqual(self, what, val1, val2, more=""):
+        if val1 != val2:
+            raise RuntimeError(f"{what} = {val1}; should be {val2} {more}")
 
     async def run(self):
         # Enable components if requested, else check they are enabled

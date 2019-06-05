@@ -27,7 +27,7 @@ import logging
 
 import astropy.units as u
 from astropy.time import Time
-from astropy.coordinates import AltAz, ICRS, EarthLocation
+from astropy.coordinates import AltAz, ICRS, EarthLocation, Angle
 from math import isclose
 
 from lsst.ts import salobj
@@ -49,7 +49,7 @@ class ATSlewing(scriptqueue.BaseScript):
         athexapod = salobj.Remote(SALPY_ATHexapod)
         atpneumatics = salobj.Remote(SALPY_ATPneumatics)
         self.timeout = 5
-        self.tolerance = 2.
+        self.tolerance = .01
         super().__init__(index=index,
                          descr="integration test for components involved in slewing operations",
                          remotes_dict=dict(atmcs=atmcs,
@@ -282,7 +282,11 @@ class ATSlewing(scriptqueue.BaseScript):
 
         # Test that we are in the state we want to be in
         print("checking ATAOS events reporting az/el consistent with target")
+
         data = await self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=75)
+        wrappedAz = Angle(data.azimuth).wrap_at(360*u.deg).degree
+        print("***")
+        print(wrappedAz)
         self.log.info(f"AOS M1 Correction start reported el={data.elevation}, "
                       f"az={data.azimuth}")
         self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")
@@ -293,29 +297,41 @@ class ATSlewing(scriptqueue.BaseScript):
         data = await self.ataos.evt_m1CorrectionCompleted.next(flush=True, timeout=75)
         self.log.info(f"AOS M1 Correction complete reported el={data.elevation}, "
                       f"az={data.azimuth}")
+        self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")              
         assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
+        self.log.debug(f"endAz: {self.endAz.value} - {data.azimuth} = {self.endAz.value-data.azimuth}")
         assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
 
         data = await self.ataos.evt_m2CorrectionStarted.next(flush=True, timeout=75)
         self.log.info(f"AOS M2 Correction start reported el={data.elevation}, "
                       f"az={data.azimuth}")
+        self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")
         assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
+        self.log.debug(f"endAz: {self.endAz.value} - {data.azimuth} = {self.endAz.value-data.azimuth}")
         assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
+
         data = await self.ataos.evt_m2CorrectionCompleted.next(flush=True, timeout=75)
         self.log.info(f"AOS M2 Correction complete reported el={data.elevation}, "
                       f"az={data.azimuth}")
+        self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")
         assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
+        self.log.debug(f"endAz: {self.endAz.value} - {data.azimuth} = {self.endAz.value-data.azimuth}")
         assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
 
         data = await self.ataos.evt_hexapodCorrectionStarted.next(flush=True, timeout=75)
         self.log.info(f"AOS hexapod Correction start reported el={data.elevation}, "
                       f"az={data.azimuth}")
+        self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")
         assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
+        self.log.debug(f"endAz: {self.endAz.value} - {data.azimuth} = {self.endAz.value-data.azimuth}")
         assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
+
         data = await self.ataos.evt_hexapodCorrectionCompleted.next(flush=True, timeout=75)
         self.log.info(f"AOS hexapod Correction complete reported el={data.elevation}, "
                       f"az={data.azimuth}")
+        self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")
         assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
+        self.log.debug(f"endAz: {self.endAz.value} - {data.azimuth} = {self.endAz.value-data.azimuth}")
         assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
 
     def set_metadata(self, metadata):
