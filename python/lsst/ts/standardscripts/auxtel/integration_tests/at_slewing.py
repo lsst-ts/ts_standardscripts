@@ -49,7 +49,7 @@ class ATSlewing(scriptqueue.BaseScript):
         athexapod = salobj.Remote(SALPY_ATHexapod)
         atpneumatics = salobj.Remote(SALPY_ATPneumatics)
         self.timeout = 5
-        self.tolerance = .01
+        self.tolerance = .05
         super().__init__(index=index,
                          descr="integration test for components involved in slewing operations",
                          remotes_dict=dict(atmcs=atmcs,
@@ -63,10 +63,10 @@ class ATSlewing(scriptqueue.BaseScript):
         self.pool_time = 10.  # wait time in tracking test loop (seconds)
 
     async def configure(self,
-                        startEl=45.,
-                        startAz=45.,
-                        endEl=75.,
-                        endAz=135.,
+                        startEl=60.,
+                        startAz=10.,
+                        endEl=45.,
+                        endAz=300.,
                         max_sep=1.,
                         enable_atmcs=True,
                         enable_atptg=True,
