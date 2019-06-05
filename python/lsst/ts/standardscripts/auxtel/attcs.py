@@ -1,12 +1,19 @@
 import asyncio
 import logging
 import math
+import types
 
 from astropy.time import Time
 
 from lsst.ts import salobj
+
 import SALPY_ATPtg
-import types
+import SALPY_ATMCS
+import SALPY_ATPneumatics
+import SALPY_ATHexapod
+import SALPY_ATAOS
+import SALPY_ATDome
+import SALPY_ATDomeTrajectory
 
 
 class ATTCS:
@@ -24,8 +31,9 @@ class ATTCS:
     athexapod: salobj.Remote
     atdome: salobj.Remote
     atdometrajectory: salobj.Remote
-    check: dict
-        A dictionary of csc names as the keys with either true or false as the value.
+    check: list
+        A list of CSC names that will be added to check when performing
+        operations.
     within: float
         The relative tolerance of the values to compare.
 
@@ -42,17 +50,28 @@ class ATTCS:
     within: float
     """
 
-    def __init__(self, atmcs, atptg, ataos, atpneumatics, athexapod, atdome, atdometrajectory,
-                 check, within=0.02):
+    def __init__(self, atmcs=None, atptg=None, ataos=None, atpneumatics=None, athexapod=None,
+                 atdome=None, atdometrajectory=None,
+                 check=None, within=0.02):
 
-        self.atmcs = atmcs
-        self.atptg = atptg
-        self.ataos = ataos
-        self.atpneumatics = atpneumatics
-        self.athexapod = athexapod
-        self.atdome = atdome
-        self.atdometrajectory = atdometrajectory
-        self.check = types.SimpleNamespace(**check)
+        self.atmcs = atmcs if atmcs is not None else salobj.Remote(SALPY_ATMCS)
+        self.atptg = atptg if atptg is not None else salobj.Remote(SALPY_ATPtg)
+        self.ataos = ataos if atptg is not None else salobj.Remote(SALPY_ATAOS)
+        self.atpneumatics = atpneumatics if atpneumatics is not None \
+            else salobj.Remote(SALPY_ATPneumatics)
+        self.athexapod = athexapod if athexapod is not None else salobj.Remote(SALPY_ATHexapod)
+        self.atdome = atdome if atdome is not None else salobj.Remote(SALPY_ATDome, 1)
+        self.atdometrajectory = atdometrajectory if atdometrajectory is not None \
+            else salobj.Remote(SALPY_ATDomeTrajectory)
+
+        csc_namespace = dict()
+        for component in self.components():
+            if check is not None and component in check:
+                csc_namespace[component] = True
+            else:
+                csc_namespace[component] = False
+        self.check = types.SimpleNamespace(**csc_namespace)
+
         self.log = logging.getLogger("ATTCS")
         self.within = within
 
@@ -194,8 +213,7 @@ class ATTCS:
                 raise RuntimeError(f"ATDometrajectory state is {salobj.State(summary_state.summaryState)}")
 
     async def wait_for_position(self):
-        """
-        Wait for position of atmcs to be ready.
+        """ Wait for position of atmcs to be ready.
         """
         while True:
             in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False)
@@ -204,11 +222,15 @@ class ATTCS:
                 self.logo.info(f"Telescope slew finished")
                 break
 
-    async def check_tracking(
-            self,
-            track_duration=None):
-        """
-        Check the state of tracking.
+    async def check_tracking(self, track_duration=None):
+        """ Check the state of tracking.
+
+        Parameters
+        ----------
+        track_duration : float
+            How long to check for tracking (in seconds). If `None`, will check
+            forever.
+
         """
         start_time = Time.now()
         while Time.now() - start_time < track_duration:
@@ -333,3 +355,9 @@ class ATTCS:
         self.log.info(f"Dome azimuth is {c1}")
         if c1 is False:
             raise RuntimeError(f"Dome azimuth is not within {within*100} percent tolerance")
+
+    @staticmethod
+    def components():
+        """Return a list of components names.
+        """
+        return "ATPtg", "ATMCS", "ATPneumatics", "ATHexapod", "ATAOS", "ATDome", "ATDomeTrajectory"
