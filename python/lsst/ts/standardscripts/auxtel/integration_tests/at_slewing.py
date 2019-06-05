@@ -292,61 +292,68 @@ class ATSlewing(scriptqueue.BaseScript):
 
         #FIXME: MAKE CHECK IN A METHOD
         # Test that we are in the state we want to be in
+        await self.checkPosition(self.endAz, self.endEl)
+
+    def set_metadata(self, metadata):
+        metadata.duration = 60  # rough estimate
+
+    async def checkPosition(self, refAz, refEl):
         print("checking ATAOS events reporting az/el consistent with target")
 
         data = await self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=75)
         wrappedAz = Angle(data.azimuth*u.deg).wrap_at(360*u.deg).degree
-        print("***")
-        print(wrappedAz)
         self.log.info(f"AOS M1 Correction start reported el={data.elevation}, "
-                      f"az={data.azimuth}")
-        self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")
-        assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
-        self.log.debug(f"endAz: {self.endAz.value} - {data.azimuth} = {self.endAz.value-data.azimuth}")
-        assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
+                      f"az={wrappedAz}")
+        self.log.debug(f"endEl: {refEl.value} - {data.elevation} = {refEl.value-data.elevation}")
+        assert isclose(refEl.value, data.elevation, rel_tol=self.tolerance)
+        self.log.debug(f"endAz: {refAz.value} - {wrappedAz} = {refAz.value-wrappedAz}")
+        assert isclose(refAz.value, wrappedAz, rel_tol=self.tolerance)
         
         data = await self.ataos.evt_m1CorrectionCompleted.next(flush=True, timeout=75)
+        wrappedAz = Angle(data.azimuth*u.deg).wrap_at(360*u.deg).degree
         self.log.info(f"AOS M1 Correction complete reported el={data.elevation}, "
-                      f"az={data.azimuth}")
-        self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")              
-        assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
-        self.log.debug(f"endAz: {self.endAz.value} - {data.azimuth} = {self.endAz.value-data.azimuth}")
-        assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
+                      f"az={wrappedAz}")
+        self.log.debug(f"endEl: {refEl.value} - {data.elevation} = {refEl.value-data.elevation}")              
+        assert isclose(refEl.value, data.elevation, rel_tol=self.tolerance)
+        self.log.debug(f"endAz: {refAz.value} - {wrappedAz} = {refAz.value-wrappedAz}")
+        assert isclose(refAz.value, wrappedAz, rel_tol=self.tolerance)
 
         data = await self.ataos.evt_m2CorrectionStarted.next(flush=True, timeout=75)
+        wrappedAz = Angle(data.azimuth*u.deg).wrap_at(360*u.deg).degree
         self.log.info(f"AOS M2 Correction start reported el={data.elevation}, "
-                      f"az={data.azimuth}")
-        self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")
-        assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
-        self.log.debug(f"endAz: {self.endAz.value} - {data.azimuth} = {self.endAz.value-data.azimuth}")
-        assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
+                      f"az={wrappedAz}")
+        self.log.debug(f"endEl: {refEl.value} - {data.elevation} = {refEl.value-data.elevation}")
+        assert isclose(refEl.value, data.elevation, rel_tol=self.tolerance)
+        self.log.debug(f"endAz: {refAz.value} - {wrappedAz} = {refAz.value-wrappedAz}")
+        assert isclose(refAz.value, wrappedAz, rel_tol=self.tolerance)
 
         data = await self.ataos.evt_m2CorrectionCompleted.next(flush=True, timeout=75)
+        wrappedAz = Angle(data.azimuth*u.deg).wrap_at(360*u.deg).degree
         self.log.info(f"AOS M2 Correction complete reported el={data.elevation}, "
-                      f"az={data.azimuth}")
-        self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")
-        assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
-        self.log.debug(f"endAz: {self.endAz.value} - {data.azimuth} = {self.endAz.value-data.azimuth}")
-        assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
+                      f"az={wrappedAz}")
+        self.log.debug(f"endEl: {refEl.value} - {data.elevation} = {refEl.value-data.elevation}")
+        assert isclose(refEl.value, data.elevation, rel_tol=self.tolerance)
+        self.log.debug(f"endAz: {refAz.value} - {wrappedAz} = {refAz.value-wrappedAz}")
+        assert isclose(refAz.value, wrappedAz, rel_tol=self.tolerance)
 
         data = await self.ataos.evt_hexapodCorrectionStarted.next(flush=True, timeout=75)
+        wrappedAz = Angle(data.azimuth*u.deg).wrap_at(360*u.deg).degree
         self.log.info(f"AOS hexapod Correction start reported el={data.elevation}, "
-                      f"az={data.azimuth}")
-        self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")
-        assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
-        self.log.debug(f"endAz: {self.endAz.value} - {data.azimuth} = {self.endAz.value-data.azimuth}")
-        assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
+                      f"az={wrappedAz}")
+        self.log.debug(f"endEl: {refEl.value} - {data.elevation} = {refEl.value-data.elevation}")
+        assert isclose(refEl.value, data.elevation, rel_tol=self.tolerance)
+        self.log.debug(f"endAz: {refAz.value} - {wrappedAz} = {refAz.value-wrappedAz}")
+        assert isclose(refAz.value, wrappedAz, rel_tol=self.tolerance)
 
         data = await self.ataos.evt_hexapodCorrectionCompleted.next(flush=True, timeout=75)
+        wrappedAz = Angle(data.azimuth*u.deg).wrap_at(360*u.deg).degree
         self.log.info(f"AOS hexapod Correction complete reported el={data.elevation}, "
-                      f"az={data.azimuth}")
-        self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")
-        assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
-        self.log.debug(f"endAz: {self.endAz.value} - {data.azimuth} = {self.endAz.value-data.azimuth}")
-        assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
+                      f"az={wrappedAz}")
+        self.log.debug(f"endEl: {refEl.value} - {data.elevation} = {refEl.value-data.elevation}")
+        assert isclose(refEl.value, data.elevation, rel_tol=self.tolerance)
+        self.log.debug(f"endAz: {refAz.value} - {wrappedAz} = {refAz.value-wrappedAz}")
+        assert isclose(refAz.value, wrappedAz, rel_tol=self.tolerance)
 
-    def set_metadata(self, metadata):
-        metadata.duration = 60  # rough estimate
 
     async def waitForSlew(self):
         while True:
