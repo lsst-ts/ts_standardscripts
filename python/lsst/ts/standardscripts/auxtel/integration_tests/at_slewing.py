@@ -49,7 +49,7 @@ class ATSlewing(scriptqueue.BaseScript):
         athexapod = salobj.Remote(SALPY_ATHexapod)
         atpneumatics = salobj.Remote(SALPY_ATPneumatics)
         self.timeout = 5
-        self.tolerance = 0.5
+        self.tolerance = 2.
         super().__init__(index=index,
                          descr="integration test for components involved in slewing operations",
                          remotes_dict=dict(atmcs=atmcs,
@@ -191,8 +191,8 @@ class ATSlewing(scriptqueue.BaseScript):
             rv=0,
             dRA=0,
             dDec=0,
-            rotPA=0,
-            rotFrame=SALPY_ATPtg.ATPtg_shared_RotFrame_target,
+            rotPA=180.-cmd_startelaz.alt.deg,
+            rotFrame=SALPY_ATPtg.ATPtg_shared_RotFrame_fixed,
             rotMode=SALPY_ATPtg.ATPtg_shared_RotMode_field,
         )
         self.log.info(f"raDecTargetStart ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
@@ -255,14 +255,18 @@ class ATSlewing(scriptqueue.BaseScript):
             rv=0,
             dRA=0,
             dDec=0,
-            rotPA=0,
-            rotFrame=SALPY_ATPtg.ATPtg_shared_RotFrame_target,
+            rotPA=180.-cmd_endelaz.alt.deg,
+            rotFrame=SALPY_ATPtg.ATPtg_shared_RotFrame_fixed,
             rotMode=SALPY_ATPtg.ATPtg_shared_RotMode_field,
         )
         self.log.info(f"raDecTargetEnd ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
                       f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg")
         self.atmcs.evt_target.flush()
         self.atmcs.evt_allAxesInPosition.flush()
+        self.log.debug("Stopping tracking...")
+        await self.atptg.cmd_stopTracking.start(timeout=30.)
+        self.log.debug("Sending raDecTarget...")
+        await self.atmcs.cmd_startTracking.start(timeout=60.)
         ack_id = await self.atptg.cmd_raDecTarget.start(timeout=2)
         self.log.info(f"raDecTarget command result: {ack_id.ack.result}")
         while True:
@@ -281,35 +285,38 @@ class ATSlewing(scriptqueue.BaseScript):
         data = await self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=75)
         self.log.info(f"AOS M1 Correction start reported el={data.elevation}, "
                       f"az={data.azimuth}")
-        assert isclose(self.endEl.value, data.elevation, abs_tol=self.tolerance)
-        assert isclose(self.endAz.value, data.azimuth, abs_tol=self.tolerance)
+        self.log.debug(f"endEl: {self.endEl.value} - {data.elevation} = {self.endEl.value-data.elevation}")
+        assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
+        self.log.debug(f"endAz: {self.endAz.value} - {data.azimuth} = {self.endAz.value-data.azimuth}")
+        assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
+        
         data = await self.ataos.evt_m1CorrectionCompleted.next(flush=True, timeout=75)
         self.log.info(f"AOS M1 Correction complete reported el={data.elevation}, "
                       f"az={data.azimuth}")
-        assert isclose(self.endEl.value, data.elevation, abs_tol=self.tolerance)
-        assert isclose(self.endAz.value, data.azimuth, abs_tol=self.tolerance)
+        assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
+        assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
 
         data = await self.ataos.evt_m2CorrectionStarted.next(flush=True, timeout=75)
         self.log.info(f"AOS M2 Correction start reported el={data.elevation}, "
                       f"az={data.azimuth}")
-        assert isclose(self.endEl.value, data.elevation, abs_tol=self.tolerance)
-        assert isclose(self.endAz.value, data.azimuth, abs_tol=self.tolerance)
+        assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
+        assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
         data = await self.ataos.evt_m2CorrectionCompleted.next(flush=True, timeout=75)
         self.log.info(f"AOS M2 Correction complete reported el={data.elevation}, "
                       f"az={data.azimuth}")
-        assert isclose(self.endEl.value, data.elevation, abs_tol=self.tolerance)
-        assert isclose(self.endAz.value, data.azimuth, abs_tol=self.tolerance)
+        assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
+        assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
 
         data = await self.ataos.evt_hexapodCorrectionStarted.next(flush=True, timeout=75)
         self.log.info(f"AOS hexapod Correction start reported el={data.elevation}, "
                       f"az={data.azimuth}")
-        assert isclose(self.endEl.value, data.elevation, abs_tol=self.tolerance)
-        assert isclose(self.endAz.value, data.azimuth, abs_tol=self.tolerance)
+        assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
+        assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
         data = await self.ataos.evt_hexapodCorrectionCompleted.next(flush=True, timeout=75)
         self.log.info(f"AOS hexapod Correction complete reported el={data.elevation}, "
                       f"az={data.azimuth}")
-        assert isclose(self.endEl.value, data.elevation, abs_tol=self.tolerance)
-        assert isclose(self.endAz.value, data.azimuth, abs_tol=self.tolerance)
+        assert isclose(self.endEl.value, data.elevation, rel_tol=self.tolerance)
+        assert isclose(self.endAz.value, data.azimuth, rel_tol=self.tolerance)
 
     def set_metadata(self, metadata):
         metadata.duration = 60  # rough estimate
