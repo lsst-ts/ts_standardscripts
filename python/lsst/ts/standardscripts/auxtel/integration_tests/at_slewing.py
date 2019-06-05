@@ -237,6 +237,16 @@ class ATSlewing(scriptqueue.BaseScript):
         # enable ATAOS correction loop
         self.ataos.cmd_enableCorrection.set(enableAll=True)
         await self.ataos.cmd_enableCorrection.start(timeout=10)
+        
+        self.log.debug("Wait for correction to complete.")
+        # Wait for correction to complete
+        # FIXME: Make timeout a parameter
+        await asyncio.gather(self.ataos.evt_m1CorrectionCompleted.next(flush=True, timeout=75),
+                             self.ataos.evt_m2CorrectionCompleted.next(flush=True, timeout=75),
+                             self.ataos.evt_hexapodCorrectionCompleted.next(flush=True, timeout=75)
+                            )
+        
+        # TODO: ADD CHECKS
 
         # move to ending position
         await self.atptg.cmd_stopTracking.start(timeout=5)
@@ -280,11 +290,12 @@ class ATSlewing(scriptqueue.BaseScript):
         self.log.info(f"telescope final el={data.elevationCalculatedAngle}, "
                       f"az={data.azimuthCalculatedAngle}")
 
+        #FIXME: MAKE CHECK IN A METHOD
         # Test that we are in the state we want to be in
         print("checking ATAOS events reporting az/el consistent with target")
 
         data = await self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=75)
-        wrappedAz = Angle(data.azimuth).wrap_at(360*u.deg).degree
+        wrappedAz = Angle(data.azimuth*u.deg).wrap_at(360*u.deg).degree
         print("***")
         print(wrappedAz)
         self.log.info(f"AOS M1 Correction start reported el={data.elevation}, "
