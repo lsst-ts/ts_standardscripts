@@ -119,9 +119,9 @@ class ATTCS:
         self.atmcs.evt_allAxesInPosition.flush()
         self.atptg.cmd_raDecTarget.start(timeout=300)
 
-        coro_list = [asyncio.ensure_future(self.wait_for_position),
-                     asyncio.ensure_future(self.check_atptg_state),
-                     asyncio.ensure_future(self.check_atmcs_state)]
+        coro_list = [asyncio.ensure_future(self.wait_for_position()),
+                     asyncio.ensure_future(self.check_atptg_state()),
+                     asyncio.ensure_future(self.check_atmcs_state())]
 
         for res in asyncio.as_completed(coro_list):
             try:
