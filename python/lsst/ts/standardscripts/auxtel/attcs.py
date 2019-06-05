@@ -41,17 +41,10 @@ class ATTCS:
     log: logging.Logger
     within: float
     """
-    def __init__(
-            self,
-            atmcs,
-            atptg,
-            ataos,
-            atpneumatics,
-            athexapod,
-            atdome,
-            atdometrajectory,
-            check,
-            within=0.02):
+
+    def __init__(self, atmcs, atptg, ataos, atpneumatics, athexapod, atdome, atdometrajectory,
+                 check, within=0.02):
+
         self.atmcs = atmcs
         self.atptg = atptg
         self.ataos = ataos
@@ -63,77 +56,55 @@ class ATTCS:
         self.log = logging.getLogger("ATTCS")
         self.within = within
 
-    async def slew(
-            self,
-            ra,
-            declination,
-            rotPA=0,
-            targetName="slew_icrs",
-            targetInstance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
-            frame=SALPY_ATPtg.ATPtg_shared_CoordFrame_icrs,
-            epoch=2000,
-            equinox=2000,
-            parallax=0,
-            pmRA=0,
-            pmDec=0,
-            rv=0,
-            dRA=0,
-            dDec=0,
-            rotFrame=SALPY_ATPtg.ATPtg_shared_RotFrame_target,
-            rotMode=SALPY_ATPtg.ATPtg_shared_RotMode_field):
+    async def slew(self, ra, dec, rotPA=0, target_name="slew_icrs",
+                   target_instance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
+                   frame=SALPY_ATPtg.ATPtg_shared_CoordFrame_icrs,
+                   epoch=2000, equinox=2000, parallax=0, pmRA=0, pmDec=0, rv=0, dRA=0, dDec=0,
+                   rot_frame=SALPY_ATPtg.ATPtg_shared_RotFrame_target,
+                   rot_mode=SALPY_ATPtg.ATPtg_shared_RotMode_field):
         """
         Slew the telescope
 
         Parameters
         ----------
 
-        ra: float
+        ra : float
             desired right ascension to slew to
-        dec: float
+        dec : float
             desired declination to slew to
-        rotPA: float
+        rotPA : float
             desired rotator position angle for slew
-        targetName: str
+        target_name : str
             Name of the target
-        targetInstance
-        frame
-        epoch
-        equinox
-        parallax
-        pmRA
-        pmDec
-        rv
-        dRA
-        rotFrame
-        rotMode
+        target_instance : int
+        frame : int
+        epoch : float
+        equinox : float
+        parallax : float
+        pmRA : float
+        pmDec : float
+        rv : float
+        dRA : float
+        rot_frame : int
+        rot_mode : int
 
         """
-        self.atptg.cmd_raDecTarget.set(
-            ra=ra,
-            declination=declination,
-            rotPA=rotPA,
-            targetName=targetName,
-            targetInstance=targetInstance,
-            frame=frame,
-            epoch=epoch,
-            equinox=equinox,
-            parallax=parallax,
-            pmRA=pmRA,
-            pmDec=pmDec,
-            rv=rv,
-            dRA=dRA,
-            dDec=dDec,
-            rotFrame=rotFrame,
-            rotMode=rotMode)
+        self.atptg.cmd_raDecTarget.set(ra=ra, declination=dec, rotPA=rotPA, targetName=target_name,
+                                       targetInstance=target_instance, frame=frame, epoch=epoch,
+                                       equinox=equinox, parallax=parallax, pmRA=pmRA, pmDec=pmDec,
+                                       rv=rv, dRA=dRA, dDec=dDec, rotFrame=rot_frame,
+                                       rotMode=rot_mode)
+
         self.atmcs.evt_summaryState.flush()
         self.atptg.evt_summaryState.flush()
         self.atmcs.evt_allAxesInPosition.flush()
         self.atptg.cmd_raDecTarget.start(timeout=300)
-        coro_list = [
-            asyncio.ensure_future(self.wait_for_position),
-            asyncio.ensure_future(self.check_atptg_state),
-            asyncio.ensure_future(self.check_atmcs_state)]
-        for res in asyncio.as_completed((coro_list)):
+
+        coro_list = [asyncio.ensure_future(self.wait_for_position),
+                     asyncio.ensure_future(self.check_atptg_state),
+                     asyncio.ensure_future(self.check_atmcs_state)]
+
+        for res in asyncio.as_completed(coro_list):
             try:
                 await res
             except RuntimeError as rte:
