@@ -31,7 +31,7 @@ from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
 index_gen = salobj.index_generator()
 
 
-class TestATCalSysTakeData(unittest.TestCase):
+class DomeTrajectoryMCSTestCase(unittest.TestCase):
     def setUp(self):
         salobj.test_utils.set_random_lsst_dds_domain()
         self.processes = []
@@ -93,6 +93,7 @@ class TestATCalSysTakeData(unittest.TestCase):
         async def doit():
             async with salobj.Domain() as domain:
                 remote = salobj.Remote(domain=domain, name="Script", index=index)
+                await remote.start_task
 
                 initial_path = os.environ["PATH"]
                 try:
