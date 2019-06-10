@@ -29,6 +29,7 @@ from lsst.ts import salobj
 from lsst.ts import scriptqueue
 from lsst.ts import ATMCSSimulator
 from lsst.ts.idl.enums.ATDome import AzimuthCommandedState, AzimuthState
+from ...utils import subtract_angles
 
 STD_TIMEOUT = 5  # timeout for normal commands (sec)
 SLEW_TIMEOUT = 60  # maximum time for dome and telescope to slew (sec)
@@ -199,6 +200,7 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
         target = await self.atmcs.evt_target.next(flush=True, timeout=STD_TIMEOUT)
         # sanity-check the target
         assert abs(target.elevation - self.track_elaz[0]) < 0.01
+        # telescope azimuth is absolute (not wrapped), so simply subtract
         assert abs(target.azimuth - self.track_elaz[1]) < 0.01
 
         # Enable ATDomeTrajectory
@@ -217,7 +219,7 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
         assert dome_az_cmd_state.commandedState == AzimuthCommandedState.GOTOPOSITION, \
             f"ATDome azimuth commanded state={dome_az_cmd_state.commandedState} != " \
             f"GoToPosition={AzimuthCommandedState.GOTOPOSITION}"
-        assert abs(dome_pos.azimuthPosition - self.track_elaz[1]) <= 0.1, \
+        assert abs(subtract_angles(dome_pos.azimuthPosition, self.track_elaz[1])) <= 0.1, \
             f"Dome current azimuth={dome_pos.azimuthPosition:0.2f} != " \
             f"{self.track_elaz[1]:0.2f} = telescope target azimuth"
 
@@ -247,7 +249,7 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
             raise AssertionError("Dome moved unexpectedly")
         self.log.info(f"After telescope slew: "
                       f"dome current azimuth={dome_pos.azimuthPosition:0.2f}")
-        assert abs(dome_pos.azimuthPosition - self.track_elaz[1]) <= 0.5, \
+        assert abs(subtract_angles(dome_pos.azimuthPosition, self.track_elaz[1])) <= 0.5, \
             f"Dome dome azimuthPosition={dome_pos.azimuthPosition:0.2f} != " \
             f"{self.track_elaz[1]:0.2f} = telescope target azimuth"
         dome_cmd_az_before_big_move = dome_az_cmd_state.azimuth
@@ -256,7 +258,7 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
         # by more than the ATDomeTrajectory azimuth dead band/cos(el)
         # and verify that the commanded dome azimuth updates to match
         daz = scaled_atdometraj_max_az*1.2
-        if self.track_elaz[1] > 2*daz:  # avoid telescope azimuth upper limit
+        if self.track_elaz[1] + daz >= self.config.azmax:
             daz = -daz
         self.offset_telescope_az(daz, "more than enough to move the dome")
         data = await self.atmcs.evt_azimuthInPosition.next(flush=False, timeout=SLEW_TIMEOUT)
@@ -272,7 +274,8 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
         assert dome_az_cmd_state.commandedState == AzimuthCommandedState.GOTOPOSITION, \
             f"ATDome azimuth commanded state={dome_az_cmd_state.commandedState} != " \
             f"GoToPosition={AzimuthCommandedState.GOTOPOSITION}"
-        assert abs(dome_az_cmd_state.azimuth - dome_cmd_az_before_big_move) >= 0.1, \
+        # use subtract_angles in case dome azimuth ~= 0
+        assert abs(subtract_angles(dome_az_cmd_state.azimuth, dome_cmd_az_before_big_move)) >= 0.1, \
             f"Dome commanded azimuth={dome_az_cmd_state.azimuth:0.2f} == " \
             f"{dome_cmd_az_before_big_move:0.2f}=previous value "
         data = await self.atdome.evt_azimuthState.next(flush=False, timeout=STD_TIMEOUT)
@@ -297,7 +300,7 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
         # Offset telescope azimuth by less than the ATDomeTrajectory
         # azimuth dead band and check that the dome does not move
         daz = atdometraj_max_az*0.8
-        if self.track_elaz[1] > 2*daz:  # avoid telescope azimuth upper limit
+        if self.track_elaz[1] + daz >= self.config.azmax:
             daz = -daz
         self.offset_telescope_az(daz, "not enough to move the dome")
         data = await self.atmcs.evt_azimuthInPosition.next(flush=False, timeout=STD_TIMEOUT)
@@ -319,7 +322,8 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
 
         dome_pos = await self.atdome.tel_position.next(flush=True, timeout=STD_TIMEOUT)
         self.log.info(f"After small offset: dome azimuth position={dome_pos.azimuthPosition:0.2f}")
-        assert abs(dome_pos.azimuthPosition - dome_cmd_az_after_big_move) <= 0.1, \
+        # use subtract_angles in case dome azimuth ~= 0
+        assert abs(subtract_angles(dome_pos.azimuthPosition, dome_cmd_az_after_big_move)) <= 0.1, \
             f"Dome azimuthPosition={dome_pos.azimuthPosition:0.2f} != " \
             f"{dome_cmd_az_after_big_move:0.2f} = previous value "
         try:
