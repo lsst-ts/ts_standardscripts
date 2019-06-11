@@ -53,34 +53,37 @@ class ATTracking(scriptqueue.BaseScript):
         atmcs = salobj.Remote(SALPY_ATMCS, 0)
         atptg = salobj.Remote(SALPY_ATPtg, 0)
         ataos = salobj.Remote(SALPY_ATAOS)
-        athexapod=salobj.Remote(SALPY_ATHexapod)
-        atpneumatics=salobj.Remote(SALPY_ATPneumatics)
-        super().__init__(index=index,
-                         descr="Test integration between ATPtg and ATMCS",
-                         remotes_dict=dict(atmcs=atmcs,
-                             atptg=atptg,
-                             ataos=ataos,
-                             athexapod=athexapod,
-                             atpneumatics=atpneumatics))
+        athexapod = salobj.Remote(SALPY_ATHexapod)
+        atpneumatics = salobj.Remote(SALPY_ATPneumatics)
+        super().__init__(
+            index=index,
+            descr="Test integration between ATPtg and ATMCS",
+            remotes_dict=dict(
+                atmcs=atmcs,
+                atptg=atptg,
+                ataos=ataos,
+                athexapod=athexapod,
+                atpneumatics=atpneumatics))
         self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
                                                     lat=-30.244728*u.deg,
                                                     height=2663.0*u.m)
         self.in_fault = False
 
-
         self.pool_time = 10.  # wait time in tracking test loop (seconds)
 
-    async def configure(self,
+    async def configure(
+            self,
             el=45.,
             az=45.,
             max_sep=1.,
-            track_duration=0.02, 
+            track_duration=0.02,
             max_track_error=5.,
             enable_atmcs=True,
             enable_atptg=True,
             enable_ataos=True,
             enable_athexapod=True,
-            enable_atpneumatics=True):
+            enable_atpneumatics=True,
+            within=0.01):
         """Configure the script.
 
         Parameters
@@ -113,6 +116,7 @@ class ATTracking(scriptqueue.BaseScript):
         self.enable_ataos = bool(enable_ataos)
         self.enable_athexapod = bool(enable_athexapod)
         self.enable_atpneumatics = bool(enable_atpneumatics)
+        self.within = float(within)
 
     def assertEqual(self, what, val1, val2, more=""):
         if val1 != val2:
@@ -138,37 +142,39 @@ class ATTracking(scriptqueue.BaseScript):
                              "ENABLED")
         if self.enable_ataos:
             self.log.info("Enable ATAOS")
-            await salobj.enable_csc(self.ataos)
+            await salobj.enable_csc(self.ataos, settingsToApply="test")
         else:
             data = await self.ataos.evt_summaryState.next(flush=False)
-            self.assertEqual("ATAOS summaryState",
-                    data.summaryState,
-                    salobj.State.ENABLED,
-                    "ENABLED")
+            self.assertEqual(
+                "ATAOS summaryState",
+                data.summaryState,
+                salobj.State.ENABLED,
+                "ENABLED")
         if self.enable_athexapod:
             self.log.info("Enable ATHexapod")
             await salobj.enable_csc(self.athexapod)
         else:
-            self.athexapod.evt_summaryState.callback=None
-            data = await self.athexapod.evt_summaryState.next(flush=False,timeout=10)
-            self.assertEqual("ATHexapod summaryState",
-                    data.summaryState,
-                    salobj.State.ENABLED,
-                    "ENABLED")
+            self.athexapod.evt_summaryState.callback = None
+            data = await self.athexapod.evt_summaryState.next(flush=False, timeout=10)
+            self.assertEqual(
+                "ATHexapod summaryState",
+                data.summaryState,
+                salobj.State.ENABLED,
+                "ENABLED")
         if self.enable_atpneumatics:
             self.log.info("Enable ATPneumatics")
             await salobj.enable_csc(self.atpneumatics)
         else:
-            self.atpneumatics.evt_summaryState.callback=None
-            data = await self.atpneumatics.evt_summaryState.next(flush=False,timeout=10)
-            self.assertEqual("ATPneumatics summaryState",
-                    data.summaryState,
-                    salobj.State.ENABLED,
-                    "ENABLED")
+            self.atpneumatics.evt_summaryState.callback = None
+            data = await self.atpneumatics.evt_summaryState.next(flush=False, timeout=10)
+            self.assertEqual(
+                "ATPneumatics summaryState",
+                data.summaryState,
+                salobj.State.ENABLED,
+                "ENABLED")
 
-
-        self.athexapod.evt_summaryState.callback=self.fault_check
-        self.atpneumatics.evt_summaryState.callback=self.fault_check
+        self.athexapod.evt_summaryState.callback = self.fault_check
+        self.atpneumatics.evt_summaryState.callback = self.fault_check
         # Report current az/alt
         data = await self.atmcs.tel_mountEncoders.next(flush=False, timeout=1)
         self.log.info(f"telescope initial el={data.elevationCalculatedAngle}, "
@@ -267,80 +273,40 @@ class ATTracking(scriptqueue.BaseScript):
 
         start_time = Time.now()
 
-        while Time.now()-start_time < self.track_duration:
+        while Time.now() - start_time < self.track_duration:
 
-            mount_data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
-            current_target = await self.atptg.tel_currentTargetStatus.next(flush=True, timeout=1)
-
-            mount_azel = AltAz(alt=mount_data.elevationCalculatedAngle*u.deg,
-                               az=mount_data.azimuthCalculatedAngle*u.deg,
-                               obstime=Time.now(), location=self.location)
-
-            demand_azel = AltAz(alt=Angle(current_target.demandEl, unit=u.deg),
-                                az=Angle(current_target.demandAz, unit=u.deg),
-                                obstime=Time.now(), location=self.location)
-
-            self.log.info(f"Mount: el={mount_azel.alt}, "
-                          f"az={mount_azel.az}")
-
-            self.log.info(f"ATPtg demand: el={demand_azel.alt}, "
-                          f"az={demand_azel.az}")
-
-            track_error = mount_azel.separation(demand_azel).to(u.arcsec)
-            self.log.info(f"Track error: {track_error}")
-
-            if track_error > self.max_track_error:
-                raise RuntimeError(f"Track error={track_error} > {self.max_track_error}")
-            else:
-                self.log.info(f"Track error={track_error}; max={self.max_track_error}")
-
-            athexapod_inposition = self.athexapod.evt_inPosition.next(flush=True, timeout=30)
-            athexapod_positionupdate= self.athexapod.evt_positionUpdate.next(flush=True,timeout=30)
-            ataos_hexapod_correction_completed= self.ataos.evt_hexapodCorrectionCompleted.next(flush=True,timeout=30)
-            atpneumatic_m1_set_pressure= self.atpneumatics.evt_m1SetPressure.next(flush=True, timeout=120)
-            atpneumatics_m2_set_pressure=self.atpneumatics.evt_m2SetPressure.next(flush=True, timeout=120)
-            ataos_m1_correction_started=self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=120)
-            ataos_m2_correction_started=self.ataos.evt_m2CorrectionStarted.next(flush=True, timeout=120)
-            results = await asyncio.gather(
-                    athexapod_inposition,
-                    athexapod_positionupdate,
-                    ataos_hexapod_correction_completed)
-            hexapod_position=results[1]
-            hexapod_correction=results[2]
-            self.hexapod_check_values(hexapod_position,hexapod_correction)
-            #results2= await asyncio.gather(
-            #        atpneumatic_m1_set_pressure,
-            #        atpneumatics_m2_set_pressure,
-            #        ataos_m1_correction_started,
-            #        ataos_m2_correction_started)
-            # self.pneumatics_check_values(results[2],results[0])
-            # self.pneumatics_check_values(results[3],results[1])
-            
-            if self.in_fault:
-                raise RuntimeError("Fault state in CSC")
+            await self.track()
 
             await asyncio.sleep(self.pool_time)
 
     def set_metadata(self, metadata):
         metadata.duration = 60  # rough estimate
 
-    def hexapod_check_values(self,athex_position,athex_correction,within=0.03):
+    def hexapod_check_values(self, athex_position, athex_correction, within=0.03):
         self.log.info(f"Checking hexapod correction within {within*100} percent tolerance")
-        c1=math.isclose(athex_position.positionX, athex_correction.hexapod_x,rel_tol=within)
-        self.log.info(f"Hexapod x check is {c1}")
-        c2=math.isclose(athex_position.positionY, athex_correction.hexapod_y,rel_tol=within)
-        self.log.info(f"Hexapod y check is {c2}")
-        c3=math.isclose(athex_position.positionZ, athex_correction.hexapod_z,rel_tol=within)
-        self.log.info(f"Hexapod z check is {c3}")
-        if (c1 or c2 or c3) == False:
+        c1 = math.isclose(athex_position.positionX, athex_correction.hexapod_x, rel_tol=within)
+        self.log.info(
+            f"Hexapod x check is {c1}, "
+            f"difference is {athex_position.positionX - athex_correction.hexapod_x}")
+        c2 = math.isclose(athex_position.positionY, athex_correction.hexapod_y, rel_tol=within)
+        self.log.info(
+            f"Hexapod y check is {c2}, "
+            f"difference is {athex_position.positionY - athex_correction.hexapod_y}")
+        c3 = math.isclose(athex_position.positionZ, athex_correction.hexapod_z, rel_tol=within)
+        self.log.info(
+            f"Hexapod z check is {c3}, "
+            f"difference is {athex_position.positionZ - athex_correction.hexapod_z}")
+        if (c1 or c2 or c3) is False:
             raise RuntimeError(f"Hexapod not corrected within {within*100} percent tolerance")
-    
-    def pneumatics_check_values(self,atpne_pre,atpneu_post,within=0.03):
-        c1=math.isclose(atpne_pre.pressure,atpne_post.pressure,rel_tol=within)
-        if c1 == False:
-            raise RuntimeError("Pneumatics not corrected within tolerance")
 
-    def fault_check(self,summary_state_evt):
+    def pneumatics_check_values(self, atpne_pre, atpneu_post, within=0.03):
+        self.log.info(f"checking pneumatics correction within {within*100} percent tolerance")
+        c1 = math.isclose(atpne_pre.pressure, atpneu_post.pressure, rel_tol=within)
+        self.log.info(f"pneumatics is {c1}")
+        if c1 is False:
+            raise RuntimeError(f"Pneumatics not corrected within {within*100} percent tolerance")
+
+    def fault_check(self, summary_state_evt):
         if summary_state_evt.summaryState == salobj.State.FAULT:
             self.in_fault = True
         else:
@@ -351,21 +317,93 @@ class ATTracking(scriptqueue.BaseScript):
         self.log.info("cleanup")
         try:
             await self.atptg.cmd_stopTracking.start(timeout=1)
+            # disable corrections
+            self.ataos.cmd_disableCorrections.set(disableAll=True)
+            await self.ataos.cmd_disableCorrections.start(timeout=5)
         except salobj.AckError as e:
             self.log.error(f"ATPtg stopTracking failed with {e}")
         else:
             self.log.info("Tracking stopped")
+
+    async def track(self):
+        mount_data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
+        current_target = await self.atptg.tel_currentTargetStatus.next(flush=True, timeout=1)
+
+        mount_azel = AltAz(
+            alt=mount_data.elevationCalculatedAngle*u.deg,
+            az=mount_data.azimuthCalculatedAngle*u.deg,
+            obstime=Time.now(), location=self.location)
+
+        demand_azel = AltAz(
+            alt=Angle(current_target.demandEl, unit=u.deg),
+            az=Angle(current_target.demandAz, unit=u.deg),
+            obstime=Time.now(), location=self.location)
+
+        self.log.info(
+            f"Mount: el={mount_azel.alt}, "
+            f"az={mount_azel.az}")
+
+        self.log.info(
+            f"ATPtg demand: el={demand_azel.alt}, "
+            f"az={demand_azel.az}")
+
+        track_error = mount_azel.separation(demand_azel).to(u.arcsec)
+        self.log.info(f"Track error: {track_error}")
+
+        if track_error > self.max_track_error:
+            raise RuntimeError(f"Track error={track_error} > {self.max_track_error}")
+        else:
+            self.log.info(f"Track error={track_error}; max={self.max_track_error}")
+
+        await self.checkpoint("verify hexapod")
+        await self.verify_hexapod()
+        await self.checkpoint("verify pneumatics")
+        await self.verify_pneumatics()
+
+        if self.in_fault:
+            raise RuntimeError("Fault state in CSC")
+
+    async def verify_hexapod(self):
+        athexapod_inposition = self.athexapod.evt_inPosition.next(flush=True, timeout=60)
+        athexapod_positionupdate = self.athexapod.evt_positionUpdate.next(flush=True, timeout=60)
+        ataos_hexapod_correction_completed = self.ataos.evt_hexapodCorrectionCompleted.next(
+            flush=True,
+            timeout=30)
+        results = await asyncio.gather(
+                athexapod_inposition,
+                athexapod_positionupdate,
+                ataos_hexapod_correction_completed)
+        hexapod_position = results[1]
+        hexapod_correction = results[2]
+        self.hexapod_check_values(hexapod_position, hexapod_correction, self.within)
+
+    async def verify_pneumatics(self):
+        atpneumatic_m1_set_pressure = self.atpneumatics.evt_m1SetPressure.next(flush=True, timeout=120)
+        atpneumatics_m2_set_pressure = self.atpneumatics.evt_m2SetPressure.next(flush=True, timeout=120)
+        ataos_m1_correction_started = self.ataos.evt_m1CorrectionStarted.next(flush=True, timeout=120)
+        ataos_m2_correction_started = self.ataos.evt_m2CorrectionStarted.next(flush=True, timeout=120)
+        results2 = await asyncio.gather(
+            ataos_m1_correction_started,
+            atpneumatic_m1_set_pressure,
+            ataos_m2_correction_started,
+            atpneumatics_m2_set_pressure)
+        self.pneumatics_check_values(results2[0], results2[1], self.within)
+        self.pneumatics_check_values(results2[2], results2[3], self.within)
 
 
 async def main():
 
     script = ATTracking(index=10)
 
-
     script.log.setLevel(logging.INFO)
     script.log.addHandler(logging.StreamHandler())
 
-    config_dict = dict(enable_atmcs=True, enable_atptg=False, enable_athexapod=False,enable_atpneumatics=False,track_duration=0.06)
+    config_dict = dict(
+        enable_atmcs=True,
+        enable_atptg=False,
+        enable_athexapod=False,
+        enable_atpneumatics=False,
+        track_duration=0.06)
 
     print("*** configure")
     config_data = script.cmd_configure.DataType()
