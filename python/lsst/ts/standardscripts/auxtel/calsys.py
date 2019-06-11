@@ -70,7 +70,7 @@ class ATCalSys:
 
         Returns
         -------
-        lfo : `SALPY_Electrometer.Electrometer_logevent_largeFileObjectAvailableC`
+        lfo : ``self.electr.evt_largeFileObjectAvailable.DataType``
             Large file Object Available event.
 
         """
@@ -104,9 +104,8 @@ class ATCalSys:
 
         Returns
         -------
-        cmd_captureSpectImage.start : `SALPY_FiberSpectrograph.
-            FiberSpectrograph_logevent_largeFileObjectAvailableC`
-
+        large_file_data : ``self.fiber_spec.evt_largeFileObjectAvailable.DataType``
+            Large file object available event data.
         """
         if evt is not None:
             await evt

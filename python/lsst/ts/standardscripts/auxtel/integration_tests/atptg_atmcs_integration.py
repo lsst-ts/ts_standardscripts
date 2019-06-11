@@ -291,8 +291,7 @@ async def main():
     print("*** configure")
     config_data = script.cmd_configure.DataType()
     config_data.config = yaml.safe_dump(config_dict)
-    config_id_data = salobj.CommandIdData(1, config_data)
-    await script.do_configure(config_id_data)
+    await script.do_configure(config_data)
 
     print("*** run")
     await script.do_run(None)

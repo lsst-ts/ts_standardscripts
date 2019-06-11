@@ -138,8 +138,8 @@ class LATISS:
 
         Returns
         -------
-        endReadout : `SALPY_ATCamera.ATCamera_logevent_endReadoutC`
-
+        endReadout : ``self.atcam.evt_endReadout.DataType``
+            End readout event data.
         """
 
         await self.setup_atspec(filter=filter,
@@ -173,8 +173,8 @@ class LATISS:
 
         Returns
         -------
-        endReadout : `SALPY_ATCamera.ATCamera_logevent_endReadoutC`
-
+        endReadout : ``self.atcam.evt_endReadout.DataType``
+            End readout event data.
         """
         async with self.cmd_lock:
             # FIXME: Current version of ATCamera software is not set up to take
