@@ -25,8 +25,8 @@ import re
 
 import yaml
 
-from lsst.ts.scriptqueue.base_script import BaseScript
 from lsst.ts import salobj
+from lsst.ts.scriptqueue.base_script import BaseScript
 
 
 class SetSummaryState(BaseScript):
