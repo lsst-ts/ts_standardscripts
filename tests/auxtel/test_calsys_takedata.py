@@ -124,49 +124,51 @@ class TestATCalSysTakeData(unittest.TestCase):
 
         async def doit():
             script = CalSysTakeData(index=index)
+            try:
+                async def run_configure(**kwargs):
+                    script.set_state(Script.ScriptState.UNCONFIGURED)
+                    config_data = script.cmd_configure.DataType()
+                    if kwargs:
+                        config_data.config = yaml.safe_dump(kwargs)
+                    await script.do_configure(config_data)
 
-            async def run_configure(**kwargs):
-                script.set_state(Script.ScriptState.UNCONFIGURED)
-                config_data = script.cmd_configure.DataType()
-                if kwargs:
-                    config_data.config = yaml.safe_dump(kwargs)
-                await script.do_configure(config_data)
+                # configure requires wavelengths and integration_times
+                with self.assertRaises(salobj.ExpectedError):
+                    await run_configure()
+                with self.assertRaises(salobj.ExpectedError):
+                    await run_configure(wavelengths=100)
+                with self.assertRaises(salobj.ExpectedError):
+                    await run_configure(integration_times=100)
 
-            # configure requires wavelengths and integration_times
-            with self.assertRaises(salobj.ExpectedError):
-                await run_configure()
-            with self.assertRaises(salobj.ExpectedError):
-                await run_configure(wavelengths=100)
-            with self.assertRaises(salobj.ExpectedError):
-                await run_configure(integration_times=100)
+                # if configured with a scalar then every element has length 1
+                await run_configure(wavelengths=100, integration_times=31)
+                assert_array_equal(script.config.wavelengths, np.array([100], dtype=float))
+                assert_array_equal(script.config.integration_times, np.array([31], dtype=int))
+                for argname in argnames:
+                    arg = getattr(script.config, argname)
+                    self.assertIs(type(arg), np.ndarray)
+                    self.assertEqual(len(arg), 1)
 
-            # if configured with a scalar then every element has length 1
-            await run_configure(wavelengths=100, integration_times=31)
-            assert_array_equal(script.config.wavelengths, np.array([100], dtype=float))
-            assert_array_equal(script.config.integration_times, np.array([31], dtype=int))
-            for argname in argnames:
-                arg = getattr(script.config, argname)
-                self.assertIs(type(arg), np.ndarray)
-                self.assertEqual(len(arg), 1)
+                # if configured with an array then
+                # every element has the same length
+                await run_configure(wavelengths=[100, 200], integration_times=31)
+                assert_array_equal(script.config.wavelengths, np.array([100, 200], dtype=float))
+                assert_array_equal(script.config.integration_times, np.array([31, 31], dtype=int))
+                for argname in argnames:
+                    arg = getattr(script.config, argname)
+                    self.assertIs(type(arg), np.ndarray)
+                    self.assertEqual(len(arg), 2)
 
-            # if configured with an array then
-            # every element has the same length
-            await run_configure(wavelengths=[100, 200], integration_times=31)
-            assert_array_equal(script.config.wavelengths, np.array([100, 200], dtype=float))
-            assert_array_equal(script.config.integration_times, np.array([31, 31], dtype=int))
-            for argname in argnames:
-                arg = getattr(script.config, argname)
-                self.assertIs(type(arg), np.ndarray)
-                self.assertEqual(len(arg), 2)
-
-            await run_configure(wavelengths=100, integration_times=31, grating_types=[1, 2])
-            assert_array_equal(script.config.wavelengths, np.array([100, 100], dtype=float))
-            assert_array_equal(script.config.integration_times, np.array([31, 31], dtype=int))
-            assert_array_equal(script.config.grating_types, np.array([1, 2], dtype=int))
-            for argname in argnames:
-                arg = getattr(script.config, argname)
-                self.assertIs(type(arg), np.ndarray)
-                self.assertEqual(len(arg), 2)
+                await run_configure(wavelengths=100, integration_times=31, grating_types=[1, 2])
+                assert_array_equal(script.config.wavelengths, np.array([100, 100], dtype=float))
+                assert_array_equal(script.config.integration_times, np.array([31, 31], dtype=int))
+                assert_array_equal(script.config.grating_types, np.array([1, 2], dtype=int))
+                for argname in argnames:
+                    arg = getattr(script.config, argname)
+                    self.assertIs(type(arg), np.ndarray)
+                    self.assertEqual(len(arg), 2)
+            finally:
+                await script.close()
 
         asyncio.get_event_loop().run_until_complete(doit())
 
