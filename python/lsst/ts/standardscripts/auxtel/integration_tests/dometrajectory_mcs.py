@@ -110,7 +110,6 @@ class DomeTrajectoryMCS(scriptqueue.BaseScript):
         - Slew the telescope by more than the dome tolerance / cos(el)
         - Check that the dome did move
         """
-        self.log.setLevel(20)
         # Disable ATDomeTrajectory
         self.log.info("Disable ATDomeTrajectory")
         await salobj.set_summary_state(self.atdometraj, salobj.State.DISABLED)

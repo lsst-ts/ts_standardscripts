@@ -21,7 +21,6 @@
 __all__ = ["ATPtgATMcsIntegration"]
 
 import asyncio
-import logging
 
 import astropy.units as u
 from astropy.time import Time
@@ -119,7 +118,6 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
         self.config = config
 
     async def run(self):
-        self.log.setLevel(20)
         # Enable ATMCS and ATPgt, if requested, else check they are enabled
         await self.checkpoint("enable_cscs")
         if self.config.enable_atmcs:

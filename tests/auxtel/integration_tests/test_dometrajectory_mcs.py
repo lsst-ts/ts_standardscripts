@@ -52,7 +52,6 @@ class DomeTrajectoryMCSTestCase(unittest.TestCase):
 
             print("*** Create DomeTrajectoryMCS script")
             script = DomeTrajectoryMCS(index=1)  # index is arbitrary
-            script.log.setLevel(logging.INFO)
             script.log.addHandler(logging.StreamHandler())
 
             print("*** Wait for ATMCS to start up")
