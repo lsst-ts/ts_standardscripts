@@ -275,27 +275,3 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
             self.log.error(f"ATPtg stopTracking failed with {e}")
         else:
             self.log.info("Tracking stopped")
-
-
-async def main():
-
-    script = ATPtgATMcsIntegration(index=10)
-
-    script.log.setLevel(logging.INFO)
-    script.log.addHandler(logging.StreamHandler())
-
-    config_dict = dict(enable_atmcs=False, enable_atptg=False)
-
-    print("*** configure")
-    config_data = script.cmd_configure.DataType()
-    config_data.config = yaml.safe_dump(config_dict)
-    await script.do_configure(config_data)
-
-    print("*** run")
-    await script.do_run(None)
-    print("*** done")
-
-
-if __name__ == '__main__':
-
-    asyncio.get_event_loop().run_until_complete(main())
