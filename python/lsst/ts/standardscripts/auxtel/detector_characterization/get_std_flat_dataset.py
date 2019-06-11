@@ -25,7 +25,7 @@ import yaml
 
 from lsst.ts import salobj
 from lsst.ts import scriptqueue
-from lsst.ts.standardscripts.auxtel.latiss import LATISS
+from ..latiss import LATISS
 
 
 class ATGetStdFlatDataset(scriptqueue.BaseScript):

@@ -5,9 +5,9 @@ import collections
 import numpy as np
 import yaml
 
-from lsst.ts.standardscripts.auxtel.latiss import LATISS
-from lsst.ts.scriptqueue.base_script import BaseScript
 from lsst.ts import salobj
+from lsst.ts.scriptqueue.base_script import BaseScript
+from .latiss import LATISS
 
 
 class ATCamTakeImage(BaseScript):
