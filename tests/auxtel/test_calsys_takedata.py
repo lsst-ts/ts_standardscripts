@@ -1,34 +1,18 @@
-import logging
-import pathlib
-import sys
-import unittest
 import asyncio
+import logging
+import unittest
 
-import yaml
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
+import yaml
 
 from lsst.ts.idl.enums import ATMonochromator, Script
 from lsst.ts import salobj
+from lsst.ts.standardscripts.auxtel import CalSysTakeData
 
 np.random.seed(47)
 
 index_gen = salobj.index_generator()
-
-
-def make_script(index):
-    tests_dir = pathlib.Path(__file__).resolve().parent.parent.parent
-    script_dir = tests_dir / "scripts" / "auxtel"
-    orig_path = sys.path
-    try:
-        sys.path.append(str(script_dir))
-        import calsys_takedata
-        script = calsys_takedata.CalSysTakeData(index=index)
-    finally:
-        sys.path[:] = orig_path
-    script.log.setLevel(logging.INFO)
-    script.log.addHandler(logging.StreamHandler())
-    return script
 
 
 class Harness:
@@ -37,7 +21,8 @@ class Harness:
 
         self.test_index = next(index_gen)
 
-        self.script = make_script(index=self.index)
+        self.script = CalSysTakeData(index=self.index)
+        self.script.log.addHandler(logging.StreamHandler())
 
         # mock controllers that use callback functions defined below
         # to handle the expected commands
@@ -117,7 +102,7 @@ class TestATCalSysTakeData(unittest.TestCase):
                     "image_types", "lamps", "spectrometer_delays")
 
         async def doit():
-            script = make_script(index=index)
+            script = CalSysTakeData(index=index)
 
             async def run_configure(**kwargs):
                 script.set_state(Script.ScriptState.UNCONFIGURED)
@@ -168,7 +153,7 @@ class TestATCalSysTakeData(unittest.TestCase):
         async def doit():
             async with Harness() as harness:
                 wavelengths = [100, 600]
-                integration_times = [5, 2]
+                integration_times = [1.5, 1.9]
                 grating_types = [1, 2]
                 entrance_slit_widths = [2.1, 2.2]
                 exit_slit_widths = [3.3, 3.4]
