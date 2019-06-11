@@ -95,7 +95,6 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
                 type: number
                 default: 400
                 exclusiveMinimum: 0
-                exclusiveMinimum: {self.maximum_exp_time}
               n_bias:
                 description: Number of bias images.
                 type: integer
@@ -116,10 +115,10 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
                   Flat exposure times = flat_base_exptime * flat_dn_range.
                 type: array
                 items:
-                    type: float
+                    type: number
                     exclusiveMinimum: 0
-                default: [1, 2, 4, 8, 16, 32, 64, 128],
-              filter_id:
+                default: [1, 2, 4, 8, 16, 32, 64, 128]
+              filter:
                 description: ATSpectrograph filter name or ID. Omit to leave unchanged.
                 anyOf:
                   - type: string
@@ -127,7 +126,7 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
                     minimum: 1
                   - type: "null"
                 default: null
-              grating_id:
+              grating:
                 description: ATSpectrograph grating name or ID. Omit to leave unchanged.
                 anyOf:
                   - type: string
@@ -145,11 +144,19 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
                 description: Approximate readout time of camera (sec).
                   Used to estimate script duration.
                 type: number
-                default: {self.latiss.read_out_time}
+                default: 2
                 exclusiveMinimum: 0
-
-            required: [n_dark, t_dark, n_bias, n_flat, flat_base_exptime, flat_dn_range,
-            filter_id, grating_id, linear_stage, read_out_time]
+            required:
+              - n_dark
+              - t_dark
+              - n_bias
+              - n_flat
+              - flat_base_exptime
+              - flat_dn_range
+              - filter
+              - grating
+              - linear_stage
+              - read_out_time
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -164,7 +171,6 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         """
         self.config = config
         self.flat_exp_times = self.config.flat_base_exptime * np.array(self.config.flat_dn_range, dtype=float)
-        self.n_flats = len(self.flat_exp_times) * self.config.n_flats
 
         max_flat_time = self.flat_exp_times.max()
         if max_flat_time > self.maximum_exp_time:
@@ -183,11 +189,11 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         await self.latiss.take_bias(nbias=self.config.n_bias,
                                     checkpoint=self.checkpoint)
 
-        self.log.info(f"Taking {self.n_flats} flat-field images")
+        self.log.info(f"Taking {self.config.n_flat} flat-field images")
         for flat_exp_time in self.flat_exp_times:
             await self.latiss.take_flats(exptime=flat_exp_time,
                                          nflats=self.config.n_flat,
-                                         filter=self.config.filter_id,
+                                         filter=self.config.filter,
                                          grating=self.config.grating,
                                          linear_stage=self.config.linear_stage,
                                          checkpoint=self.checkpoint)
@@ -202,5 +208,5 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         dark_time = self.config.n_dark * (self.read_out_time + self.config.t_dark)
         # Note, biases are taken twice: before flats and after flats
         bias_time = 2 * self.config.n_bias * self.read_out_time
-        flat_time = self.n_flats*(self.read_out_time + self.flat_exp_times.mean())
+        flat_time = self.config.n_flat*(self.read_out_time + self.flat_exp_times.mean())
         metadata.duration = dark_time + bias_time + flat_time

@@ -24,8 +24,9 @@ import asyncio
 import numpy as np
 import logging
 
-from lsst.ts import salobj
+import yaml
 
+from lsst.ts import salobj
 from lsst.ts.idl.enums import Script
 from lsst.ts.standardscripts.auxtel.detector_characterization import ATGetStdFlatDataset
 
@@ -77,13 +78,15 @@ class Harness:
         self.linear_stage = data.distanceFromHome
 
     async def __aenter__(self):
-        await self.at_cam.start_task
-        await self.at_spec.start_task
+        await asyncio.gather(self.script.start_task,
+                             self.at_cam.start_task,
+                             self.at_spec.start_task)
         return self
 
     async def __aexit__(self, *args):
-        await self.at_cam.close()
-        await self.at_spec.close()
+        await asyncio.gather(self.script.close(),
+                             self.at_cam.close(),
+                             self.at_spec.close())
 
 
 class TestATGetStdFlatDataset(unittest.TestCase):
@@ -96,13 +99,16 @@ class TestATGetStdFlatDataset(unittest.TestCase):
                 harness.at_spec.cmd_changeDisperser.callback = harness.cmd_change_grating_callback
                 harness.at_spec.cmd_moveLinearStage.callback = harness.cmd_move_linear_stage_callback
 
-                # Make sure configuration works with no parameter
-                await harness.script.configure()
+                # Make sure configure works with no data
+                config_data = harness.script.cmd_configure.DataType()
+                await harness.script.do_configure(config_data)
+                harness.script.set_state(Script.ScriptState.UNCONFIGURED)
 
                 # Now configure the spectrograph
-                await harness.script.configure(filter_id=0,
-                                               grating_id=3,
-                                               linear_stage=10.)
+                config_data.config = yaml.safe_dump(dict(filter=1,
+                                                         grating=3,
+                                                         linear_stage=10))
+                await harness.script.do_configure(config_data)
 
                 harness.script.set_state(Script.ScriptState.RUNNING)
 
@@ -110,12 +116,13 @@ class TestATGetStdFlatDataset(unittest.TestCase):
                 await harness.script._run_task
                 harness.script.set_state(Script.ScriptState.ENDING)
 
-                self.assertEqual(harness.n_bias, harness.script.n_bias * 2)
-                self.assertEqual(harness.n_dark, harness.script.n_dark)
-                self.assertEqual(harness.n_flat, len(harness.script.flat_dn_range) * harness.script.n_flat)
-                self.assertEqual(harness.filter, 0)
+                self.assertEqual(harness.n_bias, harness.script.config.n_bias * 2)
+                self.assertEqual(harness.n_dark, harness.script.config.n_dark)
+                self.assertEqual(harness.n_flat,
+                                 len(harness.script.config.flat_dn_range) * harness.script.config.n_flat)
+                self.assertEqual(harness.filter, 1)
                 self.assertEqual(harness.grating, 3)
-                self.assertEqual(harness.linear_stage, 10.)
+                self.assertEqual(harness.linear_stage, 10)
 
         stream_handler = logging.StreamHandler(sys.stdout)
         logger.addHandler(stream_handler)
