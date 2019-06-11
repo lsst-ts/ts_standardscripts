@@ -96,7 +96,8 @@ class Harness:
         return self
 
     async def __aexit__(self, *args):
-        await self.script.close()
+        items_to_close = [self.script] + self.controllers
+        await asyncio.gather(*[item.close() for item in items_to_close])
 
 
 class TestSetSummaryState(unittest.TestCase):

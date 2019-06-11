@@ -79,9 +79,9 @@ class Harness:
         return self
 
     async def __aexit__(self, *args):
-        await self.atspec.close()
-        await self.atcam.close()
-        await self.script.close()
+        await asyncio.gather(self.atspec.close(),
+                             self.atcam.close(),
+                             self.script.close())
 
 
 class TestATCamTakeImage(unittest.TestCase):

@@ -85,13 +85,16 @@ class Harness:
         self.latiss_linear_stage = data.distanceFromHome
 
     async def __aenter__(self):
-        self.domain = salobj.Domain()
+        await asyncio.gather(self.latiss.atcam.start_task,
+                             self.latiss.atspec.start_task,
+                             self.atcam.start_task,
+                             self.atspec.start_task)
         return self
 
     async def __aexit__(self, *args):
-        await self.domain.close()
-        await self.atcam.close()
-        await self.atspec.close()
+        await asyncio.gather(self.domain.close(),
+                             self.atcam.close(),
+                             self.atspec.close())
 
 
 class TestLATISS(unittest.TestCase):

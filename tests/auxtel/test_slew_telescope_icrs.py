@@ -58,13 +58,13 @@ class Harness:
         self.atptg_target = data
 
     async def __aenter__(self):
-        await self.script.start_task
-        await self.atptg.start_task
+        await asyncio.gather(self.script.start_task,
+                             self.atptg.start_task)
         return self
 
     async def __aexit__(self, *args):
-        await self.script.close()
-        await self.atptg.close()
+        await asyncio.gather(self.script.close(),
+                             self.atptg.close())
 
 
 class TestSlewTelescopeIcrs(unittest.TestCase):

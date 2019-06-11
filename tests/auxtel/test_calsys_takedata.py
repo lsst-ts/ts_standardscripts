@@ -97,17 +97,17 @@ class Harness:
         self.grating_types.append(data.gratingType)
 
     async def __aenter__(self):
-        await self.script.start_task
-        await self.electrometer.start_task
-        await self.monochromator.start_task
-        await self.fiberspec.start_task
+        await asyncio.gather(self.script.start_task,
+                             self.electrometer.start_task,
+                             self.monochromator.start_task,
+                             self.fiberspec.start_task)
         return self
 
     async def __aexit__(self, *args):
-        await self.script.close()
-        await self.electrometer.close()
-        await self.monochromator.close()
-        await self.fiberspec.close()
+        await asyncio.gather(self.script.close(),
+                             self.electrometer.close(),
+                             self.monochromator.close(),
+                             self.fiberspec.close())
 
 
 class TestATCalSysTakeData(unittest.TestCase):
