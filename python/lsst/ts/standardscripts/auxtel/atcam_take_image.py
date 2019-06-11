@@ -61,8 +61,8 @@ class ATCamTakeImage(BaseScript):
                       type: number
                       minimum: 0
                   - type: number
-                    default: 0
                     minimum: 0
+                default: 0
               shutter:
                 description: Open the shutter?
                 type: boolean
