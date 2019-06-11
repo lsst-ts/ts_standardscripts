@@ -20,7 +20,6 @@
 
 import asyncio
 import logging
-import sys
 import unittest
 
 import yaml
@@ -31,8 +30,7 @@ from lsst.ts.standardscripts.auxtel.atcam_take_image import ATCamTakeImage
 
 index_gen = salobj.index_generator()
 
-logger = logging.getLogger()
-logger.level = logging.DEBUG
+logging.basicConfig()
 
 
 class Harness:
@@ -187,9 +185,6 @@ class TestATCamTakeImage(unittest.TestCase):
                 self.assertIn(config_kwargs['filter'], harness.selected_filter)
                 self.assertIn(config_kwargs['grating'], harness.selected_disperser)
                 self.assertIn(config_kwargs['linear_stage'], harness.selected_linear_stage)
-
-            stream_handler = logging.StreamHandler(sys.stdout)
-            logger.addHandler(stream_handler)
 
         asyncio.get_event_loop().run_until_complete(doit())
 

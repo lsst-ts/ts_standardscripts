@@ -30,6 +30,8 @@ from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
 
 index_gen = salobj.index_generator()
 
+logging.basicConfig()
+
 
 class DomeTrajectoryMCSTestCase(unittest.TestCase):
     def setUp(self):
@@ -52,7 +54,6 @@ class DomeTrajectoryMCSTestCase(unittest.TestCase):
 
             print("*** Create DomeTrajectoryMCS script")
             script = DomeTrajectoryMCS(index=1)  # index is arbitrary
-            script.log.addHandler(logging.StreamHandler())
             await script.start_task
 
             print("*** Wait for ATMCS to start up")

@@ -34,6 +34,8 @@ np.random.seed(47)
 
 index_gen = salobj.index_generator()
 
+logging.basicConfig()
+
 
 class Harness:
     def __init__(self):
@@ -42,7 +44,6 @@ class Harness:
         self.test_index = next(index_gen)
 
         self.script = CalSysTakeData(index=self.index)
-        self.script.log.addHandler(logging.StreamHandler())
 
         # mock controllers that use callback functions defined below
         # to handle the expected commands

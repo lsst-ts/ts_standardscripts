@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU General Public License
 
-import sys
 import unittest
 import asyncio
 import numpy as np
@@ -34,8 +33,7 @@ np.random.seed(47)
 
 index_gen = salobj.index_generator()
 
-logger = logging.getLogger()
-logger.level = logging.DEBUG
+logging.basicConfig()
 
 
 class Harness:
@@ -123,9 +121,6 @@ class TestATGetStdFlatDataset(unittest.TestCase):
                 self.assertEqual(harness.filter, 1)
                 self.assertEqual(harness.grating, 3)
                 self.assertEqual(harness.linear_stage, 10)
-
-        stream_handler = logging.StreamHandler(sys.stdout)
-        logger.addHandler(stream_handler)
 
         asyncio.get_event_loop().run_until_complete(doit())
 
