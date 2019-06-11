@@ -123,7 +123,7 @@ class ATCalSys:
 
         Returns
         -------
-        large_file_data : ``self.fiber_spec.evt_largeFileObjectAvailable.DataType``
+        large_file_data : ``fiber_spec.evt_largeFileObjectAvailable.DataType``
             Large file object available event data.
         """
         if evt is not None:

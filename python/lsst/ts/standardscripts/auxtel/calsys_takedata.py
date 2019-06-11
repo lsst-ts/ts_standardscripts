@@ -278,7 +278,7 @@ class CalSysTakeData(scriptqueue.BaseScript):
             await asyncio.gather(coro1, coro2)
 
     async def start_take_spectrum(self, index):
-        """Wait for `self.config.spectrometer_delays` then take a spectral image.
+        """Wait for ``config.spectrometer_delays``, then take a spectral image.
 
         Parameters
         ----------
