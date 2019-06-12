@@ -176,12 +176,6 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
         """Run method.
         """
 
-        self.log.info(f"Taking {self.n_dark} dark images...")
-
-        await self.latiss.take_darks(exptime=self.t_dark,
-                                     ndarks=self.n_dark,
-                                     checkpoint=self.checkpoint)
-
         self.log.info(f"Taking {self.n_bias} bias images...")
 
         await self.latiss.take_bias(nbias=self.n_bias,
@@ -201,6 +195,13 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
 
         await self.latiss.take_bias(nbias=self.n_bias,
                                     checkpoint=self.checkpoint)
+
+        self.log.info(f"Taking {self.n_dark} dark images...")
+
+        await self.latiss.take_darks(exptime=self.t_dark,
+                                     ndarks=self.n_dark,
+                                     checkpoint=self.checkpoint)
+
 
         await self.checkpoint("done")
 
