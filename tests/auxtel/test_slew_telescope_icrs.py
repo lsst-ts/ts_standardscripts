@@ -1,3 +1,23 @@
+# This file is part of ts_standardscripts
+#
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+
 import logging
 import random
 import unittest
@@ -13,6 +33,8 @@ random.seed(47)
 
 index_gen = salobj.index_generator()
 
+logging.basicConfig()
+
 
 class Harness:
     def __init__(self):
@@ -21,7 +43,6 @@ class Harness:
         self.test_index = next(index_gen)
 
         self.script = SlewTelescopeIcrs(index=self.index)
-        self.script.log.addHandler(logging.StreamHandler())
 
         # mock controller that uses callback functions defined below
         # to handle the expected commands
@@ -38,13 +59,13 @@ class Harness:
         self.atptg_target = data
 
     async def __aenter__(self):
-        await self.script.start_task
-        await self.atptg.start_task
+        await asyncio.gather(self.script.start_task,
+                             self.atptg.start_task)
         return self
 
     async def __aexit__(self, *args):
-        await self.script.close()
-        await self.atptg.close()
+        await asyncio.gather(self.script.close(),
+                             self.atptg.close())
 
 
 class TestSlewTelescopeIcrs(unittest.TestCase):

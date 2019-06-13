@@ -30,6 +30,8 @@ from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
 
 index_gen = salobj.index_generator()
 
+logging.basicConfig()
+
 
 class DomeTrajectoryMCSTestCase(unittest.TestCase):
     def setUp(self):
@@ -52,8 +54,7 @@ class DomeTrajectoryMCSTestCase(unittest.TestCase):
 
             print("*** Create DomeTrajectoryMCS script")
             script = DomeTrajectoryMCS(index=1)  # index is arbitrary
-            script.log.setLevel(logging.INFO)
-            script.log.addHandler(logging.StreamHandler())
+            await script.start_task
 
             print("*** Wait for ATMCS to start up")
             data = await script.atmcs.evt_summaryState.next(flush=False, timeout=20)
@@ -65,12 +66,6 @@ class DomeTrajectoryMCSTestCase(unittest.TestCase):
             data = await script.atdometraj.evt_summaryState.next(flush=False, timeout=30)
             self.assertEqual(data.summaryState, salobj.State.STANDBY)
 
-            async def wait_script_state(state):
-                while script.state.state != state:
-                    await asyncio.sleep(0.1)
-
-            print("*** Wait for the script to be ready to be configured")
-            await asyncio.wait_for(wait_script_state(ScriptState.UNCONFIGURED), timeout=2)
             print("*** Configure script")
             config_data = script.cmd_configure.DataType()
             config_data.config = ""

@@ -1,3 +1,23 @@
+# This file is part of ts_standardscripts
+#
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+
 __all__ = ["ATCamTakeImage"]
 
 import collections
@@ -5,9 +25,9 @@ import collections
 import numpy as np
 import yaml
 
-from lsst.ts.standardscripts.auxtel.latiss import LATISS
-from lsst.ts.scriptqueue.base_script import BaseScript
 from lsst.ts import salobj
+from lsst.ts.scriptqueue.base_script import BaseScript
+from .latiss import LATISS
 
 
 class ATCamTakeImage(BaseScript):
@@ -61,8 +81,8 @@ class ATCamTakeImage(BaseScript):
                       type: number
                       minimum: 0
                   - type: number
-                    default: 0
                     minimum: 0
+                default: 0
               shutter:
                 description: Open the shutter?
                 type: boolean

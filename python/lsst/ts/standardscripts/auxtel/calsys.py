@@ -1,8 +1,27 @@
+# This file is part of ts_standardscripts
+#
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+
+__all__ = ['ATCalSys']
 
 import asyncio
 from .latiss import LATISS
-
-__all__ = ['ATCalSys']
 
 
 class ATCalSys:
@@ -70,7 +89,7 @@ class ATCalSys:
 
         Returns
         -------
-        lfo : `SALPY_Electrometer.Electrometer_logevent_largeFileObjectAvailableC`
+        lfo : ``self.electr.evt_largeFileObjectAvailable.DataType``
             Large file Object Available event.
 
         """
@@ -104,9 +123,8 @@ class ATCalSys:
 
         Returns
         -------
-        cmd_captureSpectImage.start : `SALPY_FiberSpectrograph.
-            FiberSpectrograph_logevent_largeFileObjectAvailableC`
-
+        large_file_data : ``fiber_spec.evt_largeFileObjectAvailable.DataType``
+            Large file object available event data.
         """
         if evt is not None:
             await evt

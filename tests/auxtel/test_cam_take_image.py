@@ -1,18 +1,36 @@
+# This file is part of ts_standardscripts
+#
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+
 import asyncio
 import logging
-import sys
 import unittest
 
 import yaml
 
+from lsst.ts.idl.enums import Script
 from lsst.ts import salobj
-
 from lsst.ts.standardscripts.auxtel.atcam_take_image import ATCamTakeImage
 
 index_gen = salobj.index_generator()
 
-logger = logging.getLogger()
-logger.level = logging.DEBUG
+logging.basicConfig()
 
 
 class Harness:
@@ -59,89 +77,73 @@ class Harness:
         return self
 
     async def __aexit__(self, *args):
-        await self.atspec.close()
-        await self.atcam.close()
-        await self.script.close()
+        await asyncio.gather(self.atspec.close(),
+                             self.atcam.close(),
+                             self.script.close())
 
 
 class TestATCamTakeImage(unittest.TestCase):
 
-    def test_exp_time_scalar_omit_nimages(self):
+    def test_configure(self):
         async def doit():
-            async with Harness() as harness:
-                exp_time = 1.1
-                config_kwargs = dict(exp_times=exp_time)
-                config_data = harness.script.cmd_configure.DataType()
-                config_data.config = yaml.safe_dump(config_kwargs)
-                await harness.script.do_configure(data=config_data)
-                await harness.script.do_run(data=None)
-                self.assertEqual(harness.nimages, 1)
-                self.assertEqual(harness.selected_filter, [])
-                self.assertEqual(harness.selected_disperser, [])
-                self.assertEqual(harness.selected_linear_stage, [])
+            index = next(index_gen)
+            script = ATCamTakeImage(index=index)
+            try:
+                async def run_configure(**kwargs):
+                    script.set_state(Script.ScriptState.UNCONFIGURED)
+                    config_data = script.cmd_configure.DataType()
+                    if kwargs:
+                        config_data.config = yaml.safe_dump(kwargs)
+                    await script.do_configure(config_data)
 
-        asyncio.get_event_loop().run_until_complete(doit())
+                exp_times = 1.1
+                await run_configure(exp_times=exp_times)
+                self.assertEqual(script.config.exp_times, [exp_times])
+                self.assertFalse(script.config.shutter)
+                self.assertEqual(script.config.groupid, "")
+                self.assertIsNone(script.config.filter)
+                self.assertIsNone(script.config.grating)
+                self.assertIsNone(script.config.linear_stage)
 
-    def test_exp_time_scalar_with_nimages(self):
-        async def doit():
-            async with Harness() as harness:
-                exp_time = 1.1
+                exp_times = 1.1
                 nimages = 2
-                config_kwargs = dict(nimages=nimages, exp_times=exp_time)
-                config_data = harness.script.cmd_configure.DataType()
-                config_data.config = yaml.safe_dump(config_kwargs)
-                await harness.script.do_configure(data=config_data)
-                await harness.script.do_run(data=None)
-                self.assertEqual(harness.nimages, nimages)
-                self.assertEqual(harness.selected_filter, [])
-                self.assertEqual(harness.selected_disperser, [])
-                self.assertEqual(harness.selected_linear_stage, [])
+                filter = None
+                grating = None
+                await run_configure(exp_times=exp_times, nimages=nimages,
+                                    filter=filter, grating=grating)
+                self.assertEqual(script.config.exp_times, [exp_times, exp_times])
+                self.assertEqual(script.config.filter, filter)
+                self.assertEqual(script.config.grating, grating)
 
-        asyncio.get_event_loop().run_until_complete(doit())
+                exp_times = 1.1
+                nimages = 2
+                filter = "blue"
+                grating = 5
+                linear_stage = 25
+                await run_configure(exp_times=exp_times, nimages=nimages,
+                                    filter=filter, grating=grating, linear_stage=linear_stage)
+                self.assertEqual(script.config.exp_times, [exp_times, exp_times])
+                self.assertEqual(script.config.filter, filter)
+                self.assertEqual(script.config.grating, grating)
+                self.assertEqual(script.config.linear_stage, linear_stage)
 
-    def test_exp_time_array_omit_nimages(self):
-        async def doit():
-            async with Harness() as harness:
                 exp_times = [0, 2, 0.5]
-                config_kwargs = dict(exp_times=exp_times)
-                config_data = harness.script.cmd_configure.DataType()
-                config_data.config = yaml.safe_dump(config_kwargs)
-                await harness.script.do_configure(data=config_data)
-                await harness.script.do_run(data=None)
-                self.assertEqual(harness.nimages, len(exp_times))
-                self.assertEqual(harness.selected_filter, [])
-                self.assertEqual(harness.selected_disperser, [])
-                self.assertEqual(harness.selected_linear_stage, [])
+                filter = 2
+                grating = "a grating"
+                await run_configure(exp_times=exp_times, filter=filter,
+                                    grating=grating, linear_stage=linear_stage)
+                self.assertEqual(script.config.exp_times, exp_times)
+                self.assertEqual(script.config.filter, filter)
+                self.assertEqual(script.config.grating, grating)
+                self.assertEqual(script.config.linear_stage, linear_stage)
 
-        asyncio.get_event_loop().run_until_complete(doit())
-
-    def test_exp_time_array_with_matching_nimages(self):
-        async def doit():
-            async with Harness() as harness:
-                exp_times = [0, 2, 0.5]
-                nimages = len(exp_times)
-                config_kwargs = dict(nimages=nimages, exp_times=exp_times)
-                config_data = harness.script.cmd_configure.DataType()
-                config_data.config = yaml.safe_dump(config_kwargs)
-                await harness.script.do_configure(data=config_data)
-                await harness.script.do_run(data=None)
-                self.assertEqual(harness.nimages, len(exp_times))
-                self.assertEqual(harness.selected_filter, [])
-                self.assertEqual(harness.selected_disperser, [])
-                self.assertEqual(harness.selected_linear_stage, [])
-
-        asyncio.get_event_loop().run_until_complete(doit())
-
-    def test_exp_time_array_with_mismatching_nimages(self):
-        async def doit():
-            async with Harness() as harness:
                 exp_times = [0, 2, 0.5]
                 nimages = len(exp_times) + 1
-                config_kwargs = dict(nimages=nimages, exp_times=exp_times)
-                config_data = harness.script.cmd_configure.DataType()
-                config_data.config = yaml.safe_dump(config_kwargs)
                 with self.assertRaises(salobj.ExpectedError):
-                    await harness.script.do_configure(data=config_data)
+                    await run_configure(exp_times=exp_times, nimages=nimages)
+
+            finally:
+                await script.close()
 
         asyncio.get_event_loop().run_until_complete(doit())
 
@@ -167,9 +169,6 @@ class TestATCamTakeImage(unittest.TestCase):
                 self.assertIn(config_kwargs['filter'], harness.selected_filter)
                 self.assertIn(config_kwargs['grating'], harness.selected_disperser)
                 self.assertIn(config_kwargs['linear_stage'], harness.selected_linear_stage)
-
-            stream_handler = logging.StreamHandler(sys.stdout)
-            logger.addHandler(stream_handler)
 
         asyncio.get_event_loop().run_until_complete(doit())
 

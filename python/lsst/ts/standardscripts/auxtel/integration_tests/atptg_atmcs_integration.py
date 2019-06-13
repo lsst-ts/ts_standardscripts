@@ -21,7 +21,6 @@
 __all__ = ["ATPtgATMcsIntegration"]
 
 import asyncio
-import logging
 
 import astropy.units as u
 from astropy.time import Time
@@ -119,7 +118,6 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
         self.config = config
 
     async def run(self):
-        self.log.setLevel(20)
         # Enable ATMCS and ATPgt, if requested, else check they are enabled
         await self.checkpoint("enable_cscs")
         if self.config.enable_atmcs:
@@ -277,28 +275,3 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
             self.log.error(f"ATPtg stopTracking failed with {e}")
         else:
             self.log.info("Tracking stopped")
-
-
-async def main():
-
-    script = ATPtgATMcsIntegration(index=10)
-
-    script.log.setLevel(logging.INFO)
-    script.log.addHandler(logging.StreamHandler())
-
-    config_dict = dict(enable_atmcs=False, enable_atptg=False)
-
-    print("*** configure")
-    config_data = script.cmd_configure.DataType()
-    config_data.config = yaml.safe_dump(config_dict)
-    config_id_data = salobj.CommandIdData(1, config_data)
-    await script.do_configure(config_id_data)
-
-    print("*** run")
-    await script.do_run(None)
-    print("*** done")
-
-
-if __name__ == '__main__':
-
-    asyncio.get_event_loop().run_until_complete(main())
