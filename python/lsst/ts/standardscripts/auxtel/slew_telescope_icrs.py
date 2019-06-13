@@ -24,10 +24,9 @@ import yaml
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts import scriptqueue
 
 
-class SlewTelescopeIcrs(scriptqueue.BaseScript):
+class SlewTelescopeIcrs(salobj.BaseScript):
     """Slew the telescope to a specified ICRS position.
 
     Parameters
