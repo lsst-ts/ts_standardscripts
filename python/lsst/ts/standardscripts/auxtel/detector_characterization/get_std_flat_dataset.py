@@ -38,19 +38,18 @@ class ATGetStdFlatDataset(scriptqueue.BaseScript):
 
     Basically, this script will:
 
-    1 - Take a set `n_dark` (default=10) dark images (shutter closed) with
-        `t_dark` (default=400s) exposure time
-    2 - Take a set of `n_bias` (default=10) bias
-    3 - Flat field data:
+    1 - Take a set of `n_bias` (default=10) bias
+    2 - Flat field data:
         - Take a set of pairs of flat fields at a set of approximately
-        logarithmically spaced intensity
-        levels starting at 500 DN and increasing by a factor of 2 (i.e. 500,
-        1000, 2000, ...).
+        logarithmically spaced intensity levels starting at 500 DN and
+        increasing by a factor of 2 (i.e. 500, 1000, 2000, ...).
         The exact levels are not important, but they must be well known; both
         the flux level and shutter time must be well measured (if shutter is
         opened before/closed after the lamp
         is turned on then the shutter time need not be well measured).
         - Take a set of `nb` biases after the entire flat sequence is complete
+    3 - Take a set `n_dark` (default=10) dark images (shutter closed) with
+        `t_dark` (default=400s) exposure time
 
     Parameters
     ----------
