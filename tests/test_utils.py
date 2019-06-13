@@ -18,20 +18,35 @@
 #
 # You should have received a copy of the GNU General Public License
 
+import itertools
 import pathlib
 import unittest
 
 from lsst.ts import standardscripts
 
 
-class TestTestUtils(unittest.TestCase):
+class TestUtils(unittest.TestCase):
     def test_get_scripts_dir(self):
         scripts_dir = standardscripts.get_scripts_dir()
         self.assertTrue(scripts_dir.is_dir())
 
         pkg_path = pathlib.Path(__file__).resolve().parent.parent
         predicted_path = pkg_path / "scripts"
-        self.assertEqual(scripts_dir.samefile(predicted_path))
+        self.assertTrue(scripts_dir.samefile(predicted_path))
+
+    def test_subtract_angles(self):
+        for angle1, nwraps, diff in itertools.product(
+                (-90, -0.0001, 0, 0.0001, 90, 179.9999, 180, 180.0001),
+                (0, -1, 1, -5, 5),
+                (-0.00001, 0, 0.00001, -90, 90, -179.9999, 179.9999)):
+            with self.subTest(angle1=angle1, nwraps=nwraps, diff=diff):
+                angle2 = angle1 - diff
+                wrapped_angle1 = nwraps*360 + angle1
+                wrapped_angle2 = nwraps*360 + angle2
+                meas_diff1 = standardscripts.subtract_angles(wrapped_angle1, angle2)
+                self.assertAlmostEqual(meas_diff1, diff)
+                meas_diff2 = standardscripts.subtract_angles(angle1, wrapped_angle2)
+                self.assertAlmostEqual(meas_diff2, diff)
 
 
 if __name__ == '__main__':

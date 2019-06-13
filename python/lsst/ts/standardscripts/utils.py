@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Data Management System.
@@ -19,7 +18,36 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from lsst.ts.standardscripts.auxtel import CalSysTakeData
+__all__ = ["get_scripts_dir", "subtract_angles"]
 
-if __name__ == '__main__':
-    CalSysTakeData.main()
+import pathlib
+
+
+def get_scripts_dir():
+    """Get the absolute path to the scripts directory.
+
+    Returns
+    -------
+    scripts_dir : `pathlib.Path`
+        Absolute path to the specified scripts directory.
+    """
+    # 4 for python/lsst/ts/standardscripts
+    return pathlib.Path(__file__).resolve().parents[4] / "scripts"
+
+
+def subtract_angles(angle1, angle2):
+    """Compute the difference between two angles, wrapped to [-180, 180].
+
+    Parameters
+    ----------
+    angle1 : `float`
+        Angle 1 (deg)
+    angle2 : `float`
+        Angle 2 (deg)
+
+    Returns
+    -------
+    subtract_angles : `float`
+        angle1 - angle2 wrapped to [-180, 180] degrees
+    """
+    return ((angle1 - angle2) + 180) % 360.0 - 180

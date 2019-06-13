@@ -21,11 +21,12 @@
 __all__ = ["SetSummaryState"]
 
 import asyncio
-import importlib
 import re
 
-from lsst.ts.scriptqueue.base_script import BaseScript
+import yaml
+
 from lsst.ts import salobj
+from lsst.ts.scriptqueue.base_script import BaseScript
 
 
 class SetSummaryState(BaseScript):
@@ -45,7 +46,7 @@ class SetSummaryState(BaseScript):
       * First with state "STANDBY".
       * Next with state "DISABLED" or "ENABLED" and the desired settings.
 
-    * Dynamically loads SALPY libraries as needed.
+    * Dynamically loads IDL files as needed.
     """
 
     def __init__(self, index):
@@ -59,7 +60,33 @@ class SetSummaryState(BaseScript):
         # make it generous enough to handle any CSC
         self.cmd_timeout = 10
 
-    async def configure(self, data):
+    @property
+    def schema(self):
+        schema_yaml = """
+            $schema: http://json-schema.org/draft-07/schema#
+            $id: https://github.com/lsst-ts/ts_standardscripts/SetSummaryState.yaml
+            title: SetSummaryState v1
+            description: Configuration for SetSummaryState
+            type: object
+            properties:
+              data:
+                description: List of (CSC_name[:index], state_name [, settings_to_apply]);
+                    the default index is 0;
+                    the default settings_to_apply is ""
+                type: array
+                minItems: 1
+                items:
+                    type: array
+                    minItems: 2
+                    maxItems: 3
+                    items:
+                        type: string
+            required: [data]
+            additionalProperties: false
+        """
+        return yaml.safe_load(schema_yaml)
+
+    async def configure(self, config):
         """Configure the script.
 
         Specify the CSCs to command, and for each CSC,
@@ -67,9 +94,11 @@ class SetSummaryState(BaseScript):
 
         Parameters
         ----------
-        data : `List` [ `any` ]
-            A list of CSC name:index, state and optional settings.
-            Each element is a tuple with two or three entries:
+        config : `types.SimpleNamespace`
+            Configuration with one attribute:
+
+            * data : a list, where each element is a tuple
+              with two or three entries:
 
                 * CSC name and optional index as ``csc_name:index`` (a `str`).
                   For a CSC that is not indexed you may omit ``:index``
@@ -80,14 +109,6 @@ class SetSummaryState(BaseScript):
                   for each CSC. Ignored unless the ``start`` command is issued
                   (i.e. the CSC transitions from "STANDBY" to "DISABLED").
                   If omitted then "" is used.
-
-        Raises
-        ------
-        ValueError
-            If ``data`` has no elements or if any element is not a sequence
-            of 2 or 3 elements.
-            If the SALPY library cannot be imported for any specified CSC.
-            If the desired summary state name is unknown or is "fault".
 
         Notes
         -----
@@ -108,12 +129,8 @@ class SetSummaryState(BaseScript):
         self.log.info("Configure started")
 
         # parse the data
-        if len(data) == 0:
-            raise ValueError(f"data is an empty list")
         nameind_state_settings = []
-        for elt in data:
-            if len(data) not in (2, 3):
-                raise ValueError(f"{elt} must have 2 or 3 elements")
+        for elt in config.data:
             match = re.match(r"(?P<name>[a-zA-Z_-]+)(:(?P<index>\d+))?$", elt[0])
             if not match:
                 raise ValueError(f"{elt}[0] is not of the form CSC_name:index")
@@ -140,40 +157,15 @@ class SetSummaryState(BaseScript):
         remotes = dict()
         for elt in nameind_state_settings:
             name_index = elt[0]
-            self.log.debug(f"Create remote {name_index[0]}:{name_index[1]}")
+            name, index = name_index
+            self.log.debug(f"Create remote {name}:{index}")
             if name_index not in remotes:
-                remotes[name_index] = await self.create_remote(name_index)
+                remote = salobj.Remote(domain=self.domain, name=name, index=index,
+                                       include=["summaryState"])
+                remotes[name_index] = remote
 
         self.nameind_state_settings = nameind_state_settings
         self.remotes = remotes
-
-    async def create_remote(self, name_index):
-        """Create and return a salobj.Remote for one CSC.
-
-        Parameters
-        ----------
-        name_index : `List` [ `str`, `int` ]
-            CSC name and SAL index.
-
-        Returns
-        -------
-        remote : `salobj.Remote`
-            Remote to talk to the specified CSC. It can send any command
-            but only listens to one event: ``summaryState``.
-
-        Notes
-        -----
-        Warning: this is slow, due to DM-17904.
-        """
-        name, index = name_index
-        sallib = importlib.import_module(f"SALPY_{name}")
-
-        # construct the Remote in a thread to avoid blocking
-        def thread_func(name, index):
-            return salobj.Remote(sallib, index, include=["summaryState"])
-
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, thread_func, name, index)
 
     def set_metadata(self, metadata):
         """Compute estimated duration.
@@ -188,6 +180,11 @@ class SetSummaryState(BaseScript):
 
     async def run(self):
         """Run script."""
+        tasks = [remote.start_task for remote in self.remotes.values() if not remote.start_task.done()]
+        if tasks:
+            self.log.info(f"Waiting for {len(tasks)} remotes to be ready")
+            await asyncio.gather(*tasks)
+
         for name_index, state, settings in self.nameind_state_settings:
             name, index = name_index
             await self.checkpoint(f"set {name}:{index}")
