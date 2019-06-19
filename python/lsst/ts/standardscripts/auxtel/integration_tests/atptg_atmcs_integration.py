@@ -29,10 +29,9 @@ import yaml
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums import ATPtg
-from lsst.ts import scriptqueue
 
 
-class ATPtgATMcsIntegration(scriptqueue.BaseScript):
+class ATPtgATMcsIntegration(salobj.BaseScript):
     """Test integration between the ATPtg and ATMCS CSCs.
 
     Parameters

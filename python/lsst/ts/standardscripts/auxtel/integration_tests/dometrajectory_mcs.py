@@ -26,7 +26,6 @@ import math
 import yaml
 
 from lsst.ts import salobj
-from lsst.ts import scriptqueue
 from lsst.ts import ATMCSSimulator
 from lsst.ts.idl.enums.ATDome import AzimuthCommandedState, AzimuthState
 from ...utils import subtract_angles
@@ -38,7 +37,7 @@ TRACK_INTERVAL = 0.5  # interval between tracking updates (sec)
 RAD_PER_DEG = math.pi/180
 
 
-class DomeTrajectoryMCS(scriptqueue.BaseScript):
+class DomeTrajectoryMCS(salobj.BaseScript):
     """Test integration between the ATDomeTrajectory, ATDome and ATMCS CSCs.
 
     Parameters

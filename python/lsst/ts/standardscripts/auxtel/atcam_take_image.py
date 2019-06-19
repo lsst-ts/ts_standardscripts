@@ -26,11 +26,10 @@ import numpy as np
 import yaml
 
 from lsst.ts import salobj
-from lsst.ts.scriptqueue.base_script import BaseScript
 from .latiss import LATISS
 
 
-class ATCamTakeImage(BaseScript):
+class ATCamTakeImage(salobj.BaseScript):
     """ Take a series of images with the ATCamera with set exposure times.
 
     Parameters

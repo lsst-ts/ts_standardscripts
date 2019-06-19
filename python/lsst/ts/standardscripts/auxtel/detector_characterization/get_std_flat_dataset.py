@@ -24,11 +24,10 @@ import numpy as np
 import yaml
 
 from lsst.ts import salobj
-from lsst.ts import scriptqueue
 from ..latiss import LATISS
 
 
-class ATGetStdFlatDataset(scriptqueue.BaseScript):
+class ATGetStdFlatDataset(salobj.BaseScript):
     """Implement script to get sensor characterization data.
 
     Parameters
