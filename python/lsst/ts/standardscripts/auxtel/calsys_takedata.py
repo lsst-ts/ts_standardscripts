@@ -28,7 +28,6 @@ import numpy as np
 
 from lsst.ts.idl.enums import ATMonochromator
 from lsst.ts import salobj
-from lsst.ts import scriptqueue
 
 
 def is_sequence(value):
@@ -71,7 +70,7 @@ def as_array(value, dtype, nelt):
     return np.array([value]*nelt, dtype=dtype)
 
 
-class CalSysTakeData(scriptqueue.BaseScript):
+class CalSysTakeData(salobj.BaseScript):
     """
     """
 
@@ -84,8 +83,8 @@ class CalSysTakeData(scriptqueue.BaseScript):
         self.cmd_timeout = 10
         self.change_grating_time = 60
 
-    @property
-    def schema(self):
+    @classmethod
+    def get_schema(cls):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/SlewTelescopeIcrs.yaml

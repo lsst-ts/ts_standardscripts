@@ -1,6 +1,5 @@
 setupRequired(sconsUtils)
 setupRequired(ts_salobj)
-setupRequired(ts_scriptqueue)
 setupRequired(ts_ATDome)
 setupRequired(ts_ATDomeTrajectory)
 setupRequired(ts_ATMCSSimulator)

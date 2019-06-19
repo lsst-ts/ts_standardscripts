@@ -26,10 +26,9 @@ import re
 import yaml
 
 from lsst.ts import salobj
-from lsst.ts.scriptqueue.base_script import BaseScript
 
 
-class SetSummaryState(BaseScript):
+class SetSummaryState(salobj.BaseScript):
     """Set the summary state for one or more CSCs.
 
     Notes
@@ -60,8 +59,8 @@ class SetSummaryState(BaseScript):
         # make it generous enough to handle any CSC
         self.cmd_timeout = 10
 
-    @property
-    def schema(self):
+    @classmethod
+    def get_schema(cls):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/SetSummaryState.yaml

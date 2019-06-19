@@ -24,10 +24,9 @@ import yaml
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts import scriptqueue
 
 
-class SlewTelescopeIcrs(scriptqueue.BaseScript):
+class SlewTelescopeIcrs(salobj.BaseScript):
     """Slew the telescope to a specified ICRS position.
 
     Parameters
@@ -59,8 +58,8 @@ class SlewTelescopeIcrs(scriptqueue.BaseScript):
         self.atptg = salobj.Remote(domain=self.domain, name="ATPtg")
         self.tracking_started = False
 
-    @property
-    def schema(self):
+    @classmethod
+    def get_schema(cls):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/SlewTelescopeIcrs.yaml

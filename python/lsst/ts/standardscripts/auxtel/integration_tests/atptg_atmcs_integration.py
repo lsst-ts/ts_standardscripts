@@ -29,10 +29,9 @@ import yaml
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums import ATPtg
-from lsst.ts import scriptqueue
 
 
-class ATPtgATMcsIntegration(scriptqueue.BaseScript):
+class ATPtgATMcsIntegration(salobj.BaseScript):
     """Test integration between the ATPtg and ATMCS CSCs.
 
     Parameters
@@ -53,8 +52,8 @@ class ATPtgATMcsIntegration(scriptqueue.BaseScript):
 
         self.poll_time = 10.  # wait time in tracking test loop (seconds)
 
-    @property
-    def schema(self):
+    @classmethod
+    def get_schema(cls):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/ATPtgATMcsIntegration.yaml
