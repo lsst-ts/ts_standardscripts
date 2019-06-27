@@ -32,6 +32,8 @@ index_gen = salobj.index_generator()
 
 logging.basicConfig()
 
+START_TIMEOUT = 60
+
 
 class DomeTrajectoryMCSTestCase(unittest.TestCase):
     def setUp(self):
@@ -57,13 +59,13 @@ class DomeTrajectoryMCSTestCase(unittest.TestCase):
             await script.start_task
 
             print("*** Wait for ATMCS to start up")
-            data = await script.atmcs.evt_summaryState.next(flush=False, timeout=20)
+            data = await script.atmcs.evt_summaryState.next(flush=False, timeout=START_TIMEOUT)
             self.assertEqual(data.summaryState, salobj.State.STANDBY)
             print("*** Wait for ATDome to start up")
-            data = await script.atdome.evt_summaryState.next(flush=False, timeout=20)
+            data = await script.atdome.evt_summaryState.next(flush=False, timeout=START_TIMEOUT)
             self.assertEqual(data.summaryState, salobj.State.STANDBY)
             print("*** Wait for ATDomeTrajectory to start up")
-            data = await script.atdometraj.evt_summaryState.next(flush=False, timeout=30)
+            data = await script.atdometraj.evt_summaryState.next(flush=False, timeout=START_TIMEOUT)
             self.assertEqual(data.summaryState, salobj.State.STANDBY)
 
             print("*** Configure script")
@@ -95,7 +97,7 @@ class DomeTrajectoryMCSTestCase(unittest.TestCase):
                     os.environ["PATH"] = str(scripts_dir) + ":" + initial_path
                     process = await asyncio.create_subprocess_exec(script_name, str(index))
 
-                    state = await remote.evt_state.next(flush=False, timeout=60)
+                    state = await remote.evt_state.next(flush=False, timeout=START_TIMEOUT)
                     self.assertEqual(state.state, ScriptState.UNCONFIGURED)
 
                     process.terminate()
