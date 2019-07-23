@@ -23,23 +23,16 @@ __all__ = ["ATTracking"]
 import yaml
 import asyncio
 import logging
-import math
+import types
 
 import astropy.units as u
 from astropy.time import Time
-from astropy.coordinates import AltAz, ICRS, EarthLocation, Angle
+from astropy.coordinates import AltAz, ICRS, EarthLocation
 
 from lsst.ts import salobj
 from lsst.ts import scriptqueue
 from lsst.ts.standardscripts.auxtel.attcs import ATTCS
-
-import SALPY_ATMCS
-import SALPY_ATPtg
-import SALPY_ATAOS
-import SALPY_ATHexapod
-import SALPY_ATPneumatics
-import SALPY_ATDome
-import SALPY_ATDometrajectory
+from lsst.ts.idl.enums import ATPtg
 
 
 class ATTracking(scriptqueue.BaseScript):
@@ -53,92 +46,134 @@ class ATTracking(scriptqueue.BaseScript):
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        atmcs = salobj.Remote(SALPY_ATMCS, 0)
-        atptg = salobj.Remote(SALPY_ATPtg, 0)
-        ataos = salobj.Remote(SALPY_ATAOS)
-        athexapod = salobj.Remote(SALPY_ATHexapod)
-        atpneumatics = salobj.Remote(SALPY_ATPneumatics)
-        atdome=salobj.Remote(SALPY_ATDome)
-        atdometrajectory=salobj.Remote(SALPY_ATDometrajectory)
         super().__init__(
             index=index,
-            descr="Test integration between ATPtg and ATMCS",
-            remotes_dict=dict(
-                atmcs=atmcs,
-                atptg=atptg,
-                ataos=ataos,
-                athexapod=athexapod,
-                atpneumatics=atpneumatics,
-                atdome=atdome,
-                atdometrajectory=atdometrajectory))
+            descr="Test integration between ATPtg and ATMCS")
+        self.atmcs = salobj.Remote(self.domain, name="ATMCS")
+        self.atptg = salobj.Remote(self.domain, name="ATPtg")
+        self.ataos = salobj.Remote(self.domain, name="ATAOS")
+        self.athexapod = salobj.Remote(self.domain, name="ATHexapod")
+        self.atpneumatics = salobj.Remote(self.domain, name="ATPneumatics")
+        self.atdome = salobj.Remote(self.domain, name="ATDome")
+        self.atdometrajectory = salobj.Remote(self.domain, name="ATDomeTrajectory")
         self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
                                                     lat=-30.244728*u.deg,
                                                     height=2663.0*u.m)
         self.attcs = ATTCS(
-                atmcs=atmcs,
-                atptg=atptg,
-                ataos=ataos,
-                athexapod=athexapod,
-                atpneumatics=atpneumatics,
-                atdome=atdome,
-                atdometrajectory=atdometrajectory)
+            atmcs=self.atmcs,
+            atptg=self.atptg,
+            ataos=self.ataos,
+            athexapod=self.athexapod,
+            atpneumatics=self.atpneumatics,
+            atdome=self.atdome,
+            atdometrajectory=self.atdometrajectory)
         self.in_fault = False
 
         self.pool_time = 10.  # wait time in tracking test loop (seconds)
 
-    async def configure(
-            self,
-            el=45.,
-            az=45.,
-            max_sep=1.,
-            track_duration=0.02,
-            max_track_error=5.,
-            enable_atmcs=True,
-            enable_atptg=True,
-            enable_ataos=True,
-            enable_athexapod=True,
-            enable_atpneumatics=True,
-            within=0.01
-            check=dict(
-                athexapod=True,
-                atpneumatics=True,
-                atdome=True,
-                atdometrajectory=True):
+    @classmethod
+    def get_schema(cls):
+        schema = """
+        $schema: http://json-schema.org/draft-07/schema#
+        $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/ATTrackingATTCS.yaml
+        title: ATTrackingATTCS v1
+        description: configuration for ATTracking ATTCS.
+        type: object
+        properties:
+            el:
+                description: Approximate elevation of target (deg).
+                type: number
+                default: 45.0
+            az:
+                description: Approximate azimuth of target (deg).
+                type: number
+                default: 45.0
+            max_sep:
+                description: Maximum allowed on-sky separation between expected az/alt
+                and the target az/alt computer by the ATPtg (deg).
+                This need not be tiny; it is meant to be a sanity check.
+                type: number
+                default: 1.0
+            track_duration:
+                description: How long to track after slewing to position (hour).
+                type: number
+                default: 0.02
+            max_track_error:
+                description: Maximum allowed on-sky separation between commanded and
+                measured az/el (arcsec).
+                type: number
+                default: 0.05
+            enable_atmcs:
+                description: Enable the atmcs.
+                type: boolean
+                default: True
+            enable_atptg:
+                description: Enable the atptg.
+                type: boolean
+                default: True
+            enable_ataos:
+                description: Enable the ataos.
+                type: boolean
+                default: True
+            enable_athexapod:
+                description: Enable the athexapod.
+                type: boolean
+                default: True
+            enable_atpneumatics:
+                description: Enable the atpneumatics.
+                type: boolean
+                default: True
+            within:
+                description: How close in percentage, actual values are to commanded values.
+                type: number
+                default: True
+            check:
+                description: A dictionary of values to check the status of certain CSCs.
+                type: object
+                properties:
+                    athexapod:
+                        description: boolean that checks the athexapod or does not.
+                        type: boolean
+                        default: True
+                    atpneumatics:
+                        description: boolean that checks the atpneumatics or does not.
+                        type: boolean
+                        default: True
+                    atdome:
+                        description: boolean that checks the atdome or does not.
+                        type: boolean
+                        default: True
+                    atdometrajectory:
+                        description: boolean that checks the atdometrajectory or does not.
+                        type: boolean
+                        default: True
+        additionalProperties: False
+        """
+        return yaml.safe_dump(schema)
+
+    async def configure(self, config):
         """Configure the script.
 
         Parameters
         ----------
-        el : `float`
-            Approximate elevation of target (deg).
-        az : `float`
-            Approximate azimuth of target (deg).
-        max_sep : `float`
-            Maximum allowed on-sky separation between expected az/alt
-            and the target az/alt computed by ATPtg (deg).
-            This need not be tiny; it is meant as a sanity check.
-        track_duration : `float`
-            How long to track after slewing to position (hour).
-        max_track_error : `float`
-            Maximum allowed on-sky separation between commanded and
-            measured az/el (arcsec).
-        enable_atmcs : `bool` (optional)
-            Enable the ATMCS CSC?
-        enable_atptg : `bool` (optional)
-            Enable the ATPtg CSC?
+        config : `types.SimpleNamespace`
+            An object returned by the do_configure method of the ScriptQueue, having been validated
+            by a json-schema parser.
+
         """
-        self.el = float(el)*u.deg
-        self.az = float(az)*u.deg
-        self.max_sep = float(max_sep)*u.deg
-        self.track_duration = float(track_duration)*u.hour
-        self.max_track_error = float(max_track_error)*u.arcsec
-        self.enable_atmcs = bool(enable_atmcs)
-        self.enable_atptg = bool(enable_atptg)
-        self.enable_ataos = bool(enable_ataos)
-        self.enable_athexapod = bool(enable_athexapod)
-        self.enable_atpneumatics = bool(enable_atpneumatics)
-        self.within = float(within)
+        self.el = float(self.config.el)*u.deg
+        self.az = float(self.config.az)*u.deg
+        self.max_sep = float(self.config.max_sep)*u.deg
+        self.track_duration = float(self.config.track_duration)*u.hour
+        self.max_track_error = float(self.config.max_track_error)*u.arcsec
+        self.enable_atmcs = bool(self.config.enable_atmcs)
+        self.enable_atptg = bool(self.config.enable_atptg)
+        self.enable_ataos = bool(self.config.enable_ataos)
+        self.enable_athexapod = bool(self.config.enable_athexapod)
+        self.enable_atpneumatics = bool(self.config.enable_atpneumatics)
+        self.within = float(self.config.within)
         self.attcs.within = self.within
-        self.attcs.check = types.SimpleNamespace(**check)
+        self.attcs.check = types.SimpleNamespace(**self.config.check)
 
     def assertEqual(self, what, val1, val2, more=""):
         if val1 != val2:
@@ -233,8 +268,8 @@ class ATTracking(scriptqueue.BaseScript):
         # Start tracking
         self.atptg.cmd_raDecTarget.set(
             targetName="atptg_atmcs_integration",
-            targetInstance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
-            frame=SALPY_ATPtg.ATPtg_shared_CoordFrame_icrs,
+            targetInstance=ATPtg.TargetInstances.CURRENT,
+            frame=ATPtg.CoordFrame.ICRS,
             epoch=2000,  # should be ignored: no parallax or proper motion
             equinox=2000,  # should be ignored for ICRS
             ra=cmd_radec.ra.hour,
@@ -246,8 +281,8 @@ class ATTracking(scriptqueue.BaseScript):
             dRA=0,
             dDec=0,
             rotPA=0,
-            rotFrame=SALPY_ATPtg.ATPtg_shared_RotFrame_target,
-            rotMode=SALPY_ATPtg.ATPtg_shared_RotMode_field,
+            rotFrame=ATPtg.RotFrame.TARGET,
+            rotMode=ATPtg.RotMode.FIELD,
         )
         self.log.info(f"raDecTarget ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
                       f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg")
@@ -308,7 +343,7 @@ class ATTracking(scriptqueue.BaseScript):
             self.log.debug(f"Got {in_position.inPosition}")
             if in_position.inPosition:
                 break
-        
+
         await self.attcs.check_track(track_duration=self.track_duration)
 
     def set_metadata(self, metadata):

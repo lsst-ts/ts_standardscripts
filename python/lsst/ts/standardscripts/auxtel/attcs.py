@@ -5,7 +5,7 @@ import math
 from astropy.time import Time
 
 from lsst.ts import salobj
-import SALPY_ATPtg
+from lsst.ts.idl.enums import ATPtg
 import types
 
 
@@ -57,11 +57,11 @@ class ATTCS:
         self.within = within
 
     async def slew(self, ra, dec, rotPA=0, target_name="slew_icrs",
-                   target_instance=SALPY_ATPtg.ATPtg_shared_TargetInstances_current,
-                   frame=SALPY_ATPtg.ATPtg_shared_CoordFrame_icrs,
+                   target_instance=ATPtg.TargetInstances.CURRENT,
+                   frame=ATPtg.CoordFrame.ICRS,
                    epoch=2000, equinox=2000, parallax=0, pmRA=0, pmDec=0, rv=0, dRA=0, dDec=0,
-                   rot_frame=SALPY_ATPtg.ATPtg_shared_RotFrame_target,
-                   rot_mode=SALPY_ATPtg.ATPtg_shared_RotMode_field):
+                   rot_frame=ATPtg.RotFrame.TARGET,
+                   rot_mode=ATPtg.RotMode.FIELD):
         """
         Slew the telescope
 
