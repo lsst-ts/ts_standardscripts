@@ -50,12 +50,12 @@ class DomeTrajectoryMCS(salobj.BaseScript):
     def __init__(self, index):
         super().__init__(index=index,
                          descr="Test integration between ATDome and ATMCS")
-        self.atmcs = salobj.Remote(domain=self.domain, name="ATMCS", index=0,
+        self.atmcs = salobj.Remote(domain=self.domain, name="ATMCS",
                                    include=["summaryState", "track",
                                             "target", "elevationInPosition", "azimuthInPosition",
                                             "mountEncoders", "measuredMotorVelocity"])
-        self.atdometraj = salobj.Remote(domain=self.domain, name="ATDomeTrajectory", index=0)
-        self.atdome = salobj.Remote(domain=self.domain, name="ATDome", index=1)
+        self.atdometraj = salobj.Remote(domain=self.domain, name="ATDomeTrajectory")
+        self.atdome = salobj.Remote(domain=self.domain, name="ATDome")
         self._track_task = None
         self.track_elaz = None
 
