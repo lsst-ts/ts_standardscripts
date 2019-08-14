@@ -129,7 +129,7 @@ class ATCamTakeImage(salobj.BaseScript):
 
         self.config = config
 
-        nimages = config.nimages
+        nimages = int(config.nimages)
         if isinstance(config.exp_times, collections.Iterable):
             if nimages is not None:
                 if len(config.exp_times) != nimages:
@@ -152,8 +152,8 @@ class ATCamTakeImage(salobj.BaseScript):
     def set_metadata(self, metadata):
         nimages = len(self.config.exp_times)
         mean_exptime = np.mean(self.config.exp_times)
-        metadata.duration = (mean_exptime + self.readout_time +
-                             self.config.shutter_time*2 if self.config.shutter else 0) * nimages
+        metadata.duration = (mean_exptime + self.latiss.read_out_time +
+                             self.latiss.shutter_time*2 if self.latiss.shutter_time else 0) * nimages
 
     async def run(self):
         nimages = len(self.config.exp_times)
