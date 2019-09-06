@@ -32,11 +32,13 @@ class Harness:
         self.index = next(index_gen)
         self.test_index = next(index_gen)
         salobj.test_utils.set_random_lsst_dds_domain()
-        self.domain = salobj.Domain()
-        self.latiss = LATISS(salobj.Remote(domain=self.domain, name="ATCamera"),
-                             salobj.Remote(domain=self.domain, name="ATSpectrograph"))
+
         self.atcam = salobj.Controller(name="ATCamera")
         self.atspec = salobj.Controller(name="ATSpectrograph")
+
+        self.domain = salobj.Domain()
+        self.latiss = LATISS(salobj.Remote(domain=self.atcam.domain, name="ATCamera"),
+                             salobj.Remote(domain=self.atspec.domain, name="ATSpectrograph"))
 
         self.atcam.cmd_takeImages.callback = self.cmd_take_images_callback
         self.atspec.cmd_changeFilter.callback = self.cmd_changeFilter_callback
@@ -92,8 +94,7 @@ class Harness:
         return self
 
     async def __aexit__(self, *args):
-        await asyncio.gather(self.domain.close(),
-                             self.atcam.close(),
+        await asyncio.gather(self.atcam.close(),
                              self.atspec.close())
 
 
