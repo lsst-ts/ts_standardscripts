@@ -24,6 +24,7 @@ import unittest
 import asyncio
 
 import yaml
+import numpy as np
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
@@ -47,25 +48,82 @@ class Harness:
         # mock controller that uses callback functions defined below
         # to handle the expected commands
         self.atptg = salobj.Controller("ATPtg")
+        self.atdome = salobj.Controller("ATDome")
+        self.atmcs = salobj.Controller("ATMCS")
         self.atptg.evt_summaryState.set_put(summaryState=salobj.State.ENABLED)
+        self.atdome.evt_summaryState.set_put(summaryState=salobj.State.ENABLED)
         self.atptg_target = None
+        self.track = False
+        self.run_telemetry_loop = True
 
         # assign the command callback functions
         self.atptg.cmd_raDecTarget.callback = self.raDecTarget
 
+        self.tel_pos_task = asyncio.ensure_future(self.fake_tel_pos_telemetry())
+        self.dome_pos_task = asyncio.ensure_future(self.dome_tel_pos_telemetry())
+
     async def raDecTarget(self, data):
         """Callback for ATPtg raDecTarget command.
         """
+        await asyncio.sleep(0.5)
+        self.atmcs.evt_allAxesInPosition.set_put(inPosition=False,
+                                                 force_output=True)
+        await asyncio.sleep(0.5)
+        self.atdome.evt_azimuthInPosition.set_put(inPosition=False,
+                                                  force_output=True)
+
+        self.track = True
+
         self.atptg_target = data
+
+        asyncio.ensure_future(self.fake_slew(5.))
+
+    async def fake_slew(self, wait_time):
+
+        await asyncio.sleep(wait_time)
+        self.atmcs.evt_allAxesInPosition.set_put(inPosition=True,
+                                                 force_output=True)
+        await asyncio.sleep(0.5)
+        self.atdome.evt_azimuthInPosition.set_put(inPosition=True,
+                                                  force_output=True)
+
+    async def fake_tel_pos_telemetry(self):
+        while self.run_telemetry_loop:
+
+            self.atmcs.tel_mount_AzEl_Encoders.set_put(
+                elevationCalculatedAngle=np.zeros(100),
+                azimuthCalculatedAngle=np.zeros(100),
+            )
+
+            if self.track:
+                self.atmcs.evt_target.set_put(elevation=0.,
+                                              azimuth=0.,
+                                              force_output=True)
+
+            await asyncio.sleep(1.)
+
+    async def dome_tel_pos_telemetry(self):
+        while self.run_telemetry_loop:
+            self.atdome.tel_position.set_put(azimuthPosition=0.)
+            await asyncio.sleep(1.)
 
     async def __aenter__(self):
         await asyncio.gather(self.script.start_task,
-                             self.atptg.start_task)
+                             self.atptg.start_task,
+                             self.atdome.start_task,
+                             self.atmcs.start_task)
         return self
 
     async def __aexit__(self, *args):
+        self.run_telemetry_loop = False
+
+        await asyncio.gather(self.tel_pos_task,
+                             self.dome_pos_task)
+
         await asyncio.gather(self.script.close(),
-                             self.atptg.close())
+                             self.atptg.close(),
+                             self.atdome.close(),
+                             self.atmcs.close())
 
 
 class TestSlewTelescopeIcrs(unittest.TestCase):
