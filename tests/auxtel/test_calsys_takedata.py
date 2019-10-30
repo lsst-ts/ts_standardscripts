@@ -66,7 +66,7 @@ class Harness:
         # assign the command callback functions
         self.electrometer.cmd_startScanDt.callback = self.startScanDt
 
-        self.fiberspec.cmd_captureSpectImage.callback = self.captureSpectImage
+        self.fiberspec.cmd_expose.callback = self.captureSpectImage
 
         self.monochromator.cmd_changeWavelength.callback = self.changeWavelength
         self.monochromator.cmd_changeSlitWidth.callback = self.changeSlitWidth
@@ -83,7 +83,7 @@ class Harness:
         """Callback for FiberSpectrograph captureSpectImage command.
         """
         self.image_data.append(data)
-        await asyncio.sleep(data.integrationTime)
+        await asyncio.sleep(data.duration)
 
     async def changeWavelength(self, data):
         """Callback for ATMonochromator changeWavelength command."""
@@ -209,10 +209,10 @@ class TestATCalSysTakeData(unittest.TestCase):
                 desired_scan_durations = [integration_times[i] + 2*spectrometer_delays[i]
                                           for i in range(nimages)]
                 assert_array_almost_equal(harness.scan_durations, desired_scan_durations)
-                self.assertEqual([imd.imageType for imd in harness.image_data], image_types)
-                assert_array_almost_equal([imd.integrationTime
+                self.assertEqual([imd.type for imd in harness.image_data], image_types)
+                assert_array_almost_equal([imd.duration
                                            for imd in harness.image_data], integration_times)
-                self.assertEqual([imd.lamp for imd in harness.image_data], lamps)
+                self.assertEqual([imd.source for imd in harness.image_data], lamps)
                 assert_array_almost_equal(harness.wavelengths, wavelengths)
                 assert_array_almost_equal(harness.grating_types, grating_types)
                 desired_slits = []

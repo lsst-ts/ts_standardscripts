@@ -12,8 +12,8 @@ pipeline {
                     sh """
                     docker network create \${network_name}
                     chmod -R a+rw \${WORKSPACE}
-                    container=\$(docker run -v \${WORKSPACE}:/home/saluser/repo/ -td --rm --net \${network_name} --name \${container_name} lsstts/develop-env:salobj4_b30)
-                    docker exec -u saluser \${container} sh -c \"source ~/.setup.sh && make_idl_files.py ATMCS ATPtg ATAOS ATPneumatics ATHexapod ATDome ATDomeTrajectory && cd repo && eups declare -r . -t saluser && setup ts_standardscripts -t saluser && scons\"
+                    container=\$(docker run -v \${WORKSPACE}:/home/saluser/repo/ -td --rm --net \${network_name} --name \${container_name} lsstts/develop-env:salobj4_b64)
+                    docker exec -u saluser \${container} sh -c \"source ~/.setup.sh && make_idl_files.py ATMCS ATPtg ATAOS ATPneumatics ATHexapod ATDome ATDomeTrajectory && cd repo && eups declare -r . -t saluser && setup ts_standardscripts -t saluser && py.test --junitxml=tests/.tests/junit.xml\"
                     """
                 }
             }
@@ -23,14 +23,14 @@ pipeline {
         always {
             // The path of xml needed by JUnit is relative to
             // the workspace.
-            junit 'tests/.tests/*.xml'
+            junit 'tests/.tests/junit.xml'
 
             // Publish the HTML report
             publishHTML (target: [
                 allowMissing: false,
                 alwaysLinkToLastBuild: false,
                 keepAll: true,
-                reportDir: 'tests/.tests/pytest-ts_standardscripts.xml-htmlcov',
+                reportDir: 'tests/.tests/',
                 reportFiles: 'index.html',
                 reportName: "Coverage Report"
               ])

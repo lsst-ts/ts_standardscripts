@@ -25,6 +25,7 @@ import asyncio
 
 import yaml
 import numpy as np
+from astropy.time import Time
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
@@ -39,6 +40,9 @@ logging.basicConfig()
 
 class Harness:
     def __init__(self):
+
+        salobj.test_utils.set_random_lsst_dds_domain()
+
         self.index = next(index_gen)
 
         self.test_index = next(index_gen)
@@ -50,6 +54,7 @@ class Harness:
         self.atptg = salobj.Controller("ATPtg")
         self.atdome = salobj.Controller("ATDome")
         self.atmcs = salobj.Controller("ATMCS")
+
         self.atptg.evt_summaryState.set_put(summaryState=salobj.State.ENABLED)
         self.atdome.evt_summaryState.set_put(summaryState=salobj.State.ENABLED)
         self.atptg_target = None
@@ -61,6 +66,15 @@ class Harness:
 
         self.tel_pos_task = asyncio.ensure_future(self.fake_tel_pos_telemetry())
         self.dome_pos_task = asyncio.ensure_future(self.dome_tel_pos_telemetry())
+        self.time_and_date_task = asyncio.ensure_future(self.post_time_and_date())
+
+    async def post_time_and_date(self):
+
+        while self.run_telemetry_loop:
+            await asyncio.sleep(1.)
+            now = Time.now()
+            now.format = "mjd"
+            self.atptg.tel_timeAndDate.set_put(tai=now.value)
 
     async def raDecTarget(self, data):
         """Callback for ATPtg raDecTarget command.
@@ -118,7 +132,8 @@ class Harness:
         self.run_telemetry_loop = False
 
         await asyncio.gather(self.tel_pos_task,
-                             self.dome_pos_task)
+                             self.dome_pos_task,
+                             self.time_and_date_task)
 
         await asyncio.gather(self.script.close(),
                              self.atptg.close(),
@@ -128,12 +143,10 @@ class Harness:
 
 class TestSlewTelescopeIcrs(unittest.TestCase):
     def setUp(self):
-        salobj.test_utils.set_random_lsst_dds_domain()
-
         # arbitrary sample data for use by most tests
-        self.ra = 8
-        self.dec = 15
-        self.rot_pa = 1
+        self.ra = 8.
+        self.dec = -15.
+        self.rot_pa = 0.
         self.target_name = "test target"
 
     def make_config_data(self):
@@ -217,7 +230,6 @@ class TestSlewTelescopeIcrs(unittest.TestCase):
 
                 self.assertEqual(harness.atptg_target.ra, self.ra)
                 self.assertEqual(harness.atptg_target.declination, self.dec)
-                self.assertEqual(harness.atptg_target.rotPA, self.rot_pa)
                 self.assertEqual(harness.atptg_target.targetName, self.target_name)
 
         asyncio.get_event_loop().run_until_complete(doit())

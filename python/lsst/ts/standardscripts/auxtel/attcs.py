@@ -4,7 +4,7 @@ import math
 
 import astropy.units as u
 from astropy.time import Time
-from astropy.coordinates import AltAz, ICRS, EarthLocation, Angle, FK5
+from astropy.coordinates import AltAz, ICRS, EarthLocation, Angle
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums import ATPtg
