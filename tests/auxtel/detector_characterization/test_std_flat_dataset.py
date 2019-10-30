@@ -56,11 +56,11 @@ class Harness:
         self.linear_stage = None
 
     async def cmd_take_images_callback(self, data):
-        if "bias" in data.imageSequenceName:
+        if "bias" in data.imageType.lower():
             self.n_bias += 1
-        elif "dark" in data.imageSequenceName:
+        elif "dark" in data.imageType.lower():
             self.n_dark += 1
-        elif "flat" in data.imageSequenceName:
+        elif "flat" in data.imageType.lower():
             self.n_flat += 1
         await asyncio.sleep(self.script.read_out_time)
 
