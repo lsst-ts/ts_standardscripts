@@ -68,7 +68,8 @@ class LATISS:
             if checkpoint is not None:
                 await checkpoint(tag)
             await self.expose(exp_time=0., shutter=False,
-                              image_seq_name=tag,
+                              image_type="BIAS",
+                              group_id=tag,
                               science=True, guide=False, wfs=False)
 
     async def take_darks(self, exptime, ndarks, checkpoint=None):
@@ -90,7 +91,8 @@ class LATISS:
             if checkpoint is not None:
                 await checkpoint(tag)
             await self.expose(exp_time=exptime, shutter=False,
-                              image_seq_name=tag,
+                              image_type="DARK",
+                              group_id=tag,
                               science=True, guide=False, wfs=False)
 
     async def take_flats(self, exptime, nflats,
@@ -119,11 +121,12 @@ class LATISS:
             tag = f"flat_{i+1:04}"
             if checkpoint is not None:
                 await checkpoint(tag)
-            await self.take_image(exptime=exptime, shutter=True, image_seq_name=tag,
+            await self.take_image(exptime=exptime, shutter=True, image_type="FLAT",
+                                  group_id=tag,
                                   filter=filter, grating=grating,
                                   linear_stage=linear_stage)
 
-    async def take_image(self, exptime, shutter, image_seq_name,
+    async def take_image(self, exptime, shutter, image_type, group_id,
                          filter=None, grating=None, linear_stage=None,
                          science=True, guide=False, wfs=False,
                          ):
@@ -140,10 +143,11 @@ class LATISS:
             The exposure time for the image, in seconds.
         shutter : `bool`
             Should activate the shutter? (False for bias and dark)
-        image_seq_name : `str`
-            A string to identify the image.
-        filter : `None` or `int` or `str`
-            Filter id or name. If None, do not change the filter.
+        image_type : `str`
+            Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, FE55,
+            XTALK, CCOB, SPOT...)
+        group_id : `str`
+            Image groupId. Used to fill in FITS GROUPID header
         grating : `None` or `int` or `str`
             Grating id or name.  If None, do not change the grating.
         linear_stage : `None` or `float`
@@ -165,10 +169,12 @@ class LATISS:
                                 grating=grating,
                                 linear_stage=linear_stage)
 
-        return await self.expose(exp_time=exptime, shutter=shutter, image_seq_name=image_seq_name,
+        return await self.expose(exp_time=exptime, shutter=shutter,
+                                 image_type=image_type,
+                                 group_id=group_id,
                                  science=science, guide=guide, wfs=wfs)
 
-    async def expose(self, exp_time, shutter, image_seq_name,
+    async def expose(self, exp_time, shutter, image_type, group_id,
                      science=True, guide=False, wfs=False):
         """Encapsulates the take image command.
 
@@ -181,8 +187,11 @@ class LATISS:
             The exposure time for the image, in seconds.
         shutter : `bool`
             Should activate the shutter? (False for bias and dark)
-        image_seq_name : `str`
-            A string to identify the image.
+        image_type : `str`
+            Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, FE55,
+            XTALK, CCOB, SPOT...)
+        group_id : `str`
+            Image groupId. Used to fill in FITS GROUPID header
         science : `bool`
             Mark image as science (default=True)?
         guide : `bool`
@@ -202,7 +211,8 @@ class LATISS:
             self.atcam.cmd_takeImages.set(numImages=1,
                                           expTime=float(exp_time),
                                           shutter=bool(shutter),
-                                          imageSequenceName=str(image_seq_name),
+                                          imageType=str(image_type),
+                                          groupId=str(group_id),
                                           science=bool(science),
                                           guide=bool(guide),
                                           wfs=bool(wfs)

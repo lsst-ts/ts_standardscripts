@@ -63,8 +63,8 @@ class ATCamTakeImage(salobj.BaseScript):
             type: object
             properties:
               nimages:
-                description: The number of images to take; if omitted then use the length of exp_times
-                    or take a single exposure if exp_times is a scalar.
+                description: The number of images to take; if omitted then use the length of
+                    exp_times or take a single exposure if exp_times is a scalar.
                 anyOf:
                   - type: integer
                     minimum: 1
@@ -86,6 +86,11 @@ class ATCamTakeImage(salobj.BaseScript):
                 description: Open the shutter?
                 type: boolean
                 default: false
+              image_type:
+                description: Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, FE55,
+                    XTALK, CCOB, SPOT...)
+                type: string
+                default: ""
               groupid:
                 description: Value for the GROUPID entry in the image header.
                 type: string
@@ -112,7 +117,8 @@ class ATCamTakeImage(salobj.BaseScript):
                   - type: number
                   - type: "null"
                 default: null
-            required: [nimages, exp_times, shutter, groupid, filter, grating, linear_stage]
+            required: [nimages, exp_times, shutter, image_type, groupid, filter, grating,
+                       linear_stage]
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -133,8 +139,9 @@ class ATCamTakeImage(salobj.BaseScript):
         if isinstance(config.exp_times, collections.Iterable):
             if nimages is not None:
                 if len(config.exp_times) != nimages:
-                    raise ValueError(f"nimages={nimages} specified and exp_times={config.exp_times} "
-                                     "is an array, but the length does not match nimages")
+                    raise ValueError(f"nimages={nimages} specified and "
+                                     f"exp_times={config.exp_times} is an array, "
+                                     f"but the length does not match nimages")
         else:
             # exp_time is a scalar; if nimages is specified then
             # take that many images, else take 1 image
@@ -144,7 +151,8 @@ class ATCamTakeImage(salobj.BaseScript):
 
         self.log.info(f"exposure times={self.config.exp_times}, "
                       f"shutter={self.config.shutter}, "
-                      f"image_name={self.config.groupid}"
+                      f"groupid={self.config.groupid}"
+                      f"image_type={self.config.image_type}"
                       f"filter={self.config.filter}"
                       f"grating={self.config.grating}"
                       f"linear_stage={self.config.linear_stage}")
@@ -161,7 +169,8 @@ class ATCamTakeImage(salobj.BaseScript):
             await self.checkpoint(f"exposure {i+1} of {nimages}")
             end_readout = await self.latiss.take_image(exptime=exposure,
                                                        shutter=self.config.shutter,
-                                                       image_seq_name=self.config.groupid,
+                                                       image_type=self.config.image_type,
+                                                       group_id=self.config.groupid,
                                                        filter=self.config.filter,
                                                        grating=self.config.grating,
                                                        linear_stage=self.config.linear_stage)

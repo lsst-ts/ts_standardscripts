@@ -135,12 +135,12 @@ class ATCalSys:
         fs_lfo_coro = self.fiber_spec.evt_largeFileObjectAvailable.next(
             timeout=self.cmd_timeout, flush=True)
 
-        self.fiber_spec.cmd_captureSpectImage.set(
+        self.fiber_spec.cmd_expose.set(
             imageType=image_type,
             integrationTime=integration_time,
             lamp=lamp,
         )
 
-        await self.fiber_spec.cmd_captureSpectImage.start(timeout=timeout)
+        await self.fiber_spec.cmd_expose.start(timeout=timeout)
 
         return await fs_lfo_coro

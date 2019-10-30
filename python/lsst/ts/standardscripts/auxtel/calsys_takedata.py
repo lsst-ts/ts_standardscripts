@@ -286,16 +286,16 @@ class CalSysTakeData(salobj.BaseScript):
 
         Returns
         -------
-        cmd_captureSpectImage.start : coro
+        cmd_expose.start : coro
         """
         await self.electrometer.evt_detailedState.next(flush=True, timeout=self.cmd_timeout)
         await asyncio.sleep(self.config.spectrometer_delays[index])
 
         timeout = self.config.integration_times[index] + self.cmd_timeout
-        self.fiber_spectrograph.cmd_captureSpectImage.set(
-            imageType=self.config.image_types[index],
-            integrationTime=self.config.integration_times[index],
-            lamp=self.config.lamps[index],
+        self.fiber_spectrograph.cmd_expose.set(
+            type=self.config.image_types[index],
+            duration=self.config.integration_times[index],
+            source=self.config.lamps[index],
         )
         self.log.info(f"take a {self.config.integration_times[index]} second exposure")
-        return await self.fiber_spectrograph.cmd_captureSpectImage.start(timeout=timeout)
+        return await self.fiber_spectrograph.cmd_expose.start(timeout=timeout)
