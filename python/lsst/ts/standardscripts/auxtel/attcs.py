@@ -1,13 +1,14 @@
 import asyncio
 import logging
 import math
+import warnings
 
 import astropy.units as u
 from astropy.time import Time
 from astropy.coordinates import AltAz, ICRS, EarthLocation, Angle
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums import ATPtg
+from lsst.ts.idl.enums import ATPtg, ATDome
 from ..utils import subtract_angles
 import types
 
@@ -25,7 +26,9 @@ class ATTCS:
     domain: `salobj.Domain`
         Domain to use of the Remotes. If `None`, create a new domain.
     indexed_dome: `bool`
-        Compatibility flag for the ATDome. Drop once this is resolved.
+        (Deprecated) Compatibility flag for the ATDome. Drop once this is
+        resolved.
+
 
     Attributes
     ----------
@@ -39,7 +42,11 @@ class ATTCS:
     log: logging.Logger
     """
 
-    def __init__(self, domain=None, indexed_dome=True):
+    def __init__(self, domain=None, log=None, indexed_dome=None):
+
+        if indexed_dome is not None:
+            warnings.warn("Parameter 'indexed_dome' is deprecated.",
+                          DeprecationWarning)
 
         self.fast_timeout = 5.
         self.long_timeout = 30.
@@ -49,6 +56,14 @@ class ATTCS:
         self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
                                                     lat=-30.244728*u.deg,
                                                     height=2663.0*u.m)
+
+        self.tel_park_el = 80.
+        self.tel_park_az = 0.
+        self.tel_flat_el = 60.
+        self.tel_flat_az = 0.
+
+        self.dome_park_az = 285.
+        self.dome_flat_az = 180.
 
         self._components = ["ATMCS", "ATPtg", "ATAOS", "ATPneumatics",
                             "ATHexapod", "ATDome", "ATDomeTrajectory"]
@@ -62,19 +77,16 @@ class ATTCS:
         self.check = types.SimpleNamespace()
 
         for i in range(len(self._components)):
-            # FIXME: Drop indexed_dome once this is resolved.
-            if indexed_dome and self.components[i] == 'atdome':
-                self._remotes[self.components[i]] = salobj.Remote(self.domain,
-                                                                  self._components[i],
-                                                                  index=1)
-            else:
-                self._remotes[self.components[i]] = salobj.Remote(self.domain,
-                                                                  self._components[i])
+            self._remotes[self.components[i]] = salobj.Remote(self.domain,
+                                                              self._components[i])
             setattr(self.check, self.components[i], True)
 
         self.start_task = asyncio.gather(*[self._remotes[r].start_task for r in self._remotes])
 
-        self.log = logging.getLogger("ATTCS")
+        if log is None:
+            self.log = logging.getLogger("ATTCS")
+        else:
+            self.log = log
 
     @property
     def atmcs(self):
@@ -104,9 +116,54 @@ class ATTCS:
     def atdometrajectory(self):
         return self._remotes["atdometrajectory"]
 
+    async def point_azel(self, az, el, rot_pa=0.,
+                         target_name="azel_target",
+                         wait_dome=False, slew_timeout=1200.):
+        """ Slew the telescope to a fixed alt/az position.
+
+        Telescope will not track once it arrives in position.
+
+        Parameters
+        ----------
+        az : `float` or `str`
+            Target Azimuth (degree).
+        el : `float` or `str`
+            Target Elevation (degree).
+        rot_pa : `float` or `str`
+            Target rotator position angle (degree).
+        wait_dome : `bool`
+            Wait for dome to be in sync with the telescope? If preparing to
+            take a flat, for instance, the dome will never be in sync.
+        slew_timeout : `float`
+            Timeout for the slew command (second).
+
+        """
+        self.atptg.cmd_azElTarget.set(targetName=target_name,
+                                      targetInstance=ATPtg.TargetInstances.CURRENT,
+                                      azDegs=Angle(az, unit=u.deg).deg,
+                                      elDegs=Angle(el, unit=u.deg).deg,
+                                      trackId=0,  # FIXME
+                                      rotPA=Angle(rot_pa, unit=u.deg).deg)
+        check_atdome = self.check.atdome
+        self.check.atdome = wait_dome
+
+        try:
+            await self._slew_to(self.atptg.cmd_azElTarget,
+                                slew_timeout=slew_timeout)
+        except Exception as e:
+            self.check.atdome = check_atdome
+            raise e
+
+    async def start_tracking(self):
+        """ Start tracking the current position of the telescope.
+
+        Method returns once telescope and dome are in sync.
+        """
+        raise NotImplementedError("Start tracking not implemented yet.")
+
     async def slew_icrs(self, ra, dec, rot_sky=None, rot_pa=0.,
-                        target_name="slew_icrs", slew_timeout=1200.):
-        """Slew the telescope and start tracking an Ra/Dec target in ICRS
+                        target_name="slew_icrs", slew_timeout=240.):
+        """ Slew the telescope and start tracking an Ra/Dec target in ICRS
         coordinate frame.
 
         Parameters
@@ -229,6 +286,73 @@ class ATTCS:
         await self._slew_to(self.atptg.cmd_planetTarget,
                             slew_timeout=slew_timeout)
 
+    async def slew_dome_to(self, az):
+        """ Utility method to slew dome to a specified position.
+
+        Parameters
+        ----------
+        az : `float` or `str`
+            Azimuth angle for the dome (in deg).
+
+        """
+        self.atdome.evt_azimuthInPosition.flush()
+        target_az = Angle(az, unit=u.deg).deg
+        await self.atdome.cmd_moveAzimuth.set_start(azimuth=target_az,
+                                                    timeout=self.long_long_timeout)
+
+        try:
+            await self.atdome.evt_azimuthInPosition.next(flush=False,
+                                                         timeout=self.fast_timeout)
+        except asyncio.TimeoutError:
+            self.log.debug("Timed out trying to get azimuth in position from the dome "
+                           "just after command was sent. Continuing...")
+        self.check.atmcs = False
+        self.check.atdome = True
+
+        coro_list = [asyncio.create_task(self.wait_for_inposition(timeout=self.long_long_timeout)),
+                     asyncio.create_task(self.monitor_position())]
+
+        for res in asyncio.as_completed(coro_list):
+            try:
+                await res
+            except RuntimeError as rte:
+                await self.cancel_not_done(coro_list)
+                self.check.atmcs = True
+                raise rte
+            else:
+                await self.cancel_not_done(coro_list)
+                break
+
+        self.check.atmcs = True
+
+    async def prepare_for_flatfield(self):
+        """ A high level method to position the telescope and dome for flat
+        field operations.
+
+        The method will,
+
+            1 - disable ATDomeTrajectory
+            2 - send telescope to flat field position
+            3 - send dome to flat field position
+            4 - re-enable ATDomeTrajectory
+
+        """
+
+        await salobj.set_summary_state(self.atdometrajectory,
+                                       salobj.State.DISABLED)
+
+        await self.point_azel(target_name="FlatField position",
+                              az=self.tel_flat_az,
+                              el=self.tel_flat_el,
+                              wait_dome=False)
+
+        await self.slew_dome_to(self.dome_flat_az)
+
+        await self.atptg.cmd_stopTracking.start(timeout=self.fast_timeout)
+
+        await salobj.set_summary_state(self.atdometrajectory,
+                                       salobj.State.ENABLED)
+
     async def check_tracking(self, track_duration=None):
         """Check tracking state. This method monitors all the required
         parameters for tracking a target; from telescope and pointing
@@ -311,93 +435,49 @@ class ATTCS:
         -------
 
         """
-        self.log.debug("Gathering settings.")
-        settings_all = {}
-        if settings is not None:
-            for s in settings:
-                settings_all[s] = settings[s]
 
-        # Give some time for the event loop to run so it can gather the
-        # events. Useful for when running on a jupyter notebook, may be
-        # removed once we get an `aget` method.
-        await asyncio.sleep(1.)
-        for comp in self.components:
-            if comp not in settings_all:
-                sv = getattr(comp, 'evt_settingVersions').get()
-                if sv is not None:
-                    settings_all[comp] = sv.recommendedSettingsLabels.split(",")[0]
+        await self.enable(settings=settings)
+
+        if self.check.atdome:
+            self.log.info("Check that dome CSC can communicate with shutter control box.")
+
+            scb = await self.atdome.evt_scbLink.aget(timeout=self.fast_timeout)
+            if scb is None or not scb.active:
+                raise RuntimeError("Dome CSC has no communication with Shutter Control Box. "
+                                   "Dome controllers may need to be rebooted for connection to "
+                                   "be established. Cannot continue.")
+
+            self.log.info("Opening dome.")
+
+            self.atdome.evt_shutterInPosition.flush()
+
+            await self.atdome.cmd_moveShutterMainDoor.set_start(open=True,
+                                                                timeout=self.long_timeout)
+
+            self.atdome.evt_summaryState.flush()
+            # TODO: Monitor self.atdome.tel_position.get().mainDoorOpeningPercentage
+            coro_list = [asyncio.ensure_future(self.check_component_state("atdome")),
+                         asyncio.ensure_future(self.wait_for_atdome_shutter_inposition())]
+
+            for res in asyncio.as_completed(coro_list):
+                try:
+                    await res
+                except RuntimeError as rte:
+                    await self.cancel_not_done(coro_list)
+                    raise rte
                 else:
-                    settings_all[comp] = ""
+                    break
 
-        self.log.debug(f"Settings versions: {settings_all}")
+        if self.check.atpneumatics:
+            self.log.info("Open telescope cover.")
 
-        self.log.debug("Enabling all components")
+            await self.atpneumatics.cmd_openM1Cover.start(timeout=self.long_timeout)
 
-        set_ss_tasks = []
+        if self.check.ataos:
+            self.log.info("Enable ATAOS corrections.")
 
-        for comp in self.components:
-            set_ss_tasks.append(salobj.set_summary_state(self._remotes[comp],
-                                                         salobj.State.ENABLED,
-                                                         settingsToApply=settings_all[comp],
-                                                         timeout=self.long_long_timeout))
-
-        ret_val = await asyncio.gather(*set_ss_tasks, return_exceptions=True)
-
-        error_flag = False
-        error_msg = ""
-
-        for i in range(len(self.components)):
-            if isinstance(ret_val[i], Exception):
-                error_flag = True
-                error_msg += f"Unable to ENABLE {self.components[i]}\n"
-                self.log.error(f"Unable to ENABLE {self.components[i]}")
-                self.log.exception(ret_val[i])
-            else:
-                self.log.debug(f"[{self.components[i]}]::{ret_val[i]!r}")
-
-        if error_flag:
-            raise RuntimeError(error_msg)
-        else:
-            self.log.info("All components enabled.")
-
-        self.log.info("Check that dome CSC can communicate with shutter control box.")
-
-        # FIXME: replace with `aget`.
-        scb = self.atdome.evt_scbLink.get()
-        if scb is None or not scb.active:
-            raise RuntimeError("Dome CSC has no communication with Shutter Control Box. "
-                               "Dome controllers may need to be rebooted for connection to "
-                               "be established. Cannot continue.")
-
-        self.log.info("Opening dome.")
-
-        self.atdome.evt_shutterInPosition.flush()
-
-        await self.atdome.cmd_moveShutterMainDoor.set_start(open=True,
+            await self.ataos.cmd_enableCorrection.set_start(m1=True,
                                                             timeout=self.long_timeout)
-
-        self.atdome.evt_summaryState.flush()
-        # TODO: Monitor self.atdome.tel_position.get().mainDoorOpeningPercentage
-        coro_list = [asyncio.ensure_future(self.check_component_state("atdome")),
-                     asyncio.ensure_future(self.wait_for_atdome_shutter_inposition())]
-
-        for res in asyncio.as_completed(coro_list):
-            try:
-                await res
-            except RuntimeError as rte:
-                await self.cancel_not_done(coro_list)
-                raise rte
-            else:
-                break
-
-        self.log.info("Open telescope cover.")
-
-        await self.atpneumatics.cmd_openM1Cover.start(timeout=self.long_timeout)
-
-        self.log.info("Enable ATAOS corrections.")
-
-        await self.ataos.cmd_enableCorrection.set_start(m1=True,
-                                                        timeout=self.long_timeout)
 
     async def shutdown(self):
         """Shutdown ATTCS components.
@@ -425,23 +505,49 @@ class ATTCS:
 
         self.log.info("Close dome.")
 
-        self.atdome.evt_shutterInPosition.flush()
+        shutter_pos = self.atdome.evt_mainDoorState.get()
 
-        await self.atdome.cmd_closeShutter.set_start(timeout=self.long_timeout)
+        if shutter_pos.state == ATDome.ShutterDoorState.OPENED:
 
-        self.atdome.evt_summaryState.flush()
-        # TODO: Monitor self.atdome.tel_position.get().mainDoorOpeningPercentage
-        coro_list = [asyncio.ensure_future(self.check_component_state("atdome")),
-                     asyncio.ensure_future(self.wait_for_atdome_shutter_inposition())]
+            self.atdome.evt_shutterInPosition.flush()
 
-        for res in asyncio.as_completed(coro_list):
-            try:
-                await res
-            except RuntimeError as rte:
-                await self.cancel_not_done(coro_list)
-                raise rte
-            else:
-                break
+            await self.atdome.cmd_closeShutter.set_start(timeout=self.long_timeout)
+
+            self.atdome.evt_summaryState.flush()
+            # TODO: Monitor self.atdome.tel_position.get().mainDoorOpeningPercentage
+            coro_list = [asyncio.create_task(self.check_component_state("atdome")),
+                         asyncio.create_task(self.wait_for_atdome_shutter_inposition())]
+
+            for res in asyncio.as_completed(coro_list):
+                try:
+                    await res
+                except RuntimeError as rte:
+                    await self.cancel_not_done(coro_list)
+                    raise rte
+                else:
+                    await self.cancel_not_done(coro_list)
+                    break
+
+        elif shutter_pos.state > ATDome.ShutterDoorState.OPENED:
+            raise RuntimeError(f"Shutter Door state is "
+                               f"{ATDome.ShutterDoorState(shutter_pos.state)}. "
+                               f"expected either {ATDome.ShutterDoorState.OPENED} or "
+                               f"{ATDome.ShutterDoorState.CLOSED}")
+        else:
+            self.log.debug(f"Shutter Door state is "
+                           f"{ATDome.ShutterDoorState(shutter_pos.state)}. Ignoring.")
+
+        self.log.debug("Slew telescope to Park position.")
+
+        await self.point_azel(target_name="Park position",
+                              az=self.tel_park_az,
+                              el=self.tel_park_el,
+                              wait_dome=False)
+
+        self.log.debug("Slew dome to Park position.")
+        await self.slew_dome_to(az=self.dome_park_az)
+
+        await self.atptg.cmd_stopTracking.start(timeout=self.fast_timeout)
 
         self.log.info("Put all CSCs in standby")
 
@@ -470,6 +576,93 @@ class ATTCS:
             raise RuntimeError(error_msg)
         else:
             self.log.info("All components in standby.")
+
+    async def enable(self, settings=None):
+        """ Enable all ATTCS components.
+
+        This method will enable all ATTCS components. Users can provide
+        settings for the start command (in a dictionary). If no setting
+        is given for a component, it will use the first available setting
+        in `evt_settingVersions.recommendedSettingsLabels`.
+
+        Parameters
+        ----------
+        settings: `dict`
+            Dictionary with settings to apply.  If `None` use recommended
+            settings.
+
+        """
+        self.log.debug("Gathering settings.")
+
+        settings_all = {}
+        if settings is not None:
+            for s in settings:
+                settings_all[s] = settings[s]
+
+        # Give some time for the event loop to run so it can gather the
+        # events. Useful for when running on a jupyter notebook, may be
+        # removed once we get an `aget` method.
+        await asyncio.sleep(1.)
+        for comp in self.components:
+            if comp not in settings_all:
+                sv = getattr(self, comp).evt_settingVersions.get()
+
+                if sv is not None:
+                    settings_all[comp] = sv.recommendedSettingsLabels.split(",")[0]
+                else:
+                    settings_all[comp] = ""
+
+        self.log.debug(f"Settings versions: {settings_all}")
+
+        self.log.debug("Enabling all components")
+
+        set_ss_tasks = []
+
+        for comp in self.components:
+            if getattr(self.check, comp):
+                self.log.debug(f"Enabling  {comp}")
+                set_ss_tasks.append(salobj.set_summary_state(self._remotes[comp],
+                                                             salobj.State.ENABLED,
+                                                             settingsToApply=settings_all[comp],
+                                                             timeout=self.long_long_timeout))
+            else:
+                set_ss_tasks.append(self.state(comp))
+
+        ret_val = await asyncio.gather(*set_ss_tasks, return_exceptions=True)
+
+        error_flag = False
+        error_msg = ""
+
+        for i in range(len(self.components)):
+            if isinstance(ret_val[i], Exception):
+                error_flag = True
+                error_msg += f"Unable to ENABLE {self.components[i]}\n"
+                self.log.error(f"Unable to ENABLE {self.components[i]}")
+                self.log.exception(ret_val[i])
+            else:
+                self.log.debug(f"[{self.components[i]}]::{ret_val[i]!r}")
+
+        if error_flag:
+            raise RuntimeError(error_msg)
+        else:
+            self.log.info("All components enabled.")
+
+    async def state(self, comp):
+        """Get summary state for component.
+
+        Parameters
+        ----------
+        comp : `str`
+            Name of the component.
+
+        Returns
+        -------
+        state : `salobj.State`
+            Current state of component.
+
+        """
+        ss = await self._remotes[comp].evt_summaryState.aget(timeout=self.fast_timeout)
+        return salobj.State(ss.summaryState)
 
     async def _slew_to(self, slew_cmd, slew_timeout):
         """Encapsulates "slew" activities.
@@ -578,8 +771,15 @@ class ATTCS:
             String with final status.
 
         """
-        status = await asyncio.gather(self.wait_for_atdome_inposition(timeout),
-                                      self.wait_for_atmcs_inposition(timeout))
+        wait_tasks = [asyncio.sleep(0.)]
+
+        if self.check.atmcs:
+            wait_tasks.append(self.wait_for_atmcs_inposition(timeout))
+
+        if self.check.atdome:
+            wait_tasks.append(self.wait_for_atdome_inposition(timeout))
+
+        status = await asyncio.gather(*wait_tasks)
 
         return f"{status!r}"
 
@@ -633,6 +833,12 @@ class ATTCS:
             If does not get a status update in less then `timeout` seconds.
 
         """
+        in_position = await self.atdome.evt_azimuthInPosition.aget(timeout=timeout)
+
+        if in_position is not None and in_position.inPosition:
+            self.log.info(f"ATDome in position.")
+            return f"ATDome in position."
+
         while True:
 
             in_position = await self.atdome.evt_azimuthInPosition.next(flush=False,
@@ -695,8 +901,8 @@ class ATTCS:
             az_dif = subtract_angles(comm_pos.azimuth, tel_pos.azimuthCalculatedAngle[-1])
             dom_az_dif = subtract_angles(comm_pos.azimuth, dom_pos.azimuthPosition)
 
-            self.log.info(f"[Telescope] delta Alt = {alt_dif} | delta Az= {az_dif} "
-                          f"[Dome] delta Az = {dom_az_dif}")
+            self.log.info(f"[Telescope] delta Alt = {alt_dif:+08.3f} | delta Az= {az_dif:+08.3f} "
+                          f"[Dome] delta Az = {dom_az_dif:+08.3f}")
 
             await asyncio.sleep(1.)
 

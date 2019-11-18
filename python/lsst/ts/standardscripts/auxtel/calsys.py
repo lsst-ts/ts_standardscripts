@@ -21,7 +21,8 @@
 __all__ = ['ATCalSys']
 
 import asyncio
-from .latiss import LATISS
+
+from lsst.ts import salobj
 
 
 class ATCalSys:
@@ -29,29 +30,63 @@ class ATCalSys:
 
     Parameters
     ----------
-    electr : `lsst.ts.salobj.Remote`
-        Remote for the Electrometer.
-    monochr : `lsst.ts.salobj.Remote`
-        Remote for the Monochromator.
-    fiber_spec : `lsst.ts.salobj.Remote`
-        Remote for the FiberSpectrograph.
-    atcam : `lsst.ts.salobj.Remote`
-        Remote for the ATCamera.
-    atspec : `lsst.ts.salobj.Remote`
-        Remote for the ATSpectrograph.
-    atarch : `lsst.ts.salobj.Remote`
-        Remote for the ATArchiver.
+    domain: `salobj.Domain`
+        Domain to use of the Remotes. If `None`, create a new domain.
+    electrometer_index : `int`
+        Electrometer index.
+    fiber_spectrograph_index : `int`
+        FiberSpectrograph index.
     """
-    def __init__(self, electr, monochr, fiber_spec, atcam, atspec, atarch):
+    def __init__(self, domain=None, electrometer_index=1, fiber_spectrograph_index=-1):
 
-        self.latiss = LATISS(atcam=atcam,
-                             atspec=atspec)
-        self.electr = electr
-        self.monochr = monochr
-        self.fiber_spec = fiber_spec
-        self.atarch = atarch
+        self.long_timeout = 30.
 
-        self.cmd_timeout = 30.
+        self._components = [f"Electrometer:{electrometer_index}",
+                            "ATMonochromator",
+                            f"FiberSpectrograph:{fiber_spectrograph_index}"]
+
+        self.components = [comp.lower().split(":")[0] for comp in self._components]
+
+        self._remotes = {}
+
+        self.domain = domain if domain is not None else salobj.Domain()
+
+        for i in range(len(self._components)):
+            if ":" in self.components[i]:
+                name, index = self.components[i].split(":")
+                self._remotes[self.components[i]] = salobj.Remote(self.domain,
+                                                                  name,
+                                                                  int(index))
+            else:
+                self._remotes[self.components[i]] = salobj.Remote(self.domain,
+                                                                  self._components[i])
+            setattr(self.check, self.components[i], True)
+
+        self.start_task = asyncio.gather(*[self._remotes[r].start_task for r in self._remotes])
+
+    @property
+    def electr(self):
+        return self._remotes['electrometer']
+
+    @property
+    def monochr(self):
+        return self._remotes["atmonochromator"]
+
+    @property
+    def fiber_spec(self):
+        return self._remotes["fiberspectrograph"]
+
+    @property
+    def electrometer(self):
+        return self._remotes['electrometer']
+
+    @property
+    def atmonochromator(self):
+        return self._remotes["atmonochromator"]
+
+    @property
+    def fiberspectrograph(self):
+        return self._remotes["fiberspectrograph"]
 
     async def setup_monochromator(self, wavelength, entrance_slit, exit_slit, grating):
         """Setup Monochromator.
@@ -76,7 +111,7 @@ class ATCalSys:
                                                       fontExitSlitWidth=exit_slit,
                                                       fontEntranceSlitWidth=entrance_slit)
 
-        await self.monochr.cmd_updateMonochromatorSetup.start(timeout=self.cmd_timeout)
+        await self.monochr.cmd_updateMonochromatorSetup.start(timeout=self.long_timeout)
 
     async def electrometer_scan(self, duration):
         """Perform an electrometer scan for the specified duration and return
@@ -94,9 +129,9 @@ class ATCalSys:
 
         """
         self.electr.cmd_startScanDt.set(scanDuration=duration)
-        lfo_coro = self.electr.evt_largeFileObjectAvailable.next(timeout=self.cmd_timeout,
+        lfo_coro = self.electr.evt_largeFileObjectAvailable.next(timeout=self.long_timeout,
                                                                  flush=True)
-        await self.electr.cmd_startScanDt.start(timeout=duration+self.cmd_timeout)
+        await self.electr.cmd_startScanDt.start(timeout=duration+self.long_timeout)
 
         return await lfo_coro
 
@@ -130,10 +165,10 @@ class ATCalSys:
             await evt
         await asyncio.sleep(delay)
 
-        timeout = integration_time + self.cmd_timeout
+        timeout = integration_time + self.long_timeout
 
         fs_lfo_coro = self.fiber_spec.evt_largeFileObjectAvailable.next(
-            timeout=self.cmd_timeout, flush=True)
+            timeout=self.long_timeout, flush=True)
 
         self.fiber_spec.cmd_expose.set(
             imageType=image_type,
@@ -144,3 +179,15 @@ class ATCalSys:
         await self.fiber_spec.cmd_expose.start(timeout=timeout)
 
         return await fs_lfo_coro
+
+    async def close(self):
+        await asyncio.gather(*[self._remotes[r].close() for r in self._remotes])
+        await self.domain.close()
+
+    async def __aenter__(self):
+        await self.start_task
+        return self
+
+    async def __aexit__(self, *args):
+
+        await self.close()
