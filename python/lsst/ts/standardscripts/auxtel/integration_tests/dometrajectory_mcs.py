@@ -384,7 +384,7 @@ class DomeTrajectoryMCS(salobj.BaseScript):
         self._track_task.cancel()
 
     def set_metadata(self, metadata):
-        metadata.duration = SLEW_TIMEOUT  # rough estimate
+        metadata.timespan = SLEW_TIMEOUT  # rough estimate
 
     async def _track_telescope_loop(self):
         """Telescope tracking loop.

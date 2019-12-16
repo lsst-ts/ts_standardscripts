@@ -108,7 +108,7 @@ class SlewTelescopeIcrs(salobj.BaseScript):
         ----------
         metadata : SAPY_Script.Script_logevent_metadataC
         """
-        metadata.duration = 1
+        metadata.timespan = 1
 
     async def run(self):
 

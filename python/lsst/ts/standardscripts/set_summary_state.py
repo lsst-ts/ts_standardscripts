@@ -175,7 +175,7 @@ class SetSummaryState(salobj.BaseScript):
         """
         # a crude estimate; state transitions are typically quick
         # but we don't know how many of them there will be
-        metadata.duration = len(self.nameind_state_settings)*2
+        metadata.timespan = len(self.nameind_state_settings)*2
 
     async def run(self):
         """Run script."""

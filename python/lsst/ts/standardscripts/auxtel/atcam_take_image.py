@@ -160,7 +160,7 @@ class ATCamTakeImage(salobj.BaseScript):
     def set_metadata(self, metadata):
         nimages = len(self.config.exp_times)
         mean_exptime = np.mean(self.config.exp_times)
-        metadata.duration = (mean_exptime + self.latiss.read_out_time +
+        metadata.timespan = (mean_exptime + self.latiss.read_out_time +
                              self.latiss.shutter_time*2 if self.latiss.shutter_time else 0) * nimages
 
     async def run(self):

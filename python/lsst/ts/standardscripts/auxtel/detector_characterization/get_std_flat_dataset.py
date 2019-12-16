@@ -208,4 +208,4 @@ class ATGetStdFlatDataset(salobj.BaseScript):
         # Note, biases are taken twice: before flats and after flats
         bias_time = 2 * self.config.n_bias * self.read_out_time
         flat_time = self.config.n_flat*(self.read_out_time + self.flat_exp_times.mean())
-        metadata.duration = dark_time + bias_time + flat_time
+        metadata.timespan = dark_time + bias_time + flat_time

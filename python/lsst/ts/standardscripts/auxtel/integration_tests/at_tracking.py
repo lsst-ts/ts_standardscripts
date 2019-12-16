@@ -359,7 +359,7 @@ class ATTracking(scriptqueue.BaseScript):
             await asyncio.sleep(self.pool_time)
 
     def set_metadata(self, metadata):
-        metadata.duration = 60  # rough estimate
+        metadata.timespan = 60  # rough estimate
 
     def hexapod_check_values(self, athex_position, athex_correction, within=0.03):
         self.log.info(f"Checking hexapod correction within {within*100} percent tolerance")

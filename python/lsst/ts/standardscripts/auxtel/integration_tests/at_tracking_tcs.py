@@ -347,7 +347,7 @@ class ATTracking(scriptqueue.BaseScript):
         await self.attcs.check_track(track_duration=self.track_duration)
 
     def set_metadata(self, metadata):
-        metadata.duration = 60  # rough estimate
+        metadata.timespan = 60  # rough estimate
 
     async def cleanup(self):
         # Stop tracking

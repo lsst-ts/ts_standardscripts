@@ -183,7 +183,7 @@ class ATPtgATAOSIntegration(salobj.BaseScript):
                              m2_completed)
 
     def set_metadata(self, metadata):
-        metadata.duration = 60  # rough estimate
+        metadata.timespan = 60  # rough estimate
 
     async def cleanup(self):
         # Stop tracking

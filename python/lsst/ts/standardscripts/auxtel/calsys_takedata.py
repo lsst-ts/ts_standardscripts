@@ -235,7 +235,7 @@ class CalSysTakeData(salobj.BaseScript):
         metadata : SAPY_Script.Script_logevent_metadataC
         """
         nimages = len(self.config.lamps)
-        metadata.duration = self.change_grating_time*nimages + np.sum(self.config.integration_times)
+        metadata.timespan = self.change_grating_time*nimages + np.sum(self.config.integration_times)
 
     async def run(self):
         """Run script."""
