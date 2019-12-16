@@ -26,7 +26,6 @@ import math
 import yaml
 
 from lsst.ts import salobj
-from lsst.ts import ATMCSSimulator
 from lsst.ts.idl.enums.ATDome import AzimuthCommandedState, AzimuthState
 from ...utils import subtract_angles
 
@@ -399,7 +398,7 @@ class DomeTrajectoryMCS(salobj.BaseScript):
                 self.log.debug(f"trackTarget: el={self.track_elaz[0]:0.2f}, az={self.track_elaz[1]:0.2f}")
                 self.atmcs.cmd_trackTarget.set(elevation=self.track_elaz[0],
                                                azimuth=self.track_elaz[1],
-                                               time=ATMCSSimulator.curr_tai())
+                                               time=salobj.current_tai())
                 await self.atmcs.cmd_trackTarget.start(timeout=STD_TIMEOUT)
                 await asyncio.sleep(TRACK_INTERVAL)
         except asyncio.CancelledError:
