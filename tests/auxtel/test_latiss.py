@@ -24,13 +24,9 @@ import asyncio
 from lsst.ts import salobj
 from lsst.ts.standardscripts.auxtel.latiss import LATISS
 
-index_gen = salobj.index_generator()
-
 
 class Harness:
     def __init__(self):
-        self.index = next(index_gen)
-        self.test_index = next(index_gen)
         salobj.test_utils.set_random_lsst_dds_domain()
 
         self.atcam = salobj.Controller(name="ATCamera")
