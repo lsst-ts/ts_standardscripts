@@ -22,6 +22,7 @@ import asyncio
 import logging
 import unittest
 
+import asynctest
 import yaml
 
 from lsst.ts.idl.enums import Script
@@ -82,95 +83,86 @@ class Harness:
                              self.script.close())
 
 
-class TestATCamTakeImage(unittest.TestCase):
+class TestATCamTakeImage(asynctest.TestCase):
 
-    def test_configure(self):
-        async def doit():
-            index = next(index_gen)
-            script = ATCamTakeImage(index=index)
-            try:
-                async def run_configure(**kwargs):
-                    script.set_state(Script.ScriptState.UNCONFIGURED)
-                    config_data = script.cmd_configure.DataType()
-                    if kwargs:
-                        config_data.config = yaml.safe_dump(kwargs)
-                    await script.do_configure(config_data)
+    async def test_configure(self):
+        index = next(index_gen)
+        salobj.test_utils.set_random_lsst_dds_domain()
+        async with ATCamTakeImage(index=index) as script:
+            async def run_configure(**kwargs):
+                script.set_state(Script.ScriptState.UNCONFIGURED)
+                config_data = script.cmd_configure.DataType()
+                if kwargs:
+                    config_data.config = yaml.safe_dump(kwargs)
+                await script.do_configure(config_data)
 
-                exp_times = 1.1
-                await run_configure(exp_times=exp_times)
-                self.assertEqual(script.config.exp_times, [exp_times])
-                self.assertFalse(script.config.shutter)
-                self.assertEqual(script.config.groupid, "")
-                self.assertIsNone(script.config.filter)
-                self.assertIsNone(script.config.grating)
-                self.assertIsNone(script.config.linear_stage)
+            exp_times = 1.1
+            await run_configure(exp_times=exp_times)
+            self.assertEqual(script.config.exp_times, [exp_times])
+            self.assertFalse(script.config.shutter)
+            self.assertEqual(script.config.groupid, "")
+            self.assertIsNone(script.config.filter)
+            self.assertIsNone(script.config.grating)
+            self.assertIsNone(script.config.linear_stage)
 
-                exp_times = 1.1
-                nimages = 2
-                filter = None
-                grating = None
-                await run_configure(exp_times=exp_times, nimages=nimages,
-                                    filter=filter, grating=grating)
-                self.assertEqual(script.config.exp_times, [exp_times, exp_times])
-                self.assertEqual(script.config.filter, filter)
-                self.assertEqual(script.config.grating, grating)
+            exp_times = 1.1
+            nimages = 2
+            filter = None
+            grating = None
+            await run_configure(exp_times=exp_times, nimages=nimages,
+                                filter=filter, grating=grating)
+            self.assertEqual(script.config.exp_times, [exp_times, exp_times])
+            self.assertEqual(script.config.filter, filter)
+            self.assertEqual(script.config.grating, grating)
 
-                exp_times = 1.1
-                nimages = 2
-                filter = "blue"
-                grating = 5
-                linear_stage = 25
-                await run_configure(exp_times=exp_times, nimages=nimages,
-                                    filter=filter, grating=grating, linear_stage=linear_stage)
-                self.assertEqual(script.config.exp_times, [exp_times, exp_times])
-                self.assertEqual(script.config.filter, filter)
-                self.assertEqual(script.config.grating, grating)
-                self.assertEqual(script.config.linear_stage, linear_stage)
+            exp_times = 1.1
+            nimages = 2
+            filter = "blue"
+            grating = 5
+            linear_stage = 25
+            await run_configure(exp_times=exp_times, nimages=nimages,
+                                filter=filter, grating=grating, linear_stage=linear_stage)
+            self.assertEqual(script.config.exp_times, [exp_times, exp_times])
+            self.assertEqual(script.config.filter, filter)
+            self.assertEqual(script.config.grating, grating)
+            self.assertEqual(script.config.linear_stage, linear_stage)
 
-                exp_times = [0, 2, 0.5]
-                filter = 2
-                grating = "a grating"
-                await run_configure(exp_times=exp_times, filter=filter,
-                                    grating=grating, linear_stage=linear_stage)
-                self.assertEqual(script.config.exp_times, exp_times)
-                self.assertEqual(script.config.filter, filter)
-                self.assertEqual(script.config.grating, grating)
-                self.assertEqual(script.config.linear_stage, linear_stage)
+            exp_times = [0, 2, 0.5]
+            filter = 2
+            grating = "a grating"
+            await run_configure(exp_times=exp_times, filter=filter,
+                                grating=grating, linear_stage=linear_stage)
+            self.assertEqual(script.config.exp_times, exp_times)
+            self.assertEqual(script.config.filter, filter)
+            self.assertEqual(script.config.grating, grating)
+            self.assertEqual(script.config.linear_stage, linear_stage)
 
-                exp_times = [0, 2, 0.5]
-                nimages = len(exp_times) + 1
-                with self.assertRaises(salobj.ExpectedError):
-                    await run_configure(exp_times=exp_times, nimages=nimages)
+            exp_times = [0, 2, 0.5]
+            nimages = len(exp_times) + 1
+            with self.assertRaises(salobj.ExpectedError):
+                await run_configure(exp_times=exp_times, nimages=nimages)
 
-            finally:
-                await script.close()
+    async def test_take_images(self):
+        async with Harness() as harness:
+            config_kwargs = dict(nimages=1,
+                                 exp_times=0,
+                                 filter=1,
+                                 grating=1,
+                                 linear_stage=100)
+            config_data = harness.script.cmd_configure.DataType()
+            config_data.config = yaml.safe_dump(config_kwargs)
 
-        asyncio.get_event_loop().run_until_complete(doit())
+            await harness.script.do_configure(data=config_data)
+            await harness.script.do_run(data=None)
 
-    def test_take_images(self):
-        async def doit():
-            async with Harness() as harness:
-                config_kwargs = dict(nimages=1,
-                                     exp_times=0,
-                                     filter=1,
-                                     grating=1,
-                                     linear_stage=100)
-                config_data = harness.script.cmd_configure.DataType()
-                config_data.config = yaml.safe_dump(config_kwargs)
+            self.assertEqual(harness.nimages, config_kwargs['nimages'])
+            self.assertEqual(len(harness.selected_filter), config_kwargs['nimages'])
+            self.assertEqual(len(harness.selected_disperser), config_kwargs['nimages'])
+            self.assertEqual(len(harness.selected_linear_stage), config_kwargs['nimages'])
 
-                await harness.script.do_configure(data=config_data)
-                await harness.script.do_run(data=None)
-
-                self.assertEqual(harness.nimages, config_kwargs['nimages'])
-                self.assertEqual(len(harness.selected_filter), config_kwargs['nimages'])
-                self.assertEqual(len(harness.selected_disperser), config_kwargs['nimages'])
-                self.assertEqual(len(harness.selected_linear_stage), config_kwargs['nimages'])
-
-                self.assertIn(config_kwargs['filter'], harness.selected_filter)
-                self.assertIn(config_kwargs['grating'], harness.selected_disperser)
-                self.assertIn(config_kwargs['linear_stage'], harness.selected_linear_stage)
-
-        asyncio.get_event_loop().run_until_complete(doit())
+            self.assertIn(config_kwargs['filter'], harness.selected_filter)
+            self.assertIn(config_kwargs['grating'], harness.selected_disperser)
+            self.assertIn(config_kwargs['linear_stage'], harness.selected_linear_stage)
 
 
 if __name__ == '__main__':

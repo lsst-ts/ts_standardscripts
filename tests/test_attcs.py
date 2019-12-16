@@ -1,12 +1,15 @@
-from lsst.ts.standardscripts.auxtel.attcs import ATTCS
-import unittest
 import asyncio
+import unittest
+
 import numpy as np
+
+import asynctest
+import logging
 
 from lsst.ts import salobj
 from lsst.ts.salobj import test_utils
 from lsst.ts.idl.enums import ATPtg
-import logging
+from lsst.ts.standardscripts.auxtel.attcs import ATTCS
 # from math import isclose
 
 logger = logging.getLogger()
@@ -244,112 +247,97 @@ class Harness:
         await asyncio.gather(*close_task)
 
 
-class TestATTCS(unittest.TestCase):
+class TestATTCS(asynctest.TestCase):
+    async def test_slew(self):
+        async with Harness() as harness:
+            ra = 0.
+            dec = -30.
 
-    def test_slew(self):
+            harness.log.debug("test 1 start")
 
-        async def runtest():
+            with self.subTest(ra=ra, dec=dec):
+                await harness.attcs.slew(ra, dec, slew_timeout=harness.slew_time*2.)
 
-            async with Harness() as harness:
+            harness.log.debug("test 2 start")
 
-                ra = 0.
-                dec = -30.
+            with self.subTest(msg="Ra/Dec: Fail ATPtg FAULT", component="ATPtg"):
+                with self.assertRaises(RuntimeError):
+                    ret_val = await asyncio.gather(
+                        harness.attcs.slew(ra, dec,
+                                           slew_timeout=harness.slew_time*2.),
+                        harness.atptg_wait_and_fault(1.),
+                        return_exceptions=True)
+                    for val in ret_val:
+                        harness.log.debug(f"retval: {val!r}")
 
-                harness.log.debug("test 1 start")
+                    for val in ret_val:
+                        if isinstance(val, Exception):
+                            raise val
 
-                with self.subTest(ra=ra, dec=dec):
-                    await harness.attcs.slew(ra, dec, slew_timeout=harness.slew_time*2.)
+            harness.log.debug("test 3 start")
 
-                harness.log.debug("test 2 start")
+            with self.subTest(msg="Ra/Dec: Fail ATMCS FAULT", component="ATMCS"):
+                with self.assertRaises(RuntimeError):
 
-                with self.subTest(msg="Ra/Dec: Fail ATPtg FAULT", component="ATPtg"):
-                    with self.assertRaises(RuntimeError):
-                        ret_val = await asyncio.gather(
-                            harness.attcs.slew(ra, dec,
-                                               slew_timeout=harness.slew_time*2.),
-                            harness.atptg_wait_and_fault(1.),
-                            return_exceptions=True)
-                        for val in ret_val:
-                            harness.log.debug(f"retval: {val!r}")
+                    ret_val = await asyncio.gather(
+                        harness.attcs.slew(ra, dec, slew_timeout=harness.slew_time*2.),
+                        harness.atmcs_wait_and_fault(1.),
+                        return_exceptions=True)
 
-                        for val in ret_val:
-                            if isinstance(val, Exception):
-                                raise val
+                    for val in ret_val:
+                        harness.log.debug(f"retval: {val!r}")
 
-                harness.log.debug("test 3 start")
+                    for val in ret_val:
+                        if isinstance(val, Exception):
+                            raise val
 
-                with self.subTest(msg="Ra/Dec: Fail ATMCS FAULT", component="ATMCS"):
-                    with self.assertRaises(RuntimeError):
+            harness.log.debug("test 4 start")
 
-                        ret_val = await asyncio.gather(
-                            harness.attcs.slew(ra, dec, slew_timeout=harness.slew_time*2.),
-                            harness.atmcs_wait_and_fault(1.),
-                            return_exceptions=True)
+            for planet in ATPtg.Planets:
+                with self.subTest(planet=planet):
+                    await harness.attcs.slew_to_planet(planet,
+                                                       slew_timeout=harness.slew_time*2.)
 
-                        for val in ret_val:
-                            harness.log.debug(f"retval: {val!r}")
+            harness.log.debug("test 5 start")
 
-                        for val in ret_val:
-                            if isinstance(val, Exception):
-                                raise val
+            with self.subTest(msg="Planet: Fail ATMCS FAULT", component="ATMCS"):
+                with self.assertRaises(RuntimeError):
+                    ret_val = await asyncio.gather(
+                        harness.attcs.slew_to_planet(
+                            ATPtg.Planets.JUPITER,
+                            slew_timeout=harness.slew_time*2.),
+                        harness.atmcs_wait_and_fault(1.),
+                        return_exceptions=True)
+                    for val in ret_val:
+                        if isinstance(val, Exception):
+                            raise val
+                        else:
+                            harness.log.debug(f"ret_val: {val}")
 
-                harness.log.debug("test 4 start")
+            harness.log.debug("test 6 start")
 
-                for planet in ATPtg.Planets:
-                    with self.subTest(planet=planet):
-                        await harness.attcs.slew_to_planet(planet,
-                                                           slew_timeout=harness.slew_time*2.)
+            with self.subTest(msg="Planet: Fail ATPtg FAULT", component="ATPtg"):
+                with self.assertRaises(RuntimeError):
+                    ret_val = await asyncio.gather(
+                        harness.attcs.slew_to_planet(
+                            ATPtg.Planets.JUPITER,
+                            slew_timeout=harness.slew_time*2.),
+                        harness.atptg_wait_and_fault(1.),
+                        return_exceptions=True)
+                    for val in ret_val:
+                        if isinstance(val, Exception):
+                            raise val
+                        else:
+                            harness.log.debug(f"ret_val: {val}")
 
-                harness.log.debug("test 5 start")
+            harness.log.debug("test done")
 
-                with self.subTest(msg="Planet: Fail ATMCS FAULT", component="ATMCS"):
-                    with self.assertRaises(RuntimeError):
-                        ret_val = await asyncio.gather(
-                            harness.attcs.slew_to_planet(
-                                ATPtg.Planets.JUPITER,
-                                slew_timeout=harness.slew_time*2.),
-                            harness.atmcs_wait_and_fault(1.),
-                            return_exceptions=True)
-                        for val in ret_val:
-                            if isinstance(val, Exception):
-                                raise val
-                            else:
-                                harness.log.debug(f"ret_val: {val}")
-
-                harness.log.debug("test 6 start")
-
-                with self.subTest(msg="Planet: Fail ATPtg FAULT", component="ATPtg"):
-                    with self.assertRaises(RuntimeError):
-                        ret_val = await asyncio.gather(
-                            harness.attcs.slew_to_planet(
-                                ATPtg.Planets.JUPITER,
-                                slew_timeout=harness.slew_time*2.),
-                            harness.atptg_wait_and_fault(1.),
-                            return_exceptions=True)
-                        for val in ret_val:
-                            if isinstance(val, Exception):
-                                raise val
-                            else:
-                                harness.log.debug(f"ret_val: {val}")
-
-                harness.log.debug("test done")
-
-        asyncio.get_event_loop().run_until_complete(runtest())
-
-    def test_startup_shutdown(self):
-
-        async def runtest():
-
-            async with Harness() as harness:
-
-                settings = dict(zip(harness.attcs.components,
-                                    [f'setting4_{c}' for c in harness.attcs.components]))
-
-                await harness.attcs.startup(settings)
-
-                await harness.attcs.shutdown()
-
-        asyncio.get_event_loop().run_until_complete(runtest())
+    async def test_startup_shutdown(self):
+        async with Harness() as harness:
+            settings = dict(zip(harness.attcs.components,
+                                [f'setting4_{c}' for c in harness.attcs.components]))
+            await harness.attcs.startup(settings)
+            await harness.attcs.shutdown()
 
 
 if __name__ == '__main__':

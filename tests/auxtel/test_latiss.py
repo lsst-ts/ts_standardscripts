@@ -18,8 +18,10 @@
 #
 # You should have received a copy of the GNU General Public License
 
-import unittest
 import asyncio
+import unittest
+
+import asynctest
 
 from lsst.ts import salobj
 from lsst.ts.standardscripts.auxtel.latiss import LATISS
@@ -94,63 +96,54 @@ class Harness:
                              self.atspec.close())
 
 
-class TestLATISS(unittest.TestCase):
+class TestLATISS(asynctest.TestCase):
 
-    def test_take_bias(self):
-        async def doit():
-            async with Harness() as harness:
-                nbias = 10
-                await harness.latiss.take_bias(nbias=nbias)
-                self.assertEqual(harness.nimages, nbias)
-                self.assertEqual(len(harness.exptime_list), nbias)
-                for i in range(nbias):
-                    self.assertEqual(harness.exptime_list[i], 0.)
-                self.assertIsNone(harness.latiss_linear_stage)
-                self.assertIsNone(harness.latiss_grating)
-                self.assertIsNone(harness.latiss_filter)
+    async def test_take_bias(self):
+        async with Harness() as harness:
+            nbias = 10
+            await harness.latiss.take_bias(nbias=nbias)
+            self.assertEqual(harness.nimages, nbias)
+            self.assertEqual(len(harness.exptime_list), nbias)
+            for i in range(nbias):
+                self.assertEqual(harness.exptime_list[i], 0.)
+            self.assertIsNone(harness.latiss_linear_stage)
+            self.assertIsNone(harness.latiss_grating)
+            self.assertIsNone(harness.latiss_filter)
 
-        asyncio.get_event_loop().run_until_complete(doit())
+    async def test_take_darks(self):
+        async with Harness() as harness:
+            ndarks = 10
+            exptime = 5.
+            await harness.latiss.take_darks(ndarks=ndarks,
+                                            exptime=exptime)
+            self.assertEqual(harness.nimages, ndarks)
+            self.assertEqual(len(harness.exptime_list), ndarks)
+            for i in range(ndarks):
+                self.assertEqual(harness.exptime_list[i], exptime)
+            self.assertIsNone(harness.latiss_linear_stage)
+            self.assertIsNone(harness.latiss_grating)
+            self.assertIsNone(harness.latiss_filter)
 
-    def test_take_darks(self):
-        async def doit():
-            async with Harness() as harness:
-                ndarks = 10
-                exptime = 5.
-                await harness.latiss.take_darks(ndarks=ndarks,
-                                                exptime=exptime)
-                self.assertEqual(harness.nimages, ndarks)
-                self.assertEqual(len(harness.exptime_list), ndarks)
-                for i in range(ndarks):
-                    self.assertEqual(harness.exptime_list[i], exptime)
-                self.assertIsNone(harness.latiss_linear_stage)
-                self.assertIsNone(harness.latiss_grating)
-                self.assertIsNone(harness.latiss_filter)
+    async def test_take_flats(self):
+        async with Harness() as harness:
+            nflats = 10
+            exptime = 5.
+            filter_id = 1
+            grating_id = 1
+            linear_stage = 100.
 
-        asyncio.get_event_loop().run_until_complete(doit())
-
-    def test_take_flats(self):
-        async def doit():
-            async with Harness() as harness:
-                nflats = 10
-                exptime = 5.
-                filter_id = 1
-                grating_id = 1
-                linear_stage = 100.
-
-                await harness.latiss.take_flats(nflats=nflats,
-                                                exptime=exptime,
-                                                filter=filter_id,
-                                                grating=grating_id,
-                                                linear_stage=linear_stage)
-                self.assertEqual(harness.nimages, nflats)
-                self.assertEqual(len(harness.exptime_list), nflats)
-                for i in range(nflats):
-                    self.assertEqual(harness.exptime_list[i], exptime)
-                self.assertEqual(harness.latiss_filter, filter_id)
-                self.assertEqual(harness.latiss_grating, grating_id)
-                self.assertEqual(harness.latiss_linear_stage, linear_stage)
-
-        asyncio.get_event_loop().run_until_complete(doit())
+            await harness.latiss.take_flats(nflats=nflats,
+                                            exptime=exptime,
+                                            filter=filter_id,
+                                            grating=grating_id,
+                                            linear_stage=linear_stage)
+            self.assertEqual(harness.nimages, nflats)
+            self.assertEqual(len(harness.exptime_list), nflats)
+            for i in range(nflats):
+                self.assertEqual(harness.exptime_list[i], exptime)
+            self.assertEqual(harness.latiss_filter, filter_id)
+            self.assertEqual(harness.latiss_grating, grating_id)
+            self.assertEqual(harness.latiss_linear_stage, linear_stage)
 
 
 if __name__ == '__main__':
