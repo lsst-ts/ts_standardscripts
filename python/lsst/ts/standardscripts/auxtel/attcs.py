@@ -13,8 +13,7 @@ import types
 
 
 class ATTCS:
-    """
-    High level library for the Auxiliary Telescope Control System
+    """High level library for the Auxiliary Telescope Control System
 
     This is the high level interface for interacting with the CSCs that
     control the Auxiliary Telescope. Essentially this will allow the user to
@@ -38,7 +37,6 @@ class ATTCS:
     check: SimpleNamespace
     log: logging.Logger
     """
-
     def __init__(self, domain=None, indexed_dome=True):
 
         self.fast_timeout = 5.
@@ -168,8 +166,7 @@ class ATTCS:
                    rot_frame=ATPtg.RotFrame.TARGET,
                    rot_mode=ATPtg.RotMode.FIELD,
                    slew_timeout=1200.):
-        """
-        Slew the telescope and start tracking an Ra/Dec target.
+        """Slew the telescope and start tracking an Ra/Dec target.
 
         Parameters
         ----------
@@ -230,9 +227,10 @@ class ATTCS:
                             slew_timeout=slew_timeout)
 
     async def check_tracking(self, track_duration=None):
-        """Check tracking state. This method monitors all the required
-        parameters for tracking a target; from telescope and pointing
-        component to the dome.
+        """Check tracking state.
+
+        This method monitors all the required parameters for tracking a target;
+        from telescope and pointing component to the dome.
 
         If any of those conditions fails, raise an exception.
 
@@ -295,7 +293,7 @@ class ATTCS:
         await self.cancel_not_done(coro_list)
 
     async def startup(self, settings=None):
-        """ Startup ATTCS components.
+        """Start ATTCS components.
 
         This method will perform the start of the night procedure for the
         ATTCS component. It will enable all components, open the dome slit,
@@ -377,7 +375,8 @@ class ATTCS:
                                                             timeout=self.long_timeout)
 
         self.atdome.evt_summaryState.flush()
-        # TODO: Monitor self.atdome.tel_position.get().mainDoorOpeningPercentage
+        # TODO: Monitor
+        # self.atdome.tel_position.get().mainDoorOpeningPercentage
         coro_list = [asyncio.ensure_future(self.check_component_state("atdome")),
                      asyncio.ensure_future(self.wait_for_atdome_shutter_inposition())]
 
@@ -406,9 +405,7 @@ class ATTCS:
         ATTCS component. It will close the telescope cover, close the dome,
         move the telescope and dome to the park position and disable all
         components.
-
         """
-
         self.log.info("Disabling ATAOS corrections")
 
         await self.ataos.cmd_disableCorrection.set_start(disableAll=True,
@@ -430,7 +427,8 @@ class ATTCS:
         await self.atdome.cmd_closeShutter.set_start(timeout=self.long_timeout)
 
         self.atdome.evt_summaryState.flush()
-        # TODO: Monitor self.atdome.tel_position.get().mainDoorOpeningPercentage
+        # TODO:
+        # Monitor self.atdome.tel_position.get().mainDoorOpeningPercentage
         coro_list = [asyncio.ensure_future(self.check_component_state("atdome")),
                      asyncio.ensure_future(self.wait_for_atdome_shutter_inposition())]
 
@@ -476,10 +474,9 @@ class ATTCS:
 
         Parameters
         ----------
-        slew_cmd : `coro`
+        slew_cmd : coroutine
             One of the slew commands from the atptg remote. Command need to be
             setup before calling this method.
-
         """
         self.log.debug("Flushing events")
         self.atmcs.evt_allAxesInPosition.flush()
@@ -565,7 +562,7 @@ class ATTCS:
         raise RuntimeError(f"{csc} not responsive after {counter} heartbeats.")
 
     async def wait_for_inposition(self, timeout):
-        """ Wait for both the ATMCS and ATDome to be in position.
+        """Wait for both the ATMCS and ATDome to be in position.
 
         Parameters
         ----------
@@ -584,7 +581,7 @@ class ATTCS:
         return f"{status!r}"
 
     async def wait_for_atmcs_inposition(self, timeout):
-        """ Wait for inPosition of atmcs to be ready.
+        """ ait for inPosition of atmcs to be ready.
 
         Parameters
         ----------
@@ -614,8 +611,7 @@ class ATTCS:
                 self.log.debug(f"Telescope not in position")
 
     async def wait_for_atdome_inposition(self, timeout):
-        """
-        Wait for inPosition of atdome to be ready.
+        """Wait for ATDome azimuth to be in position.
 
         Parameters
         ----------
@@ -645,7 +641,7 @@ class ATTCS:
                 self.log.debug(f"ATDome not in position")
 
     async def wait_for_atdome_shutter_inposition(self):
-        """ Wait for the atdome shutter to be in position.
+        """Wait for the ATDome shutter to be in position.
 
         Returns
         -------
@@ -675,13 +671,12 @@ class ATTCS:
                 self.log.debug("ATDome shutter not in position.")
 
     async def monitor_position(self, freq=1.):
-        """ Monitor and log the position of the telescope and the dome.
+        """Monitor and log the position of the telescope and the dome.
 
         Parameters
         ----------
-        freq: `double`
-            Frequency loop should run, in Hz. Default = 1.
-
+        freq : `float`
+            Frequency loop should run, in Hz.
         """
         while True:
             comm_pos = await self.atmcs.evt_target.next(flush=True,
@@ -701,8 +696,7 @@ class ATTCS:
             await asyncio.sleep(1.)
 
     async def check_target_status(self):
-        """
-        Checks the targeting status of the atmcs.
+        """Check the targeting status of the atmcs.
         """
         while True:
             in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False)
@@ -724,9 +718,8 @@ class ATTCS:
         raise NotImplementedError("Method needs to be implemented.")
 
     async def verify_hexapod(self):
-        """
-        Verifies that the hexapod commanded values are close to the actual values being returned
-        by the hexapod.
+        """Verify that the hexapod commanded values are close to
+        the actual values being returned by the hexapod.
         """
         # FIXME: This method needs to be fixed so not to use `next` on events
         # because it is not possible to properly cancel them.
@@ -744,8 +737,8 @@ class ATTCS:
         self.hexapod_check_values(hexapod_position, hexapod_correction, self.within)
 
     async def verify_pneumatics(self):
-        """
-        Verifies that the pneumatics mirror pressures are close to the commanded values.
+        """Verify that the pneumatics mirror pressures are close to
+        the commanded values.
         """
         atpneumatic_m1_set_pressure = self.atpneumatics.evt_m1SetPressure.next(flush=True, timeout=120)
         atpneumatics_m2_set_pressure = self.atpneumatics.evt_m2SetPressure.next(flush=True, timeout=120)
@@ -830,5 +823,4 @@ class ATTCS:
         return self
 
     async def __aexit__(self, *args):
-
         await self.close()
