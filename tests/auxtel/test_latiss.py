@@ -19,8 +19,9 @@
 # You should have received a copy of the GNU General Public License
 
 import unittest
-import asynctest
 import asyncio
+
+import asynctest
 
 from lsst.ts import salobj
 from lsst.ts.standardscripts.auxtel.latiss import LATISS

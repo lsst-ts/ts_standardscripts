@@ -23,6 +23,7 @@ import asyncio
 import numpy as np
 import logging
 
+import asynctest
 import yaml
 
 from lsst.ts import salobj
@@ -87,42 +88,38 @@ class Harness:
                              self.at_spec.close())
 
 
-class TestATGetStdFlatDataset(unittest.TestCase):
+class TestATGetStdFlatDataset(asynctest.TestCase):
+    async def test_script(self):
+        async with Harness() as harness:
+            harness.at_cam.cmd_takeImages.callback = harness.cmd_take_images_callback
+            harness.at_spec.cmd_changeFilter.callback = harness.cmd_change_filter_callback
+            harness.at_spec.cmd_changeDisperser.callback = harness.cmd_change_grating_callback
+            harness.at_spec.cmd_moveLinearStage.callback = harness.cmd_move_linear_stage_callback
 
-    def test_script(self):
-        async def doit():
-            async with Harness() as harness:
-                harness.at_cam.cmd_takeImages.callback = harness.cmd_take_images_callback
-                harness.at_spec.cmd_changeFilter.callback = harness.cmd_change_filter_callback
-                harness.at_spec.cmd_changeDisperser.callback = harness.cmd_change_grating_callback
-                harness.at_spec.cmd_moveLinearStage.callback = harness.cmd_move_linear_stage_callback
+            # Make sure configure works with no data
+            config_data = harness.script.cmd_configure.DataType()
+            await harness.script.do_configure(config_data)
+            harness.script.set_state(Script.ScriptState.UNCONFIGURED)
 
-                # Make sure configure works with no data
-                config_data = harness.script.cmd_configure.DataType()
-                await harness.script.do_configure(config_data)
-                harness.script.set_state(Script.ScriptState.UNCONFIGURED)
+            # Now configure the spectrograph
+            config_data.config = yaml.safe_dump(dict(filter=1,
+                                                     grating=3,
+                                                     linear_stage=10))
+            await harness.script.do_configure(config_data)
 
-                # Now configure the spectrograph
-                config_data.config = yaml.safe_dump(dict(filter=1,
-                                                         grating=3,
-                                                         linear_stage=10))
-                await harness.script.do_configure(config_data)
+            harness.script.set_state(Script.ScriptState.RUNNING)
 
-                harness.script.set_state(Script.ScriptState.RUNNING)
+            harness.script._run_task = asyncio.ensure_future(harness.script.run())
+            await harness.script._run_task
+            harness.script.set_state(Script.ScriptState.ENDING)
 
-                harness.script._run_task = asyncio.ensure_future(harness.script.run())
-                await harness.script._run_task
-                harness.script.set_state(Script.ScriptState.ENDING)
-
-                self.assertEqual(harness.n_bias, harness.script.config.n_bias * 2)
-                self.assertEqual(harness.n_dark, harness.script.config.n_dark)
-                self.assertEqual(harness.n_flat,
-                                 len(harness.script.config.flat_dn_range) * harness.script.config.n_flat)
-                self.assertEqual(harness.filter, 1)
-                self.assertEqual(harness.grating, 3)
-                self.assertEqual(harness.linear_stage, 10)
-
-        asyncio.get_event_loop().run_until_complete(doit())
+            self.assertEqual(harness.n_bias, harness.script.config.n_bias * 2)
+            self.assertEqual(harness.n_dark, harness.script.config.n_dark)
+            self.assertEqual(harness.n_flat,
+                             len(harness.script.config.flat_dn_range) * harness.script.config.n_flat)
+            self.assertEqual(harness.filter, 1)
+            self.assertEqual(harness.grating, 3)
+            self.assertEqual(harness.linear_stage, 10)
 
 
 if __name__ == '__main__':

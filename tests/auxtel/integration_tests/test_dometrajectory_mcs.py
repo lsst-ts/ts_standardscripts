@@ -23,6 +23,8 @@ import logging
 import os
 import unittest
 
+import asynctest
+
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts import standardscripts
@@ -35,7 +37,7 @@ logging.basicConfig()
 START_TIMEOUT = 60
 
 
-class DomeTrajectoryMCSTestCase(unittest.TestCase):
+class DomeTrajectoryMCSTestCase(asynctest.TestCase):
     def setUp(self):
         salobj.test_utils.set_random_lsst_dds_domain()
         self.processes = []
@@ -45,19 +47,16 @@ class DomeTrajectoryMCSTestCase(unittest.TestCase):
             if process.returncode is None:
                 process.terminate()
 
-    def test_integration(self):
-        async def doit():
-            print("*** Start ATMCS simulator")
-            self.processes.append(await asyncio.create_subprocess_exec("run_atmcs_simulator.py"))
-            print("*** Start ATDome in simulation mode")
-            self.processes.append(await asyncio.create_subprocess_exec("run_atdome.py", "--simulate"))
-            print("*** Start ATDomeTrajectory")
-            self.processes.append(await asyncio.create_subprocess_exec("run_atdometrajectory.py"))
+    async def test_integration(self):
+        print("*** Start ATMCS simulator")
+        self.processes.append(await asyncio.create_subprocess_exec("run_atmcs_simulator.py"))
+        print("*** Start ATDome in simulation mode")
+        self.processes.append(await asyncio.create_subprocess_exec("run_atdome.py", "--simulate"))
+        print("*** Start ATDomeTrajectory")
+        self.processes.append(await asyncio.create_subprocess_exec("run_atdometrajectory.py"))
 
-            print("*** Create DomeTrajectoryMCS script")
-            script = DomeTrajectoryMCS(index=1)  # index is arbitrary
-            await script.start_task
-
+        print("*** Create DomeTrajectoryMCS script")
+        async with DomeTrajectoryMCS(index=1) as script:  # index is arbitrary
             print("*** Wait for ATMCS to start up")
             data = await script.atmcs.evt_summaryState.next(flush=False, timeout=START_TIMEOUT)
             self.assertEqual(data.summaryState, salobj.State.STANDBY)
@@ -77,9 +76,7 @@ class DomeTrajectoryMCSTestCase(unittest.TestCase):
             await script.do_run(None)
             self.assertEqual(script.state.state, ScriptState.DONE)
 
-        asyncio.get_event_loop().run_until_complete(doit())
-
-    def test_executable(self):
+    async def test_executable(self):
         index = next(index_gen)
 
         script_name = "dometrajectory_mcs.py"
@@ -87,24 +84,21 @@ class DomeTrajectoryMCSTestCase(unittest.TestCase):
         script_path = scripts_dir / script_name
         self.assertTrue(script_path.is_file())
 
-        async def doit():
-            async with salobj.Domain() as domain:
-                remote = salobj.Remote(domain=domain, name="Script", index=index)
-                await remote.start_task
+        initial_path = os.environ["PATH"]
+        try:
+            os.environ["PATH"] = str(scripts_dir) + ":" + initial_path
+            async with salobj.Domain() as domain, \
+                    salobj.Remote(domain=domain, name="Script", index=index) as remote:
+                os.environ["PATH"] = str(scripts_dir) + ":" + initial_path
+                process = await asyncio.create_subprocess_exec(script_name, str(index))
+                self.processes.append(process)
 
-                initial_path = os.environ["PATH"]
-                try:
-                    os.environ["PATH"] = str(scripts_dir) + ":" + initial_path
-                    process = await asyncio.create_subprocess_exec(script_name, str(index))
+                state = await remote.evt_state.next(flush=False, timeout=START_TIMEOUT)
+                self.assertEqual(state.state, ScriptState.UNCONFIGURED)
 
-                    state = await remote.evt_state.next(flush=False, timeout=START_TIMEOUT)
-                    self.assertEqual(state.state, ScriptState.UNCONFIGURED)
-
-                    process.terminate()
-                finally:
-                    os.environ["PATH"] = initial_path
-
-        asyncio.get_event_loop().run_until_complete(doit())
+                process.terminate()
+        finally:
+            os.environ["PATH"] = initial_path
 
 
 if __name__ == '__main__':
