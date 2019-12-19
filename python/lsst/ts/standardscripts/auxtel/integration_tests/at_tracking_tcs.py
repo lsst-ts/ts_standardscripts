@@ -157,9 +157,7 @@ class ATTracking(scriptqueue.BaseScript):
         Parameters
         ----------
         config : `types.SimpleNamespace`
-            An object returned by the do_configure method of the ScriptQueue, having been validated
-            by a json-schema parser.
-
+            Script configuration.
         """
         self.el = float(self.config.el)*u.deg
         self.az = float(self.config.az)*u.deg

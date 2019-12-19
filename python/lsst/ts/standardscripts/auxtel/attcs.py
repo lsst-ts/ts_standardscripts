@@ -150,7 +150,6 @@ class ATTCS:
         track_id : `int`
             Identifier for the target. This number will be attacked to all
             the commands sent by the pointing component.
-
         """
         self.atptg.cmd_azElTarget.set(targetName=target_name,
                                       targetInstance=ATPtg.TargetInstances.CURRENT,
@@ -200,7 +199,6 @@ class ATTCS:
         track_id : `int`
             Identifier for the target. This number will be attacked to all
             the commands sent by the pointing component.
-
         """
         radec_icrs = ICRS(Angle(ra, unit=u.hour),
                           Angle(dec, unit=u.deg))
@@ -273,7 +271,6 @@ class ATTCS:
         track_id : `int`
             Identifier for the target. This number will be attacked to all
             the commands sent by the pointing component.
-
         """
         self.atptg.cmd_raDecTarget.set(ra=ra, declination=dec, rotPA=rotPA, targetName=target_name,
                                        targetInstance=target_instance, frame=frame, epoch=epoch,
@@ -301,7 +298,6 @@ class ATTCS:
         track_id : `int`
             Identifier for the target. This number will be attacked to all
             the commands sent by the pointing component.
-
         """
         self.atptg.cmd_planetTarget.set(planetName=planet.value,
                                         targetInstance=ATPtg.TargetInstances.CURRENT,
@@ -327,7 +323,6 @@ class ATTCS:
         ----------
         az : `float` or `str`
             Azimuth angle for the dome (in deg).
-
         """
         await salobj.set_summary_state(self.atdometrajectory, salobj.State.DISABLED)
 
@@ -372,9 +367,7 @@ class ATTCS:
             2 - send telescope to flat field position
             3 - send dome to flat field position
             4 - re-enable ATDomeTrajectory
-
         """
-
         await salobj.set_summary_state(self.atdometrajectory,
                                        salobj.State.DISABLED)
 
@@ -391,9 +384,10 @@ class ATTCS:
                                        salobj.State.ENABLED)
 
     async def check_tracking(self, track_duration=None):
-        """Check tracking state. This method monitors all the required
-        parameters for tracking a target; from telescope and pointing
-        component to the dome.
+        """Check tracking state.
+
+        This method monitors all the required parameters for tracking a target;
+        from telescope and pointing component to the dome.
 
         If any of those conditions fails, raise an exception.
 
@@ -422,7 +416,6 @@ class ATTCS:
         RuntimeError
 
             If any of the conditions required for tracking is not met.
-
         """
         # TODO: properly implement this method
 
@@ -466,12 +459,7 @@ class ATTCS:
         settings: `dict`
             Dictionary with settings to apply.  If `None` use the recommended
             settings.
-
-        Returns
-        -------
-
         """
-
         await self.enable(settings=settings)
 
         if self.check.atdome:
@@ -537,9 +525,7 @@ class ATTCS:
         ATTCS component. It will close the telescope cover, close the dome,
         move the telescope and dome to the park position and disable all
         components.
-
         """
-
         self.log.info("Disabling ATAOS corrections")
 
         await self.ataos.cmd_disableCorrection.set_start(disableAll=True,
@@ -639,7 +625,6 @@ class ATTCS:
         settings: `dict`
             Dictionary with settings to apply.  If `None` use recommended
             settings.
-
         """
         self.log.debug("Gathering settings.")
 
@@ -711,20 +696,18 @@ class ATTCS:
         -------
         state : `salobj.State`
             Current state of component.
-
         """
         ss = await self._remotes[comp].evt_summaryState.aget(timeout=self.fast_timeout)
         return salobj.State(ss.summaryState)
 
     async def _slew_to(self, slew_cmd, slew_timeout):
-        """Encapsulates "slew" activities.
+        """Encapsulate "slew" activities.
 
         Parameters
         ----------
         slew_cmd : `coro`
             One of the slew commands from the atptg remote. Command need to be
             setup before calling this method.
-
         """
         self.log.debug("Flushing events")
         self.atmcs.evt_allAxesInPosition.flush()
@@ -771,19 +754,16 @@ class ATTCS:
         ----------
         component : `str`
             Name of the component to follow. Must be one of:
-                atmcs, atptg, ataos, atpneumatics, athexapod, atdome,
-                atdometrajectory
+            atmcs, atptg, ataos, atpneumatics, athexapod, atdome,
+            atdometrajectory
         desired_state : `salobj.State`
             Desired state of the CSC.
 
         Raises
         ------
         RuntimeError
-
-            if state is not `desired_state`.
-
+            If state is not `desired_state`.
         """
-
         while True:
 
             _state = await getattr(self, f"{component}").evt_summaryState.next(flush=False)
@@ -819,7 +799,6 @@ class ATTCS:
         -------
         status: `str`
             String with final status.
-
         """
         wait_tasks = []
 
@@ -850,7 +829,6 @@ class ATTCS:
         ------
         asyncio.TimeoutError
             If does not get a status update in less then `timeout` seconds.
-
         """
         while True:
 
@@ -864,8 +842,7 @@ class ATTCS:
                 self.log.debug(f"Telescope not in position")
 
     async def wait_for_atdome_inposition(self, timeout):
-        """
-        Wait for inPosition of atdome to be ready.
+        """Wait for inPosition of atdome to be ready.
 
         Parameters
         ----------
@@ -881,7 +858,6 @@ class ATTCS:
         ------
         asyncio.TimeoutError
             If does not get a status update in less then `timeout` seconds.
-
         """
         in_position = await self.atdome.evt_azimuthInPosition.aget(timeout=timeout)
 
@@ -912,9 +888,7 @@ class ATTCS:
         ------
         asyncio.TimeoutError
             If does not get in position before `self.open_dome_shutter_time`
-
         """
-
         timeout = self.open_dome_shutter_time
 
         while True:
@@ -936,9 +910,7 @@ class ATTCS:
         Parameters
         ----------
         freq: `double`
-            Frequency loop should run, in Hz. Default = 1.
-
-        """
+            Frequency loop should run, in Hz. Default = 1.        """
         while True:
             comm_pos = await self.atmcs.evt_target.next(flush=True,
                                                         timeout=self.fast_timeout)
@@ -957,8 +929,7 @@ class ATTCS:
             await asyncio.sleep(1.)
 
     async def check_target_status(self):
-        """
-        Checks the targeting status of the atmcs.
+        """Check the targeting status of the atmcs.
         """
         while True:
             in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False)
@@ -971,17 +942,13 @@ class ATTCS:
 
         Parameters
         ----------
-        component
-
-        Returns
-        -------
-
+        component : `str`
+            Name of component to check.
         """
         raise NotImplementedError("Method needs to be implemented.")
 
     async def verify_hexapod(self):
-        """
-        Verifies that the hexapod commanded values are close to the actual
+        """Verify that the hexapod commanded values are close to the actual
         values being returned by the hexapod.
         """
         # FIXME: This method needs to be fixed so not to use `next` on events
@@ -1000,8 +967,8 @@ class ATTCS:
         self.hexapod_check_values(hexapod_position, hexapod_correction, self.within)
 
     async def verify_pneumatics(self):
-        """
-        Verifies that the pneumatics mirror pressures are close to the commanded values.
+        """Verify that the pneumatics mirror pressures are close
+        to the commanded values.
         """
         atpneumatic_m1_set_pressure = self.atpneumatics.evt_m1SetPressure.next(flush=True,
                                                                                timeout=120)
@@ -1020,8 +987,7 @@ class ATTCS:
         self.pneumatics_check_values(results2[2], results2[3], self.within)
 
     def hexapod_check_values(self, athex_position, athex_correction, within):
-        """
-        Performs the actual check of the hexapod.
+        """Check the hexapod.
         """
         self.log.info(f"Checking hexapod correction within {within*100} percent tolerance")
         c1 = math.isclose(athex_position.positionX, athex_correction.hexapod_x, rel_tol=within)
@@ -1040,8 +1006,7 @@ class ATTCS:
             raise RuntimeError(f"Hexapod not corrected within {within*100} percent tolerance")
 
     def pneumatics_check_values(self, atpne_pre, atpneu_post, within):
-        """
-        Performs the actual check of the pneumatics.
+        """Check the pneumatics.
         """
         self.log.info(f"checking pneumatics correction within {within*100} percent tolerance")
         c1 = math.isclose(atpne_pre.pressure, atpneu_post.pressure, rel_tol=within)
@@ -1065,15 +1030,13 @@ class ATTCS:
 
     @staticmethod
     async def cancel_not_done(coro_list):
-        """Appropriately cancel all coroutines in `coro_list`.
+        """Cancel all coroutines in `coro_list`.
 
         Parameters
         ----------
         coro_list : `list(coroutines)`
             A list of coroutines to cancel.
-
         """
-
         for coro in coro_list:
             if not coro.done():
                 coro.cancel()
