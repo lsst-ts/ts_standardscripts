@@ -12,8 +12,8 @@ pipeline {
                     sh """
                     docker network create \${network_name}
                     chmod -R a+rw \${WORKSPACE}
-                    container=\$(docker run -v \${WORKSPACE}:/home/saluser/repo/ -td --rm --net \${network_name} --name \${container_name} lsstts/develop-env:salobj4_b64)
-                    docker exec -u saluser \${container} sh -c \"source ~/.setup.sh && make_idl_files.py ATMCS ATPtg ATAOS ATPneumatics ATHexapod ATDome ATDomeTrajectory && cd repo && eups declare -r . -t saluser && setup ts_standardscripts -t saluser && py.test --junitxml=tests/.tests/junit.xml\"
+                    container=\$(docker run -v \${WORKSPACE}:/home/saluser/repo/ -td --rm --net \${network_name} --name \${container_name} lsstts/develop-env:salobj4_develop)
+                    docker exec -u saluser \${container} sh -c \"source ~/.setup.sh && cd /home/saluser/repo/ && eups declare -r . -t saluser && setup ts_standardscripts -t saluser && py.test --junitxml=tests/.tests/junit.xml\"
                     """
                 }
             }
@@ -37,11 +37,9 @@ pipeline {
         }
         cleanup {
             sh """
+                docker exec -u root --privileged \${container_name} sh -c \"chmod -R a+rw /home/saluser/repo/ \"
                 docker stop \${container_name} || echo Could not stop container
                 docker network rm \${network_name} || echo Could not remove network
-                container=\$(docker run -v \${WORKSPACE}:/home/saluser/repo/ -td --rm lsstts/salobj:master)
-                docker exec -u root --privileged \${container} sh -c \"chmod -R a+rw /home/saluser/repo/ \"
-                docker stop \${container}
             """
             deleteDir()
         }

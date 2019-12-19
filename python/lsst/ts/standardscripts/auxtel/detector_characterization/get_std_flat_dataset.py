@@ -60,12 +60,8 @@ class ATGetStdFlatDataset(salobj.BaseScript):
 
         super().__init__(index=index,
                          descr="Take Flat field sensor characterization data.")
-        self.atcam = salobj.Remote(domain=self.domain, name="ATCamera",
-                                   include=["takeImages", "endReadout"])
-        self.atspec = salobj.Remote(domain=self.domain, name="ATSpectrograph",
-                                    include=["changeFilter", "changeDisperser", "moveLinearStage"])
 
-        self.latiss = LATISS(atcam=self.atcam, atspec=self.atspec)
+        self.latiss = LATISS(self.domain)
 
         self.read_out_time = self.latiss.read_out_time
         self.cmd_timeout = 30.

@@ -20,35 +20,71 @@
 
 __all__ = ['LATISS']
 
+import types
 import asyncio
+
+from lsst.ts import salobj
 
 
 class LATISS:
-    """LSST Auxiliary Telescope Image and Slit less Spectrograph.
+    """LSST Auxiliary Telescope Image and Slit less Spectrograph (LATISS).
 
-    Implement high level functionality for LATISS, a high level instrument
-    which is the combination of ATCamera and ATSpectrograph CSCs.
+    LATISS encapsulates core functionality from the following CSCs ATCamera,
+    ATSpectrograph, ATHeaderService and ATArchiver CSCs.
 
     Parameters
     ----------
-    atcam : `lsst.ts.salobj.Remote`
-        Remote for the ATCamera.
-    atspec : `lsst.ts.salobj.Remote`
-        Remote for the ATSpectrograph.
+    domain : `lsst.ts.salobj.Domain`
+        Domain for remotes. If `None` create a domain.
     """
 
-    def __init__(self, atcam, atspec):
+    def __init__(self, domain=None):
 
-        self.atcam = atcam
-        self.atspec = atspec
+        self._components = ["ATCamera", "ATSpectrograph", "ATHeaderService", "ATArchiver"]
+
+        self._remotes = {}
+
+        self.domain = domain if domain is not None else salobj.Domain()
+
+        for i in range(len(self._components)):
+            name, index = salobj.name_to_name_index(self._components[i])
+            self._remotes[name.lower()] = salobj.Remote(domain=self.domain,
+                                                        name=name,
+                                                        index=index)
+
+        self.check = types.SimpleNamespace(**dict(zip(self.components,
+                                                      [True]*len(self.components))))
+
+        self.start_task = asyncio.gather(*[self._remotes[r].start_task for r in self._remotes])
 
         self.read_out_time = 2.  # readout time (sec)
         self.shutter_time = 1  # time to open or close shutter (sec)
 
-        self.cmd_timeout = 30.
-        self.end_readout_timeout = 60.
+        self.fast_timeout = 5.
+        self.long_timeout = 30.
+        self.long_long_timeout = 120.
 
         self.cmd_lock = asyncio.Lock()
+
+    @property
+    def components(self):
+        return list(self._remotes)
+
+    @property
+    def atcamera(self):
+        return self._remotes["atcamera"]
+
+    @property
+    def atspectrograph(self):
+        return self._remotes["atspectrograph"]
+
+    @property
+    def atheaderservice(self):
+        return self._remotes["atheaderservice"]
+
+    @property
+    def atarchiver(self):
+        return self._remotes["atarchiver"]
 
     async def take_bias(self, nbias, checkpoint=None):
         """Take a series of bias images.
@@ -208,20 +244,20 @@ class LATISS:
             # FIXME: Current version of ATCamera software is not set up to take
             # images with numImages > 1, so this is fixed at 1 for now and we
             # loop through any set of images we want to take. (2019/03/11)
-            self.atcam.cmd_takeImages.set(numImages=1,
-                                          expTime=float(exp_time),
-                                          shutter=bool(shutter),
-                                          imageType=str(image_type),
-                                          groupId=str(group_id),
-                                          science=bool(science),
-                                          guide=bool(guide),
-                                          wfs=bool(wfs)
-                                          )
+            self.atcamera.cmd_takeImages.set(numImages=1,
+                                             expTime=float(exp_time),
+                                             shutter=bool(shutter),
+                                             imageType=str(image_type),
+                                             groupId=str(group_id),
+                                             science=bool(science),
+                                             guide=bool(guide),
+                                             wfs=bool(wfs)
+                                             )
 
-            timeout = self.read_out_time + self.cmd_timeout + self.end_readout_timeout
-            self.atcam.evt_endReadout.flush()
-            await self.atcam.cmd_takeImages.start(timeout=timeout+exp_time)
-            return await self.atcam.evt_endReadout.next(flush=False, timeout=timeout)
+            timeout = self.read_out_time + self.long_timeout + self.long_long_timeout
+            self.atcamera.evt_endReadout.flush()
+            await self.atcamera.cmd_takeImages.start(timeout=timeout + exp_time)
+            return await self.atcamera.evt_endReadout.next(flush=False, timeout=timeout)
 
     async def setup_atspec(self, filter=None, grating=None,
                            linear_stage=None):
@@ -241,32 +277,43 @@ class LATISS:
         setup_coroutines = []
         if filter is not None:
             if isinstance(filter, int):
-                self.atspec.cmd_changeFilter.set(filter=filter,
-                                                 name='')
+                self.atspectrograph.cmd_changeFilter.set(filter=filter,
+                                                         name='')
             elif type(filter) == str:
-                self.atspec.cmd_changeFilter.set(filter=0,
-                                                 name=filter)
+                self.atspectrograph.cmd_changeFilter.set(filter=0,
+                                                         name=filter)
             else:
                 raise RuntimeError(f"Filter must be a string or an int, got "
                                    f"{type(filter)}:{filter}")
-            setup_coroutines.append(self.atspec.cmd_changeFilter.start(timeout=self.cmd_timeout))
+            setup_coroutines.append(self.atspectrograph.cmd_changeFilter.start(timeout=self.long_timeout))
 
         if grating is not None:
             if isinstance(grating, int):
-                self.atspec.cmd_changeDisperser.set(disperser=grating,
-                                                    name='')
+                self.atspectrograph.cmd_changeDisperser.set(disperser=grating,
+                                                            name='')
             elif type(grating) == str:
-                self.atspec.cmd_changeDisperser.set(disperser=0,
-                                                    name=grating)
+                self.atspectrograph.cmd_changeDisperser.set(disperser=0,
+                                                            name=grating)
             else:
                 raise RuntimeError(f"Grating must be a string or an int, got "
                                    f"{type(grating)}:{grating}")
-            setup_coroutines.append(self.atspec.cmd_changeDisperser.start(timeout=self.cmd_timeout))
+            setup_coroutines.append(self.atspectrograph.cmd_changeDisperser.start(timeout=self.long_timeout))
 
         if linear_stage is not None:
-            self.atspec.cmd_moveLinearStage.set(distanceFromHome=float(linear_stage))
-            setup_coroutines.append(self.atspec.cmd_moveLinearStage.start(timeout=self.cmd_timeout))
+            self.atspectrograph.cmd_moveLinearStage.set(distanceFromHome=float(linear_stage))
+            setup_coroutines.append(self.atspectrograph.cmd_moveLinearStage.start(timeout=self.long_timeout))
 
         if len(setup_coroutines) > 0:
             async with self.cmd_lock:
                 return await asyncio.gather(*setup_coroutines)
+
+    async def close(self):
+        await asyncio.gather(*[self._remotes[r].close() for r in self._remotes])
+        await self.domain.close()
+
+    async def __aenter__(self):
+        await self.start_task
+        return self
+
+    async def __aexit__(self, *args):
+        await self.close()

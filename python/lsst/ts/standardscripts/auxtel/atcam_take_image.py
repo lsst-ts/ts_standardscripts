@@ -45,11 +45,8 @@ class ATCamTakeImage(salobj.BaseScript):
     """
     def __init__(self, index):
         super().__init__(index=index, descr="Test ATCamTakeImage")
-        self.atcam = salobj.Remote(domain=self.domain, name="ATCamera")
-        self.atspec = salobj.Remote(domain=self.domain, name="ATSpectrograph")
 
-        self.latiss = LATISS(atcam=self.atcam,
-                             atspec=self.atspec)
+        self.latiss = LATISS(self.domain)
         self.cmd_timeout = 60.  # command timeout (sec)
         # large because of an issue with one of the components
 
