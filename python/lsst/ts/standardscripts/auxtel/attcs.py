@@ -64,10 +64,13 @@ class ATTCS:
         self.dome_park_az = 285.
         self.dome_flat_az = 180.
 
-        self._components = ["ATMCS", "ATPtg", "ATAOS", "ATPneumatics",
-                            "ATHexapod", "ATDome", "ATDomeTrajectory"]
-
-        self.components = [comp.lower() for comp in self._components]
+        if indexed_dome is not None and indexed_dome:
+            # TODO: Remove when indexed_dome is removed.
+            self._components = ["ATMCS", "ATPtg", "ATAOS", "ATPneumatics",
+                                "ATHexapod", "ATDome:1", "ATDomeTrajectory"]
+        else:
+            self._components = ["ATMCS", "ATPtg", "ATAOS", "ATPneumatics",
+                                "ATHexapod", "ATDome", "ATDomeTrajectory"]
 
         self._remotes = {}
 
@@ -76,16 +79,24 @@ class ATTCS:
         self.check = types.SimpleNamespace()
 
         for i in range(len(self._components)):
-            self._remotes[self.components[i]] = salobj.Remote(self.domain,
-                                                              self._components[i])
+            name, index = salobj.name_to_name_index(self._components[i])
+            self._remotes[name.lower()] = salobj.Remote(domain=self.domain,
+                                                        name=name,
+                                                        index=index)
             setattr(self.check, self.components[i], True)
 
+        self.check = types.SimpleNamespace(**dict(zip(self.components,
+                                                      [True]*len(self.components))))
         self.start_task = asyncio.gather(*[remote.start_task for remote in self._remotes.values()])
 
         if log is None:
             self.log = logging.getLogger("ATTCS")
         else:
             self.log = log
+
+    @property
+    def components(self):
+        return list(self._remotes)
 
     @property
     def atmcs(self):

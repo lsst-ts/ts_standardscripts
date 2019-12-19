@@ -20,6 +20,7 @@
 
 __all__ = ['LATISS']
 
+import types
 import asyncio
 
 from lsst.ts import salobj
@@ -41,15 +42,18 @@ class LATISS:
 
         self._components = ["ATCamera", "ATSpectrograph", "ATHeaderService", "ATArchiver"]
 
-        self.components = [comp.lower() for comp in self._components]
-
         self._remotes = {}
 
         self.domain = domain if domain is not None else salobj.Domain()
 
         for i in range(len(self._components)):
-            self._remotes[self.components[i]] = salobj.Remote(self.domain,
-                                                              self._components[i])
+            name, index = salobj.name_to_name_index(self._components[i])
+            self._remotes[name.lower()] = salobj.Remote(domain=self.domain,
+                                                        name=name,
+                                                        index=index)
+
+        self.check = types.SimpleNamespace(**dict(zip(self.components,
+                                                      [True]*len(self.components))))
 
         self.start_task = asyncio.gather(*[self._remotes[r].start_task for r in self._remotes])
 
@@ -61,6 +65,10 @@ class LATISS:
         self.long_long_timeout = 120.
 
         self.cmd_lock = asyncio.Lock()
+
+    @property
+    def components(self):
+        return list(self._remotes)
 
     @property
     def atcamera(self):

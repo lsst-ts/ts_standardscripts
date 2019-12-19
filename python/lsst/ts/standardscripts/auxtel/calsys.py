@@ -20,6 +20,7 @@
 
 __all__ = ['ATCalSys']
 
+import types
 import asyncio
 
 from lsst.ts import salobj
@@ -45,24 +46,25 @@ class ATCalSys:
                             "ATMonochromator",
                             f"FiberSpectrograph:{fiber_spectrograph_index}"]
 
-        self.components = [comp.lower().split(":")[0] for comp in self._components]
-
         self._remotes = {}
 
         self.domain = domain if domain is not None else salobj.Domain()
 
         for i in range(len(self._components)):
-            if ":" in self.components[i]:
-                name, index = self.components[i].split(":")
-                self._remotes[self.components[i]] = salobj.Remote(self.domain,
-                                                                  name,
-                                                                  int(index))
-            else:
-                self._remotes[self.components[i]] = salobj.Remote(self.domain,
-                                                                  self._components[i])
-            setattr(self.check, self.components[i], True)
+
+            name, index = salobj.name_to_name_index(self._components[i])
+            self._remotes[name.lower()] = salobj.Remote(domain=self.domain,
+                                                        name=name,
+                                                        index=index)
+
+        self.check = types.SimpleNamespace(**dict(zip(self.components,
+                                                      [True]*len(self.components))))
 
         self.start_task = asyncio.gather(*[remote.start_task for remote in self._remotes.values()])
+
+    @property
+    def components(self):
+        return list(self._remotes)
 
     @property
     def electrometer(self):
