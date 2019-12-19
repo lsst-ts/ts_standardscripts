@@ -62,19 +62,7 @@ class ATCalSys:
                                                                   self._components[i])
             setattr(self.check, self.components[i], True)
 
-        self.start_task = asyncio.gather(*[self._remotes[r].start_task for r in self._remotes])
-
-    @property
-    def electr(self):
-        return self._remotes['electrometer']
-
-    @property
-    def monochr(self):
-        return self._remotes["atmonochromator"]
-
-    @property
-    def fiber_spec(self):
-        return self._remotes["fiberspectrograph"]
+        self.start_task = asyncio.gather(*[remote.start_task for remote in self._remotes.values()])
 
     @property
     def electrometer(self):
@@ -106,12 +94,12 @@ class ATCalSys:
 
         """
 
-        self.monochr.cmd_updateMonochromatorSetup.set(wavelength=wavelength,
-                                                      gratingType=grating,
-                                                      fontExitSlitWidth=exit_slit,
-                                                      fontEntranceSlitWidth=entrance_slit)
+        self.atmonochromator.cmd_updateMonochromatorSetup.set(wavelength=wavelength,
+                                                              gratingType=grating,
+                                                              fontExitSlitWidth=exit_slit,
+                                                              fontEntranceSlitWidth=entrance_slit)
 
-        await self.monochr.cmd_updateMonochromatorSetup.start(timeout=self.long_timeout)
+        await self.atmonochromator.cmd_updateMonochromatorSetup.start(timeout=self.long_timeout)
 
     async def electrometer_scan(self, duration):
         """Perform an electrometer scan for the specified duration and return
@@ -124,14 +112,14 @@ class ATCalSys:
 
         Returns
         -------
-        lfo : ``self.electr.evt_largeFileObjectAvailable.DataType``
+        lfo : ``self.electrometer.evt_largeFileObjectAvailable.DataType``
             Large file Object Available event.
 
         """
-        self.electr.cmd_startScanDt.set(scanDuration=duration)
-        lfo_coro = self.electr.evt_largeFileObjectAvailable.next(timeout=self.long_timeout,
-                                                                 flush=True)
-        await self.electr.cmd_startScanDt.start(timeout=duration+self.long_timeout)
+        self.electrometer.cmd_startScanDt.set(scanDuration=duration)
+        lfo_coro = self.electrometer.evt_largeFileObjectAvailable.next(timeout=self.long_timeout,
+                                                                       flush=True)
+        await self.electrometer.cmd_startScanDt.start(timeout=duration+self.long_timeout)
 
         return await lfo_coro
 
@@ -158,7 +146,7 @@ class ATCalSys:
 
         Returns
         -------
-        large_file_data : ``fiber_spec.evt_largeFileObjectAvailable.DataType``
+        large_file_data : ``fiberspectrograph.evt_largeFileObjectAvailable.DataType``
             Large file object available event data.
         """
         if evt is not None:
@@ -167,16 +155,16 @@ class ATCalSys:
 
         timeout = integration_time + self.long_timeout
 
-        fs_lfo_coro = self.fiber_spec.evt_largeFileObjectAvailable.next(
+        fs_lfo_coro = self.fiberspectrograph.evt_largeFileObjectAvailable.next(
             timeout=self.long_timeout, flush=True)
 
-        self.fiber_spec.cmd_expose.set(
+        self.fiberspectrograph.cmd_expose.set(
             imageType=image_type,
             integrationTime=integration_time,
             lamp=lamp,
         )
 
-        await self.fiber_spec.cmd_expose.start(timeout=timeout)
+        await self.fiberspectrograph.cmd_expose.start(timeout=timeout)
 
         return await fs_lfo_coro
 

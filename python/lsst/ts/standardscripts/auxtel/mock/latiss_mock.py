@@ -6,10 +6,9 @@ from lsst.ts import salobj
 
 
 class LATISSMock:
-    """ Mock the behavior of the combined components that make out LATISS.
+    """Mock the behavior of the combined components that make out LATISS.
 
     This is useful for unit testing.
-
     """
     def __init__(self):
 

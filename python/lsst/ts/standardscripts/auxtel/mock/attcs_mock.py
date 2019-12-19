@@ -42,6 +42,8 @@ class ATTCSMock:
             getattr(self, comp).cmd_disable.callback = self.get_disable_callback(comp)
             getattr(self, comp).cmd_standby.callback = self.get_standby_callback(comp)
 
+        self.atdome.cmd_start.callback = self.atdome_start_callback
+
         self.atdome.cmd_moveShutterMainDoor.callback = self.move_shutter_callback
         self.atdome.cmd_closeShutter.callback = self.close_shutter_callback
         self.atpneumatics.cmd_openM1Cover.callback = self.generic_callback
@@ -59,26 +61,25 @@ class ATTCSMock:
 
         self.track = False
 
-        self.start_task_finished = False
         self.start_task = asyncio.create_task(self.start_task_publish())
 
         self.task_list = []
 
-        self.tel_pos_task = None
-        self.dome_pos_task = None
+        self.atmcs_telemetry_task = None
+        self.atdome_telemetry_task = None
         self.run_telemetry_loop = True
 
-        self.atptg.cmd_raDecTarget.callback = self.fake_slew_callback
-        self.atptg.cmd_azElTarget.callback = self.fake_slew_callback
-        self.atptg.cmd_planetTarget.callback = self.fake_slew_callback
-        self.atptg.cmd_stopTracking.callback = self.fake_stop_tracking
+        self.atptg.cmd_raDecTarget.callback = self.slew_callback
+        self.atptg.cmd_azElTarget.callback = self.slew_callback
+        self.atptg.cmd_planetTarget.callback = self.slew_callback
+        self.atptg.cmd_stopTracking.callback = self.stop_tracking_callback
 
-        self.atdome.cmd_moveAzimuth.callback = self.fake_move_dome
+        self.atdome.cmd_moveAzimuth.callback = self.move_dome
 
     async def start_task_publish(self):
 
-        if self.start_task_finished:
-            return
+        if self.start_task.done():
+            raise RuntimeError("Start task already completed.")
 
         await asyncio.gather(self.atmcs.start_task,
                              self.atptg.start_task,
@@ -97,12 +98,10 @@ class ATTCSMock:
 
         self.atdome.evt_scbLink.set_put(active=True, force_output=True)
         self.run_telemetry_loop = True
-        self.tel_pos_task = asyncio.create_task(self.fake_tel_pos_telemetry())
-        self.dome_pos_task = asyncio.create_task(self.dome_tel_pos_telemetry())
+        self.atmcs_telemetry_task = asyncio.create_task(self.atmcs_telemetry())
+        self.atdome_telemetry_task = asyncio.create_task(self.atdome_telemetry())
 
-        self.start_task_finished = True
-
-    async def fake_tel_pos_telemetry(self):
+    async def atmcs_telemetry(self):
         while self.run_telemetry_loop:
 
             self.atmcs.tel_mount_AzEl_Encoders.set_put(
@@ -117,7 +116,7 @@ class ATTCSMock:
 
             await asyncio.sleep(1.)
 
-    async def dome_tel_pos_telemetry(self):
+    async def atdome_telemetry(self):
         while self.run_telemetry_loop:
             self.atdome.tel_position.set_put(azimuthPosition=self.dom_az)
             await asyncio.sleep(1.)
@@ -136,7 +135,7 @@ class ATTCSMock:
         self.atptg.evt_summaryState.set_put(summaryState=salobj.State.FAULT,
                                             force_output=True)
 
-    async def fake_slew_callback(self, id_data):
+    async def slew_callback(self, id_data):
         """Fake slew waits 5 seconds, then reports all axes
            in position. Does not simulate the actual slew.
         """
@@ -147,7 +146,7 @@ class ATTCSMock:
         self.track = True
         self.task_list.append(asyncio.create_task(self.wait_and_send_inposition()))
 
-    async def fake_move_dome(self, data):
+    async def move_dome(self, data):
         self.atdome.evt_azimuthInPosition.set_put(inPosition=False,
                                                   force_output=True)
 
@@ -157,7 +156,7 @@ class ATTCSMock:
         self.atdome.evt_azimuthInPosition.set_put(inPosition=True,
                                                   force_output=True)
 
-    async def fake_stop_tracking(self, data):
+    async def stop_tracking_callback(self, data):
         pass
 
     async def wait_and_send_inposition(self):
@@ -173,23 +172,26 @@ class ATTCSMock:
         await asyncio.sleep(0.5)
 
     async def move_shutter_callback(self, id_data):
-        # This command returns right away in the current version of the dome.
         if id_data.open and self.dome_shutter_pos == 0.:
-            self.task_list.append(asyncio.create_task(self.fake_open_shutter()))
+            await self.open_shutter()
         elif not id_data.open and self.dome_shutter_pos == 1.:
-            self.task_list.append(asyncio.create_task(self.fake_close_shutter()))
+            await self.close_shutter()
         else:
             raise RuntimeError(f"Cannot execute operation: {id_data.open} with dome "
                                f"at {self.dome_shutter_pos}")
 
     async def close_shutter_callback(self, id_data):
         if self.dome_shutter_pos == 1.:
-            self.task_list.append(asyncio.create_task(self.fake_close_shutter()))
+            await self.close_shutter()
         else:
             raise RuntimeError(f"Cannot close dome with dome "
                                f"at {self.dome_shutter_pos}")
 
-    async def fake_open_shutter(self):
+    async def open_shutter(self):
+        if self.atdome.evt_mainDoorState.data.state != ATDome.ShutterDoorState.CLOSED:
+            raise RuntimeError(f"Main door state is {self.atdome.evt_mainDoorState.data.state}. "
+                               f"should be {ATDome.ShutterDoorState.CLOSED!r}.")
+
         self.atdome.evt_shutterInPosition.set_put(inPosition=False,
                                                   force_output=True)
         self.atdome.evt_mainDoorState.set_put(state=ATDome.ShutterDoorState.OPENING)
@@ -200,7 +202,11 @@ class ATTCSMock:
                                                   force_output=True)
         self.atdome.evt_mainDoorState.set_put(state=ATDome.ShutterDoorState.OPENED)
 
-    async def fake_close_shutter(self):
+    async def close_shutter(self):
+        if self.atdome.evt_mainDoorState.data.state != ATDome.ShutterDoorState.OPENED:
+            raise RuntimeError(f"Main door state is {self.atdome.evt_mainDoorState.data.state}. "
+                               f"should be {ATDome.ShutterDoorState.OPENED!r}.")
+
         self.atdome.evt_shutterInPosition.set_put(inPosition=False,
                                                   force_output=True)
         self.atdome.evt_mainDoorState.set_put(state=ATDome.ShutterDoorState.CLOSING)
@@ -211,16 +217,33 @@ class ATTCSMock:
                                                   force_output=True)
         self.atdome.evt_mainDoorState.set_put(state=ATDome.ShutterDoorState.CLOSED)
 
+    def atdome_start_callback(self, data):
+        """ATDome start commands do more than the generic callback."""
+
+        ss = self.atdome.evt_summaryState
+
+        if ss.data.summaryState != salobj.State.STANDBY:
+            raise RuntimeError(f"Current state is {salobj.State(ss.data.summaryState)!r}.")
+
+        ss.set_put(summaryState=salobj.State.DISABLED)
+
+        self.settings_to_apply["atdome"] = data.settingsToApply
+
+        self.atdome.evt_mainDoorState.set_put(state=ATDome.ShutterDoorState.CLOSED)
+        self.atdome.tel_position.set(azimuthPosition=0.)
+        self.atdome.evt_azimuthInPosition.set_put(inPosition=True,
+                                                  force_output=True)
+
     def get_start_callback(self, comp):
 
         def callback(id_data):
 
-            ss = getattr(self, comp).evt_summaryState.data.summaryState
+            ss = getattr(self, comp).evt_summaryState
 
-            if ss != salobj.State.STANDBY:
+            if ss.data.summaryState != salobj.State.STANDBY:
                 raise RuntimeError(f"Current state is {salobj.State(ss.summaryState)}.")
 
-            getattr(self, comp).evt_summaryState.set_put(summaryState=salobj.State.DISABLED)
+            ss.set_put(summaryState=salobj.State.DISABLED)
 
             self.settings_to_apply[comp] = id_data.settingsToApply
 
@@ -229,36 +252,39 @@ class ATTCSMock:
     def get_enable_callback(self, comp):
 
         def callback(id_data):
-            ss = getattr(self, comp).evt_summaryState.data.summaryState
 
-            if ss != salobj.State.DISABLED:
+            ss = getattr(self, comp).evt_summaryState
+
+            if ss.data.summaryState != salobj.State.DISABLED:
                 raise RuntimeError(f"Current state is {salobj.State(ss.summaryState)}.")
 
-            getattr(self, comp).evt_summaryState.set_put(summaryState=salobj.State.ENABLED)
+            ss.set_put(summaryState=salobj.State.ENABLED)
 
         return callback
 
     def get_disable_callback(self, comp):
 
         def callback(id_data):
-            ss = getattr(self, comp).evt_summaryState.data.summaryState
 
-            if ss != salobj.State.ENABLED:
+            ss = getattr(self, comp).evt_summaryState
+
+            if ss.data.summaryState != salobj.State.ENABLED:
                 raise RuntimeError(f"Current state is {salobj.State(ss.summaryState)}.")
 
-            getattr(self, comp).evt_summaryState.set_put(summaryState=salobj.State.DISABLED)
+            ss.set_put(summaryState=salobj.State.DISABLED)
 
         return callback
 
     def get_standby_callback(self, comp):
 
         def callback(id_data):
-            ss = getattr(self, comp).evt_summaryState.data.summaryState
 
-            if ss != salobj.State.DISABLED:
+            ss = getattr(self, comp).evt_summaryState
+
+            if ss.data.summaryState != salobj.State.DISABLED:
                 raise RuntimeError(f"Current state is {salobj.State(ss.summaryState)}.")
 
-            getattr(self, comp).evt_summaryState.set_put(summaryState=salobj.State.STANDBY)
+            ss.set_put(summaryState=salobj.State.STANDBY)
 
         return callback
 
@@ -272,8 +298,8 @@ class ATTCSMock:
 
             self.run_telemetry_loop = False
 
-            await asyncio.gather(self.tel_pos_task,
-                                 self.dome_pos_task)
+            await asyncio.gather(self.atmcs_telemetry_task,
+                                 self.atdome_telemetry_task)
 
         except Exception:
             pass
@@ -286,11 +312,9 @@ class ATTCSMock:
         await asyncio.gather(*close_task)
 
     async def __aenter__(self):
-
         await self.start_task
 
         return self
 
     async def __aexit__(self, *args):
-
         await self.close()

@@ -165,6 +165,9 @@ class TestATTCS(asynctest.TestCase):
             harness.ataos.evt_settingVersions.set_put(
                 recommendedSettingsLabels="setting4_ataos_set1,setting4_ataos2_set2")
 
+            # Give remotes some time to update their data.
+            await asyncio.sleep(harness.attcs.fast_timeout)
+
             await harness.attcs.startup()
 
             for comp in harness.attcs.components:

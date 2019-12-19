@@ -26,11 +26,10 @@ from lsst.ts import salobj
 
 
 class LATISS:
-    """LSST Auxiliary Telescope Image and Slit less Spectrograph.
+    """LSST Auxiliary Telescope Image and Slit less Spectrograph (LATISS).
 
-    Implement high level functionality for LATISS, a high level instrument
-    which is the combination of ATCamera, ATSpectrograph, ATHeaderService and
-    ATArchiver CSCs.
+    LATISS encapsulates core functionality from the following CSCs ATCamera,
+    ATSpectrograph, ATHeaderService and ATArchiver CSCs.
 
     Parameters
     ----------
@@ -309,5 +308,4 @@ class LATISS:
         return self
 
     async def __aexit__(self, *args):
-
         await self.close()
