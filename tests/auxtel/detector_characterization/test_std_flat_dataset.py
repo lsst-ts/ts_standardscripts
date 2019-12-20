@@ -40,7 +40,7 @@ logging.basicConfig()
 class Harness:
     def __init__(self):
         self.index = next(index_gen)
-        salobj.test_utils.set_random_lsst_dds_domain()
+        salobj.set_random_lsst_dds_domain()
 
         self.script = ATGetStdFlatDataset(index=self.index)
 

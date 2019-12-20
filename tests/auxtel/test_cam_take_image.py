@@ -37,7 +37,7 @@ logging.basicConfig()
 class Harness:
     def __init__(self):
         self.index = next(index_gen)
-        salobj.test_utils.set_random_lsst_dds_domain()
+        salobj.set_random_lsst_dds_domain()
         self.script = ATCamTakeImage(index=self.index)
         self.atcam = salobj.Controller(name="ATCamera")
         self.atspec = salobj.Controller(name="ATSpectrograph")
@@ -87,7 +87,7 @@ class TestATCamTakeImage(asynctest.TestCase):
 
     async def test_configure(self):
         index = next(index_gen)
-        salobj.test_utils.set_random_lsst_dds_domain()
+        salobj.set_random_lsst_dds_domain()
         async with ATCamTakeImage(index=index) as script:
             async def run_configure(**kwargs):
                 script.set_state(Script.ScriptState.UNCONFIGURED)

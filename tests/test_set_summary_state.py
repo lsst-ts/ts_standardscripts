@@ -102,7 +102,7 @@ class Harness:
 
 class TestSetSummaryState(asynctest.TestCase):
     def setUp(self):
-        salobj.test_utils.set_random_lsst_dds_domain()
+        salobj.set_random_lsst_dds_domain()
 
     async def test_configure_errors(self):
         """Test error handling in the do_configure method.

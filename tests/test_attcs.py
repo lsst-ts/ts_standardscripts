@@ -5,7 +5,6 @@ import unittest
 import asynctest
 
 from lsst.ts import salobj
-from lsst.ts.salobj import test_utils
 from lsst.ts.idl.enums import ATPtg
 
 from lsst.ts.standardscripts.auxtel.attcs import ATTCS
@@ -22,7 +21,7 @@ class Harness:
 
         self.log = logging.getLogger("Harness")
 
-        test_utils.set_random_lsst_dds_domain()
+        salobj.set_random_lsst_dds_domain()
 
         self.attcs_mock = ATTCSMock()
 

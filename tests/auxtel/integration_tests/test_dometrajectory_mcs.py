@@ -39,7 +39,7 @@ START_TIMEOUT = 60
 
 class DomeTrajectoryMCSTestCase(asynctest.TestCase):
     def setUp(self):
-        salobj.test_utils.set_random_lsst_dds_domain()
+        salobj.set_random_lsst_dds_domain()
         self.processes = []
 
     def tearDown(self):

@@ -30,7 +30,7 @@ from lsst.ts.standardscripts.auxtel.mock import LATISSMock
 
 class Harness:
     def __init__(self):
-        salobj.test_utils.set_random_lsst_dds_domain()
+        salobj.set_random_lsst_dds_domain()
 
         self.latiss_remote = LATISS(salobj.Domain())
         self.latiss_mock = LATISSMock()

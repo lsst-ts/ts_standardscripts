@@ -42,7 +42,7 @@ logging.basicConfig()
 class Harness:
     def __init__(self):
 
-        salobj.test_utils.set_random_lsst_dds_domain()
+        salobj.set_random_lsst_dds_domain()
 
         self.index = next(index_gen)
 
