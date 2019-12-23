@@ -26,7 +26,6 @@ import math
 import yaml
 
 from lsst.ts import salobj
-from lsst.ts import ATMCSSimulator
 from lsst.ts.idl.enums.ATDome import AzimuthCommandedState, AzimuthState
 from ...utils import subtract_angles
 
@@ -53,7 +52,7 @@ class DomeTrajectoryMCS(salobj.BaseScript):
         self.atmcs = salobj.Remote(domain=self.domain, name="ATMCS",
                                    include=["summaryState", "track",
                                             "target", "elevationInPosition", "azimuthInPosition",
-                                            "mountEncoders", "measuredMotorVelocity"])
+                                            "mount_AzEl_Encoders", "measuredMotorVelocity"])
         self.atdometraj = salobj.Remote(domain=self.domain, name="ATDomeTrajectory")
         self.atdome = salobj.Remote(domain=self.domain, name="ATDome")
         self._track_task = None
@@ -142,15 +141,15 @@ class DomeTrajectoryMCS(salobj.BaseScript):
         max_vel = 0.001  # deg/sec
         while True:
             mount_vel = await self.atmcs.tel_measuredMotorVelocity.next(flush=False, timeout=STD_TIMEOUT)
-            if abs(mount_vel.elevationMotorVelocity) < max_vel \
-                    and abs(mount_vel.azimuthMotor1Velocity) < max_vel \
-                    and abs(mount_vel.azimuthMotor2Velocity) < max_vel:
+            if abs(mount_vel.elevationMotorVelocity[-1]) < max_vel \
+                    and abs(mount_vel.azimuthMotor1Velocity[-1]) < max_vel \
+                    and abs(mount_vel.azimuthMotor2Velocity[-1]) < max_vel:
                 break
 
         # Report current el/az
-        curr_elaz = await self.atmcs.tel_mountEncoders.next(flush=False, timeout=STD_TIMEOUT)
-        self.log.info(f"telescope initial el={curr_elaz.elevationCalculatedAngle:0.2f}, "
-                      f"az={curr_elaz.azimuthCalculatedAngle:0.2f}")
+        curr_elaz = await self.atmcs.tel_mount_AzEl_Encoders.next(flush=False, timeout=STD_TIMEOUT)
+        self.log.info(f"telescope initial el={curr_elaz.elevationCalculatedAngle[-1]:0.2f}, "
+                      f"az={curr_elaz.azimuthCalculatedAngle[-1]:0.2f}")
 
         # Wait for the dome to stop
         self.log.info("Wait for the dome to stop")
@@ -186,10 +185,10 @@ class DomeTrajectoryMCS(salobj.BaseScript):
                       f"azimuth={new_tel_az:0.2f}: match dome azimuth")
 
         def show_tel_elaz(data):
-            self.log.debug(f"Current telescope el={data.elevationCalculatedAngle:0.2f}, "
-                           f"az={data.azimuthCalculatedAngle:0.2f}")
+            self.log.debug(f"Current telescope el={data.elevationCalculatedAngle[-1]:0.2f}, "
+                           f"az={data.azimuthCalculatedAngle[-1]:0.2f}")
 
-        self.atmcs.tel_mountEncoders.callback = show_tel_elaz
+        self.atmcs.tel_mount_AzEl_Encoders.callback = show_tel_elaz
 
         # wait for next target event
         target = await self.atmcs.evt_target.next(flush=True, timeout=STD_TIMEOUT)
@@ -399,7 +398,7 @@ class DomeTrajectoryMCS(salobj.BaseScript):
                 self.log.debug(f"trackTarget: el={self.track_elaz[0]:0.2f}, az={self.track_elaz[1]:0.2f}")
                 self.atmcs.cmd_trackTarget.set(elevation=self.track_elaz[0],
                                                azimuth=self.track_elaz[1],
-                                               time=ATMCSSimulator.curr_tai())
+                                               time=salobj.current_tai())
                 await self.atmcs.cmd_trackTarget.start(timeout=STD_TIMEOUT)
                 await asyncio.sleep(TRACK_INTERVAL)
         except asyncio.CancelledError:

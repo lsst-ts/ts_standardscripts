@@ -60,12 +60,8 @@ class ATGetStdFlatDataset(salobj.BaseScript):
 
         super().__init__(index=index,
                          descr="Take Flat field sensor characterization data.")
-        self.atcam = salobj.Remote(domain=self.domain, name="ATCamera",
-                                   include=["takeImages", "endReadout"])
-        self.atspec = salobj.Remote(domain=self.domain, name="ATSpectrograph",
-                                    include=["changeFilter", "changeDisperser", "moveLinearStage"])
 
-        self.latiss = LATISS(atcam=self.atcam, atspec=self.atspec)
+        self.latiss = LATISS(self.domain)
 
         self.read_out_time = self.latiss.read_out_time
         self.cmd_timeout = 30.
@@ -179,11 +175,6 @@ class ATGetStdFlatDataset(salobj.BaseScript):
     async def run(self):
         """Run the script.
         """
-        self.log.info(f"Taking {self.config.n_dark} dark images...")
-        await self.latiss.take_darks(exptime=self.config.t_dark,
-                                     ndarks=self.config.n_dark,
-                                     checkpoint=self.checkpoint)
-
         self.log.info(f"Taking {self.config.n_bias} pre-flat bias images...")
         await self.latiss.take_bias(nbias=self.config.n_bias,
                                     checkpoint=self.checkpoint)
@@ -200,6 +191,11 @@ class ATGetStdFlatDataset(salobj.BaseScript):
         self.log.info(f"Taking {self.config.n_bias} post-flat bias images...")
         await self.latiss.take_bias(nbias=self.config.n_bias,
                                     checkpoint=self.checkpoint)
+
+        self.log.info(f"Taking {self.config.n_dark} dark images...")
+        await self.latiss.take_darks(exptime=self.config.t_dark,
+                                     ndarks=self.config.n_dark,
+                                     checkpoint=self.checkpoint)
 
         await self.checkpoint("done")
 

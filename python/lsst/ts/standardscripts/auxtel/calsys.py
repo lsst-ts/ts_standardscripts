@@ -20,8 +20,10 @@
 
 __all__ = ['ATCalSys']
 
+import types
 import asyncio
-from .latiss import LATISS
+
+from lsst.ts import salobj
 
 
 class ATCalSys:
@@ -29,29 +31,52 @@ class ATCalSys:
 
     Parameters
     ----------
-    electr : `lsst.ts.salobj.Remote`
-        Remote for the Electrometer.
-    monochr : `lsst.ts.salobj.Remote`
-        Remote for the Monochromator.
-    fiber_spec : `lsst.ts.salobj.Remote`
-        Remote for the FiberSpectrograph.
-    atcam : `lsst.ts.salobj.Remote`
-        Remote for the ATCamera.
-    atspec : `lsst.ts.salobj.Remote`
-        Remote for the ATSpectrograph.
-    atarch : `lsst.ts.salobj.Remote`
-        Remote for the ATArchiver.
+    domain: `salobj.Domain`
+        Domain to use of the Remotes. If `None`, create a new domain.
+    electrometer_index : `int`
+        Electrometer index.
+    fiber_spectrograph_index : `int`
+        FiberSpectrograph index.
     """
-    def __init__(self, electr, monochr, fiber_spec, atcam, atspec, atarch):
+    def __init__(self, domain=None, electrometer_index=1, fiber_spectrograph_index=-1):
 
-        self.latiss = LATISS(atcam=atcam,
-                             atspec=atspec)
-        self.electr = electr
-        self.monochr = monochr
-        self.fiber_spec = fiber_spec
-        self.atarch = atarch
+        self.long_timeout = 30.
 
-        self.cmd_timeout = 30.
+        self._components = [f"Electrometer:{electrometer_index}",
+                            "ATMonochromator",
+                            f"FiberSpectrograph:{fiber_spectrograph_index}"]
+
+        self._remotes = {}
+
+        self.domain = domain if domain is not None else salobj.Domain()
+
+        for i in range(len(self._components)):
+
+            name, index = salobj.name_to_name_index(self._components[i])
+            self._remotes[name.lower()] = salobj.Remote(domain=self.domain,
+                                                        name=name,
+                                                        index=index)
+
+        self.check = types.SimpleNamespace(**dict(zip(self.components,
+                                                      [True]*len(self.components))))
+
+        self.start_task = asyncio.gather(*[remote.start_task for remote in self._remotes.values()])
+
+    @property
+    def components(self):
+        return list(self._remotes)
+
+    @property
+    def electrometer(self):
+        return self._remotes['electrometer']
+
+    @property
+    def atmonochromator(self):
+        return self._remotes["atmonochromator"]
+
+    @property
+    def fiberspectrograph(self):
+        return self._remotes["fiberspectrograph"]
 
     async def setup_monochromator(self, wavelength, entrance_slit, exit_slit, grating):
         """Setup Monochromator.
@@ -71,12 +96,12 @@ class ATCalSys:
 
         """
 
-        self.monochr.cmd_updateMonochromatorSetup.set(wavelength=wavelength,
-                                                      gratingType=grating,
-                                                      fontExitSlitWidth=exit_slit,
-                                                      fontEntranceSlitWidth=entrance_slit)
+        self.atmonochromator.cmd_updateMonochromatorSetup.set(wavelength=wavelength,
+                                                              gratingType=grating,
+                                                              fontExitSlitWidth=exit_slit,
+                                                              fontEntranceSlitWidth=entrance_slit)
 
-        await self.monochr.cmd_updateMonochromatorSetup.start(timeout=self.cmd_timeout)
+        await self.atmonochromator.cmd_updateMonochromatorSetup.start(timeout=self.long_timeout)
 
     async def electrometer_scan(self, duration):
         """Perform an electrometer scan for the specified duration and return
@@ -89,14 +114,14 @@ class ATCalSys:
 
         Returns
         -------
-        lfo : ``self.electr.evt_largeFileObjectAvailable.DataType``
+        lfo : ``self.electrometer.evt_largeFileObjectAvailable.DataType``
             Large file Object Available event.
 
         """
-        self.electr.cmd_startScanDt.set(scanDuration=duration)
-        lfo_coro = self.electr.evt_largeFileObjectAvailable.next(timeout=self.cmd_timeout,
-                                                                 flush=True)
-        await self.electr.cmd_startScanDt.start(timeout=duration+self.cmd_timeout)
+        self.electrometer.cmd_startScanDt.set(scanDuration=duration)
+        lfo_coro = self.electrometer.evt_largeFileObjectAvailable.next(timeout=self.long_timeout,
+                                                                       flush=True)
+        await self.electrometer.cmd_startScanDt.start(timeout=duration+self.long_timeout)
 
         return await lfo_coro
 
@@ -123,24 +148,36 @@ class ATCalSys:
 
         Returns
         -------
-        large_file_data : ``fiber_spec.evt_largeFileObjectAvailable.DataType``
+        large_file_data : ``fiberspectrograph.evt_largeFileObjectAvailable.DataType``  # noqa: W505
             Large file object available event data.
         """
         if evt is not None:
             await evt
         await asyncio.sleep(delay)
 
-        timeout = integration_time + self.cmd_timeout
+        timeout = integration_time + self.long_timeout
 
-        fs_lfo_coro = self.fiber_spec.evt_largeFileObjectAvailable.next(
-            timeout=self.cmd_timeout, flush=True)
+        fs_lfo_coro = self.fiberspectrograph.evt_largeFileObjectAvailable.next(
+            timeout=self.long_timeout, flush=True)
 
-        self.fiber_spec.cmd_captureSpectImage.set(
+        self.fiberspectrograph.cmd_expose.set(
             imageType=image_type,
             integrationTime=integration_time,
             lamp=lamp,
         )
 
-        await self.fiber_spec.cmd_captureSpectImage.start(timeout=timeout)
+        await self.fiberspectrograph.cmd_expose.start(timeout=timeout)
 
         return await fs_lfo_coro
+
+    async def close(self):
+        await asyncio.gather(*[self._remotes[r].close() for r in self._remotes])
+        await self.domain.close()
+
+    async def __aenter__(self):
+        await self.start_task
+        return self
+
+    async def __aexit__(self, *args):
+
+        await self.close()
