@@ -6,14 +6,32 @@ pipeline {
     }
 
     stages {
-        stage("Running tests") {
+        stage("Pulling docker image") {
+            steps {
+                script {
+                    sh """
+                    docker pull lsstts/develop-env:salobj4_develop
+                    """
+                }
+            }
+        }
+        stage("Preparing environment") {
             steps {
                 script {
                     sh """
                     docker network create \${network_name}
                     chmod -R a+rw \${WORKSPACE}
                     container=\$(docker run -v \${WORKSPACE}:/home/saluser/repo/ -td --rm --net \${network_name} --name \${container_name} lsstts/develop-env:salobj4_develop)
-                    docker exec -u saluser \${container} sh -c \"source ~/.setup.sh && cd /home/saluser/repo/ && eups declare -r . -t saluser && setup ts_standardscripts -t saluser && py.test --junitxml=tests/.tests/junit.xml\"
+                    """
+                }
+            }
+        }
+
+        stage("Running tests") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repo/ && eups declare -r . -t saluser && setup ts_standardscripts -t saluser && export LSST_DDS_IP=192.168.0.1 && printenv LSST_DDS_IP && py.test --junitxml=tests/.tests/junit.xml\"
                     """
                 }
             }

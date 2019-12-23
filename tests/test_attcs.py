@@ -1,12 +1,11 @@
-
-import unittest
-import asynctest
 import asyncio
+import logging
+import unittest
+
+import asynctest
 
 from lsst.ts import salobj
-from lsst.ts.salobj import test_utils
 from lsst.ts.idl.enums import ATPtg
-import logging
 
 from lsst.ts.standardscripts.auxtel.attcs import ATTCS
 from lsst.ts.standardscripts.auxtel.mock import ATTCSMock
@@ -22,7 +21,7 @@ class Harness:
 
         self.log = logging.getLogger("Harness")
 
-        test_utils.set_random_lsst_dds_domain()
+        salobj.set_random_lsst_dds_domain()
 
         self.attcs_mock = ATTCSMock()
 
@@ -141,7 +140,6 @@ class TestATTCS(asynctest.TestCase):
     async def test_startup_shutdown(self):
 
         async with Harness() as harness:
-
             # Testing when passing settings for all components
 
             settings = dict(zip(harness.attcs.components,

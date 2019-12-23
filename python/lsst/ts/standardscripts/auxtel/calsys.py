@@ -148,7 +148,7 @@ class ATCalSys:
 
         Returns
         -------
-        large_file_data : ``fiberspectrograph.evt_largeFileObjectAvailable.DataType``
+        large_file_data : ``fiberspectrograph.evt_largeFileObjectAvailable.DataType``  # noqa: W505
             Large file object available event data.
         """
         if evt is not None:
