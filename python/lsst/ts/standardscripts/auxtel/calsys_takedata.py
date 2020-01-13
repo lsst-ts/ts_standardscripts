@@ -252,12 +252,12 @@ class CalSysTakeData(salobj.BaseScript):
             await self.monochromator.cmd_changeWavelength.start(timeout=self.cmd_timeout)
 
             self.monochromator.cmd_changeSlitWidth.set(
-                slit=ATMonochromator.Slit.FRONTEXIT,
+                slit=ATMonochromator.Slit.EXIT,
                 slitWidth=self.config.exit_slit_widths[i])
             await self.monochromator.cmd_changeSlitWidth.start(timeout=self.cmd_timeout)
 
             self.monochromator.cmd_changeSlitWidth.set(
-                slit=ATMonochromator.Slit.FRONTENTRANCE,
+                slit=ATMonochromator.Slit.ENTRY,
                 slitWidth=self.config.entrance_slit_widths[i])
             await self.monochromator.cmd_changeSlitWidth.start(timeout=self.cmd_timeout)
 

@@ -3,6 +3,7 @@ pipeline {
     environment {
         network_name = "n_${BUILD_ID}_${JENKINS_NODE_COOKIE}"
         container_name = "c_${BUILD_ID}_${JENKINS_NODE_COOKIE}"
+        work_branches = "${GIT_BRANCH} ${CHANGE_BRANCH} develop"
     }
 
     stages {
@@ -10,7 +11,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                    docker pull lsstts/develop-env:salobj4_develop
+                    docker pull lsstts/develop-env:develop
                     """
                 }
             }
@@ -21,12 +22,123 @@ pipeline {
                     sh """
                     docker network create \${network_name}
                     chmod -R a+rw \${WORKSPACE}
-                    container=\$(docker run -v \${WORKSPACE}:/home/saluser/repo/ -td --rm --net \${network_name} --name \${container_name} lsstts/develop-env:salobj4_develop)
+                    container=\$(docker run -v \${WORKSPACE}:/home/saluser/repo/ -td --rm --net \${network_name} --name \${container_name} lsstts/develop-env:develop)
+                    """
+                }
+            }
+        }
+        stage("Checkout sal") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_sal && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    """
+                }
+            }
+        }
+        stage("Checkout salobj") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_salobj && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    """
+                }
+            }
+        }
+        stage("Checkout xml") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_xml && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    """
+                }
+            }
+        }
+        stage("Checkout IDL") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_idl && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    """
+                }
+            }
+        }
+        stage("Checkout ts_simactuators") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_simactuators && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
                     """
                 }
             }
         }
 
+        stage("Checkout ts_scriptqueue") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_scriptqueue && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    """
+                }
+            }
+        }
+
+
+        stage("Checkout ts_ATDomeTrajectory") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_ATDomeTrajectory && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    """
+                }
+            }
+        }
+
+        stage("Checkout ts_ATDome") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_ATDome && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    """
+                }
+            }
+        }
+        stage("Checkout ts_externalscripts") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_externalscripts && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    """
+                }
+            }
+        }
+        stage("Checkout ts_ATMCSSimulator") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_ATMCSSimulator && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    """
+                }
+            }
+        }
+        stage("Checkout ts_config_attcs") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_config_attcs && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    """
+                }
+            }
+        }
+        stage("Build IDL files") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && setup ts_sal -t current && make_idl_files.py ATAOS ATArchiver ATBuilding ATCamera ATDome ATDomeTrajectory ATHeaderService ATHexapod ATMCS ATMonochromator ATPneumatics ATPtg ATSpectrograph ATTCS ATWhiteLight CatchupArchiver CBP CCArchiver CCCamera CCHeaderService DIMM Dome DSM EAS EFD EFDTransformationServer Electrometer Environment FiberSpectrograph GenericCamera Hexapod HVAC IOTA LinearStage LOVE MTAOS MTArchiver MTCamera MTDomeTrajectory MTEEC MTGuider MTHeaderService MTLaserTracker MTM1M3 MTM1M3TS MTM2 MTMount MTPtg MTTCS MTVMS PointingComponent PromptProcessing Rotator Scheduler Script ScriptQueue SummitFacility Test TunableLaser Watcher\"
+                    """
+                }
+            }
+        }
         stage("Running tests") {
             steps {
                 script {

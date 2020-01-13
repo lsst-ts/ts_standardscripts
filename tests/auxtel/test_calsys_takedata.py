@@ -212,8 +212,8 @@ class TestATCalSysTakeData(asynctest.TestCase):
             desired_slits = []
             desired_slit_widths = []
             for i in range(nimages):
-                desired_slits.append(ATMonochromator.Slit.FRONTEXIT)
-                desired_slits.append(ATMonochromator.Slit.FRONTENTRANCE)
+                desired_slits.append(ATMonochromator.Slit.EXIT)
+                desired_slits.append(ATMonochromator.Slit.ENTRY)
                 desired_slit_widths.append(exit_slit_widths[i])
                 desired_slit_widths.append(entrance_slit_widths[i])
             self.assertEqual([sd.slit for sd in harness.slit_data], desired_slits)
