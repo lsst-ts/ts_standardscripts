@@ -19,20 +19,19 @@
 # You should have received a copy of the GNU General Public License
 
 import asyncio
+import logging
+import random
 import unittest
-import os
 
 import asynctest
-import yaml
-import numpy as np
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.standardscripts import SetSummaryState, get_scripts_dir
+from lsst.ts import standardscripts
 
-np.random.seed(47)
+random.seed(47)  # for set_random_lsst_dds_domain
 
-index_gen = salobj.index_generator()
+logging.basicConfig()
 
 
 class TrivialController(salobj.Controller):
@@ -76,43 +75,32 @@ class TrivialController(salobj.Controller):
         self.put_state(salobj.State.DISABLED)
 
 
-class Harness:
-    def __init__(self):
-        self.index = next(index_gen)
-        self.test_index = next(index_gen)
-        self.script = SetSummaryState(index=self.index)
+class TestSetSummaryState(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+    async def basic_make_script(self, index):
+        self.script = standardscripts.SetSummaryState(index=index)
         self.controllers = []
+        return [self.script]
 
     async def add_controller(self, initial_state=salobj.State.STANDBY):
         """Add a Test controller"""
-        index = next(index_gen)
+        index = self.next_index()
 
         controller = TrivialController(index=index, initial_state=initial_state)
         await controller.start_task
         self.controllers.append(controller)
 
-    async def __aenter__(self):
-        await self.script.start_task
-        return self
-
-    async def __aexit__(self, *args):
-        items_to_close = [self.script] + self.controllers
-        await asyncio.gather(*[item.close() for item in items_to_close])
-
-
-class TestSetSummaryState(asynctest.TestCase):
-    def setUp(self):
-        salobj.set_random_lsst_dds_domain()
+    async def close(self):
+        await asyncio.gather(*[controller.close() for controller in self.controllers])
 
     async def test_configure_errors(self):
         """Test error handling in the do_configure method.
         """
-        async with Harness() as harness:
+        async with self.make_script():
             name_ind = "Test:1"
-            config_data = harness.script.cmd_configure.DataType()
+            config_data = self.script.cmd_configure.DataType()
             for bad_config in (
-                'data: []',  # need at least one tuple
-                'data: [[]]',  # tuple has 0 values; need 2 or 3
+                "data: []",  # need at least one tuple
+                "data: [[]]",  # tuple has 0 values; need 2 or 3
                 f'data: [["{name_ind}"]]',  # tuple has 1 item; need 2 or 3
                 # tuple has 4 items; need 2 or 3
                 f'data: [["{name_ind}", "enabled", "", "4th field not allowed"]]',
@@ -121,28 +109,36 @@ class TestSetSummaryState(asynctest.TestCase):
                 '[("no_such_CSC:5", "enabled")]',  # no such CSC
                 '[(name_ind, "invalid_state")]',  # no such state
                 '[(name_ind, "fault")]',  # fault state is not supported
-                '[(name_ind, 1)]',  # integer states are not supported
+                "[(name_ind, 1)]",  # integer states are not supported
             ):
                 with self.subTest(bad_config=bad_config):
                     config_data.config = bad_config
                     with self.assertRaises(salobj.ExpectedError):
-                        await harness.script.do_configure(config_data)
+                        await self.script.do_configure(config_data)
 
     async def test_configure_good(self):
         """Test the configure method with a valid configuration.
+
+        Also exercise verbose=True for make_script.
         """
-        async with Harness() as harness:
-            await harness.add_controller()
-            await harness.add_controller()
+        async with self.make_script(verbose=True):
+            await self.add_controller()
+            await self.add_controller()
             # add a 3rd controller that has the same index as the first one
-            harness.controllers.append(harness.controllers[0])
-            state_enums = (salobj.State.ENABLED, salobj.State.DISABLED, salobj.State.STANDBY)
+            self.controllers.append(self.controllers[0])
+            state_enums = (
+                salobj.State.ENABLED,
+                salobj.State.DISABLED,
+                salobj.State.STANDBY,
+            )
             state_names = [elt.name for elt in state_enums]
             settings_list = ("foo", None, "")
 
             data = []
             name_index_list = []
-            for controller, state, settings in zip(harness.controllers, state_names, settings_list):
+            for controller, state, settings in zip(
+                self.controllers, state_names, settings_list
+            ):
                 index = controller.salinfo.index
                 name_index = f"Test:{index}"
                 if settings is None:
@@ -151,42 +147,36 @@ class TestSetSummaryState(asynctest.TestCase):
                     data.append((name_index, state, settings))
                 name_index_list.append(("Test", index))
 
-            config_data = harness.script.cmd_configure.DataType()
-            config_data.config = yaml.safe_dump(dict(data=data))
-            await harness.script.do_configure(config_data)
+            await self.configure_script(data=data)
 
             # There are three controllers but two have the same index
-            self.assertEqual(len(harness.script.remotes), 2)
+            self.assertEqual(len(self.script.remotes), 2)
 
             for i in range(len(data)):
                 desired_settings = "" if settings_list[i] is None else settings_list[i]
-                self.assertEqual(harness.script.nameind_state_settings[i],
-                                 (name_index_list[i], state_enums[i], desired_settings))
+                self.assertEqual(
+                    self.script.nameind_state_settings[i],
+                    (name_index_list[i], state_enums[i], desired_settings),
+                )
 
     async def test_do_run(self):
         """Set one remote to two states, including settings.
 
         Transition FAULT -standby> STANDBY -start> DISABLED -enable> ENABLED
         """
-        async with Harness() as harness:
-            await harness.add_controller(initial_state=salobj.State.FAULT)
-            test_index = harness.controllers[0].salinfo.index
+        async with self.make_script():
+            await self.add_controller(initial_state=salobj.State.FAULT)
+            test_index = self.controllers[0].salinfo.index
             name_ind = f"Test:{test_index}"
             settings = "foo"
 
-            data = (
-                (name_ind, "standby"),
-                (name_ind, "enabled", settings),
-            )
-            config_kwargs = dict(data=data)
-            config_data = harness.script.cmd_configure.DataType()
-            config_data.config = yaml.safe_dump(config_kwargs)
-            await harness.script.do_configure(data=config_data)
-            self.assertEqual(len(harness.controllers), 1)
-            self.assertEqual(len(harness.script.remotes), 1)
+            data = ((name_ind, "standby"), (name_ind, "enabled", settings))
+            await self.configure_script(data=data)
+            self.assertEqual(len(self.controllers), 1)
+            self.assertEqual(len(self.script.remotes), 1)
 
-            await harness.script.do_run(data=None)
-            controller = harness.controllers[0]
+            await self.run_script()
+            controller = self.controllers[0]
             self.assertEqual(controller.n_standby, 1)
             self.assertEqual(controller.n_start, 1)
             self.assertEqual(controller.n_enable, 1)
@@ -194,32 +184,13 @@ class TestSetSummaryState(asynctest.TestCase):
             self.assertEqual(controller.n_exitControl, 0)
             self.assertEqual(len(controller.settings), 1)
             self.assertEqual(controller.settings[0], settings)
-            self.assertEqual(harness.script.state.state, ScriptState.DONE)
+            self.assertEqual(self.script.state.state, ScriptState.DONE)
 
     async def test_executable(self):
-        index = next(index_gen)
-
-        script_name = "set_summary_state.py"
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / script_name
-        self.assertTrue(script_path.is_file())
-
-        async with salobj.Domain() as domain:
-            remote = salobj.Remote(domain=domain, name="Script", index=index)
-            await remote.start_task
-
-            initial_path = os.environ["PATH"]
-            try:
-                os.environ["PATH"] = str(scripts_dir) + ":" + initial_path
-                process = await asyncio.create_subprocess_exec(script_name, str(index))
-
-                state = await remote.evt_state.next(flush=False, timeout=60)
-                self.assertEqual(state.state, ScriptState.UNCONFIGURED)
-
-                process.terminate()
-            finally:
-                os.environ["PATH"] = initial_path
+        scripts_dir = standardscripts.get_scripts_dir()
+        script_path = scripts_dir / "set_summary_state.py"
+        await self.check_executable(script_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
