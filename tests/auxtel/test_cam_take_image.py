@@ -31,7 +31,7 @@ from lsst.ts.standardscripts.auxtel.atcam_take_image import ATCamTakeImage
 
 random.seed(47)  # for set_random_lsst_dds_domain
 
-logging.basicConfig()
+logging.basicConfig(level=logging.DEBUG)
 
 
 class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase):
@@ -39,6 +39,7 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
         self.script = ATCamTakeImage(index=index)
         self.atcam = salobj.Controller(name="ATCamera")
         self.atspec = salobj.Controller(name="ATSpectrograph")
+        self.atheaderservice = salobj.Controller(name="ATHeaderService")
 
         self.nimages = 0
         self.selected_filter = []
@@ -50,7 +51,14 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
         self.atspec.cmd_changeDisperser.callback = self.cmd_changeDisperser_callback
         self.atspec.cmd_moveLinearStage.callback = self.cmd_moveLinearStage_callback
 
-        return (self.atspec, self.atcam, self.script)
+        self.end_image_tasks = []
+
+        return self.atspec, self.atcam, self.atheaderservice, self.script
+
+    async def close(self):
+        """Optional cleanup before closing the scripts and etc."""
+        await asyncio.gather(*self.end_image_tasks,
+                             return_exceptions=True)
 
     async def cmd_take_images_callback(self, data):
         one_exp_time = (
@@ -60,7 +68,13 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
         )
         await asyncio.sleep(one_exp_time * data.numImages)
         self.nimages += 1
+        self.end_image_tasks.append(asyncio.create_task(self.finish_take_images()))
+
+    async def finish_take_images(self):
+        await asyncio.sleep(0.5)
         self.atcam.evt_endReadout.put()
+        await asyncio.sleep(0.5)
+        self.atheaderservice.evt_largeFileObjectAvailable.put()
 
     async def cmd_changeFilter_callback(self, data):
         self.selected_filter.append(data.filter)

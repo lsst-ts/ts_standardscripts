@@ -78,6 +78,7 @@ class TestSlewTelescopeIcrs(standardscripts.BaseScriptTestCase, asynctest.TestCa
     async def raDecTarget(self, data):
         """Callback for ATPtg raDecTarget command.
         """
+        self.atdome.evt_azimuthCommandedState.put()
         await asyncio.sleep(0.5)
         self.atmcs.evt_allAxesInPosition.set_put(inPosition=False, force_output=True)
         await asyncio.sleep(0.5)
