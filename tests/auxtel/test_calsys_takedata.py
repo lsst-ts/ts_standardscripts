@@ -20,31 +20,28 @@
 
 import asyncio
 import logging
+import random
 import unittest
 
 import asynctest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-import yaml
 
 from lsst.ts.idl.enums import ATMonochromator, Script
 from lsst.ts import salobj
+from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel import CalSysTakeData
 
-np.random.seed(47)
-
-index_gen = salobj.index_generator()
+random.seed(47)  # for set_random_lsst_dds_domain
 
 logging.basicConfig()
 
 
-class Harness:
-    def __init__(self):
-        self.index = next(index_gen)
-
-        self.test_index = next(index_gen)
-
-        self.script = CalSysTakeData(index=self.index)
+class TestATCalSysTakeData(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+    async def basic_make_script(self, index):
+        """Make script and controllers and return a list of all made.
+        """
+        self.script = CalSysTakeData(index=index)
 
         # mock controllers that use callback functions defined below
         # to handle the expected commands
@@ -73,10 +70,12 @@ class Harness:
         self.monochromator.cmd_changeSlitWidth.callback = self.changeSlitWidth
         self.monochromator.cmd_selectGrating.callback = self.selectGrating
 
+        return (self.script, self.electrometer, self.monochromator, self.fiberspec)
+
     async def startScanDt(self, data):
         """Callback for Electrometer startScanDt command."""
         self.scan_durations.append(data.scanDuration)
-        await asyncio.sleep(1.)
+        await asyncio.sleep(1.0)
         self.electrometer.evt_detailedState.put()
         await asyncio.sleep(data.scanDuration)
 
@@ -98,128 +97,120 @@ class Harness:
         """Callback for ATMonochromator selectGrating command."""
         self.grating_types.append(data.gratingType)
 
-    async def __aenter__(self):
-        await asyncio.gather(self.script.start_task,
-                             self.electrometer.start_task,
-                             self.monochromator.start_task,
-                             self.fiberspec.start_task)
-        return self
-
-    async def __aexit__(self, *args):
-        await asyncio.gather(self.script.close(),
-                             self.electrometer.close(),
-                             self.monochromator.close(),
-                             self.fiberspec.close())
-
-
-class TestATCalSysTakeData(asynctest.TestCase):
-    def setUp(self):
-        salobj.set_random_lsst_dds_domain()
-
     async def test_configure(self):
-        index = next(index_gen)
+        argnames = (
+            "wavelengths",
+            "integration_times",
+            "grating_types",
+            "entrance_slit_widths",
+            "exit_slit_widths",
+            "image_types",
+            "lamps",
+            "spectrometer_delays",
+        )
 
-        argnames = ("wavelengths", "integration_times", "grating_types",
-                    "entrance_slit_widths", "exit_slit_widths",
-                    "image_types", "lamps", "spectrometer_delays")
-
-        async with CalSysTakeData(index=index) as script:
-            async def run_configure(**kwargs):
-                script.set_state(Script.ScriptState.UNCONFIGURED)
-                config_data = script.cmd_configure.DataType()
-                if kwargs:
-                    config_data.config = yaml.safe_dump(kwargs)
-                await script.do_configure(config_data)
-
+        async with self.make_script():
             # configure requires wavelengths and integration_times
             with self.assertRaises(salobj.ExpectedError):
-                await run_configure()
+                await self.configure_script()
             with self.assertRaises(salobj.ExpectedError):
-                await run_configure(wavelengths=100)
+                await self.configure_script(wavelengths=100)
             with self.assertRaises(salobj.ExpectedError):
-                await run_configure(integration_times=100)
+                await self.configure_script(integration_times=100)
 
             # if configured with a scalar then every element has length 1
-            await run_configure(wavelengths=100, integration_times=31)
-            assert_array_equal(script.config.wavelengths, np.array([100], dtype=float))
-            assert_array_equal(script.config.integration_times, np.array([31], dtype=int))
+            await self.configure_script(wavelengths=100, integration_times=31)
+            assert_array_equal(
+                self.script.config.wavelengths, [100]
+            )
+            assert_array_equal(
+                self.script.config.integration_times, [31]
+            )
             for argname in argnames:
-                arg = getattr(script.config, argname)
+                arg = getattr(self.script.config, argname)
                 self.assertIs(type(arg), np.ndarray)
                 self.assertEqual(len(arg), 1)
 
             # if configured with an array then
             # every element has the same length
-            await run_configure(wavelengths=[100, 200], integration_times=31)
-            assert_array_equal(script.config.wavelengths, np.array([100, 200], dtype=float))
-            assert_array_equal(script.config.integration_times, np.array([31, 31], dtype=int))
+            await self.configure_script(wavelengths=[100, 200], integration_times=31)
+            assert_array_equal(
+                self.script.config.wavelengths, [100, 200]
+            )
+            assert_array_equal(
+                self.script.config.integration_times, [31, 31]
+            )
             for argname in argnames:
-                arg = getattr(script.config, argname)
+                arg = getattr(self.script.config, argname)
                 self.assertIs(type(arg), np.ndarray)
                 self.assertEqual(len(arg), 2)
 
-            await run_configure(wavelengths=100, integration_times=31, grating_types=[1, 2])
-            assert_array_equal(script.config.wavelengths, np.array([100, 100], dtype=float))
-            assert_array_equal(script.config.integration_times, np.array([31, 31], dtype=int))
-            assert_array_equal(script.config.grating_types, np.array([1, 2], dtype=int))
+            await self.configure_script(
+                wavelengths=100, integration_times=31, grating_types=[1, 2]
+            )
+            assert_array_equal(
+                self.script.config.wavelengths, [100, 100]
+            )
+            assert_array_equal(
+                self.script.config.integration_times, [31, 31]
+            )
+            assert_array_equal(
+                self.script.config.grating_types, [1, 2]
+            )
             for argname in argnames:
-                arg = getattr(script.config, argname)
+                arg = getattr(self.script.config, argname)
                 self.assertIs(type(arg), np.ndarray)
                 self.assertEqual(len(arg), 2)
 
     async def test_run(self):
-        async with Harness() as harness:
-            wavelengths = [100, 600]
-            integration_times = [1.5, 1.9]
-            grating_types = [1, 2]
-            entrance_slit_widths = [2.1, 2.2]
-            exit_slit_widths = [3.3, 3.4]
-            image_types = ["test1", "test2"]
-            lamps = ["lamps1", "lamps2"]
-            spectrometer_delays = [1.03, 1.04]
-
-            config_kwargs = dict(
-                wavelengths=wavelengths,
-                integration_times=integration_times,
-                grating_types=grating_types,
-                entrance_slit_widths=entrance_slit_widths,
-                exit_slit_widths=exit_slit_widths,
-                image_types=image_types,
-                lamps=lamps,
-                spectrometer_delays=spectrometer_delays,
+        async with self.make_script():
+            config = await self.configure_script(
+                wavelengths=[100, 600],
+                integration_times=[1.5, 1.9],
+                grating_types=[1, 2],
+                entrance_slit_widths=[2.1, 2.2],
+                exit_slit_widths=[3.3, 3.4],
+                image_types=["test1", "test2"],
+                lamps=["lamps1", "lamps2"],
+                spectrometer_delays=[1.03, 1.04],
             )
-            config_data = harness.script.cmd_configure.DataType()
-            config_data.config = yaml.safe_dump(config_kwargs)
-            print(f"config={config_data.config!r}")
-            await harness.script.do_configure(data=config_data)
-            nimages = len(harness.script.config.wavelengths)
+            nimages = len(self.script.config.wavelengths)
             self.assertEqual(nimages, 2)
-            self.assertEqual(harness.script.state.state, Script.ScriptState.CONFIGURED)
+            self.assertEqual(self.script.state.state, Script.ScriptState.CONFIGURED)
 
-            await harness.script.do_run(data=None)
-            await harness.script.done_task
-            self.assertEqual(harness.script.state.state, Script.ScriptState.DONE)
+            await self.run_script()
+            self.assertEqual(self.script.state.state, Script.ScriptState.DONE)
 
-            desired_scan_durations = [integration_times[i] + 2*spectrometer_delays[i]
-                                      for i in range(nimages)]
-            assert_array_almost_equal(harness.scan_durations, desired_scan_durations)
-            self.assertEqual([imd.type for imd in harness.image_data], image_types)
-            assert_array_almost_equal([imd.duration
-                                       for imd in harness.image_data], integration_times)
-            self.assertEqual([imd.source for imd in harness.image_data], lamps)
-            assert_array_almost_equal(harness.wavelengths, wavelengths)
-            assert_array_almost_equal(harness.grating_types, grating_types)
+            desired_scan_durations = [
+                config.integration_times[i] + 2 * config.spectrometer_delays[i]
+                for i in range(nimages)
+            ]
+            assert_array_almost_equal(self.scan_durations, desired_scan_durations)
+            self.assertEqual([imd.type for imd in self.image_data], config.image_types)
+            assert_array_almost_equal(
+                [imd.duration for imd in self.image_data], config.integration_times
+            )
+            self.assertEqual([imd.source for imd in self.image_data], config.lamps)
+            assert_array_almost_equal(self.wavelengths, config.wavelengths)
+            assert_array_almost_equal(self.grating_types, config.grating_types)
             desired_slits = []
             desired_slit_widths = []
             for i in range(nimages):
                 desired_slits.append(ATMonochromator.Slit.EXIT)
                 desired_slits.append(ATMonochromator.Slit.ENTRY)
-                desired_slit_widths.append(exit_slit_widths[i])
-                desired_slit_widths.append(entrance_slit_widths[i])
-            self.assertEqual([sd.slit for sd in harness.slit_data], desired_slits)
-            assert_array_almost_equal([sd.slitWidth for sd in harness.slit_data], desired_slit_widths)
-            self.assertEqual(harness.grating_types, grating_types)
+                desired_slit_widths.append(config.exit_slit_widths[i])
+                desired_slit_widths.append(config.entrance_slit_widths[i])
+            self.assertEqual([sd.slit for sd in self.slit_data], desired_slits)
+            assert_array_almost_equal(
+                [sd.slitWidth for sd in self.slit_data], desired_slit_widths
+            )
+            self.assertEqual(self.grating_types, config.grating_types)
+
+    async def test_executable(self):
+        scripts_dir = standardscripts.get_scripts_dir()
+        script_path = scripts_dir / "auxtel" / "calsys_takedata.py"
+        await self.check_executable(script_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -18,82 +18,82 @@
 #
 # You should have received a copy of the GNU General Public License
 
+import logging
+import random
 import unittest
-import asyncio
 
 import asynctest
 
 from lsst.ts import salobj
+from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.latiss import LATISS
 from lsst.ts.standardscripts.auxtel.mock import LATISSMock
 
 
-class Harness:
-    def __init__(self):
-        salobj.set_random_lsst_dds_domain()
+random.seed(47)  # for set_random_lsst_dds_domain
 
-        self.latiss_remote = LATISS(salobj.Domain())
+logging.basicConfig()
+
+
+class TestLATISS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+    async def basic_make_script(self, index):
+        self.domain = salobj.Domain()
+        self.latiss_remote = LATISS(self.domain)
         self.latiss_mock = LATISSMock()
 
-    async def __aenter__(self):
-        await asyncio.gather(self.latiss_remote.start_task,
-                             self.latiss_mock.start_task)
-        return self
+        return (self.latiss_remote, self.latiss_mock)
 
-    async def __aexit__(self, *args):
-        await asyncio.gather(self.latiss_mock.close(),
-                             self.latiss_remote.close())
-
-
-class TestLATISS(asynctest.TestCase):
+    async def close(self):
+        await self.domain.close()
 
     async def test_take_bias(self):
-        async with Harness() as harness:
+        async with self.make_script():
             nbias = 10
-            await harness.latiss_remote.take_bias(nbias=nbias)
-            self.assertEqual(harness.latiss_mock.nimages, nbias)
-            self.assertEqual(len(harness.latiss_mock.exptime_list), nbias)
+            await self.latiss_remote.take_bias(nbias=nbias)
+            self.assertEqual(self.latiss_mock.nimages, nbias)
+            self.assertEqual(len(self.latiss_mock.exptime_list), nbias)
             for i in range(nbias):
-                self.assertEqual(harness.latiss_mock.exptime_list[i], 0.)
-            self.assertIsNone(harness.latiss_mock.latiss_linear_stage)
-            self.assertIsNone(harness.latiss_mock.latiss_grating)
-            self.assertIsNone(harness.latiss_mock.latiss_filter)
+                self.assertEqual(self.latiss_mock.exptime_list[i], 0.0)
+            self.assertIsNone(self.latiss_mock.latiss_linear_stage)
+            self.assertIsNone(self.latiss_mock.latiss_grating)
+            self.assertIsNone(self.latiss_mock.latiss_filter)
 
     async def test_take_darks(self):
-        async with Harness() as harness:
+        async with self.make_script():
             ndarks = 10
-            exptime = 5.
-            await harness.latiss_remote.take_darks(ndarks=ndarks,
-                                                   exptime=exptime)
-            self.assertEqual(harness.latiss_mock.nimages, ndarks)
-            self.assertEqual(len(harness.latiss_mock.exptime_list), ndarks)
+            exptime = 5.0
+            await self.latiss_remote.take_darks(ndarks=ndarks, exptime=exptime)
+            self.assertEqual(self.latiss_mock.nimages, ndarks)
+            self.assertEqual(len(self.latiss_mock.exptime_list), ndarks)
             for i in range(ndarks):
-                self.assertEqual(harness.latiss_mock.exptime_list[i], exptime)
-            self.assertIsNone(harness.latiss_mock.latiss_linear_stage)
-            self.assertIsNone(harness.latiss_mock.latiss_grating)
-            self.assertIsNone(harness.latiss_mock.latiss_filter)
+                self.assertEqual(self.latiss_mock.exptime_list[i], exptime)
+            self.assertIsNone(self.latiss_mock.latiss_linear_stage)
+            self.assertIsNone(self.latiss_mock.latiss_grating)
+            self.assertIsNone(self.latiss_mock.latiss_filter)
 
     async def test_take_flats(self):
-        async with Harness() as harness:
+        async with self.make_script():
             nflats = 10
-            exptime = 5.
+            exptime = 5.0
             filter_id = 1
             grating_id = 1
-            linear_stage = 100.
+            linear_stage = 100.0
 
-            await harness.latiss_remote.take_flats(nflats=nflats,
-                                                   exptime=exptime,
-                                                   filter=filter_id,
-                                                   grating=grating_id,
-                                                   linear_stage=linear_stage)
-            self.assertEqual(harness.latiss_mock.nimages, nflats)
-            self.assertEqual(len(harness.latiss_mock.exptime_list), nflats)
+            await self.latiss_remote.take_flats(
+                nflats=nflats,
+                exptime=exptime,
+                filter=filter_id,
+                grating=grating_id,
+                linear_stage=linear_stage,
+            )
+            self.assertEqual(self.latiss_mock.nimages, nflats)
+            self.assertEqual(len(self.latiss_mock.exptime_list), nflats)
             for i in range(nflats):
-                self.assertEqual(harness.latiss_mock.exptime_list[i], exptime)
-            self.assertEqual(harness.latiss_mock.latiss_filter, filter_id)
-            self.assertEqual(harness.latiss_mock.latiss_grating, grating_id)
-            self.assertEqual(harness.latiss_mock.latiss_linear_stage, linear_stage)
+                self.assertEqual(self.latiss_mock.exptime_list[i], exptime)
+            self.assertEqual(self.latiss_mock.latiss_filter, filter_id)
+            self.assertEqual(self.latiss_mock.latiss_grating, grating_id)
+            self.assertEqual(self.latiss_mock.latiss_linear_stage, linear_stage)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
