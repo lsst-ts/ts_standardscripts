@@ -20,29 +20,23 @@
 
 import unittest
 import asyncio
-import numpy as np
+import random
 import logging
 
 import asynctest
-import yaml
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums import Script
+from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.detector_characterization import ATGetStdFlatDataset
 
-np.random.seed(47)
-
-index_gen = salobj.index_generator()
+random.seed(47)  # for set_random_lsst_dds_domain
 
 logging.basicConfig()
 
 
-class Harness:
-    def __init__(self):
-        self.index = next(index_gen)
-        salobj.set_random_lsst_dds_domain()
-
-        self.script = ATGetStdFlatDataset(index=self.index)
+class TestATGetStdFlatDataset(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+    async def basic_make_script(self, index):
+        self.script = ATGetStdFlatDataset(index=index)
 
         # Adds controller to Test
         self.at_cam = salobj.Controller(name="ATCamera")
@@ -55,6 +49,8 @@ class Harness:
         self.filter = None
         self.grating = None
         self.linear_stage = None
+
+        return (self.script, self.at_cam, self.at_spec)
 
     async def cmd_take_images_callback(self, data):
         if "bias" in data.imageType.lower():
@@ -76,51 +72,43 @@ class Harness:
     async def cmd_move_linear_stage_callback(self, data):
         self.linear_stage = data.distanceFromHome
 
-    async def __aenter__(self):
-        await asyncio.gather(self.script.start_task,
-                             self.at_cam.start_task,
-                             self.at_spec.start_task)
-        return self
-
-    async def __aexit__(self, *args):
-        await asyncio.gather(self.script.close(),
-                             self.at_cam.close(),
-                             self.at_spec.close())
-
-
-class TestATGetStdFlatDataset(asynctest.TestCase):
     async def test_script(self):
-        async with Harness() as harness:
-            harness.at_cam.cmd_takeImages.callback = harness.cmd_take_images_callback
-            harness.at_spec.cmd_changeFilter.callback = harness.cmd_change_filter_callback
-            harness.at_spec.cmd_changeDisperser.callback = harness.cmd_change_grating_callback
-            harness.at_spec.cmd_moveLinearStage.callback = harness.cmd_move_linear_stage_callback
+        async with self.make_script():
+            self.at_cam.cmd_takeImages.callback = self.cmd_take_images_callback
+            self.at_spec.cmd_changeFilter.callback = self.cmd_change_filter_callback
+            self.at_spec.cmd_changeDisperser.callback = self.cmd_change_grating_callback
+            self.at_spec.cmd_moveLinearStage.callback = (
+                self.cmd_move_linear_stage_callback
+            )
 
             # Make sure configure works with no data
-            config_data = harness.script.cmd_configure.DataType()
-            await harness.script.do_configure(config_data)
-            harness.script.set_state(Script.ScriptState.UNCONFIGURED)
+            await self.configure_script()
 
             # Now configure the spectrograph
-            config_data.config = yaml.safe_dump(dict(filter=1,
-                                                     grating=3,
-                                                     linear_stage=10))
-            await harness.script.do_configure(config_data)
+            config = await self.configure_script(filter=1, grating=3, linear_stage=10)
 
-            harness.script.set_state(Script.ScriptState.RUNNING)
+            await self.run_script()
 
-            harness.script._run_task = asyncio.ensure_future(harness.script.run())
-            await harness.script._run_task
-            harness.script.set_state(Script.ScriptState.ENDING)
+            self.assertEqual(self.n_bias, self.script.config.n_bias * 2)
+            self.assertEqual(self.n_dark, self.script.config.n_dark)
+            self.assertEqual(
+                self.n_flat,
+                len(self.script.config.flat_dn_range) * self.script.config.n_flat,
+            )
+            self.assertEqual(self.filter, config.filter)
+            self.assertEqual(self.grating, config.grating)
+            self.assertEqual(self.linear_stage, config.linear_stage)
 
-            self.assertEqual(harness.n_bias, harness.script.config.n_bias * 2)
-            self.assertEqual(harness.n_dark, harness.script.config.n_dark)
-            self.assertEqual(harness.n_flat,
-                             len(harness.script.config.flat_dn_range) * harness.script.config.n_flat)
-            self.assertEqual(harness.filter, 1)
-            self.assertEqual(harness.grating, 3)
-            self.assertEqual(harness.linear_stage, 10)
+    async def test_executable(self):
+        scripts_dir = standardscripts.get_scripts_dir()
+        script_path = (
+            scripts_dir
+            / "auxtel"
+            / "detector_characterization"
+            / "get_std_flat_dataset.py"
+        )
+        await self.check_executable(script_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

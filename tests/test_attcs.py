@@ -1,28 +1,25 @@
 import asyncio
 import logging
+import random
 import unittest
 
 import asynctest
 
-from lsst.ts import salobj
 from lsst.ts.idl.enums import ATPtg
 
+from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.attcs import ATTCS
 from lsst.ts.standardscripts.auxtel.mock import ATTCSMock
 
-logger = logging.getLogger()
-logger.level = logging.DEBUG
+MAKE_TIMEOUT = 60  # Timeout for make_script (sec)
 
-index_gen = salobj.index_generator()
+random.seed(47)  # for set_random_lsst_dds_domain
+
+logging.basicConfig()
 
 
-class Harness:
-    def __init__(self):
-
-        self.log = logging.getLogger("Harness")
-
-        salobj.set_random_lsst_dds_domain()
-
+class TestATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+    async def basic_make_script(self, index):
         self.attcs_mock = ATTCSMock()
 
         self.atmcs = self.attcs_mock.atmcs
@@ -35,150 +32,164 @@ class Harness:
 
         self.attcs = ATTCS(indexed_dome=False)
 
-    async def __aenter__(self):
-
-        await asyncio.gather(self.attcs.start_task, self.attcs_mock.start_task)
-
-        return self
-
-    async def __aexit__(self, *args):
-
-        await asyncio.gather(self.attcs.close(),
-                             self.attcs_mock.close())
-
-
-class TestATTCS(asynctest.TestCase):
+        return (self.attcs, self.attcs_mock)
 
     async def test_slew(self):
 
-        async with Harness() as harness:
+        async with self.make_script(timeout=MAKE_TIMEOUT):
 
-            await harness.attcs.startup()
+            print("wait for attcs.startup")
+            await self.attcs.startup()
 
-            ra = 0.
-            dec = -30.
+            ra = 0.0
+            dec = -30.0
 
-            harness.log.debug("test 1 start")
+            print("test 1 start")
 
             with self.subTest(ra=ra, dec=dec):
-                await harness.attcs.slew(ra, dec, slew_timeout=harness.attcs_mock.slew_time*2.)
+                await self.attcs.slew(
+                    ra, dec, slew_timeout=self.attcs_mock.slew_time * 2.0
+                )
 
-            harness.log.debug("test 2 start")
+            print("test 2 start")
 
             with self.subTest(msg="Ra/Dec: Fail ATPtg FAULT", component="ATPtg"):
                 with self.assertRaises(RuntimeError):
                     ret_val = await asyncio.gather(
-                        harness.attcs.slew(ra, dec,
-                                           slew_timeout=harness.attcs_mock.slew_time*2.),
-                        harness.attcs_mock.atptg_wait_and_fault(1.),
-                        return_exceptions=True)
+                        self.attcs.slew(
+                            ra, dec, slew_timeout=self.attcs_mock.slew_time * 2.0
+                        ),
+                        self.attcs_mock.atptg_wait_and_fault(1.0),
+                        return_exceptions=True,
+                    )
                     for val in ret_val:
-                        harness.log.debug(f"retval: {val!r}")
+                        print(f"retval: {val!r}")
 
                     for val in ret_val:
                         if isinstance(val, Exception):
                             raise val
 
-            harness.log.debug("test 3 start")
+            print("test 3 start")
 
             with self.subTest(msg="Ra/Dec: Fail ATMCS FAULT", component="ATMCS"):
                 with self.assertRaises(RuntimeError):
 
                     ret_val = await asyncio.gather(
-                        harness.attcs.slew(ra, dec, slew_timeout=harness.attcs_mock.slew_time*2.),
-                        harness.attcs_mock.atmcs_wait_and_fault(1.),
-                        return_exceptions=True)
+                        self.attcs.slew(
+                            ra, dec, slew_timeout=self.attcs_mock.slew_time * 2.0
+                        ),
+                        self.attcs_mock.atmcs_wait_and_fault(1.0),
+                        return_exceptions=True,
+                    )
 
                     for val in ret_val:
-                        harness.log.debug(f"retval: {val!r}")
+                        print(f"retval: {val!r}")
 
                     for val in ret_val:
                         if isinstance(val, Exception):
                             raise val
 
-            harness.log.debug("test 4 start")
+            print("test 4 start")
 
             for planet in ATPtg.Planets:
                 with self.subTest(planet=planet):
-                    await harness.attcs.slew_to_planet(planet,
-                                                       slew_timeout=harness.attcs_mock.slew_time*2.)
+                    await self.attcs.slew_to_planet(
+                        planet, slew_timeout=self.attcs_mock.slew_time * 2.0
+                    )
 
-            harness.log.debug("test 5 start")
+            print("test 5 start")
 
             with self.subTest(msg="Planet: Fail ATMCS FAULT", component="ATMCS"):
                 with self.assertRaises(RuntimeError):
                     ret_val = await asyncio.gather(
-                        harness.attcs.slew_to_planet(
+                        self.attcs.slew_to_planet(
                             ATPtg.Planets.JUPITER,
-                            slew_timeout=harness.attcs_mock.slew_time*2.),
-                        harness.attcs_mock.atmcs_wait_and_fault(1.),
-                        return_exceptions=True)
+                            slew_timeout=self.attcs_mock.slew_time * 2.0,
+                        ),
+                        self.attcs_mock.atmcs_wait_and_fault(1.0),
+                        return_exceptions=True,
+                    )
                     for val in ret_val:
                         if isinstance(val, Exception):
                             raise val
                         else:
-                            harness.log.debug(f"ret_val: {val}")
+                            print(f"ret_val: {val}")
 
-            harness.log.debug("test 6 start")
+            print("test 6 start")
 
             with self.subTest(msg="Planet: Fail ATPtg FAULT", component="ATPtg"):
                 with self.assertRaises(RuntimeError):
                     ret_val = await asyncio.gather(
-                        harness.attcs.slew_to_planet(
+                        self.attcs.slew_to_planet(
                             ATPtg.Planets.JUPITER,
-                            slew_timeout=harness.attcs_mock.slew_time*2.),
-                        harness.attcs_mock.atptg_wait_and_fault(1.),
-                        return_exceptions=True)
+                            slew_timeout=self.attcs_mock.slew_time * 2.0,
+                        ),
+                        self.attcs_mock.atptg_wait_and_fault(1.0),
+                        return_exceptions=True,
+                    )
                     for val in ret_val:
                         if isinstance(val, Exception):
                             raise val
                         else:
-                            harness.log.debug(f"ret_val: {val}")
+                            print(f"ret_val: {val}")
 
-            harness.log.debug("test done")
+            print("test done")
 
     async def test_startup_shutdown(self):
 
-        async with Harness() as harness:
+        async with self.make_script(timeout=MAKE_TIMEOUT):
             # Testing when passing settings for all components
 
-            settings = dict(zip(harness.attcs.components,
-                                [f'setting4_{c}' for c in harness.attcs.components]))
+            settings = dict(
+                zip(
+                    self.attcs.components,
+                    [f"setting4_{c}" for c in self.attcs.components],
+                )
+            )
 
-            await harness.attcs.startup(settings)
+            print("wait for attcs.startup 1")
+            await self.attcs.startup(settings)
 
             for comp in settings:
-                self.assertEqual(harness.attcs_mock.settings_to_apply[comp],
-                                 settings[comp])
+                self.assertEqual(
+                    self.attcs_mock.settings_to_apply[comp], settings[comp]
+                )
 
-            await harness.attcs.shutdown()
+            print("wait for attcs.shutdown 1")
+            await self.attcs.shutdown()
 
             # Testing when not passing settings for all components and only
             # atdome and ataos sent evt_settingVersions.
             # atdome sent a single label but ataos sends more then one.
 
-            harness.atdome.evt_settingVersions.set_put(
-                recommendedSettingsLabels="setting4_atdome_set")
+            self.atdome.evt_settingVersions.set_put(
+                recommendedSettingsLabels="setting4_atdome_set"
+            )
 
-            harness.ataos.evt_settingVersions.set_put(
-                recommendedSettingsLabels="setting4_ataos_set1,setting4_ataos2_set2")
+            self.ataos.evt_settingVersions.set_put(
+                recommendedSettingsLabels="setting4_ataos_set1,setting4_ataos2_set2"
+            )
 
             # Give remotes some time to update their data.
-            await asyncio.sleep(harness.attcs.fast_timeout)
+            await asyncio.sleep(self.attcs.fast_timeout)
 
-            await harness.attcs.startup()
+            print("wait for attcs.startup 2")
+            await self.attcs.startup()
 
-            for comp in harness.attcs.components:
+            for comp in self.attcs.components:
                 if comp == "atdome":
-                    self.assertEqual(harness.attcs_mock.settings_to_apply[comp],
-                                     "setting4_atdome_set")
+                    self.assertEqual(
+                        self.attcs_mock.settings_to_apply[comp], "setting4_atdome_set"
+                    )
                 elif comp == "ataos":
-                    self.assertEqual(harness.attcs_mock.settings_to_apply[comp],
-                                     "setting4_ataos_set1")
+                    self.assertEqual(
+                        self.attcs_mock.settings_to_apply[comp], "setting4_ataos_set1"
+                    )
                 else:
-                    self.assertEqual(harness.attcs_mock.settings_to_apply[comp],
-                                     "")
+                    self.assertEqual(self.attcs_mock.settings_to_apply[comp], "")
+
+            print("done")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

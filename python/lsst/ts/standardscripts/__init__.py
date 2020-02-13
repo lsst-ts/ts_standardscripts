@@ -21,6 +21,7 @@
 
 from .set_summary_state import *
 from .utils import *
+from .base_script_test_case import *
 
 try:
     from .version import *

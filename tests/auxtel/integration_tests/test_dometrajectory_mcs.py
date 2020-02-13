@@ -20,26 +20,24 @@
 
 import asyncio
 import logging
-import os
+import random
 import unittest
 
 import asynctest
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
 
-index_gen = salobj.index_generator()
+START_TIMEOUT = 30  # Time to start subprocesses (sec)
+
+random.seed(47)  # for set_random_lsst_dds_domain
 
 logging.basicConfig()
 
-START_TIMEOUT = 60
 
-
-class DomeTrajectoryMCSTestCase(asynctest.TestCase):
+class DomeTrajectoryMCSTestCase(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     def setUp(self):
-        salobj.set_random_lsst_dds_domain()
         self.processes = []
 
     def tearDown(self):
@@ -47,59 +45,53 @@ class DomeTrajectoryMCSTestCase(asynctest.TestCase):
             if process.returncode is None:
                 process.terminate()
 
-    async def test_integration(self):
+    async def basic_make_script(self, index):
         print("*** Start ATMCS simulator")
-        self.processes.append(await asyncio.create_subprocess_exec("run_atmcs_simulator.py"))
+        self.processes.append(
+            await asyncio.create_subprocess_exec("run_atmcs_simulator.py")
+        )
         print("*** Start ATDome in simulation mode")
-        self.processes.append(await asyncio.create_subprocess_exec("run_atdome.py", "--simulate"))
+        self.processes.append(
+            await asyncio.create_subprocess_exec("run_atdome.py", "--simulate")
+        )
         print("*** Start ATDomeTrajectory")
-        self.processes.append(await asyncio.create_subprocess_exec("run_atdometrajectory.py"))
+        self.processes.append(
+            await asyncio.create_subprocess_exec("run_atdometrajectory.py")
+        )
 
-        print("*** Create DomeTrajectoryMCS script")
-        async with DomeTrajectoryMCS(index=1) as script:  # index is arbitrary
-            print("*** Wait for ATMCS to start up")
-            data = await script.atmcs.evt_summaryState.next(flush=False, timeout=START_TIMEOUT)
-            self.assertEqual(data.summaryState, salobj.State.STANDBY)
-            print("*** Wait for ATDome to start up")
-            data = await script.atdome.evt_summaryState.next(flush=False, timeout=START_TIMEOUT)
-            self.assertEqual(data.summaryState, salobj.State.STANDBY)
-            print("*** Wait for ATDomeTrajectory to start up")
-            data = await script.atdometraj.evt_summaryState.next(flush=False, timeout=START_TIMEOUT)
-            self.assertEqual(data.summaryState, salobj.State.STANDBY)
+        self.script = DomeTrajectoryMCS(index=index)
 
-            print("*** Configure script")
-            config_data = script.cmd_configure.DataType()
-            config_data.config = ""
-            await script.do_configure(config_data)
-            self.assertEqual(script.state.state, ScriptState.CONFIGURED)
-            print("*** Run script")
-            await script.do_run(None)
-            self.assertEqual(script.state.state, ScriptState.DONE)
+        print("*** Wait for ATMCS to start up")
+        data = await self.script.atmcs.evt_summaryState.next(
+            flush=False, timeout=START_TIMEOUT
+        )
+        self.assertEqual(data.summaryState, salobj.State.STANDBY)
+        print("*** Wait for ATDome to start up")
+        data = await self.script.atdome.evt_summaryState.next(
+            flush=False, timeout=START_TIMEOUT
+        )
+        self.assertEqual(data.summaryState, salobj.State.STANDBY)
+        print("*** Wait for ATDomeTrajectory to start up")
+        data = await self.script.atdometraj.evt_summaryState.next(
+            flush=False, timeout=START_TIMEOUT
+        )
+        self.assertEqual(data.summaryState, salobj.State.STANDBY)
+
+        return [self.script]
+
+    async def test_integration(self):
+        async with self.make_script(timeout=START_TIMEOUT):
+            print("*** Configure and run script")
+            await self.configure_script()
+            await self.run_script()
 
     async def test_executable(self):
-        index = next(index_gen)
-
-        script_name = "dometrajectory_mcs.py"
-        scripts_dir = standardscripts.get_scripts_dir() / "auxtel" / "integration_tests"
-        script_path = scripts_dir / script_name
-        self.assertTrue(script_path.is_file())
-
-        initial_path = os.environ["PATH"]
-        try:
-            os.environ["PATH"] = str(scripts_dir) + ":" + initial_path
-            async with salobj.Domain() as domain, \
-                    salobj.Remote(domain=domain, name="Script", index=index) as remote:
-                os.environ["PATH"] = str(scripts_dir) + ":" + initial_path
-                process = await asyncio.create_subprocess_exec(script_name, str(index))
-                self.processes.append(process)
-
-                state = await remote.evt_state.next(flush=False, timeout=START_TIMEOUT)
-                self.assertEqual(state.state, ScriptState.UNCONFIGURED)
-
-                process.terminate()
-        finally:
-            os.environ["PATH"] = initial_path
+        scripts_dir = standardscripts.get_scripts_dir()
+        script_path = (
+            scripts_dir / "auxtel" / "integration_tests" / "dometrajectory_mcs.py"
+        )
+        await self.check_executable(script_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

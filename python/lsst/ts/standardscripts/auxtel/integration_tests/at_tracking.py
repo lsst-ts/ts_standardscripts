@@ -22,7 +22,6 @@ __all__ = ["ATTracking"]
 
 import yaml
 import asyncio
-import logging
 import math
 
 import astropy.units as u
@@ -392,33 +391,3 @@ class ATTracking(scriptqueue.BaseScript):
             self.log.error(f"ATPtg stopTracking failed with {e}")
         else:
             self.log.info("Tracking stopped")
-
-
-async def main():
-
-    script = ATTracking(index=10)
-
-    script.log.setLevel(logging.INFO)
-    script.log.addHandler(logging.StreamHandler())
-
-    config_dict = dict(
-        enable_atmcs=True,
-        enable_atptg=False,
-        enable_athexapod=False,
-        enable_atpneumatics=False,
-        track_duration=0.06)
-
-    print("*** configure")
-    config_data = script.cmd_configure.DataType()
-    config_data.config = yaml.safe_dump(config_dict)
-    config_id_data = salobj.CommandIdData(1, config_data)
-    await script.do_configure(config_id_data)
-
-    print("*** run")
-    await script.do_run(None)
-    print("*** done")
-
-
-if __name__ == '__main__':
-
-    asyncio.get_event_loop().run_until_complete(main())
