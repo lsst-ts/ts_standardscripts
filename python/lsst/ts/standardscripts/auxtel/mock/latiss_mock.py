@@ -1,8 +1,13 @@
 
 __all__ = ["LATISSMock"]
 
+import astropy
 import asyncio
+import logging
+
 from lsst.ts import salobj
+
+index_gen = salobj.index_generator()
 
 
 class LATISSMock:
@@ -14,6 +19,7 @@ class LATISSMock:
 
         self.atcam = salobj.Controller(name="ATCamera")
         self.atspec = salobj.Controller(name="ATSpectrograph")
+        self.atheaderservice = salobj.Controller(name="ATHeaderService")
 
         self.atcam.cmd_takeImages.callback = self.cmd_take_images_callback
         self.atspec.cmd_changeFilter.callback = self.cmd_changeFilter_callback
@@ -32,8 +38,11 @@ class LATISSMock:
 
         self.end_readout_task = None
 
+        self.log = logging.getLogger(__name__)
+
         self.start_task = asyncio.gather(self.atspec.start_task,
-                                         self.atcam.start_task)
+                                         self.atcam.start_task,
+                                         self.atheaderservice.start_task)
 
     async def cmd_take_images_callback(self, data):
         """Emulate take image command."""
@@ -45,10 +54,19 @@ class LATISSMock:
 
     async def end_readout(self, data):
         """Wait `self.readout_time` and send endReadout event."""
+        self.log.debug(f"end_readout started: sleep {self.readout_time}")
         await asyncio.sleep(self.readout_time)
-        self.atcam.evt_endReadout.put()
         self.nimages += 1
         self.exptime_list.append(data.expTime)
+        date_id = astropy.time.Time.now().tai.isot.split("T")[0].replace("-", "")
+        image_name = f"test_latiss_{date_id}_{next(index_gen)}"
+        self.log.debug(f"sending endReadout: {image_name}")
+        self.atcam.evt_endReadout.set_put(
+            imageName=image_name
+        )
+        self.log.debug(f"sending LFOA")
+        self.atheaderservice.evt_largeFileObjectAvailable.put()
+        self.log.debug(f"end_readout done")
 
     async def cmd_changeFilter_callback(self, data):
         """Emulate change filter command"""
@@ -76,6 +94,12 @@ class LATISSMock:
             try:
                 await asyncio.wait_for(self.end_readout_task,
                                        timeout=self.readout_time*2.)
+            except asyncio.TimeoutError:
+                self.end_readout_task.cancel()
+                try:
+                    await self.end_readout_task
+                except Exception:
+                    pass
             except Exception:
                 pass
 
@@ -87,4 +111,4 @@ class LATISSMock:
         return self
 
     async def __aexit__(self, *args):
-        await asyncio.gather(self.close())
+        await self.close()

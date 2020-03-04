@@ -32,7 +32,7 @@ from lsst.ts.standardscripts.auxtel.mock import LATISSMock
 
 random.seed(47)  # for set_random_lsst_dds_domain
 
-logging.basicConfig()
+logging.basicConfig(level=logging.DEBUG)
 
 
 class TestLATISS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
@@ -44,6 +44,8 @@ class TestLATISS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
         return (self.latiss_remote, self.latiss_mock)
 
     async def close(self):
+        await self.latiss_mock.close()
+        await self.latiss_remote.close()
         await self.domain.close()
 
     async def test_take_bias(self):

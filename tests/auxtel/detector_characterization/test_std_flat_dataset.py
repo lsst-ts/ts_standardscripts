@@ -18,10 +18,11 @@
 #
 # You should have received a copy of the GNU General Public License
 
-import unittest
-import asyncio
 import random
+import astropy
+import asyncio
 import logging
+import unittest
 
 import asynctest
 
@@ -31,7 +32,9 @@ from lsst.ts.standardscripts.auxtel.detector_characterization import ATGetStdFla
 
 random.seed(47)  # for set_random_lsst_dds_domain
 
-logging.basicConfig()
+index_gen = salobj.index_generator()
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class TestATGetStdFlatDataset(standardscripts.BaseScriptTestCase, asynctest.TestCase):
@@ -41,6 +44,7 @@ class TestATGetStdFlatDataset(standardscripts.BaseScriptTestCase, asynctest.Test
         # Adds controller to Test
         self.at_cam = salobj.Controller(name="ATCamera")
         self.at_spec = salobj.Controller(name="ATSpectrograph")
+        self.at_headerservice = salobj.Controller(name="ATHeaderService")
 
         self.n_bias = 0
         self.n_dark = 0
@@ -50,7 +54,7 @@ class TestATGetStdFlatDataset(standardscripts.BaseScriptTestCase, asynctest.Test
         self.grating = None
         self.linear_stage = None
 
-        return (self.script, self.at_cam, self.at_spec)
+        return (self.script, self.at_cam, self.at_spec, self.at_headerservice)
 
     async def cmd_take_images_callback(self, data):
         if "bias" in data.imageType.lower():
@@ -61,7 +65,14 @@ class TestATGetStdFlatDataset(standardscripts.BaseScriptTestCase, asynctest.Test
             self.n_flat += 1
         await asyncio.sleep(self.script.read_out_time)
 
-        self.at_cam.evt_endReadout.put(self.at_cam.evt_endReadout.DataType())
+        date_id = astropy.time.Time.now().tai.isot.split("T")[0].replace("-", "")
+        image_name = f"test_latiss_{date_id}_{next(index_gen)}"
+
+        self.at_cam.evt_endReadout.set_put(
+            imageName=image_name
+        )
+
+        self.at_headerservice.evt_largeFileObjectAvailable.put()
 
     async def cmd_change_filter_callback(self, data):
         self.filter = data.filter
