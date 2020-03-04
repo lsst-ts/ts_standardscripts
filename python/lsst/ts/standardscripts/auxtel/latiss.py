@@ -20,13 +20,15 @@
 
 __all__ = ['LATISS']
 
-import types
 import asyncio
 
-from lsst.ts import salobj
+import numpy as np
+import astropy
+
+from ..base_group import BaseGroup
 
 
-class LATISS:
+class LATISS(BaseGroup):
     """LSST Auxiliary Telescope Image and Slit less Spectrograph (LATISS).
 
     LATISS encapsulates core functionality from the following CSCs ATCamera,
@@ -38,77 +40,44 @@ class LATISS:
         Domain for remotes. If `None` create a domain.
     """
 
-    def __init__(self, domain=None):
+    def __init__(self, domain=None, log=None):
 
-        self._components = ["ATCamera", "ATSpectrograph", "ATHeaderService", "ATArchiver"]
-
-        self._remotes = {}
-
-        self.domain = domain if domain is not None else salobj.Domain()
-
-        for i in range(len(self._components)):
-            name, index = salobj.name_to_name_index(self._components[i])
-            self._remotes[name.lower()] = salobj.Remote(domain=self.domain,
-                                                        name=name,
-                                                        index=index)
-
-        self.check = types.SimpleNamespace(**dict(zip(self.components,
-                                                      [True]*len(self.components))))
-
-        self.start_task = asyncio.gather(*[self._remotes[r].start_task for r in self._remotes])
+        super().__init__(components=["ATCamera", "ATSpectrograph",
+                                     "ATHeaderService", "ATArchiver"],
+                         domain=domain,
+                         log=log)
 
         self.read_out_time = 2.  # readout time (sec)
         self.shutter_time = 1  # time to open or close shutter (sec)
 
-        self.fast_timeout = 5.
-        self.long_timeout = 30.
-        self.long_long_timeout = 120.
+        self.valid_imagetype = ["BIAS", "DARK", "FLAT", "OBJECT", "ENGTEST"]
 
         self.cmd_lock = asyncio.Lock()
 
-    @property
-    def components(self):
-        return list(self._remotes)
-
-    @property
-    def atcamera(self):
-        return self._remotes["atcamera"]
-
-    @property
-    def atspectrograph(self):
-        return self._remotes["atspectrograph"]
-
-    @property
-    def atheaderservice(self):
-        return self._remotes["atheaderservice"]
-
-    @property
-    def atarchiver(self):
-        return self._remotes["atarchiver"]
-
-    async def take_bias(self, nbias, checkpoint=None):
+    async def take_bias(self, nbias,
+                        group_id=None, checkpoint=None):
         """Take a series of bias images.
 
         Parameters
         ----------
         nbias : `int`
             Number of bias frames to take.
+        group_id : `str`
+            Optional group id for the data sequence. Will generate a common
+            one for all the data if none is given.
         checkpoint : `coro`
             A optional awaitable callback that accepts one string argument
             that is called before each bias is taken.
 
         """
-        for i in range(nbias):
-            tag = f'bias_{i+1:04}_{nbias:04}'
+        return await self.take_imgtype(imgtype="BIAS",
+                                       exptime=0.,
+                                       n=nbias,
+                                       group_id=group_id,
+                                       checkpoint=checkpoint)
 
-            if checkpoint is not None:
-                await checkpoint(tag)
-            await self.expose(exp_time=0., shutter=False,
-                              image_type="BIAS",
-                              group_id=tag,
-                              science=True, guide=False, wfs=False)
-
-    async def take_darks(self, exptime, ndarks, checkpoint=None):
+    async def take_darks(self, exptime, ndarks,
+                         group_id=None, checkpoint=None):
         """Take a series of dark images.
 
         Parameters
@@ -117,22 +86,23 @@ class LATISS:
             Exposure time for darks.
         ndarks : `int`
             Number of dark frames to take.
+        group_id : `str`
+            Optional group id for the data sequence. Will generate a common
+            one for all the data if none is given.
         checkpoint : `coro`
             A optional awaitable callback that accepts one string argument
             that is called before each bias is taken.
 
         """
-        for i in range(ndarks):
-            tag = f'dark_{i+1:04}_{ndarks:04}'
-            if checkpoint is not None:
-                await checkpoint(tag)
-            await self.expose(exp_time=exptime, shutter=False,
-                              image_type="DARK",
-                              group_id=tag,
-                              science=True, guide=False, wfs=False)
+        return await self.take_imgtype(imgtype="DARK",
+                                       exptime=exptime,
+                                       n=ndarks,
+                                       group_id=group_id,
+                                       checkpoint=checkpoint)
 
     async def take_flats(self, exptime, nflats,
                          filter=None, grating=None, linear_stage=None,
+                         group_id=None,
                          checkpoint=None):
         """Take a series of flat field images.
 
@@ -148,19 +118,153 @@ class LATISS:
             Grating id or name.  If None, do not change the grating.
         linear_stage : `None` or `float`
             Linear stage position.  If None, do not change the linear stage.
+        group_id : `str`
+            Optional group id for the data sequence. Will generate a common
+            one for all the data if none is given.
         checkpoint : `coro`
             A optional awaitable callback that accepts one string argument
             that is called before each bias is taken.
 
         """
-        for i in range(nflats):
-            tag = f"flat_{i+1:04}"
+        return await self.take_imgtype(imgtype="FLAT",
+                                       exptime=exptime,
+                                       n=nflats,
+                                       filter=filter,
+                                       grating=grating,
+                                       linear_stage=linear_stage,
+                                       group_id=group_id,
+                                       checkpoint=checkpoint)
+
+    async def take_object(self, exptime, n,
+                          filter=None, grating=None, linear_stage=None,
+                          group_id=None, checkpoint=None):
+        """Take a series of object images.
+
+        Object images are assumed to be looking through an open dome at the
+        sky.
+
+        Parameters
+        ----------
+        exptime : `float`
+            Exposure time for flats.
+        n : `int`
+            Number of frames to take.
+        filter : `None` or `int` or `str`
+            Filter id or name. If None, do not change the filter.
+        grating : `None` or `int` or `str`
+            Grating id or name.  If None, do not change the grating.
+        linear_stage : `None` or `float`
+            Linear stage position.  If None, do not change the linear stage.
+        group_id : `str`
+            Optional group id for the data sequence. Will generate a common
+            one for all the data if none is given.
+        checkpoint : `coro`
+            A optional awaitable callback that accepts one string argument
+            that is called before each bias is taken.
+
+        """
+        return await self.take_imgtype(imgtype="OBJECT",
+                                       exptime=exptime,
+                                       n=n,
+                                       filter=filter,
+                                       grating=grating,
+                                       linear_stage=linear_stage,
+                                       group_id=group_id,
+                                       checkpoint=checkpoint)
+
+    async def take_engtest(self, exptime, n,
+                           filter=None, grating=None, linear_stage=None,
+                           group_id=None, checkpoint=None):
+        """Take a series of engineering test images.
+
+        Parameters
+        ----------
+        exptime : `float`
+            Exposure time for flats.
+        n : `int`
+            Number of frames to take.
+        filter : `None` or `int` or `str`
+            Filter id or name. If None, do not change the filter.
+        grating : `None` or `int` or `str`
+            Grating id or name.  If None, do not change the grating.
+        linear_stage : `None` or `float`
+            Linear stage position.  If None, do not change the linear stage.
+        group_id : `str`
+            Optional group id for the data sequence. Will generate a common
+            one for all the data if none is given.
+        checkpoint : `coro`
+            A optional awaitable callback that accepts one string argument
+            that is called before each bias is taken.
+
+        """
+        return await self.take_imgtype(imgtype="ENGTEST",
+                                       exptime=exptime,
+                                       n=n,
+                                       filter=filter,
+                                       grating=grating,
+                                       linear_stage=linear_stage,
+                                       group_id=group_id,
+                                       checkpoint=checkpoint)
+
+    async def take_imgtype(self, imgtype, exptime, n,
+                           filter=None, grating=None, linear_stage=None,
+                           group_id=None, checkpoint=None):
+        """Take a series of images of the specified image type.
+
+        Parameters
+        ----------
+        exptime : `float`
+            Exposure time for flats.
+        n : `int`
+            Number of frames to take.
+        filter : `None` or `int` or `str`
+            Filter id or name. If None, do not change the filter.
+        grating : `None` or `int` or `str`
+            Grating id or name.  If None, do not change the grating.
+        linear_stage : `None` or `float`
+            Linear stage position.  If None, do not change the linear stage.
+        checkpoint : `coro`
+            A optional awaitable callback that accepts one string argument
+            that is called before each bias is taken.
+
+        """
+
+        if imgtype not in self.valid_imagetype:
+            raise RuntimeError(f"Invalid imgtype:{imgtype}. Must be one of "
+                               f"{self.valid_imagetype!r}")
+
+        exp_ids = np.zeros(n, dtype=int)
+
+        if group_id is None:
+            self.log.debug("Generating group_id")
+            group_id = self.next_group_id()
+
+        if imgtype == "BIAS" and exptime > 0.:
+            self.log.warning("Image type is BIAS, ignoring exptime.")
+
+        for i in range(n):
+            tag = f"{imgtype} {i+1:04} - {n:04}"
+
             if checkpoint is not None:
                 await checkpoint(tag)
-            await self.take_image(exptime=exptime, shutter=True, image_type="FLAT",
-                                  group_id=tag,
-                                  filter=filter, grating=grating,
-                                  linear_stage=linear_stage)
+            else:
+                self.log.debug(tag)
+
+            end_readout = await self.take_image(exptime=exptime if imgtype != "BIAS" else 0.,
+                                                shutter=imgtype not in ["BIAS", "DARK"],
+                                                image_type=imgtype,
+                                                group_id=group_id,
+                                                filter=filter if i == 0 else None,
+                                                grating=grating if i == 0 else None,
+                                                linear_stage=linear_stage if i == 0 else None)
+
+            # parse out visitID from filename -
+            # (Patrick comment) this is highly annoying
+            _, _, i_prefix, i_suffix = end_readout.imageName.split("_")
+
+            exp_ids[i] = int((i_prefix + i_suffix[1:]))
+
+        return exp_ids
 
     async def take_image(self, exptime, shutter, image_type, group_id,
                          filter=None, grating=None, linear_stage=None,
@@ -182,6 +286,12 @@ class LATISS:
         image_type : `str`
             Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, FE55,
             XTALK, CCOB, SPOT...)
+        filter : `None` or `int` or `str`
+            Filter id or name. If None, do not change the filter.
+        grating : `None` or `int` or `str`
+            Grating id or name.  If None, do not change the grating.
+        linear_stage : `None` or `float`
+            Linear stage position.  If None, do not change the linear stage.
         group_id : `str`
             Image groupId. Used to fill in FITS GROUPID header
         grating : `None` or `int` or `str`
@@ -256,8 +366,17 @@ class LATISS:
 
             timeout = self.read_out_time + self.long_timeout + self.long_long_timeout
             self.atcamera.evt_endReadout.flush()
+            self.atheaderservice.evt_largeFileObjectAvailable.flush()
             await self.atcamera.cmd_takeImages.start(timeout=timeout + exp_time)
-            return await self.atcamera.evt_endReadout.next(flush=False, timeout=timeout)
+            end_readout = await self.atcamera.evt_endReadout.next(flush=False,
+                                                                  timeout=timeout)
+            # FIXME: This should not be required! remove once bug on
+            # atheaderservice is fixed
+            self.log.debug("Waiting for header service LFO before continuing")
+            await self.atheaderservice.evt_largeFileObjectAvailable.next(flush=False,
+                                                                         timeout=self.long_timeout)
+            await asyncio.sleep(self.fast_timeout)
+            return end_readout
 
     async def setup_atspec(self, filter=None, grating=None,
                            linear_stage=None):
@@ -307,13 +426,12 @@ class LATISS:
             async with self.cmd_lock:
                 return await asyncio.gather(*setup_coroutines)
 
-    async def close(self):
-        await asyncio.gather(*[self._remotes[r].close() for r in self._remotes])
-        await self.domain.close()
+    def next_group_id(self):
+        """Get the next group ID.
 
-    async def __aenter__(self):
-        await self.start_task
-        return self
-
-    async def __aexit__(self, *args):
-        await self.close()
+        The group ID is the current TAI date and time as a string in ISO
+        format. It has T separating date and time and no time zone suffix.
+        Here is an example:
+        "2020-01-17T22:59:05.721"
+        """
+        return astropy.time.Time.now().tai.isot

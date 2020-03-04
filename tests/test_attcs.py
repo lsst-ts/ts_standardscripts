@@ -11,11 +11,12 @@ from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.attcs import ATTCS
 from lsst.ts.standardscripts.auxtel.mock import ATTCSMock
 
+HB_TIMEOUT = 5  # Basic timeout for heartbeats
 MAKE_TIMEOUT = 60  # Timeout for make_script (sec)
 
 random.seed(47)  # for set_random_lsst_dds_domain
 
-logging.basicConfig()
+logging.basicConfig(level=logging.DEBUG)
 
 
 class TestATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
@@ -30,7 +31,7 @@ class TestATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
         self.athexapod = self.attcs_mock.athexapod
         self.atdometrajectory = self.attcs_mock.atdometrajectory
 
-        self.attcs = ATTCS(indexed_dome=False)
+        self.attcs = ATTCS()
 
         return (self.attcs, self.attcs_mock)
 
@@ -46,48 +47,69 @@ class TestATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
             print("test 1 start")
 
-            with self.subTest(ra=ra, dec=dec):
-                await self.attcs.slew(
-                    ra, dec, slew_timeout=self.attcs_mock.slew_time * 2.0
-                )
+            await self.attcs.slew(
+                ra, dec, slew_timeout=self.attcs_mock.slew_time * 2.0
+            )
+
+    async def test_slew_fail_atptg_fault(self):
+
+        async with self.make_script(timeout=MAKE_TIMEOUT):
+            print("wait for attcs.startup")
+            await self.attcs.startup()
+
+            ra = 0.0
+            dec = -30.0
 
             print("test 2 start")
 
-            with self.subTest(msg="Ra/Dec: Fail ATPtg FAULT", component="ATPtg"):
-                with self.assertRaises(RuntimeError):
-                    ret_val = await asyncio.gather(
-                        self.attcs.slew(
-                            ra, dec, slew_timeout=self.attcs_mock.slew_time * 2.0
-                        ),
-                        self.attcs_mock.atptg_wait_and_fault(1.0),
-                        return_exceptions=True,
-                    )
-                    for val in ret_val:
-                        print(f"retval: {val!r}")
+            with self.assertRaises(RuntimeError):
+                ret_val = await asyncio.gather(
+                    self.attcs.slew(
+                        ra, dec, slew_timeout=self.attcs_mock.slew_time * 2.0
+                    ),
+                    self.attcs_mock.atptg_wait_and_fault(1.0),
+                    return_exceptions=True,
+                )
+                for val in ret_val:
+                    print(f"retval: {val!r}")
 
-                    for val in ret_val:
-                        if isinstance(val, Exception):
-                            raise val
+                for val in ret_val:
+                    if isinstance(val, Exception):
+                        raise val
+
+    async def test_slew_fail_atmcs_fault(self):
+
+        async with self.make_script(timeout=MAKE_TIMEOUT):
+            print("wait for attcs.startup")
+            await self.attcs.startup()
+
+            ra = 0.0
+            dec = -30.0
 
             print("test 3 start")
 
-            with self.subTest(msg="Ra/Dec: Fail ATMCS FAULT", component="ATMCS"):
-                with self.assertRaises(RuntimeError):
+            with self.assertRaises(RuntimeError):
 
-                    ret_val = await asyncio.gather(
-                        self.attcs.slew(
-                            ra, dec, slew_timeout=self.attcs_mock.slew_time * 2.0
-                        ),
-                        self.attcs_mock.atmcs_wait_and_fault(1.0),
-                        return_exceptions=True,
-                    )
+                ret_val = await asyncio.gather(
+                    self.attcs.slew(
+                        ra, dec, slew_timeout=self.attcs_mock.slew_time * 2.0
+                    ),
+                    self.attcs_mock.atmcs_wait_and_fault(1.0),
+                    return_exceptions=True,
+                )
 
-                    for val in ret_val:
-                        print(f"retval: {val!r}")
+                for val in ret_val:
+                    print(f"retval: {val!r}")
 
-                    for val in ret_val:
-                        if isinstance(val, Exception):
-                            raise val
+                for val in ret_val:
+                    if isinstance(val, Exception):
+                        raise val
+
+    async def test_slew_toplanet(self):
+
+        async with self.make_script(timeout=MAKE_TIMEOUT):
+            print("wait for attcs.startup")
+            await self.attcs.startup()
 
             print("test 4 start")
 
@@ -97,43 +119,47 @@ class TestATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
                         planet, slew_timeout=self.attcs_mock.slew_time * 2.0
                     )
 
-            print("test 5 start")
+    async def test_slew_toplanet_fail_atmcs_fault(self):
 
-            with self.subTest(msg="Planet: Fail ATMCS FAULT", component="ATMCS"):
-                with self.assertRaises(RuntimeError):
-                    ret_val = await asyncio.gather(
-                        self.attcs.slew_to_planet(
-                            ATPtg.Planets.JUPITER,
-                            slew_timeout=self.attcs_mock.slew_time * 2.0,
-                        ),
-                        self.attcs_mock.atmcs_wait_and_fault(1.0),
-                        return_exceptions=True,
-                    )
-                    for val in ret_val:
-                        if isinstance(val, Exception):
-                            raise val
-                        else:
-                            print(f"ret_val: {val}")
+        async with self.make_script(timeout=MAKE_TIMEOUT):
+            print("wait for attcs.startup")
+            await self.attcs.startup()
 
-            print("test 6 start")
+            with self.assertRaises(RuntimeError):
+                ret_val = await asyncio.gather(
+                    self.attcs.slew_to_planet(
+                        ATPtg.Planets.JUPITER,
+                        slew_timeout=self.attcs_mock.slew_time * 2.0,
+                    ),
+                    self.attcs_mock.atmcs_wait_and_fault(1.0),
+                    return_exceptions=True,
+                )
+                for val in ret_val:
+                    if isinstance(val, Exception):
+                        raise val
+                    else:
+                        print(f"ret_val: {val}")
 
-            with self.subTest(msg="Planet: Fail ATPtg FAULT", component="ATPtg"):
-                with self.assertRaises(RuntimeError):
-                    ret_val = await asyncio.gather(
-                        self.attcs.slew_to_planet(
-                            ATPtg.Planets.JUPITER,
-                            slew_timeout=self.attcs_mock.slew_time * 2.0,
-                        ),
-                        self.attcs_mock.atptg_wait_and_fault(1.0),
-                        return_exceptions=True,
-                    )
-                    for val in ret_val:
-                        if isinstance(val, Exception):
-                            raise val
-                        else:
-                            print(f"ret_val: {val}")
+    async def test_slew_toplanet_fail_atptg_fault(self):
 
-            print("test done")
+        async with self.make_script(timeout=MAKE_TIMEOUT):
+            print("wait for attcs.startup")
+            await self.attcs.startup()
+
+            with self.assertRaises(RuntimeError):
+                ret_val = await asyncio.gather(
+                    self.attcs.slew_to_planet(
+                        ATPtg.Planets.JUPITER,
+                        slew_timeout=self.attcs_mock.slew_time * 2.0,
+                    ),
+                    self.attcs_mock.atptg_wait_and_fault(1.0),
+                    return_exceptions=True,
+                )
+                for val in ret_val:
+                    if isinstance(val, Exception):
+                        raise val
+                    else:
+                        print(f"ret_val: {val}")
 
     async def test_startup_shutdown(self):
 
@@ -155,7 +181,11 @@ class TestATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
                     self.attcs_mock.settings_to_apply[comp], settings[comp]
                 )
 
+            # Give remotes some time to update their data.
+            await asyncio.sleep(self.attcs.fast_timeout)
+
             print("wait for attcs.shutdown 1")
+            await asyncio.sleep(self.attcs.fast_timeout)
             await self.attcs.shutdown()
 
             # Testing when not passing settings for all components and only

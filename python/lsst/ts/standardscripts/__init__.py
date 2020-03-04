@@ -19,8 +19,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .set_summary_state import *
 from .utils import *
+from .base_group import *
+from .set_summary_state import *
 from .base_script_test_case import *
 
 try:

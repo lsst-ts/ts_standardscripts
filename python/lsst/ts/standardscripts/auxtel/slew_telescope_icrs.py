@@ -57,7 +57,7 @@ class SlewTelescopeIcrs(salobj.BaseScript):
 
     def __init__(self, index):
         super().__init__(index=index, descr="Slew the auxiliary telescope to an ICRS position")
-        self.attcs = ATTCS(self.domain, indexed_dome=False)
+        self.attcs = ATTCS(self.domain)
         self.tracking_started = False
 
     @classmethod

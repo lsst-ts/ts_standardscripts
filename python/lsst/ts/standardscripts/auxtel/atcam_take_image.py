@@ -163,6 +163,7 @@ class ATCamTakeImage(salobj.BaseScript):
     async def run(self):
         nimages = len(self.config.exp_times)
         for i, exposure in enumerate(self.config.exp_times):
+            self.log.debug(f"exposure {i+1} of {nimages}")
             await self.checkpoint(f"exposure {i+1} of {nimages}")
             end_readout = await self.latiss.take_image(exptime=exposure,
                                                        shutter=self.config.shutter,

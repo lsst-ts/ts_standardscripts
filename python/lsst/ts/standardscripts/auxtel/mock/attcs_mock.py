@@ -5,7 +5,7 @@ import asyncio
 import numpy as np
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums import ATDome
+from lsst.ts.idl.enums import ATDome, ATPneumatics, ATMCS
 
 LONG_TIMEOUT = 30
 
@@ -46,8 +46,9 @@ class ATTCSMock:
 
         self.atdome.cmd_moveShutterMainDoor.callback = self.move_shutter_callback
         self.atdome.cmd_closeShutter.callback = self.close_shutter_callback
-        self.atpneumatics.cmd_openM1Cover.callback = self.generic_callback
-        self.atpneumatics.cmd_closeM1Cover.callback = self.generic_callback
+        self.atdome.cmd_homeAzimuth.callback = self.dome_home_callback
+        self.atpneumatics.cmd_openM1Cover.callback = self.open_m1_cover_callback
+        self.atpneumatics.cmd_closeM1Cover.callback = self.close_m1_cover_callback
         self.ataos.cmd_enableCorrection.callback = self.generic_callback
         self.ataos.cmd_disableCorrection.callback = self.generic_callback
 
@@ -58,6 +59,9 @@ class ATTCSMock:
         self.tel_alt = 80.
         self.tel_az = 0.
         self.dom_az = 0.
+        self.is_dome_homming = False
+
+        self.m1_cover_state = ATPneumatics.MirrorCoverState.CLOSED
 
         self.track = False
 
@@ -75,6 +79,14 @@ class ATTCSMock:
         self.atptg.cmd_stopTracking.callback = self.stop_tracking_callback
 
         self.atdome.cmd_moveAzimuth.callback = self.move_dome
+
+    @property
+    def m1_cover_state(self):
+        return ATPneumatics.MirrorCoverState(self.atpneumatics.evt_m1CoverState.data.state)
+
+    @m1_cover_state.setter
+    def m1_cover_state(self, value):
+        self.atpneumatics.evt_m1CoverState.set_put(state=value)
 
     async def start_task_publish(self):
 
@@ -96,7 +108,9 @@ class ATTCSMock:
                 recommendedSettingsVersion=f"{self.setting_versions[comp]},"
             )
 
+        self.atmcs.evt_atMountState.set_put(state=ATMCS.AtMountState.TRACKINGDISABLED)
         self.atdome.evt_scbLink.set_put(active=True, force_output=True)
+        self.atdome.evt_azimuthCommandedState.put()
         self.run_telemetry_loop = True
         self.atmcs_telemetry_task = asyncio.create_task(self.atmcs_telemetry())
         self.atdome_telemetry_task = asyncio.create_task(self.atdome_telemetry())
@@ -119,6 +133,7 @@ class ATTCSMock:
     async def atdome_telemetry(self):
         while self.run_telemetry_loop:
             self.atdome.tel_position.set_put(azimuthPosition=self.dom_az)
+            self.atdome.evt_azimuthState.set_put(homing=self.is_dome_homming)
             await asyncio.sleep(1.)
 
     async def atmcs_wait_and_fault(self, wait_time):
@@ -135,6 +150,53 @@ class ATTCSMock:
         self.atptg.evt_summaryState.set_put(summaryState=salobj.State.FAULT,
                                             force_output=True)
 
+    async def open_m1_cover_callback(self, data):
+
+        if self.m1_cover_state != ATPneumatics.MirrorCoverState.CLOSED:
+            raise RuntimeError(f"M1 cover not closed. Current state is {self.m1_cover_state!r}")
+
+        self.task_list.append(asyncio.create_task(self.open_m1_cover()))
+
+    async def close_m1_cover_callback(self, data):
+        if self.m1_cover_state != ATPneumatics.MirrorCoverState.OPENED:
+            raise RuntimeError(f"M1 cover not opened. Current state is {self.m1_cover_state!r}")
+
+        self.task_list.append(asyncio.create_task(self.close_m1_cover()))
+
+    async def dome_home_callback(self, data):
+        await asyncio.sleep(0.5)
+        self.task_list.append(asyncio.create_task(self.home_dome()))
+
+    async def open_m1_cover(self):
+        await asyncio.sleep(0.5)
+        self.m1_cover_state = ATPneumatics.MirrorCoverState.INMOTION
+        await asyncio.sleep(5.0)
+        self.m1_cover_state = ATPneumatics.MirrorCoverState.OPENED
+
+    async def close_m1_cover(self):
+        await asyncio.sleep(0.5)
+        self.m1_cover_state = ATPneumatics.MirrorCoverState.INMOTION
+        await asyncio.sleep(5.0)
+        self.m1_cover_state = ATPneumatics.MirrorCoverState.CLOSED
+
+    async def home_dome(self):
+        print("Homing dome")
+        await asyncio.sleep(0.5)
+        self.is_dome_homming = True
+        self.atdome.evt_azimuthCommandedState.set_put(
+            azimuth=0.,
+            commandedState=ATDome.AzimuthCommandedState.HOME
+        )
+
+        await asyncio.sleep(5.)
+        print("Dome homed")
+        self.dom_az = 0.
+        self.atdome.evt_azimuthCommandedState.set_put(
+            azimuth=0.,
+            commandedState=ATDome.AzimuthCommandedState.STOP
+        )
+        self.is_dome_homming = False
+
     async def slew_callback(self, id_data):
         """Fake slew waits 5 seconds, then reports all axes
            in position. Does not simulate the actual slew.
@@ -143,21 +205,41 @@ class ATTCSMock:
                                                  force_output=True)
         self.atdome.evt_azimuthInPosition.set_put(inPosition=False,
                                                   force_output=True)
+
+        self.atdome.evt_azimuthCommandedState.put()
         self.track = True
         self.task_list.append(asyncio.create_task(self.wait_and_send_inposition()))
 
     async def move_dome(self, data):
+
+        print(f"Move dome {self.dom_az} -> {data.azimuth}")
         self.atdome.evt_azimuthInPosition.set_put(inPosition=False,
                                                   force_output=True)
 
-        await asyncio.sleep(self.slew_time)
+        self.atdome.evt_azimuthCommandedState.set_put(
+            azimuth=data.azimuth,
+            commandedState=ATDome.AzimuthCommandedState.GOTOPOSITION,
+            force_output=True
+        )
 
-        self.atdome.tel_position.set(azimuthPosition=data.azimuth)
+        await asyncio.sleep(self.slew_time)
+        self.dom_az = data.azimuth
+
+        self.atdome.evt_azimuthCommandedState.set_put(
+            azimuth=data.azimuth,
+            commandedState=ATDome.AzimuthCommandedState.STOP,
+            force_output=True
+        )
         self.atdome.evt_azimuthInPosition.set_put(inPosition=True,
                                                   force_output=True)
 
     async def stop_tracking_callback(self, data):
-        pass
+        print("Stop tracking start")
+        self.atmcs.evt_atMountState.set_put(state=ATMCS.AtMountState.STOPPING)
+        await asyncio.sleep(0.5)
+        self.track = False
+        self.atmcs.evt_atMountState.set_put(state=ATMCS.AtMountState.TRACKINGDISABLED)
+        print("Stop tracking end")
 
     async def wait_and_send_inposition(self):
 
@@ -167,6 +249,8 @@ class ATTCSMock:
         await asyncio.sleep(0.5)
         self.atdome.evt_azimuthInPosition.set_put(inPosition=True,
                                                   force_output=True)
+
+        self.atmcs.evt_atMountState.set_put(state=ATMCS.AtMountState.TRACKINGENABLED)
 
     async def generic_callback(self, id_data):
         await asyncio.sleep(0.5)
