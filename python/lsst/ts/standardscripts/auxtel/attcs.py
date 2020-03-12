@@ -122,12 +122,15 @@ class ATTCS(BaseGroup):
                                       rotPA=Angle(rot_pa, unit=u.deg).deg)
         check_atdome = self.check.atdome
         self.check.atdome = wait_dome
+        check_atdometrajectory = self.check.atdometrajectory
+        self.check.atdometrajectory = wait_dome
 
         try:
             await self._slew_to(self.atptg.cmd_azElTarget,
                                 slew_timeout=slew_timeout)
         except Exception as e:
             self.check.atdome = check_atdome
+            self.check.atdometrajectory = check_atdometrajectory
             raise e
 
     async def start_tracking(self):
