@@ -444,8 +444,7 @@ class ATTCS(BaseGroup):
             self.atmcs.evt_allAxesInPosition.flush()
             await self.atptg.cmd_stopTracking.start(timeout=self.fast_timeout)
 
-        while at_mount_state.state != 8 or \
-                at_mount_state.state != ATMCS.AtMountState.TRACKINGDISABLED:
+        while at_mount_state.state not in (8, ATMCS.AtMountState.TRACKINGDISABLED):
             at_mount_state = await self.atmcs.evt_atMountState.next(flush=False,
                                                                     timeout=self.long_timeout)
             self.log.debug(f"Tracking state: {at_mount_state.state}.")
