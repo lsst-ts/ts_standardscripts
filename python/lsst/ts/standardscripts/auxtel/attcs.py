@@ -87,10 +87,11 @@ class ATTCS(BaseGroup):
         self.dome_az_in_position = asyncio.Event()
         self.dome_az_in_position.clear()
 
+        self.track_id_gen = salobj.index_generator()
+
     async def point_azel(self, az, el, rot_pa=0.,
                          target_name="azel_target",
-                         wait_dome=False, slew_timeout=1200.,
-                         track_id=0):
+                         wait_dome=False, slew_timeout=1200.):
         """Slew the telescope to a fixed alt/az position.
 
         Telescope will not track once it arrives in position.
@@ -110,15 +111,11 @@ class ATTCS(BaseGroup):
             take a flat, for instance, the dome will never be in sync.
         slew_timeout : `float`
             Timeout for the slew command (second).
-        track_id : `int`
-            Identifier for the target. This number will be attacked to all
-            the commands sent by the pointing component.
         """
         self.atptg.cmd_azElTarget.set(targetName=target_name,
                                       targetInstance=ATPtg.TargetInstances.CURRENT,
                                       azDegs=Angle(az, unit=u.deg).deg,
                                       elDegs=Angle(el, unit=u.deg).deg,
-                                      trackId=track_id,
                                       rotPA=Angle(rot_pa, unit=u.deg).deg)
         check_atdome = self.check.atdome
         self.check.atdome = wait_dome
@@ -142,8 +139,7 @@ class ATTCS(BaseGroup):
 
     async def slew_object(self, name, rot_sky=None, pa_ang=None,
                           rot_pa=0.,
-                          slew_timeout=240.,
-                          track_id=0):
+                          slew_timeout=240.):
         """Slew to an object name.
 
         Use simbad to resolve the name and get coordinates.
@@ -164,9 +160,6 @@ class ATTCS(BaseGroup):
             given (Default = 0).
         slew_timeout : `float`
             Timeout for the slew command (second).
-        track_id : `int`
-            Identifier for the target. This number will be attacked to all
-            the commands sent by the pointing component.
 
         """
 
@@ -188,12 +181,11 @@ class ATTCS(BaseGroup):
                              pa_ang=pa_ang,
                              rot_pa=rot_pa,
                              target_name=name,
-                             slew_timeout=slew_timeout,
-                             track_id=track_id)
+                             slew_timeout=slew_timeout)
 
     async def slew_icrs(self, ra, dec, rot_sky=None, pa_ang=None, rot_pa=0.,
                         target_name="slew_icrs", slew_timeout=240.,
-                        track_id=0):
+                        stop_before_slew=True):
         """Slew the telescope and start tracking an Ra/Dec target in ICRS
         coordinate frame.
 
@@ -217,9 +209,11 @@ class ATTCS(BaseGroup):
             Target name.
         slew_timeout : `float`
             Timeout for the slew command (second).
-        track_id : `int`
-            Identifier for the target. This number will be attacked to all
-            the commands sent by the pointing component.
+        stop_before_slew : bool
+            Stop tracking before starting the slew? This option is a
+            workaround to some issues with the ATMCS not sending events
+            reliably.
+
         """
         radec_icrs = ICRS(Angle(ra, unit=u.hour),
                           Angle(dec, unit=u.deg))
@@ -269,7 +263,7 @@ class ATTCS(BaseGroup):
                         rot_frame=ATPtg.RotFrame.TARGET,
                         rot_mode=ATPtg.RotMode.FIELD,
                         slew_timeout=slew_timeout,
-                        track_id=track_id)
+                        stop_before_slew=stop_before_slew)
 
     async def slew(self, ra, dec, rotPA=0., target_name="slew_icrs",
                    target_instance=ATPtg.TargetInstances.CURRENT,
@@ -277,7 +271,7 @@ class ATTCS(BaseGroup):
                    epoch=2000, equinox=2000, parallax=0, pmRA=0, pmDec=0, rv=0, dRA=0, dDec=0,
                    rot_frame=ATPtg.RotFrame.TARGET,
                    rot_mode=ATPtg.RotMode.FIELD,
-                   slew_timeout=1200., track_id=0):
+                   slew_timeout=1200., stop_before_slew=True):
         """Slew the telescope and start tracking an Ra/Dec target.
 
         Parameters
@@ -304,23 +298,23 @@ class ATTCS(BaseGroup):
         rot_mode : int
         slew_timeout : `float`
             Timeout for the slew command (second).
-        track_id : `int`
-            Identifier for the target. This number will be attacked to all
-            the commands sent by the pointing component.
+        stop_before_slew : bool
+            Stop tracking before starting the slew? This option is a
+            workaround to some issues with the ATMCS not sending events
+            reliably.
         """
         self.atptg.cmd_raDecTarget.set(ra=ra, declination=dec, rotPA=rotPA, targetName=target_name,
                                        targetInstance=target_instance, frame=frame, epoch=epoch,
                                        equinox=equinox, parallax=parallax, pmRA=pmRA, pmDec=pmDec,
                                        rv=rv, dRA=dRA, dDec=dDec, rotFrame=rot_frame,
-                                       rotMode=rot_mode, trackId=track_id)
+                                       rotMode=rot_mode)
 
         await self._slew_to(self.atptg.cmd_raDecTarget,
-                            slew_timeout=slew_timeout)
+                            slew_timeout=slew_timeout, stop_before_slew=stop_before_slew)
 
     async def slew_to_planet(self, planet,
                              rot_pa=0.,
-                             slew_timeout=1200.,
-                             track_id=0):
+                             slew_timeout=1200.):
         """Slew and track a solar system body.
 
         Parameters
@@ -331,15 +325,11 @@ class ATTCS(BaseGroup):
             Desired instrument position angle (degree), Eastwards from North.
         slew_timeout : `float`
             Timeout for the slew command (second).
-        track_id : `int`
-            Identifier for the target. This number will be attacked to all
-            the commands sent by the pointing component.
         """
         self.atptg.cmd_planetTarget.set(planetName=planet.value,
                                         targetInstance=ATPtg.TargetInstances.CURRENT,
                                         dRA=0.,
                                         dDec=0.,
-                                        trackId=track_id,
                                         rotPA=rot_pa)
 
         await self._slew_to(self.atptg.cmd_planetTarget,
@@ -813,7 +803,7 @@ class ATTCS(BaseGroup):
                                f"state. Expected {ATPneumatics.MirrorCoverState.OPENED!r} or "
                                f"{ATPneumatics.MirrorCoverState.CLOSED!r}")
 
-    async def _slew_to(self, slew_cmd, slew_timeout):
+    async def _slew_to(self, slew_cmd, slew_timeout, stop_before_slew=True):
         """Encapsulate "slew" activities.
 
         Parameters
@@ -825,10 +815,25 @@ class ATTCS(BaseGroup):
 
         self.log.debug("Sending command")
 
+        if stop_before_slew:
+            try:
+                await self.stop_tracking()
+            except Exception:
+                pass
+
+        track_id = next(self.track_id_gen)
+
         try:
-            await self.stop_tracking()
-        except Exception:
+            current_target = await self.atmcs.evt_target.next(flush=True,
+                                                              timeout=self.fast_timeout)
+            if track_id <= current_target.trackId:
+                self.track_id_gen = salobj.index_generator(current_target.trackId+1)
+                track_id = next(self.track_id_gen)
+
+        except asyncio.TimeoutError:
             pass
+
+        slew_cmd.set(trackId=track_id)
 
         ack = await slew_cmd.start(timeout=slew_timeout)
         self.dome_az_in_position.clear()
