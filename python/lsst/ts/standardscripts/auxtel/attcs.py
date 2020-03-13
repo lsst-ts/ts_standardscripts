@@ -969,19 +969,13 @@ class ATTCS(BaseGroup):
         asyncio.TimeoutError
             If does not get a status update in less then `timeout` seconds.
         """
-        first_pass = True
         while True:
 
-            if first_pass:
+            try:
+                in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False,
+                                                                          timeout=timeout)
+            except IndexError:
                 in_position = await self.atmcs.evt_allAxesInPosition.aget(timeout=timeout)
-                self.atmcs.evt_allAxesInPosition.flush()
-                first_pass = False
-            else:
-                try:
-                    in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False,
-                                                                              timeout=timeout)
-                except IndexError:
-                    in_position = await self.atmcs.evt_allAxesInPosition.aget(timeout=timeout)
 
             # make sure timestamp of event is after command was acknowledged.
             if cmd_ack is not None and in_position.private_sndStamp < cmd_ack.private_sndStamp:
