@@ -820,6 +820,8 @@ class ATTCS(BaseGroup):
                 await self.stop_tracking()
             except Exception:
                 pass
+        else:
+            self.atmcs.evt_allAxesInPosition.flush()
 
         track_id = next(self.track_id_gen)
 
