@@ -872,7 +872,12 @@ class ATTCS(BaseGroup):
 
         """
         self.log.debug(f"Applying Az/El offset: {az}/ {el} ")
+        self.atmcs.evt_allAxesInPosition.flush()
         await self.atptg.cmd_offsetAzEl.set_start(az=az, el=el, num=0 if not persistent else 1)
+        try:
+            await self.atmcs.evt_allAxesInPosition.next(flush=True, timeout=self.tel_settle_time)
+        except asyncio.TimeoutError:
+            pass
         self.log.debug("Waiting for telescope to settle.")
         await asyncio.sleep(self.tel_settle_time)
         self.log.debug("Done")

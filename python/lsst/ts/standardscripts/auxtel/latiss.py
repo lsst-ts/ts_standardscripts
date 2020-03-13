@@ -135,7 +135,7 @@ class LATISS(BaseGroup):
                                        group_id=group_id,
                                        checkpoint=checkpoint)
 
-    async def take_object(self, exptime, n,
+    async def take_object(self, exptime, n=1,
                           filter=None, grating=None, linear_stage=None,
                           group_id=None, checkpoint=None):
         """Take a series of object images.
@@ -172,7 +172,7 @@ class LATISS(BaseGroup):
                                        group_id=group_id,
                                        checkpoint=checkpoint)
 
-    async def take_engtest(self, exptime, n,
+    async def take_engtest(self, exptime, n=1,
                            filter=None, grating=None, linear_stage=None,
                            group_id=None, checkpoint=None):
         """Take a series of engineering test images.
