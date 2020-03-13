@@ -186,7 +186,7 @@ class ATTCS(BaseGroup):
 
     async def slew_icrs(self, ra, dec, rot_sky=None, pa_ang=None, rot_pa=0.,
                         target_name="slew_icrs", slew_timeout=240.,
-                        stop_before_slew=True):
+                        stop_before_slew=True, wait_settle=True):
         """Slew the telescope and start tracking an Ra/Dec target in ICRS
         coordinate frame.
 
@@ -274,7 +274,8 @@ class ATTCS(BaseGroup):
                         rot_frame=ATPtg.RotFrame.TARGET,
                         rot_mode=ATPtg.RotMode.FIELD,
                         slew_timeout=slew_timeout,
-                        stop_before_slew=stop_before_slew)
+                        stop_before_slew=stop_before_slew,
+                        wait_settle=wait_settle)
 
     async def slew(self, ra, dec, rotPA=0., target_name="slew_icrs",
                    target_instance=ATPtg.TargetInstances.CURRENT,
@@ -282,7 +283,7 @@ class ATTCS(BaseGroup):
                    epoch=2000, equinox=2000, parallax=0, pmRA=0, pmDec=0, rv=0, dRA=0, dDec=0,
                    rot_frame=ATPtg.RotFrame.TARGET,
                    rot_mode=ATPtg.RotMode.FIELD,
-                   slew_timeout=1200., stop_before_slew=True):
+                   slew_timeout=1200., stop_before_slew=True, wait_settle=True):
         """Slew the telescope and start tracking an Ra/Dec target.
 
         Parameters
@@ -321,7 +322,9 @@ class ATTCS(BaseGroup):
                                        rotMode=rot_mode)
 
         await self._slew_to(self.atptg.cmd_raDecTarget,
-                            slew_timeout=slew_timeout, stop_before_slew=stop_before_slew)
+                            slew_timeout=slew_timeout,
+                            stop_before_slew=stop_before_slew,
+                            wait_settle=wait_settle)
 
     async def slew_to_planet(self, planet,
                              rot_pa=0.,
@@ -814,7 +817,7 @@ class ATTCS(BaseGroup):
                                f"state. Expected {ATPneumatics.MirrorCoverState.OPENED!r} or "
                                f"{ATPneumatics.MirrorCoverState.CLOSED!r}")
 
-    async def _slew_to(self, slew_cmd, slew_timeout, stop_before_slew=True):
+    async def _slew_to(self, slew_cmd, slew_timeout, stop_before_slew=True, wait_settle=True):
         """Encapsulate "slew" activities.
 
         Parameters
@@ -853,7 +856,8 @@ class ATTCS(BaseGroup):
 
         self.log.debug("Scheduling check coroutines")
 
-        self.scheduled_coro.append(asyncio.ensure_future(self.wait_for_inposition(timeout=slew_timeout)))
+        self.scheduled_coro.append(asyncio.ensure_future(self.wait_for_inposition(timeout=slew_timeout,
+                                                                                  wait_settle=wait_settle)))
         self.scheduled_coro.append(asyncio.ensure_future(self.monitor_position(ack)))
 
         for comp in self.components:
@@ -939,7 +943,7 @@ class ATTCS(BaseGroup):
 
         await self.offset_azel(az, el, persistent)
 
-    async def wait_for_inposition(self, timeout, cmd_ack=None):
+    async def wait_for_inposition(self, timeout, cmd_ack=None, wait_settle=True):
         """Wait for both the ATMCS and ATDome to be in position.
 
         Parameters
@@ -955,14 +959,14 @@ class ATTCS(BaseGroup):
         status = list()
 
         if self.check.atmcs:
-            status.append(await self.wait_for_atmcs_inposition(timeout, cmd_ack))
+            status.append(await self.wait_for_atmcs_inposition(timeout, cmd_ack, wait_settle))
 
         if self.check.atdome:
             status.append(await self.wait_for_atdome_inposition(timeout, cmd_ack))
 
         return f"{status!r}"
 
-    async def wait_for_atmcs_inposition(self, timeout, cmd_ack=None):
+    async def wait_for_atmcs_inposition(self, timeout, cmd_ack=None, wait_settle=True):
         """Wait for inPosition of atmcs to be ready.
 
         Parameters
@@ -994,8 +998,9 @@ class ATTCS(BaseGroup):
             else:
                 self.log.info(f"Got {in_position.inPosition}")
                 if in_position.inPosition:
-                    self.log.info("Waiting for telescope to settle.")
-                    await asyncio.sleep(self.tel_settle_time)
+                    if wait_settle:
+                        self.log.info("Waiting for telescope to settle.")
+                        await asyncio.sleep(self.tel_settle_time)
                     self.log.info(f"Telescope in position.")
                     return f"Telescope in position."
                 else:
