@@ -220,15 +220,25 @@ class ATTCS(BaseGroup):
                           Angle(dec, unit=u.deg))
 
         rot = rot_sky
+
         if rot is None and pa_ang is None:
             time_data = await self.atptg.tel_timeAndDate.next(flush=True,
                                                               timeout=self.fast_timeout)
+
             curr_time_atptg = Time(time_data.tai, format="mjd", scale="tai")
 
+            par_angle = parallactic_angle(self.location,
+                                          Angle(time_data.lst, unit=u.hour),
+                                          radec_icrs)
+
             coord_frame_altaz = AltAz(location=self.location, obstime=curr_time_atptg)
+
             alt_az = radec_icrs.transform_to(coord_frame_altaz)
 
-            rot = 180.-alt_az.alt.deg+Angle(rot_pa, unit=u.deg).deg
+            rot = par_angle.deg + Angle(rot_pa, unit=u.deg).deg+alt_az.alt.deg
+
+            self.log.debug(f"Parallactic angle: {par_angle.deg} | "
+                           f"Sky Angle: {Angle(rot, unit=u.deg).deg}")
         elif rot is None:
             time_data = await self.atptg.tel_timeAndDate.next(flush=True,
                                                               timeout=self.fast_timeout)
