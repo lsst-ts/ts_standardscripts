@@ -370,12 +370,6 @@ class LATISS(BaseGroup):
             await self.atcamera.cmd_takeImages.start(timeout=timeout + exp_time)
             end_readout = await self.atcamera.evt_endReadout.next(flush=False,
                                                                   timeout=timeout)
-            # FIXME: This should not be required! remove once bug on
-            # atheaderservice is fixed
-            self.log.debug("Waiting for header service LFO before continuing")
-            await self.atheaderservice.evt_largeFileObjectAvailable.next(flush=False,
-                                                                         timeout=self.long_timeout)
-            await asyncio.sleep(self.fast_timeout)
             return end_readout
 
     async def setup_atspec(self, filter=None, grating=None,
