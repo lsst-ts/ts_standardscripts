@@ -79,6 +79,7 @@ class ATTCS(BaseGroup):
 
         self.tel_az_slew_tolerance = Angle(0.004*u.deg)
         self.tel_el_slew_tolerance = Angle(0.004*u.deg)
+        self.tel_nasm_slew_tolerance = Angle(0.004*u.deg)
 
         self.dome_park_az = 285.
         self.dome_flat_az = 20.
@@ -1097,10 +1098,17 @@ class ATTCS(BaseGroup):
                                                             timeout=self.fast_timeout)
                 tel_pos = await self.atmcs.tel_mount_AzEl_Encoders.next(flush=True,
                                                                         timeout=self.fast_timeout)
+                nasm_pos = await self.atmcs.tel_mount_Nasmyth_Encoders.next(flush=True,
+                                                                            timeout=self.fast_timeout)
+
                 alt_dif = subtract_angles(comm_pos.elevation, tel_pos.elevationCalculatedAngle[-1])
                 az_dif = subtract_angles(comm_pos.azimuth, tel_pos.azimuthCalculatedAngle[-1])
+                nasm1_dif = subtract_angles(comm_pos.nasmyth1RotatorAngle, nasm_pos.nasmyth1CalculatedAngle[-1])
+                nasm2_dif = subtract_angles(comm_pos.nasmyth2RotatorAngle, nasm_pos.nasmyth2CalculatedAngle[-1])
                 alt_in_position = Angle(np.abs(alt_dif)*u.deg) < self.tel_el_slew_tolerance
                 az_in_position = Angle(np.abs(az_dif)*u.deg) < self.tel_az_slew_tolerance
+                na1_in_position = Angle(np.abs(nasm1_dif)*u.deg) < self.tel_nasm_slew_tolerance
+                na2_in_position = Angle(np.abs(nasm2_dif) * u.deg) < self.tel_nasm_slew_tolerance
 
             if atdome:
                 dom_pos = await self.atdome.tel_position.next(flush=True,
@@ -1115,15 +1123,24 @@ class ATTCS(BaseGroup):
                     self.dome_az_in_position.set()
 
             if atmcs and atdome:
-                self.log.info(f"[Telescope] delta Alt = {alt_dif:+08.3f} | delta Az= {az_dif:+08.3f} "
+                self.log.info(f"[Telescope] delta Alt = {alt_dif:+08.3f} | delta Az = {az_dif:+08.3f} "
+                              f"delta N1 = {nasm1_dif:+08.3f} delta N2 = {nasm2_dif:+08.3f} "
                               f"[Dome] delta Az = {dom_az_dif:+08.3f}")
-                in_position = alt_in_position and az_in_position and dom_in_position
+                in_position = (alt_in_position and
+                               az_in_position and
+                               na1_in_position and
+                               na2_in_position and
+                               dom_in_position)
             elif atdome:
                 self.log.info(f"[Dome] delta Az = {dom_az_dif:+08.3f}")
                 in_position = dom_in_position
             elif atmcs:
-                self.log.info(f"[Telescope] delta Alt = {alt_dif:+08.3f} | delta Az= {az_dif:+08.3f}")
-                in_position = alt_in_position and az_in_position
+                self.log.info(f"[Telescope] delta Alt = {alt_dif:+08.3f} | delta Az= {az_dif:+08.3f} "
+                              f"delta N1 = {nasm1_dif:+08.3f} delta N2 = {nasm2_dif:+08.3f} ")
+                in_position = (alt_in_position and
+                               az_in_position and
+                               na1_in_position and
+                               na2_in_position)
             else:
                 break
 
