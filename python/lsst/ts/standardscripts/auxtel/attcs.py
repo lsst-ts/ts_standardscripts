@@ -1,3 +1,4 @@
+import enum
 import asyncio
 
 import numpy as np
@@ -16,6 +17,13 @@ from ..utils import subtract_angles
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums import ATPtg, ATDome, ATPneumatics, ATMCS
+
+
+# FIXME: Use from idl.enums.ATPneumatics
+class VentsPosition(enum.IntEnum):
+    OPENED = 0
+    CLOSED = 1
+    PARTIALLYOPENED = 2
 
 
 class ATTCS(BaseGroup):
@@ -611,6 +619,7 @@ class ATTCS(BaseGroup):
         if self.check.atpneumatics:
             self.log.info("Open telescope cover.")
             await self.open_m1_cover()
+            await self.open_m1_vent()
 
         await self.enable(settings=settings)
 
@@ -618,6 +627,7 @@ class ATTCS(BaseGroup):
             self.log.info("Enable ATAOS corrections.")
 
             await self.ataos.cmd_enableCorrection.set_start(m1=True,
+                                                            hexapod=True,
                                                             timeout=self.long_timeout)
 
     async def shutdown(self):
@@ -659,6 +669,11 @@ class ATTCS(BaseGroup):
             self.check.atdometrajectory = True
 
         await self.close_m1_cover()
+
+        try:
+            await self.close_m1_vents()
+        except Exception:
+            self.log.info("Error closing m1 vents.")
 
         self.log.info("Close dome.")
 
@@ -816,6 +831,54 @@ class ATTCS(BaseGroup):
             raise RuntimeError(f"M1 cover in {ATPneumatics.MirrorCoverState(cover_state.state)!r} "
                                f"state. Expected {ATPneumatics.MirrorCoverState.OPENED!r} or "
                                f"{ATPneumatics.MirrorCoverState.CLOSED!r}")
+
+    async def open_m1_vents(self):
+        """Task to open m1 vents.
+        """
+
+        vent_state = await self.atpneumatics.evt_m1CoverState.aget(timeout=self.fast_timeout)
+
+        self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
+
+        if vent_state.position == VentsPosition.CLOSED:
+
+            self.log.debug("Opening M1 vents.")
+
+            await self.atpneumatics.cmd_openM1CellVents.start(timeout=self.long_timeout)
+
+            while vent_state.position != VentsPosition.OPENED:
+                vent_state = await self.atpneumatics.evt_m1CoverState.next(
+                    flush=False,
+                    timeout=self.long_long_timeout)
+                self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
+        elif vent_state.position == VentsPosition.OPENED:
+            self.log.info(f"M1 vents already opened.")
+        else:
+            raise RuntimeError(f"Unrecognized M1 vent position: {vent_state.position}")
+
+    async def close_m1_vents(self):
+        """Task to open m1 vents.
+        """
+
+        vent_state = await self.atpneumatics.evt_m1CoverState.aget(timeout=self.fast_timeout)
+
+        self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
+
+        if vent_state.position == VentsPosition.OPENED:
+
+            self.log.debug("Closing M1 vents.")
+
+            await self.atpneumatics.cmd_closeM1CellVents.start(timeout=self.long_timeout)
+
+            while vent_state.position != VentsPosition.CLOSED:
+                vent_state = await self.atpneumatics.evt_m1CoverState.next(
+                    flush=False,
+                    timeout=self.long_long_timeout)
+                self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
+        elif vent_state.position == VentsPosition.CLOSED:
+            self.log.info(f"M1 vents already closed.")
+        else:
+            raise RuntimeError(f"Unrecognized M1 vent position: {vent_state.position}")
 
     async def _slew_to(self, slew_cmd, slew_timeout, stop_before_slew=True, wait_settle=True):
         """Encapsulate "slew" activities.
