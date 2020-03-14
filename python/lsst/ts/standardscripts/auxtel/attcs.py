@@ -671,7 +671,7 @@ class ATTCS(BaseGroup):
         await self.close_m1_cover()
 
         try:
-            await self.close_m1_vents()
+            await self.close_m1_vent()
         except Exception:
             self.log.info("Error closing m1 vents.")
 
@@ -832,7 +832,7 @@ class ATTCS(BaseGroup):
                                f"state. Expected {ATPneumatics.MirrorCoverState.OPENED!r} or "
                                f"{ATPneumatics.MirrorCoverState.CLOSED!r}")
 
-    async def open_m1_vents(self):
+    async def open_m1_vent(self):
         """Task to open m1 vents.
         """
 
@@ -856,7 +856,7 @@ class ATTCS(BaseGroup):
         else:
             raise RuntimeError(f"Unrecognized M1 vent position: {vent_state.position}")
 
-    async def close_m1_vents(self):
+    async def close_m1_vent(self):
         """Task to open m1 vents.
         """
 
