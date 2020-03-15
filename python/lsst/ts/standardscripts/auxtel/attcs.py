@@ -1269,7 +1269,7 @@ class ATTCS(BaseGroup):
 
         """
 
-        state = self.get_state('atptg')
+        state = await self.get_state('atptg')
         if state != salobj.State.ENABLED:
             raise RuntimeError(f"ATPtg in {state!r}. Expected {salobj.State.ENABLED!r}.")
 
