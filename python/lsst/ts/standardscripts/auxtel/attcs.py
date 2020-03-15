@@ -1263,6 +1263,23 @@ class ATTCS(BaseGroup):
         except asyncio.TimeoutError:
             pass
 
+    async def add_point_data(self):
+        """ Add current position to a point file. If a file is open it will
+        append to that file. If no file is opened it will open a new one.
+
+        """
+
+        state = self.get_state('atptg')
+        if state != salobj.State.ENABLED:
+            raise RuntimeError(f"ATPtg in {state!r}. Expected {salobj.State.ENABLED!r}.")
+
+        try:
+            await self.atptg.cmd_pointAddData.start()
+        except salobj.AckError:
+            self.log.debug("Opening new pointing file.")
+            await self.atptg.cmd_pointNewFile.start()
+            await self.atptg.cmd_pointAddData.start()
+
 
 def parallactic_angle(location, lst, target):
     """
