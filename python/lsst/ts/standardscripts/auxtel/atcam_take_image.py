@@ -55,7 +55,7 @@ class ATCamTakeImage(salobj.BaseScript):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/ATCamTakeImage.yaml
-            title: ATCamTakeImage v1
+            title: ATCamTakeImage v2
             description: Configuration for ATCamTakeImage.
             type: object
             properties:
@@ -65,8 +65,7 @@ class ATCamTakeImage(salobj.BaseScript):
                 anyOf:
                   - type: integer
                     minimum: 1
-                  - type: "null"
-                default: null
+                default: 1
               exp_times:
                 description: The exposure time of each image (sec). If a single value,
                   then the same exposure time is used for each exposure.
@@ -79,17 +78,8 @@ class ATCamTakeImage(salobj.BaseScript):
                   - type: number
                     minimum: 0
                 default: 0
-              shutter:
-                description: Open the shutter?
-                type: boolean
-                default: false
               image_type:
-                description: Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, FE55,
-                    XTALK, CCOB, SPOT...)
-                type: string
-                default: ""
-              groupid:
-                description: Value for the GROUPID entry in the image header.
+                description: Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, OBJECT)
                 type: string
                 default: ""
               filter:
@@ -114,8 +104,7 @@ class ATCamTakeImage(salobj.BaseScript):
                   - type: number
                   - type: "null"
                 default: null
-            required: [nimages, exp_times, shutter, image_type, groupid, filter, grating,
-                       linear_stage]
+            required: [exp_times, image_type]
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -147,8 +136,6 @@ class ATCamTakeImage(salobj.BaseScript):
             config.exp_times = [config.exp_times]*nimages
 
         self.log.info(f"exposure times={self.config.exp_times}, "
-                      f"shutter={self.config.shutter}, "
-                      f"groupid={self.config.groupid}"
                       f"image_type={self.config.image_type}"
                       f"filter={self.config.filter}"
                       f"grating={self.config.grating}"
@@ -165,11 +152,10 @@ class ATCamTakeImage(salobj.BaseScript):
         for i, exposure in enumerate(self.config.exp_times):
             self.log.debug(f"exposure {i+1} of {nimages}")
             await self.checkpoint(f"exposure {i+1} of {nimages}")
-            end_readout = await self.latiss.take_image(exptime=exposure,
-                                                       shutter=self.config.shutter,
-                                                       image_type=self.config.image_type,
-                                                       group_id=self.config.groupid,
-                                                       filter=self.config.filter,
-                                                       grating=self.config.grating,
-                                                       linear_stage=self.config.linear_stage)
-            self.log.debug(f"Took {end_readout.imageName}")
+            end_readout = await self.latiss.imgtype(self.config.image_type, exposure, 1,
+                                                    filter=self.config.filter,
+                                                    grating=self.config.grating,
+                                                    linear_stage=self.config.linear_stage,
+                                                    group_id=self.group_id,
+                                                    checkpoint=self.checkpoint)
+            self.log.debug(f"Took {end_readout}")

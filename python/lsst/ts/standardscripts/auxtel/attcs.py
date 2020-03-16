@@ -874,7 +874,7 @@ class ATTCS(BaseGroup):
             try:
                 await self.atpneumatics.cmd_closeM1CellVents.start(timeout=self.long_timeout)
             except Exception:
-                return 
+                return
 
             # while vent_state.position != VentsPosition.CLOSED:
             #     vent_state = await self.atpneumatics.evt_m1CoverState.next(
