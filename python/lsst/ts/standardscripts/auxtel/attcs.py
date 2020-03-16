@@ -844,13 +844,16 @@ class ATTCS(BaseGroup):
 
             self.log.debug("Opening M1 vents.")
 
-            await self.atpneumatics.cmd_openM1CellVents.start(timeout=self.long_timeout)
+            try:
+                await self.atpneumatics.cmd_openM1CellVents.start(timeout=self.long_timeout)
+            except Exception as e:
+                return
 
-            while vent_state.position != VentsPosition.OPENED:
-                vent_state = await self.atpneumatics.evt_m1CoverState.next(
-                    flush=False,
-                    timeout=self.long_long_timeout)
-                self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
+            # while vent_state.position != VentsPosition.OPENED:
+            #     vent_state = await self.atpneumatics.evt_m1CoverState.next(
+            #         flush=False,
+            #         timeout=self.long_long_timeout)
+            #     self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
         elif vent_state.position == VentsPosition.OPENED:
             self.log.info(f"M1 vents already opened.")
         else:
@@ -868,13 +871,16 @@ class ATTCS(BaseGroup):
 
             self.log.debug("Closing M1 vents.")
 
-            await self.atpneumatics.cmd_closeM1CellVents.start(timeout=self.long_timeout)
+            try:
+                await self.atpneumatics.cmd_closeM1CellVents.start(timeout=self.long_timeout)
+            except Exception:
+                return 
 
-            while vent_state.position != VentsPosition.CLOSED:
-                vent_state = await self.atpneumatics.evt_m1CoverState.next(
-                    flush=False,
-                    timeout=self.long_long_timeout)
-                self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
+            # while vent_state.position != VentsPosition.CLOSED:
+            #     vent_state = await self.atpneumatics.evt_m1CoverState.next(
+            #         flush=False,
+            #         timeout=self.long_long_timeout)
+            #     self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
         elif vent_state.position == VentsPosition.CLOSED:
             self.log.info(f"M1 vents already closed.")
         else:
