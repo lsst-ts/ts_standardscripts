@@ -152,10 +152,10 @@ class ATCamTakeImage(salobj.BaseScript):
         for i, exposure in enumerate(self.config.exp_times):
             self.log.debug(f"exposure {i+1} of {nimages}")
             await self.checkpoint(f"exposure {i+1} of {nimages}")
-            end_readout = await self.latiss.imgtype(self.config.image_type, exposure, 1,
-                                                    filter=self.config.filter,
-                                                    grating=self.config.grating,
-                                                    linear_stage=self.config.linear_stage,
-                                                    group_id=self.group_id,
-                                                    checkpoint=self.checkpoint)
+            end_readout = await self.latiss.take_imgtype(self.config.image_type, exposure, 1,
+                                                         filter=self.config.filter,
+                                                         grating=self.config.grating,
+                                                         linear_stage=self.config.linear_stage,
+                                                         group_id=self.group_id,
+                                                         checkpoint=self.checkpoint)
             self.log.debug(f"Took {end_readout}")
