@@ -65,7 +65,8 @@ class ATCamTakeImage(salobj.BaseScript):
                 anyOf:
                   - type: integer
                     minimum: 1
-                default: 1
+                  - type: "null"
+                default: null
               exp_times:
                 description: The exposure time of each image (sec). If a single value,
                   then the same exposure time is used for each exposure.
@@ -104,7 +105,7 @@ class ATCamTakeImage(salobj.BaseScript):
                   - type: number
                   - type: "null"
                 default: null
-            required: [exp_times, image_type]
+            required: [image_type]
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)

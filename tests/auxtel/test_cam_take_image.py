@@ -72,7 +72,7 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
 
     async def finish_take_images(self):
         await asyncio.sleep(0.5)
-        self.atcam.evt_endReadout.put()
+        self.atcam.evt_endReadout.set_put(imageName='AT_image_2020_001')
         await asyncio.sleep(0.5)
         self.atheaderservice.evt_largeFileObjectAvailable.put()
 
@@ -91,22 +91,25 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
     async def test_configure(self):
         async with self.make_script():
             exp_times = 1.1
-            await self.configure_script(exp_times=exp_times)
+            image_type = "OBJECT"
+            await self.configure_script(exp_times=exp_times, image_type=image_type)
             self.assertEqual(self.script.config.exp_times, [exp_times])
-            self.assertFalse(self.script.config.shutter)
-            self.assertEqual(self.script.config.groupid, "")
+            self.assertEqual(self.script.config.image_type, image_type)
             self.assertIsNone(self.script.config.filter)
             self.assertIsNone(self.script.config.grating)
             self.assertIsNone(self.script.config.linear_stage)
 
             exp_times = 1.1
+            image_type = "OBJECT"
             nimages = 2
             filter = None
             grating = None
             await self.configure_script(
-                exp_times=exp_times, nimages=nimages, filter=filter, grating=grating
+                exp_times=exp_times, image_type=image_type,
+                nimages=nimages, filter=filter, grating=grating
             )
             self.assertEqual(self.script.config.exp_times, [exp_times, exp_times])
+            self.assertEqual(self.script.config.image_type, image_type)
             self.assertEqual(self.script.config.filter, filter)
             self.assertEqual(self.script.config.grating, grating)
 
@@ -117,12 +120,14 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
             linear_stage = 25
             await self.configure_script(
                 exp_times=exp_times,
+                image_type=image_type,
                 nimages=nimages,
                 filter=filter,
                 grating=grating,
                 linear_stage=linear_stage,
             )
             self.assertEqual(self.script.config.exp_times, [exp_times, exp_times])
+            self.assertEqual(self.script.config.image_type, image_type)
             self.assertEqual(self.script.config.filter, filter)
             self.assertEqual(self.script.config.grating, grating)
             self.assertEqual(self.script.config.linear_stage, linear_stage)
@@ -132,11 +137,13 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
             grating = "a grating"
             await self.configure_script(
                 exp_times=exp_times,
+                image_type=image_type,
                 filter=filter,
                 grating=grating,
                 linear_stage=linear_stage,
             )
             self.assertEqual(self.script.config.exp_times, exp_times)
+            self.assertEqual(self.script.config.image_type, image_type)
             self.assertEqual(self.script.config.filter, filter)
             self.assertEqual(self.script.config.grating, grating)
             self.assertEqual(self.script.config.linear_stage, linear_stage)
@@ -144,12 +151,16 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
             exp_times = [0, 2, 0.5]
             nimages = len(exp_times) + 1
             with self.assertRaises(salobj.ExpectedError):
-                await self.configure_script(exp_times=exp_times, nimages=nimages)
+                await self.configure_script(
+                    exp_times=exp_times,
+                    image_type=image_type,
+                    nimages=nimages
+                )
 
     async def test_take_images(self):
         async with self.make_script():
             config = await self.configure_script(
-                nimages=1, exp_times=0, filter=1, grating=1, linear_stage=100
+                nimages=1, exp_times=0, image_type="BIAS", filter=1, grating=1, linear_stage=100
             )
             await self.run_script()
 

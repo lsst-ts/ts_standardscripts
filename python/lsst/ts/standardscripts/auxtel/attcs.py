@@ -1,3 +1,6 @@
+
+__all__ = ['VentsPosition', 'ATTCS']
+
 import enum
 import asyncio
 
@@ -836,7 +839,7 @@ class ATTCS(BaseGroup):
         """Task to open m1 vents.
         """
 
-        vent_state = await self.atpneumatics.evt_m1CoverState.aget(timeout=self.fast_timeout)
+        vent_state = await self.atpneumatics.evt_m1VentsPosition.aget(timeout=self.fast_timeout)
 
         self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
 
@@ -846,14 +849,14 @@ class ATTCS(BaseGroup):
 
             try:
                 await self.atpneumatics.cmd_openM1CellVents.start(timeout=self.long_timeout)
-            except Exception as e:
+            except Exception:
                 return
 
-            # while vent_state.position != VentsPosition.OPENED:
-            #     vent_state = await self.atpneumatics.evt_m1CoverState.next(
-            #         flush=False,
-            #         timeout=self.long_long_timeout)
-            #     self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
+            while vent_state.position != VentsPosition.OPENED:
+                vent_state = await self.atpneumatics.evt_m1VentsPosition.next(
+                    flush=False,
+                    timeout=self.long_long_timeout)
+                self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
         elif vent_state.position == VentsPosition.OPENED:
             self.log.info(f"M1 vents already opened.")
         else:
@@ -863,7 +866,7 @@ class ATTCS(BaseGroup):
         """Task to open m1 vents.
         """
 
-        vent_state = await self.atpneumatics.evt_m1CoverState.aget(timeout=self.fast_timeout)
+        vent_state = await self.atpneumatics.evt_m1VentsPosition.aget(timeout=self.fast_timeout)
 
         self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
 
@@ -876,11 +879,11 @@ class ATTCS(BaseGroup):
             except Exception:
                 return
 
-            # while vent_state.position != VentsPosition.CLOSED:
-            #     vent_state = await self.atpneumatics.evt_m1CoverState.next(
-            #         flush=False,
-            #         timeout=self.long_long_timeout)
-            #     self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
+            while vent_state.position != VentsPosition.CLOSED:
+                vent_state = await self.atpneumatics.evt_m1VentsPosition.next(
+                    flush=False,
+                    timeout=self.long_long_timeout)
+                self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
         elif vent_state.position == VentsPosition.CLOSED:
             self.log.info(f"M1 vents already closed.")
         else:
@@ -1187,8 +1190,10 @@ class ATTCS(BaseGroup):
 
                 alt_dif = subtract_angles(comm_pos.elevation, tel_pos.elevationCalculatedAngle[-1])
                 az_dif = subtract_angles(comm_pos.azimuth, tel_pos.azimuthCalculatedAngle[-1])
-                nasm1_dif = subtract_angles(comm_pos.nasmyth1RotatorAngle, nasm_pos.nasmyth1CalculatedAngle[-1])
-                nasm2_dif = subtract_angles(comm_pos.nasmyth2RotatorAngle, nasm_pos.nasmyth2CalculatedAngle[-1])
+                nasm1_dif = subtract_angles(comm_pos.nasmyth1RotatorAngle,
+                                            nasm_pos.nasmyth1CalculatedAngle[-1])
+                nasm2_dif = subtract_angles(comm_pos.nasmyth2RotatorAngle,
+                                            nasm_pos.nasmyth2CalculatedAngle[-1])
                 alt_in_position = Angle(np.abs(alt_dif)*u.deg) < self.tel_el_slew_tolerance
                 az_in_position = Angle(np.abs(az_dif)*u.deg) < self.tel_az_slew_tolerance
                 na1_in_position = Angle(np.abs(nasm1_dif)*u.deg) < self.tel_nasm_slew_tolerance
@@ -1210,21 +1215,21 @@ class ATTCS(BaseGroup):
                 self.log.info(f"[Telescope] delta Alt = {alt_dif:+08.3f} | delta Az = {az_dif:+08.3f} "
                               f"delta N1 = {nasm1_dif:+08.3f} delta N2 = {nasm2_dif:+08.3f} "
                               f"[Dome] delta Az = {dom_az_dif:+08.3f}")
-                in_position = (alt_in_position and
-                               az_in_position and
-                               na1_in_position and
-                               na2_in_position and
-                               dom_in_position)
+                in_position = (alt_in_position
+                               and az_in_position
+                               and na1_in_position
+                               and na2_in_position
+                               and dom_in_position)
             elif atdome:
                 self.log.info(f"[Dome] delta Az = {dom_az_dif:+08.3f}")
                 in_position = dom_in_position
             elif atmcs:
                 self.log.info(f"[Telescope] delta Alt = {alt_dif:+08.3f} | delta Az= {az_dif:+08.3f} "
                               f"delta N1 = {nasm1_dif:+08.3f} delta N2 = {nasm2_dif:+08.3f} ")
-                in_position = (alt_in_position and
-                               az_in_position and
-                               na1_in_position and
-                               na2_in_position)
+                in_position = (alt_in_position
+                               and az_in_position
+                               and na1_in_position
+                               and na2_in_position)
             else:
                 break
 
