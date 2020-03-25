@@ -1,3 +1,26 @@
+# This file is part of ts_standardscripts
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+
+__all__ = ['VentsPosition', 'ATTCS']
+
+import enum
 import asyncio
 
 import numpy as np
@@ -16,6 +39,13 @@ from ..utils import subtract_angles
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums import ATPtg, ATDome, ATPneumatics, ATMCS
+
+
+# FIXME: Use from idl.enums.ATPneumatics
+class VentsPosition(enum.IntEnum):
+    OPENED = 0
+    CLOSED = 1
+    PARTIALLYOPENED = 2
 
 
 class ATTCS(BaseGroup):
@@ -79,6 +109,7 @@ class ATTCS(BaseGroup):
 
         self.tel_az_slew_tolerance = Angle(0.004*u.deg)
         self.tel_el_slew_tolerance = Angle(0.004*u.deg)
+        self.tel_nasm_slew_tolerance = Angle(0.004*u.deg)
 
         self.dome_park_az = 285.
         self.dome_flat_az = 20.
@@ -87,10 +118,11 @@ class ATTCS(BaseGroup):
         self.dome_az_in_position = asyncio.Event()
         self.dome_az_in_position.clear()
 
+        self.track_id_gen = salobj.index_generator()
+
     async def point_azel(self, az, el, rot_pa=0.,
                          target_name="azel_target",
-                         wait_dome=False, slew_timeout=1200.,
-                         track_id=0):
+                         wait_dome=False, slew_timeout=1200.):
         """Slew the telescope to a fixed alt/az position.
 
         Telescope will not track once it arrives in position.
@@ -110,24 +142,23 @@ class ATTCS(BaseGroup):
             take a flat, for instance, the dome will never be in sync.
         slew_timeout : `float`
             Timeout for the slew command (second).
-        track_id : `int`
-            Identifier for the target. This number will be attacked to all
-            the commands sent by the pointing component.
         """
         self.atptg.cmd_azElTarget.set(targetName=target_name,
                                       targetInstance=ATPtg.TargetInstances.CURRENT,
                                       azDegs=Angle(az, unit=u.deg).deg,
                                       elDegs=Angle(el, unit=u.deg).deg,
-                                      trackId=track_id,
                                       rotPA=Angle(rot_pa, unit=u.deg).deg)
         check_atdome = self.check.atdome
         self.check.atdome = wait_dome
+        check_atdometrajectory = self.check.atdometrajectory
+        self.check.atdometrajectory = wait_dome
 
         try:
             await self._slew_to(self.atptg.cmd_azElTarget,
                                 slew_timeout=slew_timeout)
         except Exception as e:
             self.check.atdome = check_atdome
+            self.check.atdometrajectory = check_atdometrajectory
             raise e
 
     async def start_tracking(self):
@@ -139,8 +170,7 @@ class ATTCS(BaseGroup):
 
     async def slew_object(self, name, rot_sky=None, pa_ang=None,
                           rot_pa=0.,
-                          slew_timeout=240.,
-                          track_id=0):
+                          slew_timeout=240.):
         """Slew to an object name.
 
         Use simbad to resolve the name and get coordinates.
@@ -161,9 +191,6 @@ class ATTCS(BaseGroup):
             given (Default = 0).
         slew_timeout : `float`
             Timeout for the slew command (second).
-        track_id : `int`
-            Identifier for the target. This number will be attacked to all
-            the commands sent by the pointing component.
 
         """
 
@@ -185,12 +212,11 @@ class ATTCS(BaseGroup):
                              pa_ang=pa_ang,
                              rot_pa=rot_pa,
                              target_name=name,
-                             slew_timeout=slew_timeout,
-                             track_id=track_id)
+                             slew_timeout=slew_timeout)
 
     async def slew_icrs(self, ra, dec, rot_sky=None, pa_ang=None, rot_pa=0.,
                         target_name="slew_icrs", slew_timeout=240.,
-                        track_id=0):
+                        stop_before_slew=True, wait_settle=True):
         """Slew the telescope and start tracking an Ra/Dec target in ICRS
         coordinate frame.
 
@@ -214,23 +240,35 @@ class ATTCS(BaseGroup):
             Target name.
         slew_timeout : `float`
             Timeout for the slew command (second).
-        track_id : `int`
-            Identifier for the target. This number will be attacked to all
-            the commands sent by the pointing component.
+        stop_before_slew : bool
+            Stop tracking before starting the slew? This option is a
+            workaround to some issues with the ATMCS not sending events
+            reliably.
+
         """
         radec_icrs = ICRS(Angle(ra, unit=u.hour),
                           Angle(dec, unit=u.deg))
 
         rot = rot_sky
+
         if rot is None and pa_ang is None:
             time_data = await self.atptg.tel_timeAndDate.next(flush=True,
                                                               timeout=self.fast_timeout)
+
             curr_time_atptg = Time(time_data.tai, format="mjd", scale="tai")
 
+            par_angle = parallactic_angle(self.location,
+                                          Angle(time_data.lst, unit=u.hour),
+                                          radec_icrs)
+
             coord_frame_altaz = AltAz(location=self.location, obstime=curr_time_atptg)
+
             alt_az = radec_icrs.transform_to(coord_frame_altaz)
 
-            rot = 180.-alt_az.alt.deg+Angle(rot_pa, unit=u.deg).deg
+            rot = par_angle.deg + Angle(rot_pa, unit=u.deg).deg+alt_az.alt.deg
+
+            self.log.debug(f"Parallactic angle: {par_angle.deg} | "
+                           f"Sky Angle: {Angle(rot, unit=u.deg).deg}")
         elif rot is None:
             time_data = await self.atptg.tel_timeAndDate.next(flush=True,
                                                               timeout=self.fast_timeout)
@@ -266,7 +304,8 @@ class ATTCS(BaseGroup):
                         rot_frame=ATPtg.RotFrame.TARGET,
                         rot_mode=ATPtg.RotMode.FIELD,
                         slew_timeout=slew_timeout,
-                        track_id=track_id)
+                        stop_before_slew=stop_before_slew,
+                        wait_settle=wait_settle)
 
     async def slew(self, ra, dec, rotPA=0., target_name="slew_icrs",
                    target_instance=ATPtg.TargetInstances.CURRENT,
@@ -274,7 +313,7 @@ class ATTCS(BaseGroup):
                    epoch=2000, equinox=2000, parallax=0, pmRA=0, pmDec=0, rv=0, dRA=0, dDec=0,
                    rot_frame=ATPtg.RotFrame.TARGET,
                    rot_mode=ATPtg.RotMode.FIELD,
-                   slew_timeout=1200., track_id=0):
+                   slew_timeout=1200., stop_before_slew=True, wait_settle=True):
         """Slew the telescope and start tracking an Ra/Dec target.
 
         Parameters
@@ -301,23 +340,25 @@ class ATTCS(BaseGroup):
         rot_mode : int
         slew_timeout : `float`
             Timeout for the slew command (second).
-        track_id : `int`
-            Identifier for the target. This number will be attacked to all
-            the commands sent by the pointing component.
+        stop_before_slew : bool
+            Stop tracking before starting the slew? This option is a
+            workaround to some issues with the ATMCS not sending events
+            reliably.
         """
         self.atptg.cmd_raDecTarget.set(ra=ra, declination=dec, rotPA=rotPA, targetName=target_name,
                                        targetInstance=target_instance, frame=frame, epoch=epoch,
                                        equinox=equinox, parallax=parallax, pmRA=pmRA, pmDec=pmDec,
                                        rv=rv, dRA=dRA, dDec=dDec, rotFrame=rot_frame,
-                                       rotMode=rot_mode, trackId=track_id)
+                                       rotMode=rot_mode)
 
         await self._slew_to(self.atptg.cmd_raDecTarget,
-                            slew_timeout=slew_timeout)
+                            slew_timeout=slew_timeout,
+                            stop_before_slew=stop_before_slew,
+                            wait_settle=wait_settle)
 
     async def slew_to_planet(self, planet,
                              rot_pa=0.,
-                             slew_timeout=1200.,
-                             track_id=0):
+                             slew_timeout=1200.):
         """Slew and track a solar system body.
 
         Parameters
@@ -328,15 +369,11 @@ class ATTCS(BaseGroup):
             Desired instrument position angle (degree), Eastwards from North.
         slew_timeout : `float`
             Timeout for the slew command (second).
-        track_id : `int`
-            Identifier for the target. This number will be attacked to all
-            the commands sent by the pointing component.
         """
         self.atptg.cmd_planetTarget.set(planetName=planet.value,
                                         targetInstance=ATPtg.TargetInstances.CURRENT,
                                         dRA=0.,
                                         dDec=0.,
-                                        trackId=track_id,
                                         rotPA=rot_pa)
 
         await self._slew_to(self.atptg.cmd_planetTarget,
@@ -444,8 +481,7 @@ class ATTCS(BaseGroup):
             self.atmcs.evt_allAxesInPosition.flush()
             await self.atptg.cmd_stopTracking.start(timeout=self.fast_timeout)
 
-        while at_mount_state.state != 8 or \
-                at_mount_state.state != ATMCS.AtMountState.TRACKINGDISABLED:
+        while at_mount_state.state not in (8, ATMCS.AtMountState.TRACKINGDISABLED):
             at_mount_state = await self.atmcs.evt_atMountState.next(flush=False,
                                                                     timeout=self.long_timeout)
             self.log.debug(f"Tracking state: {at_mount_state.state}.")
@@ -605,6 +641,7 @@ class ATTCS(BaseGroup):
         if self.check.atpneumatics:
             self.log.info("Open telescope cover.")
             await self.open_m1_cover()
+            await self.open_m1_vent()
 
         await self.enable(settings=settings)
 
@@ -612,6 +649,7 @@ class ATTCS(BaseGroup):
             self.log.info("Enable ATAOS corrections.")
 
             await self.ataos.cmd_enableCorrection.set_start(m1=True,
+                                                            hexapod=True,
                                                             timeout=self.long_timeout)
 
     async def shutdown(self):
@@ -653,6 +691,11 @@ class ATTCS(BaseGroup):
             self.check.atdometrajectory = True
 
         await self.close_m1_cover()
+
+        try:
+            await self.close_m1_vent()
+        except Exception:
+            self.log.info("Error closing m1 vents.")
 
         self.log.info("Close dome.")
 
@@ -811,7 +854,61 @@ class ATTCS(BaseGroup):
                                f"state. Expected {ATPneumatics.MirrorCoverState.OPENED!r} or "
                                f"{ATPneumatics.MirrorCoverState.CLOSED!r}")
 
-    async def _slew_to(self, slew_cmd, slew_timeout):
+    async def open_m1_vent(self):
+        """Task to open m1 vents.
+        """
+
+        vent_state = await self.atpneumatics.evt_m1VentsPosition.aget(timeout=self.fast_timeout)
+
+        self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
+
+        if vent_state.position == VentsPosition.CLOSED:
+
+            self.log.debug("Opening M1 vents.")
+
+            try:
+                await self.atpneumatics.cmd_openM1CellVents.start(timeout=self.long_timeout)
+            except Exception:
+                return
+
+            while vent_state.position != VentsPosition.OPENED:
+                vent_state = await self.atpneumatics.evt_m1VentsPosition.next(
+                    flush=False,
+                    timeout=self.long_long_timeout)
+                self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
+        elif vent_state.position == VentsPosition.OPENED:
+            self.log.info(f"M1 vents already opened.")
+        else:
+            raise RuntimeError(f"Unrecognized M1 vent position: {vent_state.position}")
+
+    async def close_m1_vent(self):
+        """Task to open m1 vents.
+        """
+
+        vent_state = await self.atpneumatics.evt_m1VentsPosition.aget(timeout=self.fast_timeout)
+
+        self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
+
+        if vent_state.position == VentsPosition.OPENED:
+
+            self.log.debug("Closing M1 vents.")
+
+            try:
+                await self.atpneumatics.cmd_closeM1CellVents.start(timeout=self.long_timeout)
+            except Exception:
+                return
+
+            while vent_state.position != VentsPosition.CLOSED:
+                vent_state = await self.atpneumatics.evt_m1VentsPosition.next(
+                    flush=False,
+                    timeout=self.long_long_timeout)
+                self.log.debug(f"M1 vent state {VentsPosition(vent_state.position)}")
+        elif vent_state.position == VentsPosition.CLOSED:
+            self.log.info(f"M1 vents already closed.")
+        else:
+            raise RuntimeError(f"Unrecognized M1 vent position: {vent_state.position}")
+
+    async def _slew_to(self, slew_cmd, slew_timeout, stop_before_slew=True, wait_settle=True):
         """Encapsulate "slew" activities.
 
         Parameters
@@ -823,17 +920,35 @@ class ATTCS(BaseGroup):
 
         self.log.debug("Sending command")
 
+        if stop_before_slew:
+            try:
+                await self.stop_tracking()
+            except Exception:
+                pass
+        else:
+            self.atmcs.evt_allAxesInPosition.flush()
+
+        track_id = next(self.track_id_gen)
+
         try:
-            await self.stop_tracking()
-        except Exception:
+            current_target = await self.atmcs.evt_target.next(flush=True,
+                                                              timeout=self.fast_timeout)
+            if track_id <= current_target.trackId:
+                self.track_id_gen = salobj.index_generator(current_target.trackId+1)
+                track_id = next(self.track_id_gen)
+
+        except asyncio.TimeoutError:
             pass
+
+        slew_cmd.set(trackId=track_id)
 
         ack = await slew_cmd.start(timeout=slew_timeout)
         self.dome_az_in_position.clear()
 
         self.log.debug("Scheduling check coroutines")
 
-        self.scheduled_coro.append(asyncio.ensure_future(self.wait_for_inposition(timeout=slew_timeout)))
+        self.scheduled_coro.append(asyncio.ensure_future(self.wait_for_inposition(timeout=slew_timeout,
+                                                                                  wait_settle=wait_settle)))
         self.scheduled_coro.append(asyncio.ensure_future(self.monitor_position(ack)))
 
         for comp in self.components:
@@ -870,7 +985,12 @@ class ATTCS(BaseGroup):
 
         """
         self.log.debug(f"Applying Az/El offset: {az}/ {el} ")
+        self.atmcs.evt_allAxesInPosition.flush()
         await self.atptg.cmd_offsetAzEl.set_start(az=az, el=el, num=0 if not persistent else 1)
+        try:
+            await self.atmcs.evt_allAxesInPosition.next(flush=True, timeout=self.tel_settle_time)
+        except asyncio.TimeoutError:
+            pass
         self.log.debug("Waiting for telescope to settle.")
         await asyncio.sleep(self.tel_settle_time)
         self.log.debug("Done")
@@ -914,7 +1034,7 @@ class ATTCS(BaseGroup):
 
         await self.offset_azel(az, el, persistent)
 
-    async def wait_for_inposition(self, timeout, cmd_ack=None):
+    async def wait_for_inposition(self, timeout, cmd_ack=None, wait_settle=True):
         """Wait for both the ATMCS and ATDome to be in position.
 
         Parameters
@@ -930,14 +1050,14 @@ class ATTCS(BaseGroup):
         status = list()
 
         if self.check.atmcs:
-            status.append(await self.wait_for_atmcs_inposition(timeout, cmd_ack))
+            status.append(await self.wait_for_atmcs_inposition(timeout, cmd_ack, wait_settle))
 
         if self.check.atdome:
             status.append(await self.wait_for_atdome_inposition(timeout, cmd_ack))
 
         return f"{status!r}"
 
-    async def wait_for_atmcs_inposition(self, timeout, cmd_ack=None):
+    async def wait_for_atmcs_inposition(self, timeout, cmd_ack=None, wait_settle=True):
         """Wait for inPosition of atmcs to be ready.
 
         Parameters
@@ -955,19 +1075,13 @@ class ATTCS(BaseGroup):
         asyncio.TimeoutError
             If does not get a status update in less then `timeout` seconds.
         """
-        first_pass = True
         while True:
 
-            if first_pass:
+            try:
+                in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False,
+                                                                          timeout=timeout)
+            except IndexError:
                 in_position = await self.atmcs.evt_allAxesInPosition.aget(timeout=timeout)
-                self.atmcs.evt_allAxesInPosition.flush()
-                first_pass = False
-            else:
-                try:
-                    in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False,
-                                                                              timeout=timeout)
-                except IndexError:
-                    in_position = await self.atmcs.evt_allAxesInPosition.aget(timeout=timeout)
 
             # make sure timestamp of event is after command was acknowledged.
             if cmd_ack is not None and in_position.private_sndStamp < cmd_ack.private_sndStamp:
@@ -975,8 +1089,9 @@ class ATTCS(BaseGroup):
             else:
                 self.log.info(f"Got {in_position.inPosition}")
                 if in_position.inPosition:
-                    self.log.info("Waiting for telescope to settle.")
-                    await asyncio.sleep(self.tel_settle_time)
+                    if wait_settle:
+                        self.log.info("Waiting for telescope to settle.")
+                        await asyncio.sleep(self.tel_settle_time)
                     self.log.info(f"Telescope in position.")
                     return f"Telescope in position."
                 else:
@@ -1089,10 +1204,19 @@ class ATTCS(BaseGroup):
                                                             timeout=self.fast_timeout)
                 tel_pos = await self.atmcs.tel_mount_AzEl_Encoders.next(flush=True,
                                                                         timeout=self.fast_timeout)
+                nasm_pos = await self.atmcs.tel_mount_Nasmyth_Encoders.next(flush=True,
+                                                                            timeout=self.fast_timeout)
+
                 alt_dif = subtract_angles(comm_pos.elevation, tel_pos.elevationCalculatedAngle[-1])
                 az_dif = subtract_angles(comm_pos.azimuth, tel_pos.azimuthCalculatedAngle[-1])
+                nasm1_dif = subtract_angles(comm_pos.nasmyth1RotatorAngle,
+                                            nasm_pos.nasmyth1CalculatedAngle[-1])
+                nasm2_dif = subtract_angles(comm_pos.nasmyth2RotatorAngle,
+                                            nasm_pos.nasmyth2CalculatedAngle[-1])
                 alt_in_position = Angle(np.abs(alt_dif)*u.deg) < self.tel_el_slew_tolerance
                 az_in_position = Angle(np.abs(az_dif)*u.deg) < self.tel_az_slew_tolerance
+                na1_in_position = Angle(np.abs(nasm1_dif)*u.deg) < self.tel_nasm_slew_tolerance
+                na2_in_position = Angle(np.abs(nasm2_dif) * u.deg) < self.tel_nasm_slew_tolerance
 
             if atdome:
                 dom_pos = await self.atdome.tel_position.next(flush=True,
@@ -1107,15 +1231,24 @@ class ATTCS(BaseGroup):
                     self.dome_az_in_position.set()
 
             if atmcs and atdome:
-                self.log.info(f"[Telescope] delta Alt = {alt_dif:+08.3f} | delta Az= {az_dif:+08.3f} "
+                self.log.info(f"[Telescope] delta Alt = {alt_dif:+08.3f} | delta Az = {az_dif:+08.3f} "
+                              f"delta N1 = {nasm1_dif:+08.3f} delta N2 = {nasm2_dif:+08.3f} "
                               f"[Dome] delta Az = {dom_az_dif:+08.3f}")
-                in_position = alt_in_position and az_in_position and dom_in_position
+                in_position = (alt_in_position
+                               and az_in_position
+                               and na1_in_position
+                               and na2_in_position
+                               and dom_in_position)
             elif atdome:
                 self.log.info(f"[Dome] delta Az = {dom_az_dif:+08.3f}")
                 in_position = dom_in_position
             elif atmcs:
-                self.log.info(f"[Telescope] delta Alt = {alt_dif:+08.3f} | delta Az= {az_dif:+08.3f}")
-                in_position = alt_in_position and az_in_position
+                self.log.info(f"[Telescope] delta Alt = {alt_dif:+08.3f} | delta Az= {az_dif:+08.3f} "
+                              f"delta N1 = {nasm1_dif:+08.3f} delta N2 = {nasm2_dif:+08.3f} ")
+                in_position = (alt_in_position
+                               and az_in_position
+                               and na1_in_position
+                               and na2_in_position)
             else:
                 break
 
@@ -1159,6 +1292,23 @@ class ATTCS(BaseGroup):
             await self.athexapod.evt_positionUpdate.next(flush=False, timeout=self.long_timeout)
         except asyncio.TimeoutError:
             pass
+
+    async def add_point_data(self):
+        """ Add current position to a point file. If a file is open it will
+        append to that file. If no file is opened it will open a new one.
+
+        """
+
+        state = await self.get_state('atptg')
+        if state != salobj.State.ENABLED:
+            raise RuntimeError(f"ATPtg in {state!r}. Expected {salobj.State.ENABLED!r}.")
+
+        try:
+            await self.atptg.cmd_pointAddData.start()
+        except salobj.AckError:
+            self.log.debug("Opening new pointing file.")
+            await self.atptg.cmd_pointNewFile.start()
+            await self.atptg.cmd_pointAddData.start()
 
 
 def parallactic_angle(location, lst, target):

@@ -54,6 +54,8 @@ class TestATGetStdFlatDataset(standardscripts.BaseScriptTestCase, asynctest.Test
         self.grating = None
         self.linear_stage = None
 
+        self.end_readout_tasks = []
+
         return (self.script, self.at_cam, self.at_spec, self.at_headerservice)
 
     async def cmd_take_images_callback(self, data):
@@ -63,6 +65,11 @@ class TestATGetStdFlatDataset(standardscripts.BaseScriptTestCase, asynctest.Test
             self.n_dark += 1
         elif "flat" in data.imageType.lower():
             self.n_flat += 1
+
+        self.end_readout_tasks.append(asyncio.create_task(self.end_readout()))
+
+    async def end_readout(self):
+
         await asyncio.sleep(self.script.read_out_time)
 
         date_id = astropy.time.Time.now().tai.isot.split("T")[0].replace("-", "")

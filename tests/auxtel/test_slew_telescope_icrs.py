@@ -25,7 +25,10 @@ import unittest
 
 import asynctest
 import numpy as np
+
+import astropy.units as u
 from astropy.time import Time
+from astropy.coordinates import EarthLocation, Angle
 
 from lsst.ts import salobj
 from lsst.ts import standardscripts
@@ -39,6 +42,10 @@ logging.basicConfig()
 class TestSlewTelescopeIcrs(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     async def basic_make_script(self, index):
         self.script = SlewTelescopeIcrs(index=index)
+
+        self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
+                                                    lat=-30.244728*u.deg,
+                                                    height=2663.0*u.m)
 
         # mock controller that uses callback functions defined below
         # to handle the expected commands
@@ -70,10 +77,16 @@ class TestSlewTelescopeIcrs(standardscripts.BaseScriptTestCase, asynctest.TestCa
         """Write ATPtg timeAndDate telemetry.
         """
         while True:
-            await asyncio.sleep(1.0)
             now = Time.now()
-            now.format = "mjd"
-            self.atptg.tel_timeAndDate.set_put(tai=now.value)
+            self.atptg.tel_timeAndDate.set_put(
+                tai=now.tai.mjd,
+                utc=now.utc.value.hour + now.utc.value.minute / 60. + (
+                    now.utc.value.second
+                    + now.utc.value.microsecond / 1e3) / 60. / 60.,
+                lst=Angle(now.sidereal_time('mean',
+                                            self.location.lon)).to_string(sep=':'),
+            )
+            await asyncio.sleep(0.05)
 
     async def raDecTarget(self, data):
         """Callback for ATPtg raDecTarget command.
@@ -105,6 +118,8 @@ class TestSlewTelescopeIcrs(standardscripts.BaseScriptTestCase, asynctest.TestCa
                 elevationCalculatedAngle=np.zeros(100),
                 azimuthCalculatedAngle=np.zeros(100),
             )
+
+            self.atmcs.tel_mount_Nasmyth_Encoders.put()
 
             if self.track:
                 self.atmcs.evt_target.set_put(

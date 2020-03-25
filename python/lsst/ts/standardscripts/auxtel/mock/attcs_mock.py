@@ -1,11 +1,35 @@
+# This file is part of ts_standardscripts
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
 
 __all__ = ["ATTCSMock"]
 
 import asyncio
 import numpy as np
 
+import astropy.units as u
+from astropy.time import Time
+from astropy.coordinates import EarthLocation, Angle
+
 from lsst.ts import salobj
 from lsst.ts.idl.enums import ATDome, ATPneumatics, ATMCS
+from lsst.ts.standardscripts.auxtel import VentsPosition
 
 LONG_TIMEOUT = 30
 
@@ -17,6 +41,10 @@ class ATTCSMock:
 
     """
     def __init__(self):
+
+        self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
+                                                    lat=-30.244728*u.deg,
+                                                    height=2663.0*u.m)
 
         self._components = ["ATMCS", "ATPtg", "ATAOS", "ATPneumatics",
                             "ATHexapod", "ATDome", "ATDomeTrajectory"]
@@ -47,8 +75,14 @@ class ATTCSMock:
         self.atdome.cmd_moveShutterMainDoor.callback = self.move_shutter_callback
         self.atdome.cmd_closeShutter.callback = self.close_shutter_callback
         self.atdome.cmd_homeAzimuth.callback = self.dome_home_callback
+
         self.atpneumatics.cmd_openM1Cover.callback = self.open_m1_cover_callback
         self.atpneumatics.cmd_closeM1Cover.callback = self.close_m1_cover_callback
+        self.atpneumatics.cmd_openM1CellVents.callback = self.open_m1_cell_vents_callback
+        self.atpneumatics.cmd_closeM1CellVents.callback = self.close_m1_cell_vents_callback
+
+        self.atpneumatics.evt_m1VentsPosition.set(position=VentsPosition.CLOSED)
+
         self.ataos.cmd_enableCorrection.callback = self.generic_callback
         self.ataos.cmd_disableCorrection.callback = self.generic_callback
 
@@ -71,6 +105,7 @@ class ATTCSMock:
 
         self.atmcs_telemetry_task = None
         self.atdome_telemetry_task = None
+        self.atptg_telemetry_task = None
         self.run_telemetry_loop = True
 
         self.atptg.cmd_raDecTarget.callback = self.slew_callback
@@ -114,6 +149,7 @@ class ATTCSMock:
         self.run_telemetry_loop = True
         self.atmcs_telemetry_task = asyncio.create_task(self.atmcs_telemetry())
         self.atdome_telemetry_task = asyncio.create_task(self.atdome_telemetry())
+        self.atptg_telemetry_task = asyncio.create_task(self.atptg_telemetry())
 
     async def atmcs_telemetry(self):
         while self.run_telemetry_loop:
@@ -122,6 +158,10 @@ class ATTCSMock:
                 elevationCalculatedAngle=np.zeros(100)+self.tel_alt,
                 azimuthCalculatedAngle=np.zeros(100)+self.tel_az,
             )
+
+            self.atmcs.tel_mount_Nasmyth_Encoders.put()
+
+            self.atpneumatics.evt_m1VentsPosition.put()  # only output when it changes
 
             if self.track:
                 self.atmcs.evt_target.set_put(elevation=self.tel_alt,
@@ -134,6 +174,18 @@ class ATTCSMock:
         while self.run_telemetry_loop:
             self.atdome.tel_position.set_put(azimuthPosition=self.dom_az)
             self.atdome.evt_azimuthState.set_put(homing=self.is_dome_homming)
+            await asyncio.sleep(1.)
+
+    async def atptg_telemetry(self):
+        while self.run_telemetry_loop:
+            now = Time.now()
+            self.atptg.tel_timeAndDate.set_put(
+                tai=now.tai.mjd,
+                utc=now.utc.value.hour
+                + now.utc.value.minute / 60.
+                + (now.utc.value.second + now.utc.value.microsecond / 1e3) / 60. / 60.,
+                lst=Angle(now.sidereal_time('mean', self.location.lon)).to_string(sep=':'),
+            )
             await asyncio.sleep(1.)
 
     async def atmcs_wait_and_fault(self, wait_time):
@@ -163,6 +215,22 @@ class ATTCSMock:
 
         self.task_list.append(asyncio.create_task(self.close_m1_cover()))
 
+    async def open_m1_cell_vents_callback(self, data):
+        if self.atpneumatics.evt_m1VentsPosition.data.position != VentsPosition.CLOSED:
+            vent_pos = VentsPosition(self.atpneumatics.evt_m1VentsPosition.data.position)
+            raise RuntimeError(f"Cannot open vent. Current vent position is "
+                               f"{vent_pos!r}")
+        else:
+            self.task_list.append(asyncio.create_task(self.open_m1_cell_vents()))
+
+    async def close_m1_cell_vents_callback(self, data):
+        if self.atpneumatics.evt_m1VentsPosition.data.position != VentsPosition.OPENED:
+            vent_pos = VentsPosition(self.atpneumatics.evt_m1VentsPosition.data.position)
+            raise RuntimeError(f"Cannot close vent. Current vent position is "
+                               f"{vent_pos!r}")
+        else:
+            self.task_list.append(asyncio.create_task(self.close_m1_cell_vents()))
+
     async def dome_home_callback(self, data):
         await asyncio.sleep(0.5)
         self.task_list.append(asyncio.create_task(self.home_dome()))
@@ -178,6 +246,16 @@ class ATTCSMock:
         self.m1_cover_state = ATPneumatics.MirrorCoverState.INMOTION
         await asyncio.sleep(5.0)
         self.m1_cover_state = ATPneumatics.MirrorCoverState.CLOSED
+
+    async def open_m1_cell_vents(self):
+        self.atpneumatics.evt_m1VentsPosition.set(position=VentsPosition.PARTIALLYOPENED)
+        await asyncio.sleep(2.)
+        self.atpneumatics.evt_m1VentsPosition.set(position=VentsPosition.OPENED)
+
+    async def pass_m1_cell_vents(self):
+        self.atpneumatics.evt_m1VentsPosition.set(position=VentsPosition.PARTIALLYOPENED)
+        await asyncio.sleep(2.)
+        self.atpneumatics.evt_m1VentsPosition.set(position=VentsPosition.CLOSED)
 
     async def home_dome(self):
         print("Homing dome")
