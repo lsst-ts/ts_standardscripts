@@ -43,11 +43,12 @@ class ATCamTakeImage(salobj.BaseScript):
 
     * exposure {n} of {m}: before sending the ATCamera ``takeImages`` command
     """
+
     def __init__(self, index):
         super().__init__(index=index, descr="Test ATCamTakeImage")
 
         self.latiss = LATISS(self.domain)
-        self.cmd_timeout = 60.  # command timeout (sec)
+        self.cmd_timeout = 60.0  # command timeout (sec)
         # large because of an issue with one of the components
 
     @classmethod
@@ -126,37 +127,48 @@ class ATCamTakeImage(salobj.BaseScript):
         if isinstance(config.exp_times, collections.Iterable):
             if nimages is not None:
                 if len(config.exp_times) != nimages:
-                    raise ValueError(f"nimages={nimages} specified and "
-                                     f"exp_times={config.exp_times} is an array, "
-                                     f"but the length does not match nimages")
+                    raise ValueError(
+                        f"nimages={nimages} specified and "
+                        f"exp_times={config.exp_times} is an array, "
+                        f"but the length does not match nimages"
+                    )
         else:
             # exp_time is a scalar; if nimages is specified then
             # take that many images, else take 1 image
             if nimages is None:
                 nimages = 1
-            config.exp_times = [config.exp_times]*nimages
+            config.exp_times = [config.exp_times] * nimages
 
-        self.log.info(f"exposure times={self.config.exp_times}, "
-                      f"image_type={self.config.image_type}"
-                      f"filter={self.config.filter}"
-                      f"grating={self.config.grating}"
-                      f"linear_stage={self.config.linear_stage}")
+        self.log.info(
+            f"exposure times={self.config.exp_times}, "
+            f"image_type={self.config.image_type}"
+            f"filter={self.config.filter}"
+            f"grating={self.config.grating}"
+            f"linear_stage={self.config.linear_stage}"
+        )
 
     def set_metadata(self, metadata):
         nimages = len(self.config.exp_times)
         mean_exptime = np.mean(self.config.exp_times)
-        metadata.duration = (mean_exptime + self.latiss.read_out_time
-                             + self.latiss.shutter_time*2 if self.latiss.shutter_time else 0) * nimages
+        metadata.duration = (
+            mean_exptime + self.latiss.read_out_time + self.latiss.shutter_time * 2
+            if self.latiss.shutter_time
+            else 0
+        ) * nimages
 
     async def run(self):
         nimages = len(self.config.exp_times)
         for i, exposure in enumerate(self.config.exp_times):
             self.log.debug(f"exposure {i+1} of {nimages}")
             await self.checkpoint(f"exposure {i+1} of {nimages}")
-            end_readout = await self.latiss.take_imgtype(self.config.image_type, exposure, 1,
-                                                         filter=self.config.filter,
-                                                         grating=self.config.grating,
-                                                         linear_stage=self.config.linear_stage,
-                                                         group_id=self.group_id,
-                                                         checkpoint=self.checkpoint)
+            end_readout = await self.latiss.take_imgtype(
+                self.config.image_type,
+                exposure,
+                1,
+                filter=self.config.filter,
+                grating=self.config.grating,
+                linear_stage=self.config.linear_stage,
+                group_id=self.group_id,
+                checkpoint=self.checkpoint,
+            )
             self.log.debug(f"Took {end_readout}")

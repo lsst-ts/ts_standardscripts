@@ -1,4 +1,3 @@
-
 import logging
 import random
 import unittest
@@ -19,7 +18,6 @@ MAKE_TIMEOUT = 60  # Timeout for make_script (sec)
 
 
 class TestBaseGroup(standardscripts.BaseScriptTestCase, asynctest.TestCase):
-
     async def basic_make_script(self, index):
         self.basegroup = BaseGroup(components=["Test:1", "Test:2", "Test:3"])
 
@@ -37,10 +35,10 @@ class TestBaseGroup(standardscripts.BaseScriptTestCase, asynctest.TestCase):
             await self.basegroup.enable()
 
             for comp in self.basegroup.components:
-                with self.subTest(msg=f"Check {comp} is enable",
-                                  component=comp):
-                    await getattr(self.basegroup, comp).evt_heartbeat.next(flush=True,
-                                                                           timeout=HB_TIMEOUT)
+                with self.subTest(msg=f"Check {comp} is enable", component=comp):
+                    await getattr(self.basegroup, comp).evt_heartbeat.next(
+                        flush=True, timeout=HB_TIMEOUT
+                    )
                     ss = await self.basegroup.get_state(comp)
                     self.assertEqual(ss, salobj.State.ENABLED)
 
@@ -48,10 +46,10 @@ class TestBaseGroup(standardscripts.BaseScriptTestCase, asynctest.TestCase):
             await self.basegroup.standby()
 
             for comp in self.basegroup.components:
-                with self.subTest(msg=f"Check {comp} is in standby",
-                                  component=comp):
-                    await getattr(self.basegroup, comp).evt_heartbeat.next(flush=True,
-                                                                           timeout=HB_TIMEOUT)
+                with self.subTest(msg=f"Check {comp} is in standby", component=comp):
+                    await getattr(self.basegroup, comp).evt_heartbeat.next(
+                        flush=True, timeout=HB_TIMEOUT
+                    )
                     ss = await self.basegroup.get_state(comp)
                     self.assertEqual(ss, salobj.State.STANDBY)
 

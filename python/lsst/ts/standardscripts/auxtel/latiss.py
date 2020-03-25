@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ['LATISS']
+__all__ = ["LATISS"]
 
 import asyncio
 
@@ -42,20 +42,20 @@ class LATISS(BaseGroup):
 
     def __init__(self, domain=None, log=None):
 
-        super().__init__(components=["ATCamera", "ATSpectrograph",
-                                     "ATHeaderService", "ATArchiver"],
-                         domain=domain,
-                         log=log)
+        super().__init__(
+            components=["ATCamera", "ATSpectrograph", "ATHeaderService", "ATArchiver"],
+            domain=domain,
+            log=log,
+        )
 
-        self.read_out_time = 2.  # readout time (sec)
+        self.read_out_time = 2.0  # readout time (sec)
         self.shutter_time = 1  # time to open or close shutter (sec)
 
         self.valid_imagetype = ["BIAS", "DARK", "FLAT", "OBJECT", "ENGTEST"]
 
         self.cmd_lock = asyncio.Lock()
 
-    async def take_bias(self, nbias,
-                        group_id=None, checkpoint=None):
+    async def take_bias(self, nbias, group_id=None, checkpoint=None):
         """Take a series of bias images.
 
         Parameters
@@ -70,14 +70,15 @@ class LATISS(BaseGroup):
             that is called before each bias is taken.
 
         """
-        return await self.take_imgtype(imgtype="BIAS",
-                                       exptime=0.,
-                                       n=nbias,
-                                       group_id=group_id,
-                                       checkpoint=checkpoint)
+        return await self.take_imgtype(
+            imgtype="BIAS",
+            exptime=0.0,
+            n=nbias,
+            group_id=group_id,
+            checkpoint=checkpoint,
+        )
 
-    async def take_darks(self, exptime, ndarks,
-                         group_id=None, checkpoint=None):
+    async def take_darks(self, exptime, ndarks, group_id=None, checkpoint=None):
         """Take a series of dark images.
 
         Parameters
@@ -94,16 +95,24 @@ class LATISS(BaseGroup):
             that is called before each bias is taken.
 
         """
-        return await self.take_imgtype(imgtype="DARK",
-                                       exptime=exptime,
-                                       n=ndarks,
-                                       group_id=group_id,
-                                       checkpoint=checkpoint)
+        return await self.take_imgtype(
+            imgtype="DARK",
+            exptime=exptime,
+            n=ndarks,
+            group_id=group_id,
+            checkpoint=checkpoint,
+        )
 
-    async def take_flats(self, exptime, nflats,
-                         filter=None, grating=None, linear_stage=None,
-                         group_id=None,
-                         checkpoint=None):
+    async def take_flats(
+        self,
+        exptime,
+        nflats,
+        filter=None,
+        grating=None,
+        linear_stage=None,
+        group_id=None,
+        checkpoint=None,
+    ):
         """Take a series of flat field images.
 
         Parameters
@@ -126,18 +135,27 @@ class LATISS(BaseGroup):
             that is called before each bias is taken.
 
         """
-        return await self.take_imgtype(imgtype="FLAT",
-                                       exptime=exptime,
-                                       n=nflats,
-                                       filter=filter,
-                                       grating=grating,
-                                       linear_stage=linear_stage,
-                                       group_id=group_id,
-                                       checkpoint=checkpoint)
+        return await self.take_imgtype(
+            imgtype="FLAT",
+            exptime=exptime,
+            n=nflats,
+            filter=filter,
+            grating=grating,
+            linear_stage=linear_stage,
+            group_id=group_id,
+            checkpoint=checkpoint,
+        )
 
-    async def take_object(self, exptime, n=1,
-                          filter=None, grating=None, linear_stage=None,
-                          group_id=None, checkpoint=None):
+    async def take_object(
+        self,
+        exptime,
+        n=1,
+        filter=None,
+        grating=None,
+        linear_stage=None,
+        group_id=None,
+        checkpoint=None,
+    ):
         """Take a series of object images.
 
         Object images are assumed to be looking through an open dome at the
@@ -163,18 +181,27 @@ class LATISS(BaseGroup):
             that is called before each bias is taken.
 
         """
-        return await self.take_imgtype(imgtype="OBJECT",
-                                       exptime=exptime,
-                                       n=n,
-                                       filter=filter,
-                                       grating=grating,
-                                       linear_stage=linear_stage,
-                                       group_id=group_id,
-                                       checkpoint=checkpoint)
+        return await self.take_imgtype(
+            imgtype="OBJECT",
+            exptime=exptime,
+            n=n,
+            filter=filter,
+            grating=grating,
+            linear_stage=linear_stage,
+            group_id=group_id,
+            checkpoint=checkpoint,
+        )
 
-    async def take_engtest(self, exptime, n=1,
-                           filter=None, grating=None, linear_stage=None,
-                           group_id=None, checkpoint=None):
+    async def take_engtest(
+        self,
+        exptime,
+        n=1,
+        filter=None,
+        grating=None,
+        linear_stage=None,
+        group_id=None,
+        checkpoint=None,
+    ):
         """Take a series of engineering test images.
 
         Parameters
@@ -197,18 +224,28 @@ class LATISS(BaseGroup):
             that is called before each bias is taken.
 
         """
-        return await self.take_imgtype(imgtype="ENGTEST",
-                                       exptime=exptime,
-                                       n=n,
-                                       filter=filter,
-                                       grating=grating,
-                                       linear_stage=linear_stage,
-                                       group_id=group_id,
-                                       checkpoint=checkpoint)
+        return await self.take_imgtype(
+            imgtype="ENGTEST",
+            exptime=exptime,
+            n=n,
+            filter=filter,
+            grating=grating,
+            linear_stage=linear_stage,
+            group_id=group_id,
+            checkpoint=checkpoint,
+        )
 
-    async def take_imgtype(self, imgtype, exptime, n,
-                           filter=None, grating=None, linear_stage=None,
-                           group_id=None, checkpoint=None):
+    async def take_imgtype(
+        self,
+        imgtype,
+        exptime,
+        n,
+        filter=None,
+        grating=None,
+        linear_stage=None,
+        group_id=None,
+        checkpoint=None,
+    ):
         """Take a series of images of the specified image type.
 
         Parameters
@@ -230,8 +267,10 @@ class LATISS(BaseGroup):
         """
 
         if imgtype not in self.valid_imagetype:
-            raise RuntimeError(f"Invalid imgtype:{imgtype}. Must be one of "
-                               f"{self.valid_imagetype!r}")
+            raise RuntimeError(
+                f"Invalid imgtype:{imgtype}. Must be one of "
+                f"{self.valid_imagetype!r}"
+            )
 
         exp_ids = np.zeros(n, dtype=int)
 
@@ -239,7 +278,7 @@ class LATISS(BaseGroup):
             self.log.debug("Generating group_id")
             group_id = self.next_group_id()
 
-        if imgtype == "BIAS" and exptime > 0.:
+        if imgtype == "BIAS" and exptime > 0.0:
             self.log.warning("Image type is BIAS, ignoring exptime.")
 
         for i in range(n):
@@ -250,13 +289,15 @@ class LATISS(BaseGroup):
             else:
                 self.log.debug(tag)
 
-            end_readout = await self.take_image(exptime=exptime if imgtype != "BIAS" else 0.,
-                                                shutter=imgtype not in ["BIAS", "DARK"],
-                                                image_type=imgtype,
-                                                group_id=group_id,
-                                                filter=filter if i == 0 else None,
-                                                grating=grating if i == 0 else None,
-                                                linear_stage=linear_stage if i == 0 else None)
+            end_readout = await self.take_image(
+                exptime=exptime if imgtype != "BIAS" else 0.0,
+                shutter=imgtype not in ["BIAS", "DARK"],
+                image_type=imgtype,
+                group_id=group_id,
+                filter=filter if i == 0 else None,
+                grating=grating if i == 0 else None,
+                linear_stage=linear_stage if i == 0 else None,
+            )
 
             # parse out visitID from filename -
             # (Patrick comment) this is highly annoying
@@ -266,10 +307,19 @@ class LATISS(BaseGroup):
 
         return exp_ids
 
-    async def take_image(self, exptime, shutter, image_type, group_id,
-                         filter=None, grating=None, linear_stage=None,
-                         science=True, guide=False, wfs=False,
-                         ):
+    async def take_image(
+        self,
+        exptime,
+        shutter,
+        image_type,
+        group_id,
+        filter=None,
+        grating=None,
+        linear_stage=None,
+        science=True,
+        guide=False,
+        wfs=False,
+    ):
         """Set up the spectrograph and take a series of images.
 
 
@@ -311,17 +361,30 @@ class LATISS(BaseGroup):
             End readout event data.
         """
 
-        await self.setup_atspec(filter=filter,
-                                grating=grating,
-                                linear_stage=linear_stage)
+        await self.setup_atspec(
+            filter=filter, grating=grating, linear_stage=linear_stage
+        )
 
-        return await self.expose(exp_time=exptime, shutter=shutter,
-                                 image_type=image_type,
-                                 group_id=group_id,
-                                 science=science, guide=guide, wfs=wfs)
+        return await self.expose(
+            exp_time=exptime,
+            shutter=shutter,
+            image_type=image_type,
+            group_id=group_id,
+            science=science,
+            guide=guide,
+            wfs=wfs,
+        )
 
-    async def expose(self, exp_time, shutter, image_type, group_id,
-                     science=True, guide=False, wfs=False):
+    async def expose(
+        self,
+        exp_time,
+        shutter,
+        image_type,
+        group_id,
+        science=True,
+        guide=False,
+        wfs=False,
+    ):
         """Encapsulates the take image command.
 
         This basically consists of configuring and sending a takeImages
@@ -354,26 +417,27 @@ class LATISS(BaseGroup):
             # FIXME: Current version of ATCamera software is not set up to take
             # images with numImages > 1, so this is fixed at 1 for now and we
             # loop through any set of images we want to take. (2019/03/11)
-            self.atcamera.cmd_takeImages.set(numImages=1,
-                                             expTime=float(exp_time),
-                                             shutter=bool(shutter),
-                                             imageType=str(image_type),
-                                             groupId=str(group_id),
-                                             science=bool(science),
-                                             guide=bool(guide),
-                                             wfs=bool(wfs)
-                                             )
+            self.atcamera.cmd_takeImages.set(
+                numImages=1,
+                expTime=float(exp_time),
+                shutter=bool(shutter),
+                imageType=str(image_type),
+                groupId=str(group_id),
+                science=bool(science),
+                guide=bool(guide),
+                wfs=bool(wfs),
+            )
 
             timeout = self.read_out_time + self.long_timeout + self.long_long_timeout
             self.atcamera.evt_endReadout.flush()
             self.atheaderservice.evt_largeFileObjectAvailable.flush()
             await self.atcamera.cmd_takeImages.start(timeout=timeout + exp_time)
-            end_readout = await self.atcamera.evt_endReadout.next(flush=False,
-                                                                  timeout=timeout)
+            end_readout = await self.atcamera.evt_endReadout.next(
+                flush=False, timeout=timeout
+            )
             return end_readout
 
-    async def setup_atspec(self, filter=None, grating=None,
-                           linear_stage=None):
+    async def setup_atspec(self, filter=None, grating=None, linear_stage=None):
         """Encapsulates commands to setup spectrograph.
 
         Parameters
@@ -390,31 +454,39 @@ class LATISS(BaseGroup):
         setup_coroutines = []
         if filter is not None:
             if isinstance(filter, int):
-                self.atspectrograph.cmd_changeFilter.set(filter=filter,
-                                                         name='')
+                self.atspectrograph.cmd_changeFilter.set(filter=filter, name="")
             elif type(filter) == str:
-                self.atspectrograph.cmd_changeFilter.set(filter=0,
-                                                         name=filter)
+                self.atspectrograph.cmd_changeFilter.set(filter=0, name=filter)
             else:
-                raise RuntimeError(f"Filter must be a string or an int, got "
-                                   f"{type(filter)}:{filter}")
-            setup_coroutines.append(self.atspectrograph.cmd_changeFilter.start(timeout=self.long_timeout))
+                raise RuntimeError(
+                    f"Filter must be a string or an int, got "
+                    f"{type(filter)}:{filter}"
+                )
+            setup_coroutines.append(
+                self.atspectrograph.cmd_changeFilter.start(timeout=self.long_timeout)
+            )
 
         if grating is not None:
             if isinstance(grating, int):
-                self.atspectrograph.cmd_changeDisperser.set(disperser=grating,
-                                                            name='')
+                self.atspectrograph.cmd_changeDisperser.set(disperser=grating, name="")
             elif type(grating) == str:
-                self.atspectrograph.cmd_changeDisperser.set(disperser=0,
-                                                            name=grating)
+                self.atspectrograph.cmd_changeDisperser.set(disperser=0, name=grating)
             else:
-                raise RuntimeError(f"Grating must be a string or an int, got "
-                                   f"{type(grating)}:{grating}")
-            setup_coroutines.append(self.atspectrograph.cmd_changeDisperser.start(timeout=self.long_timeout))
+                raise RuntimeError(
+                    f"Grating must be a string or an int, got "
+                    f"{type(grating)}:{grating}"
+                )
+            setup_coroutines.append(
+                self.atspectrograph.cmd_changeDisperser.start(timeout=self.long_timeout)
+            )
 
         if linear_stage is not None:
-            self.atspectrograph.cmd_moveLinearStage.set(distanceFromHome=float(linear_stage))
-            setup_coroutines.append(self.atspectrograph.cmd_moveLinearStage.start(timeout=self.long_timeout))
+            self.atspectrograph.cmd_moveLinearStage.set(
+                distanceFromHome=float(linear_stage)
+            )
+            setup_coroutines.append(
+                self.atspectrograph.cmd_moveLinearStage.start(timeout=self.long_timeout)
+            )
 
         if len(setup_coroutines) > 0:
             async with self.cmd_lock:

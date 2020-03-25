@@ -47,9 +47,7 @@ class TestATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
             print("test 1 start")
 
-            await self.attcs.slew(
-                ra, dec, slew_timeout=self.attcs_mock.slew_time * 2.0
-            )
+            await self.attcs.slew(ra, dec, slew_timeout=self.attcs_mock.slew_time * 2.0)
 
     async def test_slew_fail_atptg_fault(self):
 

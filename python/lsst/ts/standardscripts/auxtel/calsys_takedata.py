@@ -67,7 +67,7 @@ def as_array(value, dtype, nelt):
         if len(value) != nelt:
             raise ValueError(f"len={len(value)} != {nelt}")
         return np.array(value, dtype=dtype)
-    return np.array([value]*nelt, dtype=dtype)
+    return np.array([value] * nelt, dtype=dtype)
 
 
 class CalSysTakeData(salobj.BaseScript):
@@ -75,11 +75,17 @@ class CalSysTakeData(salobj.BaseScript):
     """
 
     def __init__(self, index):
-        super().__init__(index=index,
-                         descr="Configure and take data from the auxiliary telescope CalSystem.")
-        self.electrometer = salobj.Remote(domain=self.domain, name="Electrometer", index=1)
+        super().__init__(
+            index=index,
+            descr="Configure and take data from the auxiliary telescope CalSystem.",
+        )
+        self.electrometer = salobj.Remote(
+            domain=self.domain, name="Electrometer", index=1
+        )
         self.monochromator = salobj.Remote(domain=self.domain, name="ATMonochromator")
-        self.fiber_spectrograph = salobj.Remote(domain=self.domain, name="FiberSpectrograph")
+        self.fiber_spectrograph = salobj.Remote(
+            domain=self.domain, name="FiberSpectrograph"
+        )
         self.cmd_timeout = 10
         self.change_grating_time = 60
 
@@ -207,22 +213,37 @@ class CalSysTakeData(salobj.BaseScript):
         nelt = 1
         kwargs = locals()
         # Find the first array value, if any, and set nelt based on that
-        for argname in ("wavelengths", "integration_times", "grating_types",
-                        "entrance_slit_widths", "exit_slit_widths",
-                        "image_types", "lamps", "spectrometer_delays"):
+        for argname in (
+            "wavelengths",
+            "integration_times",
+            "grating_types",
+            "entrance_slit_widths",
+            "exit_slit_widths",
+            "image_types",
+            "lamps",
+            "spectrometer_delays",
+        ):
             value = getattr(config, argname)
             if is_sequence(value):
                 nelt = len(value)
                 break
 
         config.wavelengths = as_array(config.wavelengths, dtype=float, nelt=nelt)
-        config.integration_times = as_array(config.integration_times, dtype=float, nelt=nelt)
+        config.integration_times = as_array(
+            config.integration_times, dtype=float, nelt=nelt
+        )
         config.grating_types = as_array(config.grating_types, dtype=int, nelt=nelt)
-        config.entrance_slit_widths = as_array(config.entrance_slit_widths, dtype=float, nelt=nelt)
-        config.exit_slit_widths = as_array(config.exit_slit_widths, dtype=float, nelt=nelt)
+        config.entrance_slit_widths = as_array(
+            config.entrance_slit_widths, dtype=float, nelt=nelt
+        )
+        config.exit_slit_widths = as_array(
+            config.exit_slit_widths, dtype=float, nelt=nelt
+        )
         config.image_types = as_array(config.image_types, dtype=str, nelt=nelt)
         config.lamps = as_array(config.lamps, dtype=str, nelt=nelt)
-        config.spectrometer_delays = as_array(config.spectrometer_delays, dtype=float, nelt=nelt)
+        config.spectrometer_delays = as_array(
+            config.spectrometer_delays, dtype=float, nelt=nelt
+        )
         self.config = config
 
         self.log.info("Configure completed")
@@ -235,7 +256,9 @@ class CalSysTakeData(salobj.BaseScript):
         metadata : SAPY_Script.Script_logevent_metadataC
         """
         nimages = len(self.config.lamps)
-        metadata.duration = self.change_grating_time*nimages + np.sum(self.config.integration_times)
+        metadata.duration = self.change_grating_time * nimages + np.sum(
+            self.config.integration_times
+        )
 
     async def run(self):
         """Run script."""
@@ -248,22 +271,31 @@ class CalSysTakeData(salobj.BaseScript):
 
             await self.checkpoint("setup")
 
-            self.monochromator.cmd_changeWavelength.set(wavelength=self.config.wavelengths[i])
-            await self.monochromator.cmd_changeWavelength.start(timeout=self.cmd_timeout)
+            self.monochromator.cmd_changeWavelength.set(
+                wavelength=self.config.wavelengths[i]
+            )
+            await self.monochromator.cmd_changeWavelength.start(
+                timeout=self.cmd_timeout
+            )
 
             self.monochromator.cmd_changeSlitWidth.set(
                 slit=ATMonochromator.Slit.EXIT,
-                slitWidth=self.config.exit_slit_widths[i])
+                slitWidth=self.config.exit_slit_widths[i],
+            )
             await self.monochromator.cmd_changeSlitWidth.start(timeout=self.cmd_timeout)
 
             self.monochromator.cmd_changeSlitWidth.set(
                 slit=ATMonochromator.Slit.ENTRY,
-                slitWidth=self.config.entrance_slit_widths[i])
+                slitWidth=self.config.entrance_slit_widths[i],
+            )
             await self.monochromator.cmd_changeSlitWidth.start(timeout=self.cmd_timeout)
 
-            self.monochromator.cmd_selectGrating.set(gratingType=self.config.grating_types[i])
+            self.monochromator.cmd_selectGrating.set(
+                gratingType=self.config.grating_types[i]
+            )
             await self.monochromator.cmd_selectGrating.start(
-                timeout=self.cmd_timeout+self.change_grating_time)
+                timeout=self.cmd_timeout + self.change_grating_time
+            )
 
             await self.checkpoint("expose")
 
@@ -271,7 +303,9 @@ class CalSysTakeData(salobj.BaseScript):
             # until the scan is done, so start the scan and then start
             # taking the image data
             self.electrometer.cmd_startScanDt.set(
-                scanDuration=self.config.integration_times[i] + self.config.spectrometer_delays[i]*2)
+                scanDuration=self.config.integration_times[i]
+                + self.config.spectrometer_delays[i] * 2
+            )
             coro1 = self.electrometer.cmd_startScanDt.start()
             coro2 = self.start_take_spectrum(i)
             await asyncio.gather(coro1, coro2)
@@ -288,7 +322,9 @@ class CalSysTakeData(salobj.BaseScript):
         -------
         cmd_expose.start : coro
         """
-        await self.electrometer.evt_detailedState.next(flush=True, timeout=self.cmd_timeout)
+        await self.electrometer.evt_detailedState.next(
+            flush=True, timeout=self.cmd_timeout
+        )
         await asyncio.sleep(self.config.spectrometer_delays[index])
 
         timeout = self.config.integration_times[index] + self.cmd_timeout

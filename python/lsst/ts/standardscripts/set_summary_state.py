@@ -51,7 +51,7 @@ class SetSummaryState(salobj.BaseScript):
     def __init__(self, index):
         super().__init__(index=index, descr="Put CSCs into specified states")
 
-        self.valid_transitions = ['start', 'enable', 'disable', 'standby']
+        self.valid_transitions = ["start", "enable", "disable", "standby"]
 
         # approximate time to construct a Remote for a CSC (sec)
         self.create_remote_time = 15
@@ -159,8 +159,9 @@ class SetSummaryState(salobj.BaseScript):
             name, index = name_index
             self.log.debug(f"Create remote {name}:{index}")
             if name_index not in remotes:
-                remote = salobj.Remote(domain=self.domain, name=name, index=index,
-                                       include=["summaryState"])
+                remote = salobj.Remote(
+                    domain=self.domain, name=name, index=index, include=["summaryState"]
+                )
                 remotes[name_index] = remote
 
         self.nameind_state_settings = nameind_state_settings
@@ -175,11 +176,15 @@ class SetSummaryState(salobj.BaseScript):
         """
         # a crude estimate; state transitions are typically quick
         # but we don't know how many of them there will be
-        metadata.duration = len(self.nameind_state_settings)*2
+        metadata.duration = len(self.nameind_state_settings) * 2
 
     async def run(self):
         """Run script."""
-        tasks = [remote.start_task for remote in self.remotes.values() if not remote.start_task.done()]
+        tasks = [
+            remote.start_task
+            for remote in self.remotes.values()
+            if not remote.start_task.done()
+        ]
         if tasks:
             self.log.info(f"Waiting for {len(tasks)} remotes to be ready")
             await asyncio.gather(*tasks)
@@ -188,4 +193,6 @@ class SetSummaryState(salobj.BaseScript):
             name, index = name_index
             await self.checkpoint(f"set {name}:{index}")
             remote = self.remotes[(name, index)]
-            await salobj.set_summary_state(remote, state, settings, timeout=self.cmd_timeout)
+            await salobj.set_summary_state(
+                remote, state, settings, timeout=self.cmd_timeout
+            )

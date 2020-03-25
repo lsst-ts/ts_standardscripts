@@ -53,10 +53,13 @@ class SlewTelescopeIcrs(salobj.BaseScript):
     * If stopped or on failure and ``startTracking`` was issued
         then issues the ``stopTracking`` command to ATMCS.
     """
+
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        super().__init__(index=index, descr="Slew the auxiliary telescope to an ICRS position")
+        super().__init__(
+            index=index, descr="Slew the auxiliary telescope to an ICRS position"
+        )
         self.attcs = ATTCS(self.domain)
         self.tracking_started = False
 
@@ -112,13 +115,17 @@ class SlewTelescopeIcrs(salobj.BaseScript):
 
     async def run(self):
 
-        self.log.info(f"Slew and track target_name={self.config.target_name}; "
-                      f"ra={self.config.ra}, dec={self.config.dec}; rot_pa={self.config.rot_pa}")
+        self.log.info(
+            f"Slew and track target_name={self.config.target_name}; "
+            f"ra={self.config.ra}, dec={self.config.dec}; rot_pa={self.config.rot_pa}"
+        )
 
-        await self.attcs.slew_icrs(ra=self.config.ra,
-                                   dec=self.config.dec,
-                                   rot_pa=self.config.rot_pa,
-                                   target_name=self.config.target_name)
+        await self.attcs.slew_icrs(
+            ra=self.config.ra,
+            dec=self.config.dec,
+            rot_pa=self.config.rot_pa,
+            target_name=self.config.target_name,
+        )
 
         self.tracking_started = True
 
@@ -126,10 +133,14 @@ class SlewTelescopeIcrs(salobj.BaseScript):
         if self.state.state != ScriptState.ENDING:
             # abnormal termination
             if self.tracking_started:
-                self.log.warning(f"Terminating with state={self.state.state}: sending "
-                                 f"stopTracking to ATMCS")
+                self.log.warning(
+                    f"Terminating with state={self.state.state}: sending "
+                    f"stopTracking to ATMCS"
+                )
                 try:
                     await self.attcs.atmcs.cmd_stopTracking.start(timeout=10)
                 except asyncio.TimeoutError as e:
-                    self.log.error("Stop tracking command timed out during cleanup procedure.")
+                    self.log.error(
+                        "Stop tracking command timed out during cleanup procedure."
+                    )
                     self.log.exception(e)

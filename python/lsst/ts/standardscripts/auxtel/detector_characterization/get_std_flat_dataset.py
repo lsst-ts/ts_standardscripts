@@ -58,18 +58,19 @@ class ATGetStdFlatDataset(salobj.BaseScript):
 
     def __init__(self, index):
 
-        super().__init__(index=index,
-                         descr="Take Flat field sensor characterization data.")
+        super().__init__(
+            index=index, descr="Take Flat field sensor characterization data."
+        )
 
         self.latiss = LATISS(self.domain)
 
         self.read_out_time = self.latiss.read_out_time
-        self.cmd_timeout = 30.
-        self.end_readout_timeout = 120.
+        self.cmd_timeout = 30.0
+        self.end_readout_timeout = 120.0
 
         # FIXME: Get this parameter from the camera configuration once late
         # joiner is working on the open network.
-        self.maximum_exp_time = 401.  # Maximum exposure time in seconds.
+        self.maximum_exp_time = 401.0  # Maximum exposure time in seconds.
 
     @classmethod
     def get_schema(cls):
@@ -165,37 +166,47 @@ class ATGetStdFlatDataset(salobj.BaseScript):
             Script configuration, as defined by `schema`.
         """
         self.config = config
-        self.flat_exp_times = self.config.flat_base_exptime * np.array(self.config.flat_dn_range, dtype=float)
+        self.flat_exp_times = self.config.flat_base_exptime * np.array(
+            self.config.flat_dn_range, dtype=float
+        )
 
         max_flat_time = self.flat_exp_times.max()
         if max_flat_time > self.maximum_exp_time:
-            raise ValueError(f"Maximum flat time = {max_flat_time:0.2f} > "
-                             f"maximum allowed={self.maximum_exp_time} (sec)")
+            raise ValueError(
+                f"Maximum flat time = {max_flat_time:0.2f} > "
+                f"maximum allowed={self.maximum_exp_time} (sec)"
+            )
 
     async def run(self):
         """Run the script.
         """
         self.log.info(f"Taking {self.config.n_bias} pre-flat bias images...")
-        await self.latiss.take_bias(nbias=self.config.n_bias,
-                                    checkpoint=self.checkpoint)
+        await self.latiss.take_bias(
+            nbias=self.config.n_bias, checkpoint=self.checkpoint
+        )
 
         self.log.info(f"Taking {self.config.n_flat} flat-field images")
         for flat_exp_time in self.flat_exp_times:
-            await self.latiss.take_flats(exptime=flat_exp_time,
-                                         nflats=self.config.n_flat,
-                                         filter=self.config.filter,
-                                         grating=self.config.grating,
-                                         linear_stage=self.config.linear_stage,
-                                         checkpoint=self.checkpoint)
+            await self.latiss.take_flats(
+                exptime=flat_exp_time,
+                nflats=self.config.n_flat,
+                filter=self.config.filter,
+                grating=self.config.grating,
+                linear_stage=self.config.linear_stage,
+                checkpoint=self.checkpoint,
+            )
 
         self.log.info(f"Taking {self.config.n_bias} post-flat bias images...")
-        await self.latiss.take_bias(nbias=self.config.n_bias,
-                                    checkpoint=self.checkpoint)
+        await self.latiss.take_bias(
+            nbias=self.config.n_bias, checkpoint=self.checkpoint
+        )
 
         self.log.info(f"Taking {self.config.n_dark} dark images...")
-        await self.latiss.take_darks(exptime=self.config.t_dark,
-                                     ndarks=self.config.n_dark,
-                                     checkpoint=self.checkpoint)
+        await self.latiss.take_darks(
+            exptime=self.config.t_dark,
+            ndarks=self.config.n_dark,
+            checkpoint=self.checkpoint,
+        )
 
         await self.checkpoint("done")
 
@@ -203,5 +214,7 @@ class ATGetStdFlatDataset(salobj.BaseScript):
         dark_time = self.config.n_dark * (self.read_out_time + self.config.t_dark)
         # Note, biases are taken twice: before flats and after flats
         bias_time = 2 * self.config.n_bias * self.read_out_time
-        flat_time = self.config.n_flat*(self.read_out_time + self.flat_exp_times.mean())
+        flat_time = self.config.n_flat * (
+            self.read_out_time + self.flat_exp_times.mean()
+        )
         metadata.duration = dark_time + bias_time + flat_time
