@@ -913,8 +913,9 @@ class ATTCS(BaseGroup):
 
             self.log.debug("Opening M1 cover.")
 
-            # check that telescope is in a good elevation to open cover. If not,
-            # point to current azimuth and elevation 75 before opening the mirror cover
+            # Check that telescope is in a good elevation to open cover.
+            # If not, point to current azimuth and elevation 75 degrees
+            # before opening the mirror cover.
             tel_pos = await self.atmcs.tel_mount_AzEl_Encoders.next(
                 flush=True, timeout=self.fast_timeout
             )
@@ -1289,30 +1290,6 @@ class ATTCS(BaseGroup):
         self.log.info(f"ATDome in position.")
         return f"ATDome in position."
 
-        # in_position = await self.atdome.evt_azimuthInPosition.aget(timeout=timeout)
-        # self.atdome.evt_azimuthInPosition.flush()
-        #
-
-        # if not in_position.inPosition:
-        #     self.log.info(f"ATDome in position.")
-        #     return f"ATDome in position."
-        #
-        # while True:
-        #
-        #     try:
-        #         in_position = await self.atdome.evt_azimuthInPosition.next(flush=False,
-        #                                                                    timeout=timeout)
-        #     except IndexError:
-        #         in_position = await self.atdome.evt_azimuthInPosition.aget(timeout=timeout)
-        #
-        #     self.log.info(f"Got {in_position.inPosition}")
-        #     # FIXME: ATDome is messing in position with not in position
-        #     if not in_position.inPosition:
-        #         self.log.info(f"ATDome in position.")
-        #         return f"ATDome in position."
-        #     else:
-        #         self.log.debug(f"ATDome not in position")
-
     async def wait_for_atdome_shutter_inposition(self):
         """Wait for the atdome shutter to be in position.
 
@@ -1481,12 +1458,6 @@ class ATTCS(BaseGroup):
             Offset in mm.
 
         """
-        # Get current offset
-        # try:
-        #     current_offset = await self.ataos.evt_correctionOffsets.aget(timeout=self.fast_timeout)
-        # except asyncio.TimeoutError:
-        #     current_offset = None
-
         self.athexapod.evt_positionUpdate.flush()
         await self.ataos.cmd_applyFocusOffset.set_start(offset=offset)
 
