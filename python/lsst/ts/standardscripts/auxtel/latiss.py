@@ -1,6 +1,6 @@
 # This file is part of ts_standardscripts
 #
-# Developed for the LSST Data Management System.
+# Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -135,7 +135,7 @@ class LATISS(BaseGroup):
                                        group_id=group_id,
                                        checkpoint=checkpoint)
 
-    async def take_object(self, exptime, n,
+    async def take_object(self, exptime, n=1,
                           filter=None, grating=None, linear_stage=None,
                           group_id=None, checkpoint=None):
         """Take a series of object images.
@@ -172,7 +172,7 @@ class LATISS(BaseGroup):
                                        group_id=group_id,
                                        checkpoint=checkpoint)
 
-    async def take_engtest(self, exptime, n,
+    async def take_engtest(self, exptime, n=1,
                            filter=None, grating=None, linear_stage=None,
                            group_id=None, checkpoint=None):
         """Take a series of engineering test images.
@@ -370,12 +370,6 @@ class LATISS(BaseGroup):
             await self.atcamera.cmd_takeImages.start(timeout=timeout + exp_time)
             end_readout = await self.atcamera.evt_endReadout.next(flush=False,
                                                                   timeout=timeout)
-            # FIXME: This should not be required! remove once bug on
-            # atheaderservice is fixed
-            self.log.debug("Waiting for header service LFO before continuing")
-            await self.atheaderservice.evt_largeFileObjectAvailable.next(flush=False,
-                                                                         timeout=self.long_timeout)
-            await asyncio.sleep(self.fast_timeout)
             return end_readout
 
     async def setup_atspec(self, filter=None, grating=None,
