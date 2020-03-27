@@ -487,7 +487,7 @@ class DomeTrajectoryMCS(salobj.BaseScript):
                 self.atmcs.cmd_trackTarget.set(
                     elevation=self.track_elaz[0],
                     azimuth=self.track_elaz[1],
-                    time=salobj.current_tai(),
+                    taiTime=salobj.current_tai(),
                 )
                 await self.atmcs.cmd_trackTarget.start(timeout=STD_TIMEOUT)
                 await asyncio.sleep(TRACK_INTERVAL)
