@@ -484,10 +484,16 @@ class DomeTrajectoryMCS(salobj.BaseScript):
                 self.log.debug(
                     f"trackTarget: el={self.track_elaz[0]:0.2f}, az={self.track_elaz[1]:0.2f}"
                 )
+                # TODO DM-24051: ditch this hack
+                # when we no longer need ts_xml 4.8
+                if hasattr(self.atmcs.cmd_trackTarget.DataType(), "taiTime"):
+                    time_kwargs = dict(taiTime=salobj.current_tai())
+                else:
+                    time_kwargs = dict(time=salobj.current_tai())
                 self.atmcs.cmd_trackTarget.set(
                     elevation=self.track_elaz[0],
                     azimuth=self.track_elaz[1],
-                    taiTime=salobj.current_tai(),
+                    **time_kwargs,
                 )
                 await self.atmcs.cmd_trackTarget.start(timeout=STD_TIMEOUT)
                 await asyncio.sleep(TRACK_INTERVAL)

@@ -263,11 +263,16 @@ class ATTracking(scriptqueue.BaseScript):
         # Use time from the target event, since that is the time at which
         # the position was specified.
         data = await self.atmcs.evt_target.next(flush=True, timeout=1)
-        target_time = Time(data.taiTime, scale="tai", format="unix")
+        # TODO DM-24051: ditch this hack when we no longer need ts_xml 4.8
+        if hasattr(data, "taiTime"):
+            event_tai = data.taiTime
+        else:
+            event_tai = data.time
+        target_time = Time(event_tai, scale="tai", format="unix")
         curr_time_local = Time.now()
-        dtime = data.taiTime - curr_time_local.tai.unix
+        dtime = event_tai - curr_time_local.tai.unix
         self.log.info(
-            f"target event time={data.taiTime:0.2f}; "
+            f"target event time={event_tai:0.2f}; "
             f"current tai unix ={curr_time_local.tai.unix:0.2f}; "
             f"diff={dtime:0.2f} sec"
         )
