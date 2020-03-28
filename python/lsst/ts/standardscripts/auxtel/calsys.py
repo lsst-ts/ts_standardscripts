@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ['ATCalSys']
+__all__ = ["ATCalSys"]
 
 import types
 import asyncio
@@ -38,13 +38,16 @@ class ATCalSys:
     fiber_spectrograph_index : `int`
         FiberSpectrograph index.
     """
+
     def __init__(self, domain=None, electrometer_index=1, fiber_spectrograph_index=-1):
 
-        self.long_timeout = 30.
+        self.long_timeout = 30.0
 
-        self._components = [f"Electrometer:{electrometer_index}",
-                            "ATMonochromator",
-                            f"FiberSpectrograph:{fiber_spectrograph_index}"]
+        self._components = [
+            f"Electrometer:{electrometer_index}",
+            "ATMonochromator",
+            f"FiberSpectrograph:{fiber_spectrograph_index}",
+        ]
 
         self._remotes = {}
 
@@ -53,14 +56,17 @@ class ATCalSys:
         for i in range(len(self._components)):
 
             name, index = salobj.name_to_name_index(self._components[i])
-            self._remotes[name.lower()] = salobj.Remote(domain=self.domain,
-                                                        name=name,
-                                                        index=index)
+            self._remotes[name.lower()] = salobj.Remote(
+                domain=self.domain, name=name, index=index
+            )
 
-        self.check = types.SimpleNamespace(**dict(zip(self.components,
-                                                      [True]*len(self.components))))
+        self.check = types.SimpleNamespace(
+            **dict(zip(self.components, [True] * len(self.components)))
+        )
 
-        self.start_task = asyncio.gather(*[remote.start_task for remote in self._remotes.values()])
+        self.start_task = asyncio.gather(
+            *[remote.start_task for remote in self._remotes.values()]
+        )
 
     @property
     def components(self):
@@ -68,7 +74,7 @@ class ATCalSys:
 
     @property
     def electrometer(self):
-        return self._remotes['electrometer']
+        return self._remotes["electrometer"]
 
     @property
     def atmonochromator(self):
@@ -96,12 +102,16 @@ class ATCalSys:
 
         """
 
-        self.atmonochromator.cmd_updateMonochromatorSetup.set(wavelength=wavelength,
-                                                              gratingType=grating,
-                                                              fontExitSlitWidth=exit_slit,
-                                                              fontEntranceSlitWidth=entrance_slit)
+        self.atmonochromator.cmd_updateMonochromatorSetup.set(
+            wavelength=wavelength,
+            gratingType=grating,
+            fontExitSlitWidth=exit_slit,
+            fontEntranceSlitWidth=entrance_slit,
+        )
 
-        await self.atmonochromator.cmd_updateMonochromatorSetup.start(timeout=self.long_timeout)
+        await self.atmonochromator.cmd_updateMonochromatorSetup.start(
+            timeout=self.long_timeout
+        )
 
     async def electrometer_scan(self, duration):
         """Perform an electrometer scan for the specified duration and return
@@ -119,13 +129,18 @@ class ATCalSys:
 
         """
         self.electrometer.cmd_startScanDt.set(scanDuration=duration)
-        lfo_coro = self.electrometer.evt_largeFileObjectAvailable.next(timeout=self.long_timeout,
-                                                                       flush=True)
-        await self.electrometer.cmd_startScanDt.start(timeout=duration+self.long_timeout)
+        lfo_coro = self.electrometer.evt_largeFileObjectAvailable.next(
+            timeout=self.long_timeout, flush=True
+        )
+        await self.electrometer.cmd_startScanDt.start(
+            timeout=duration + self.long_timeout
+        )
 
         return await lfo_coro
 
-    async def take_fiber_spectrum_after(self, delay, image_type, integration_time, lamp, evt=None):
+    async def take_fiber_spectrum_after(
+        self, delay, image_type, integration_time, lamp, evt=None
+    ):
         """Wait, then start an acquisition with the fiber spectrograph.
 
         By default, this method will wait for `delay` seconds then start
@@ -158,12 +173,11 @@ class ATCalSys:
         timeout = integration_time + self.long_timeout
 
         fs_lfo_coro = self.fiberspectrograph.evt_largeFileObjectAvailable.next(
-            timeout=self.long_timeout, flush=True)
+            timeout=self.long_timeout, flush=True
+        )
 
         self.fiberspectrograph.cmd_expose.set(
-            imageType=image_type,
-            integrationTime=integration_time,
-            lamp=lamp,
+            imageType=image_type, integrationTime=integration_time, lamp=lamp,
         )
 
         await self.fiberspectrograph.cmd_expose.start(timeout=timeout)

@@ -34,9 +34,9 @@ class BaseGroup:
 
     def __init__(self, components, domain=None, log=None):
 
-        self.fast_timeout = 5.
-        self.long_timeout = 30.
-        self.long_long_timeout = 120.
+        self.fast_timeout = 5.0
+        self.long_timeout = 30.0
+        self.long_long_timeout = 120.0
 
         self._components = components
 
@@ -46,16 +46,19 @@ class BaseGroup:
 
         for i in range(len(self._components)):
             name, index = salobj.name_to_name_index(self._components[i])
-            self._remotes[name.lower()] = salobj.Remote(domain=self.domain,
-                                                        name=name,
-                                                        index=index)
+            self._remotes[name.lower()] = salobj.Remote(
+                domain=self.domain, name=name, index=index
+            )
 
         self.scheduled_coro = []
 
-        self.check = types.SimpleNamespace(**dict(zip(self.components,
-                                                      [True]*len(self.components))))
+        self.check = types.SimpleNamespace(
+            **dict(zip(self.components, [True] * len(self.components)))
+        )
 
-        self.start_task = asyncio.gather(*[self._remotes[r].start_task for r in self._remotes])
+        self.start_task = asyncio.gather(
+            *[self._remotes[r].start_task for r in self._remotes]
+        )
 
         if log is None:
             self.log = logging.getLogger(__name__)
@@ -108,7 +111,9 @@ class BaseGroup:
                 first_pass = False
             else:
                 try:
-                    _state = await self._remotes[comp].evt_summaryState.next(flush=False)
+                    _state = await self._remotes[comp].evt_summaryState.next(
+                        flush=False
+                    )
                 except IndexError:
                     _state = await self._remotes[comp].evt_summaryState.aget()
 
@@ -116,8 +121,9 @@ class BaseGroup:
 
             if state != desired_state:
                 self.log.warning(f"{comp} not in {desired_state!r}: {state!r}")
-                raise RuntimeError(f"{comp} state is {state!r}, "
-                                   f"expected {desired_state!r}")
+                raise RuntimeError(
+                    f"{comp} state is {state!r}, " f"expected {desired_state!r}"
+                )
             else:
                 self.log.debug(f"{comp}: {state!r}")
 
@@ -134,8 +140,9 @@ class BaseGroup:
         """
 
         while True:
-            await self._remotes[comp].evt_heartbeat.next(flush=True,
-                                                         timeout=self.fast_timeout)
+            await self._remotes[comp].evt_heartbeat.next(
+                flush=True, timeout=self.fast_timeout
+            )
 
     async def standby(self):
         """ Put all CSCs in standby.
@@ -145,9 +152,13 @@ class BaseGroup:
 
         for comp in self.components:
             if getattr(self.check, comp):
-                set_ss_tasks.append(salobj.set_summary_state(self._remotes[comp],
-                                                             salobj.State.STANDBY,
-                                                             timeout=self.long_long_timeout))
+                set_ss_tasks.append(
+                    salobj.set_summary_state(
+                        self._remotes[comp],
+                        salobj.State.STANDBY,
+                        timeout=self.long_long_timeout,
+                    )
+                )
             else:
                 set_ss_tasks.append(self.get_state(comp))
 
@@ -196,15 +207,20 @@ class BaseGroup:
                 self.log.debug(f"No settings for {comp}.")
                 try:
                     sv = await getattr(self, comp).evt_settingVersions.aget(
-                        timeout=self.fast_timeout)
+                        timeout=self.fast_timeout
+                    )
                 except asyncio.TimeoutError:
                     sv = None
 
                 if sv is not None:
                     settings_all[comp] = sv.recommendedSettingsLabels.split(",")[0]
-                    self.log.debug(f"Using {settings_all[comp]} from settingVersions event.")
+                    self.log.debug(
+                        f"Using {settings_all[comp]} from settingVersions event."
+                    )
                 else:
-                    self.log.debug(f"Couldn't get settingVersions event. Using empty settings.")
+                    self.log.debug(
+                        f"Couldn't get settingVersions event. Using empty settings."
+                    )
                     settings_all[comp] = ""
 
         self.log.debug(f"Settings versions: {settings_all}")
@@ -216,10 +232,14 @@ class BaseGroup:
         for comp in self.components:
             if getattr(self.check, comp):
                 self.log.debug(f"Enabling  {comp}")
-                set_ss_tasks.append(salobj.set_summary_state(self._remotes[comp],
-                                                             salobj.State.ENABLED,
-                                                             settingsToApply=settings_all[comp],
-                                                             timeout=self.long_long_timeout))
+                set_ss_tasks.append(
+                    salobj.set_summary_state(
+                        self._remotes[comp],
+                        salobj.State.ENABLED,
+                        settingsToApply=settings_all[comp],
+                        timeout=self.long_long_timeout,
+                    )
+                )
             else:
                 set_ss_tasks.append(self.get_state(comp))
 

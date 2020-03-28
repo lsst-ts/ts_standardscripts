@@ -120,12 +120,8 @@ class TestATCalSysTakeData(standardscripts.BaseScriptTestCase, asynctest.TestCas
 
             # if configured with a scalar then every element has length 1
             await self.configure_script(wavelengths=100, integration_times=31)
-            assert_array_equal(
-                self.script.config.wavelengths, [100]
-            )
-            assert_array_equal(
-                self.script.config.integration_times, [31]
-            )
+            assert_array_equal(self.script.config.wavelengths, [100])
+            assert_array_equal(self.script.config.integration_times, [31])
             for argname in argnames:
                 arg = getattr(self.script.config, argname)
                 self.assertIs(type(arg), np.ndarray)
@@ -134,12 +130,8 @@ class TestATCalSysTakeData(standardscripts.BaseScriptTestCase, asynctest.TestCas
             # if configured with an array then
             # every element has the same length
             await self.configure_script(wavelengths=[100, 200], integration_times=31)
-            assert_array_equal(
-                self.script.config.wavelengths, [100, 200]
-            )
-            assert_array_equal(
-                self.script.config.integration_times, [31, 31]
-            )
+            assert_array_equal(self.script.config.wavelengths, [100, 200])
+            assert_array_equal(self.script.config.integration_times, [31, 31])
             for argname in argnames:
                 arg = getattr(self.script.config, argname)
                 self.assertIs(type(arg), np.ndarray)
@@ -148,15 +140,9 @@ class TestATCalSysTakeData(standardscripts.BaseScriptTestCase, asynctest.TestCas
             await self.configure_script(
                 wavelengths=100, integration_times=31, grating_types=[1, 2]
             )
-            assert_array_equal(
-                self.script.config.wavelengths, [100, 100]
-            )
-            assert_array_equal(
-                self.script.config.integration_times, [31, 31]
-            )
-            assert_array_equal(
-                self.script.config.grating_types, [1, 2]
-            )
+            assert_array_equal(self.script.config.wavelengths, [100, 100])
+            assert_array_equal(self.script.config.integration_times, [31, 31])
+            assert_array_equal(self.script.config.grating_types, [1, 2])
             for argname in argnames:
                 arg = getattr(self.script.config, argname)
                 self.assertIs(type(arg), np.ndarray)

@@ -75,9 +75,7 @@ class TestATGetStdFlatDataset(standardscripts.BaseScriptTestCase, asynctest.Test
         date_id = astropy.time.Time.now().tai.isot.split("T")[0].replace("-", "")
         image_name = f"test_latiss_{date_id}_{next(index_gen)}"
 
-        self.at_cam.evt_endReadout.set_put(
-            imageName=image_name
-        )
+        self.at_cam.evt_endReadout.set_put(imageName=image_name)
 
         self.at_headerservice.evt_largeFileObjectAvailable.put()
 

@@ -43,9 +43,9 @@ class TestSlewTelescopeIcrs(standardscripts.BaseScriptTestCase, asynctest.TestCa
     async def basic_make_script(self, index):
         self.script = SlewTelescopeIcrs(index=index)
 
-        self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
-                                                    lat=-30.244728*u.deg,
-                                                    height=2663.0*u.m)
+        self.location = EarthLocation.from_geodetic(
+            lon=-70.747698 * u.deg, lat=-30.244728 * u.deg, height=2663.0 * u.m
+        )
 
         # mock controller that uses callback functions defined below
         # to handle the expected commands
@@ -80,11 +80,14 @@ class TestSlewTelescopeIcrs(standardscripts.BaseScriptTestCase, asynctest.TestCa
             now = Time.now()
             self.atptg.tel_timeAndDate.set_put(
                 tai=now.tai.mjd,
-                utc=now.utc.value.hour + now.utc.value.minute / 60. + (
-                    now.utc.value.second
-                    + now.utc.value.microsecond / 1e3) / 60. / 60.,
-                lst=Angle(now.sidereal_time('mean',
-                                            self.location.lon)).to_string(sep=':'),
+                utc=now.utc.value.hour
+                + now.utc.value.minute / 60.0
+                + (now.utc.value.second + now.utc.value.microsecond / 1e3)
+                / 60.0
+                / 60.0,
+                lst=Angle(now.sidereal_time("mean", self.location.lon)).to_string(
+                    sep=":"
+                ),
             )
             await asyncio.sleep(0.05)
 

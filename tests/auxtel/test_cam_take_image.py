@@ -57,8 +57,7 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
 
     async def close(self):
         """Optional cleanup before closing the scripts and etc."""
-        await asyncio.gather(*self.end_image_tasks,
-                             return_exceptions=True)
+        await asyncio.gather(*self.end_image_tasks, return_exceptions=True)
 
     async def cmd_take_images_callback(self, data):
         one_exp_time = (
@@ -72,7 +71,7 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
 
     async def finish_take_images(self):
         await asyncio.sleep(0.5)
-        self.atcam.evt_endReadout.set_put(imageName='AT_image_2020_001')
+        self.atcam.evt_endReadout.set_put(imageName="AT_image_2020_001")
         await asyncio.sleep(0.5)
         self.atheaderservice.evt_largeFileObjectAvailable.put()
 
@@ -105,8 +104,11 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
             filter = None
             grating = None
             await self.configure_script(
-                exp_times=exp_times, image_type=image_type,
-                nimages=nimages, filter=filter, grating=grating
+                exp_times=exp_times,
+                image_type=image_type,
+                nimages=nimages,
+                filter=filter,
+                grating=grating,
             )
             self.assertEqual(self.script.config.exp_times, [exp_times, exp_times])
             self.assertEqual(self.script.config.image_type, image_type)
@@ -152,15 +154,18 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
             nimages = len(exp_times) + 1
             with self.assertRaises(salobj.ExpectedError):
                 await self.configure_script(
-                    exp_times=exp_times,
-                    image_type=image_type,
-                    nimages=nimages
+                    exp_times=exp_times, image_type=image_type, nimages=nimages
                 )
 
     async def test_take_images(self):
         async with self.make_script():
             config = await self.configure_script(
-                nimages=1, exp_times=0, image_type="BIAS", filter=1, grating=1, linear_stage=100
+                nimages=1,
+                exp_times=0,
+                image_type="BIAS",
+                filter=1,
+                grating=1,
+                linear_stage=100,
             )
             await self.run_script()
 

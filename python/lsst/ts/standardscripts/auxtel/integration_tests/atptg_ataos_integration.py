@@ -39,16 +39,16 @@ class ATPtgATAOSIntegration(salobj.BaseScript):
     index : `int`
         Index of Script SAL component.
     """
+
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        super().__init__(index=index,
-                         descr="Test integration between ATPtg and ATAOS")
+        super().__init__(index=index, descr="Test integration between ATPtg and ATAOS")
         self.ataos = salobj.Remote(domain=self.domain, name="ATAOS")
         self.atptg = salobj.Remote(domain=self.domain, name="ATPtg")
-        self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
-                                                    lat=-30.244728*u.deg,
-                                                    height=2663.0*u.m)
+        self.location = EarthLocation.from_geodetic(
+            lon=-70.747698 * u.deg, lat=-30.244728 * u.deg, height=2663.0 * u.m
+        )
 
         self.timeout = 30  # general timeout in seconds.
 
@@ -90,8 +90,8 @@ class ATPtgATAOSIntegration(salobj.BaseScript):
         config : `types.SimpleNamespace`
             Script configuration, as defined by `schema`.
         """
-        config.el = config.el*u.deg
-        config.az = config.az*u.deg
+        config.el = config.el * u.deg
+        config.az = config.az * u.deg
         self.config = config
 
     async def run(self):
@@ -103,8 +103,10 @@ class ATPtgATAOSIntegration(salobj.BaseScript):
         else:
             data = self.ataos.evt_summaryState.get()
             if data.summaryState != salobj.State.ENABLED:
-                raise salobj.ExpectedError(f"ATAOS summaryState={data.summaryState} != "
-                                           f"{salobj.State.ENABLED!r}")
+                raise salobj.ExpectedError(
+                    f"ATAOS summaryState={data.summaryState} != "
+                    f"{salobj.State.ENABLED!r}"
+                )
 
         if self.config.enable_atptg:
             self.log.info(f"Enable ATPtg")
@@ -112,20 +114,28 @@ class ATPtgATAOSIntegration(salobj.BaseScript):
         else:
             data = self.atptg.evt_summaryState.get()
             if data.summaryState != salobj.State.ENABLED:
-                raise salobj.ExpectedError(f"ATPtg summaryState={data.summaryState} != "
-                                           f"{salobj.State.ENABLED!r}")
+                raise salobj.ExpectedError(
+                    f"ATPtg summaryState={data.summaryState} != "
+                    f"{salobj.State.ENABLED!r}"
+                )
 
         await self.checkpoint("start_tracking")
         # Docker containers can have serious clock drift,
         # so just the time reported by ATPtg
-        time_data = await self.atptg.tel_timeAndDate.next(flush=False, timeout=self.timeout)
+        time_data = await self.atptg.tel_timeAndDate.next(
+            flush=False, timeout=self.timeout
+        )
         curr_time_atptg = Time(time_data.tai, format="mjd", scale="tai")
         time_err = curr_time_atptg - Time.now()
         self.log.info(f"Time error={time_err.sec:0.2f} sec")
 
         # Compute RA/Dec for commanded az/el
-        cmd_elaz = AltAz(alt=self.config.el, az=self.config.az, obstime=curr_time_atptg.tai,
-                         location=self.location)
+        cmd_elaz = AltAz(
+            alt=self.config.el,
+            az=self.config.az,
+            obstime=curr_time_atptg.tai,
+            location=self.location,
+        )
         cmd_radec = cmd_elaz.transform_to(ICRS)
 
         # Start tracking
@@ -147,16 +157,21 @@ class ATPtgATAOSIntegration(salobj.BaseScript):
             rotFrame=ATPtg.RotFrame.TARGET,
             rotMode=ATPtg.RotMode.FIELD,
         )
-        self.log.info(f"raDecTarget ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
-                      f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg")
+        self.log.info(
+            f"raDecTarget ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
+            f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg"
+        )
 
         await self.atptg.cmd_raDecTarget.start(timeout=self.timeout)
 
         # make sure at least one current Target status was published...
         self.log.debug("Waiting for currentTargetStatus to be published.")
-        target_status = await self.atptg.tel_currentTargetStatus.next(flush=True,
-                                                                      timeout=self.timeout)
-        self.log.debug(f"Got {target_status.demandRaString} {target_status.demandDecString}.")
+        target_status = await self.atptg.tel_currentTargetStatus.next(
+            flush=True, timeout=self.timeout
+        )
+        self.log.debug(
+            f"Got {target_status.demandRaString} {target_status.demandDecString}."
+        )
 
         await self.checkpoint("apply_correction_manually")
 
@@ -171,16 +186,17 @@ class ATPtgATAOSIntegration(salobj.BaseScript):
         await self.ataos.cmd_enableCorrection.start(timeout=self.timeout)
 
         # Wait until ATAOS publishes that corrections where performed
-        hexapod_completed = self.ataos.evt_hexapodCorrectionCompleted.next(flush=True,
-                                                                           timeout=self.timeout)
-        m1_completed = self.ataos.evt_m1CorrectionCompleted.next(flush=True,
-                                                                 timeout=self.timeout)
-        m2_completed = self.ataos.evt_m2CorrectionCompleted.next(flush=True,
-                                                                 timeout=self.timeout)
+        hexapod_completed = self.ataos.evt_hexapodCorrectionCompleted.next(
+            flush=True, timeout=self.timeout
+        )
+        m1_completed = self.ataos.evt_m1CorrectionCompleted.next(
+            flush=True, timeout=self.timeout
+        )
+        m2_completed = self.ataos.evt_m2CorrectionCompleted.next(
+            flush=True, timeout=self.timeout
+        )
 
-        await asyncio.gather(hexapod_completed,
-                             m1_completed,
-                             m2_completed)
+        await asyncio.gather(hexapod_completed, m1_completed, m2_completed)
 
     def set_metadata(self, metadata):
         metadata.duration = 60  # rough estimate
