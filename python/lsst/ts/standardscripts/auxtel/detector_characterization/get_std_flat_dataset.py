@@ -24,7 +24,7 @@ import numpy as np
 import yaml
 
 from lsst.ts import salobj
-from ..latiss import LATISS
+from lsst.ts.observatory.control import LATISS, LATISSUsages
 
 
 class ATGetStdFlatDataset(salobj.BaseScript):
@@ -62,7 +62,7 @@ class ATGetStdFlatDataset(salobj.BaseScript):
             index=index, descr="Take Flat field sensor characterization data."
         )
 
-        self.latiss = LATISS(self.domain)
+        self.latiss = LATISS(self.domain, intended_usage=LATISSUsages.TakeImageFull)
 
         self.read_out_time = self.latiss.read_out_time
         self.cmd_timeout = 30.0

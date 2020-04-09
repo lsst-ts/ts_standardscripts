@@ -150,7 +150,7 @@ class TestSlewTelescopeIcrs(standardscripts.BaseScriptTestCase, asynctest.TestCa
                 "ra: 5\ndec: 90.0001",  # dec too big
                 "ra: 5\ndec: -90.0001",  # dec too small
                 'ra: 5\ndec: "45"',  # dec not a float
-                'ra: 5\ndec: 45\nrot_pa="5"',  # rot_pa not a float
+                'ra: 5\ndec: 45\nrot_sky="5"',  # rot_sky not a float
             ):
                 with self.subTest(bad_config=bad_config):
                     config_data.config = bad_config
@@ -163,24 +163,24 @@ class TestSlewTelescopeIcrs(standardscripts.BaseScriptTestCase, asynctest.TestCa
 
             self.assertEqual(self.script.config.ra, config.ra)
             self.assertEqual(self.script.config.dec, config.dec)
-            self.assertEqual(self.script.config.rot_pa, 0)
-            self.assertEqual(self.script.config.target_name, "")
+            self.assertEqual(self.script.config.rot_sky, 0)
+            self.assertEqual(self.script.config.target_name, "slew_icrs")
 
     async def test_configure_no_defaults(self):
         async with self.make_script():
             config = await self.configure_script(
-                ra=5.1, dec=36.2, rot_pa=-92.0, target_name="a target"
+                ra=5.1, dec=36.2, rot_sky=-92.0, target_name="a target"
             )
 
             self.assertEqual(self.script.config.ra, config.ra)
             self.assertEqual(self.script.config.dec, config.dec)
-            self.assertEqual(self.script.config.rot_pa, config.rot_pa)
+            self.assertEqual(self.script.config.rot_sky, config.rot_sky)
             self.assertEqual(self.script.config.target_name, config.target_name)
 
     async def test_run(self):
         async with self.make_script():
             config = await self.configure_script(
-                ra=8.0, dec=-15.0, rot_pa=0.0, target_name="test target"
+                ra=8.0, dec=-15.0, rot_sky=0.0, target_name="test target"
             )
             await self.run_script()
 

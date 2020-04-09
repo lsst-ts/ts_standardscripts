@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["get_scripts_dir", "subtract_angles"]
+__all__ = ["get_scripts_dir"]
 
 import pathlib
 
@@ -33,21 +33,3 @@ def get_scripts_dir():
     """
     # 4 for python/lsst/ts/standardscripts
     return pathlib.Path(__file__).resolve().parents[4] / "scripts"
-
-
-def subtract_angles(angle1, angle2):
-    """Compute the difference between two angles, wrapped to [-180, 180].
-
-    Parameters
-    ----------
-    angle1 : `float`
-        Angle 1 (deg)
-    angle2 : `float`
-        Angle 2 (deg)
-
-    Returns
-    -------
-    subtract_angles : `float`
-        angle1 - angle2 wrapped to [-180, 180] degrees
-    """
-    return ((angle1 - angle2) + 180) % 360.0 - 180

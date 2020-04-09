@@ -20,7 +20,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .utils import *
-from .base_group import *
 from .set_summary_state import *
 from .base_script_test_case import *
 

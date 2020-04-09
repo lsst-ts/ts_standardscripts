@@ -18,20 +18,39 @@
 #
 # You should have received a copy of the GNU General Public License
 
-import pathlib
+import logging
+import random
 import unittest
+import asynctest
 
 from lsst.ts import standardscripts
+from lsst.ts.standardscripts.auxtel import Shutdown
+from lsst.ts.observatory.control.mock import ATCSMock
+
+random.seed(47)  # for set_random_lsst_dds_domain
+
+logging.basicConfig()
 
 
-class TestUtils(unittest.TestCase):
-    def test_get_scripts_dir(self):
+class TestShutdown(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+    async def basic_make_script(self, index):
+        self.script = Shutdown(index=index)
+        self.atcs_mock = ATCSMock()
+
+        return (self.script, self.atcs_mock)
+
+    async def test_run(self):
+        async with self.make_script():
+            await self.configure_script()
+
+            # TODO: Have to think about how to test this script.
+
+            # await self.run_script()
+
+    async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        self.assertTrue(scripts_dir.is_dir())
-
-        pkg_path = pathlib.Path(__file__).resolve().parent.parent
-        predicted_path = pkg_path / "scripts"
-        self.assertTrue(scripts_dir.samefile(predicted_path))
+        script_path = scripts_dir / "auxtel" / "shutdown.py"
+        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":
