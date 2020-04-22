@@ -19,7 +19,7 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from lsst.ts.standardscripts.auxtel import ATCamTakeImage
+from lsst.ts.standardscripts.auxtel import LatissTakeImage
 
-if __name__ == '__main__':
-    ATCamTakeImage.main()
+if __name__ == "__main__":
+    LatissTakeImage.main()

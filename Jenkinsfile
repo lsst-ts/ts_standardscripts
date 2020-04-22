@@ -3,7 +3,7 @@ pipeline {
     environment {
         network_name = "n_${BUILD_ID}_${JENKINS_NODE_COOKIE}"
         container_name = "c_${BUILD_ID}_${JENKINS_NODE_COOKIE}"
-        work_branches = "${GIT_BRANCH} ${CHANGE_BRANCH} master"
+        work_branches = "${GIT_BRANCH} ${CHANGE_BRANCH} develop"
     }
 
     stages {
@@ -11,7 +11,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                    docker pull lsstts/develop-env:master
+                    docker pull lsstts/develop-env:develop
                     """
                 }
             }
@@ -22,7 +22,7 @@ pipeline {
                     sh """
                     docker network create \${network_name}
                     chmod -R a+rw \${WORKSPACE}
-                    container=\$(docker run -v \${WORKSPACE}:/home/saluser/repo/ -td --rm --net \${network_name} --name \${container_name} lsstts/develop-env:master)
+                    container=\$(docker run -v \${WORKSPACE}:/home/saluser/repo/ -td --rm --net \${network_name} --name \${container_name} lsstts/develop-env:develop)
                     """
                 }
             }
@@ -130,11 +130,20 @@ pipeline {
                 }
             }
         }
+        stage("Checkout ts_observatory_control") {
+            steps {
+                script {
+                    sh """
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_observatory_control && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    """
+                }
+            }
+        }
         stage("Build IDL files") {
             steps {
                 script {
                     sh """
-                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && setup ts_sal -t current && make_idl_files.py ATAOS ATArchiver ATBuilding ATCamera ATDome ATDomeTrajectory ATHeaderService ATHexapod ATMCS ATMonochromator ATPneumatics ATPtg ATSpectrograph ATWhiteLight CBP CCArchiver CCCamera CCHeaderService CatchupArchiver DIMM DSM Dome EAS Electrometer Environment FiberSpectrograph GenericCamera Hexapod IOTA LOVE LinearStage MTAOS MTAlignment MTArchiver MTCamera MTDomeTrajectory MTHeaderService MTMount MTPtg Rotator Scheduler Script ScriptQueue SummitFacility Test TunableLaser Watcher\"
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && make_idl_files.py --all\"
                     """
                 }
             }

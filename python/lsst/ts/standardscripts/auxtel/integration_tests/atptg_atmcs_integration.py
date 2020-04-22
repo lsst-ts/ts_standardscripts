@@ -39,18 +39,18 @@ class ATPtgATMcsIntegration(salobj.BaseScript):
     index : `int`
         Index of Script SAL component.
     """
+
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        super().__init__(index=index,
-                         descr="Test integration between ATPtg and ATMCS")
+        super().__init__(index=index, descr="Test integration between ATPtg and ATMCS")
         self.atmcs = salobj.Remote(domain=self.domain, name="ATMCS")
         self.atptg = salobj.Remote(domain=self.domain, name="ATPtg")
-        self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
-                                                    lat=-30.244728*u.deg,
-                                                    height=2663.0*u.m)
+        self.location = EarthLocation.from_geodetic(
+            lon=-70.747698 * u.deg, lat=-30.244728 * u.deg, height=2663.0 * u.m
+        )
 
-        self.poll_time = 10.  # wait time in tracking test loop (seconds)
+        self.poll_time = 10.0  # wait time in tracking test loop (seconds)
 
     @classmethod
     def get_schema(cls):
@@ -113,7 +113,7 @@ class ATPtgATMcsIntegration(salobj.BaseScript):
             max_track_error=u.arcsec,
         )
         for field, units in units_dict.items():
-            setattr(config, field, getattr(config, field)*units)
+            setattr(config, field, getattr(config, field) * units)
         self.config = config
 
     async def run(self):
@@ -125,21 +125,27 @@ class ATPtgATMcsIntegration(salobj.BaseScript):
         else:
             data = self.atmcs.evt_summaryState.get()
             if data.summaryState != salobj.State.ENABLED:
-                raise salobj.ExpectedError(f"ATMCS summaryState={data.summaryState} != "
-                                           f"{salobj.State.ENABLED!r}")
+                raise salobj.ExpectedError(
+                    f"ATMCS summaryState={data.summaryState} != "
+                    f"{salobj.State.ENABLED!r}"
+                )
         if self.config.enable_atptg:
             self.log.info("Enable ATPtg")
             await salobj.set_summary_state(self.atptg, salobj.State.ENABLED)
         else:
             data = self.atptg.evt_summaryState.get()
             if data.summaryState != salobj.State.ENABLED:
-                raise salobj.ExpectedError(f"ATPtg summaryState={data.summaryState} != "
-                                           f"{salobj.State.ENABLED!r}")
+                raise salobj.ExpectedError(
+                    f"ATPtg summaryState={data.summaryState} != "
+                    f"{salobj.State.ENABLED!r}"
+                )
 
         # Report current az/alt
         data = await self.atmcs.tel_mountEncoders.next(flush=False, timeout=1)
-        self.log.info(f"telescope initial el={data.elevationCalculatedAngle}, "
-                      f"az={data.azimuthCalculatedAngle}")
+        self.log.info(
+            f"telescope initial el={data.elevationCalculatedAngle}, "
+            f"az={data.azimuthCalculatedAngle}"
+        )
 
         await self.checkpoint("start_tracking")
         # Docker containers can have serious clock drift,
@@ -150,8 +156,12 @@ class ATPtgATMcsIntegration(salobj.BaseScript):
         self.log.info(f"Time error={time_err.sec:0.2f} sec")
 
         # Compute RA/Dec for commanded az/el
-        cmd_elaz = AltAz(alt=self.config.el, az=self.config.az, obstime=curr_time_atptg.tai,
-                         location=self.location)
+        cmd_elaz = AltAz(
+            alt=self.config.el,
+            az=self.config.az,
+            obstime=curr_time_atptg.tai,
+            location=self.location,
+        )
         cmd_radec = cmd_elaz.transform_to(ICRS)
 
         # Start tracking
@@ -173,8 +183,10 @@ class ATPtgATMcsIntegration(salobj.BaseScript):
             rotFrame=ATPtg.RotFrame.TARGET,
             rotMode=ATPtg.RotMode.FIELD,
         )
-        self.log.info(f"raDecTarget ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
-                      f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg")
+        self.log.info(
+            f"raDecTarget ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
+            f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg"
+        )
         self.atmcs.evt_target.flush()
         self.atmcs.evt_allAxesInPosition.flush()
         ack_id = await self.atptg.cmd_raDecTarget.start(timeout=2)
@@ -184,17 +196,32 @@ class ATPtgATMcsIntegration(salobj.BaseScript):
         # Use time from the target event, since that is the time at which
         # the position was specified.
         data = await self.atmcs.evt_target.next(flush=True, timeout=1)
-        target_time = Time(data.time, scale="tai", format="unix")
+        # TODO DM-24051: ditch this hack when we no longer need ts_xml 4.8
+        if hasattr(data, "taiTime"):
+            event_tai = data.taiTime
+        else:
+            event_tai = data.time
+        target_time = Time(event_tai, scale="tai", format="unix")
         curr_time_local = Time.now()
-        dtime = data.time - curr_time_local.tai.unix
-        self.log.info(f"target event time={data.time:0.2f}; "
-                      f"current tai unix ={curr_time_local.tai.unix:0.2f}; "
-                      f"diff={dtime:0.2f} sec")
-        self.log.info(f"desired el={self.config.el.value:0.2f}, az={self.config.az.value:0.2f}; "
-                      f"target el={data.elevation:0.2f}, az={data.azimuth:0.2f} deg")
-        self.log.info(f"target velocity el={data.elevationVelocity:0.4f}, az={data.azimuthVelocity:0.4f}")
-        target_elaz = AltAz(alt=data.elevation*u.deg, az=data.azimuth*u.deg,
-                            obstime=target_time, location=self.location)
+        dtime = event_tai - curr_time_local.tai.unix
+        self.log.info(
+            f"target event time={event_tai:0.2f}; "
+            f"current tai unix ={curr_time_local.tai.unix:0.2f}; "
+            f"diff={dtime:0.2f} sec"
+        )
+        self.log.info(
+            f"desired el={self.config.el.value:0.2f}, az={self.config.az.value:0.2f}; "
+            f"target el={data.elevation:0.2f}, az={data.azimuth:0.2f} deg"
+        )
+        self.log.info(
+            f"target velocity el={data.elevationVelocity:0.4f}, az={data.azimuthVelocity:0.4f}"
+        )
+        target_elaz = AltAz(
+            alt=data.elevation * u.deg,
+            az=data.azimuth * u.deg,
+            obstime=target_time,
+            location=self.location,
+        )
 
         separation = cmd_elaz.separation(target_elaz).to(u.arcsec)
         self.log.info(f"el/az separation={separation}; max={self.config.max_sep}")
@@ -203,62 +230,92 @@ class ATPtgATMcsIntegration(salobj.BaseScript):
 
         # Check that the telescope is heading towards the target
         data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
-        print(f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}")
-        curr_elaz0 = AltAz(alt=data.elevationCalculatedAngle*u.deg, az=data.azimuthCalculatedAngle*u.deg,
-                           obstime=Time.now(), location=self.location)
+        print(
+            f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}"
+        )
+        curr_elaz0 = AltAz(
+            alt=data.elevationCalculatedAngle * u.deg,
+            az=data.azimuthCalculatedAngle * u.deg,
+            obstime=Time.now(),
+            location=self.location,
+        )
         for i in range(5):
             data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
-            print(f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}")
-        curr_elaz1 = AltAz(alt=data.elevationCalculatedAngle*u.deg, az=data.azimuthCalculatedAngle*u.deg,
-                           obstime=Time.now(), location=self.location)
+            print(
+                f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}"
+            )
+        curr_elaz1 = AltAz(
+            alt=data.elevationCalculatedAngle * u.deg,
+            az=data.azimuthCalculatedAngle * u.deg,
+            obstime=Time.now(),
+            location=self.location,
+        )
         sep0 = cmd_elaz.separation(curr_elaz0).to(u.arcsec)
         sep1 = cmd_elaz.separation(curr_elaz1).to(u.arcsec)
         if sep0 <= sep1:
-            raise RuntimeError(f"az/alt separation between commanded and current is not "
-                               f"decreasing: sep0 = {sep0}; sep1 = {sep1}")
+            raise RuntimeError(
+                f"az/alt separation between commanded and current is not "
+                f"decreasing: sep0 = {sep0}; sep1 = {sep1}"
+            )
 
         # Monitor tracking for the specified duration
 
-        if self.config.track_duration == 0.:
+        if self.config.track_duration == 0.0:
             self.log.info("Skipping track test...")
             return
 
-        self.log.info(f"Monitoring tracking for {self.config.track_duration}. Wait for "
-                      f"allAxesInPosition event.")
+        self.log.info(
+            f"Monitoring tracking for {self.config.track_duration}. Wait for "
+            f"allAxesInPosition event."
+        )
         while True:
-            in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False, timeout=10)
+            in_position = await self.atmcs.evt_allAxesInPosition.next(
+                flush=False, timeout=10
+            )
             self.log.debug(f"Got {in_position.inPosition}")
             if in_position.inPosition:
                 break
 
         start_time = Time.now()
 
-        while Time.now()-start_time < self.config.track_duration:
+        while Time.now() - start_time < self.config.track_duration:
 
             mount_data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
-            current_target = await self.atptg.tel_currentTargetStatus.next(flush=True, timeout=1)
+            current_target = await self.atptg.tel_currentTargetStatus.next(
+                flush=True, timeout=1
+            )
 
-            mount_azel = AltAz(alt=mount_data.elevationCalculatedAngle*u.deg,
-                               az=mount_data.azimuthCalculatedAngle*u.deg,
-                               obstime=Time.now(), location=self.location)
+            mount_azel = AltAz(
+                alt=mount_data.elevationCalculatedAngle * u.deg,
+                az=mount_data.azimuthCalculatedAngle * u.deg,
+                obstime=Time.now(),
+                location=self.location,
+            )
 
-            demand_azel = AltAz(alt=Angle(current_target.demandEl, unit=u.deg),
-                                az=Angle(current_target.demandAz, unit=u.deg),
-                                obstime=Time.now(), location=self.location)
+            demand_azel = AltAz(
+                alt=Angle(current_target.demandEl, unit=u.deg),
+                az=Angle(current_target.demandAz, unit=u.deg),
+                obstime=Time.now(),
+                location=self.location,
+            )
 
-            self.log.info(f"Mount: el={mount_azel.alt}, "
-                          f"az={mount_azel.az}")
+            self.log.info(f"Mount: el={mount_azel.alt}, " f"az={mount_azel.az}")
 
-            self.log.info(f"ATPtg demand: el={demand_azel.alt}, "
-                          f"az={demand_azel.az}")
+            self.log.info(
+                f"ATPtg demand: el={demand_azel.alt}, " f"az={demand_azel.az}"
+            )
 
             track_error = mount_azel.separation(demand_azel).to(u.arcsec)
             self.log.info(f"Track error: {track_error}")
 
             if track_error > self.config.max_track_error:
-                raise RuntimeError(f"Track error={track_error} > {self.config.max_track_error}")
+                raise RuntimeError(
+                    f"Track error={track_error} > {self.config.max_track_error}"
+                )
             else:
-                self.log.info(f"Track error={track_error}; max={self.config.max_track_error}")
+                self.log.info(
+                    f"Track error={track_error}; max={self.config.max_track_error}"
+                )
 
             await asyncio.sleep(self.poll_time)
 

@@ -43,12 +43,11 @@ class ATTracking(scriptqueue.BaseScript):
     index : `int`
         Index of Script SAL component.
     """
+
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        super().__init__(
-            index=index,
-            descr="Test integration between ATPtg and ATMCS")
+        super().__init__(index=index, descr="Test integration between ATPtg and ATMCS")
         self.atmcs = salobj.Remote(self.domain, name="ATMCS")
         self.atptg = salobj.Remote(self.domain, name="ATPtg")
         self.ataos = salobj.Remote(self.domain, name="ATAOS")
@@ -56,9 +55,9 @@ class ATTracking(scriptqueue.BaseScript):
         self.atpneumatics = salobj.Remote(self.domain, name="ATPneumatics")
         self.atdome = salobj.Remote(self.domain, name="ATDome")
         self.atdometrajectory = salobj.Remote(self.domain, name="ATDomeTrajectory")
-        self.location = EarthLocation.from_geodetic(lon=-70.747698*u.deg,
-                                                    lat=-30.244728*u.deg,
-                                                    height=2663.0*u.m)
+        self.location = EarthLocation.from_geodetic(
+            lon=-70.747698 * u.deg, lat=-30.244728 * u.deg, height=2663.0 * u.m
+        )
         self.attcs = ATTCS(
             atmcs=self.atmcs,
             atptg=self.atptg,
@@ -66,10 +65,11 @@ class ATTracking(scriptqueue.BaseScript):
             athexapod=self.athexapod,
             atpneumatics=self.atpneumatics,
             atdome=self.atdome,
-            atdometrajectory=self.atdometrajectory)
+            atdometrajectory=self.atdometrajectory,
+        )
         self.in_fault = False
 
-        self.pool_time = 10.  # wait time in tracking test loop (seconds)
+        self.pool_time = 10.0  # wait time in tracking test loop (seconds)
 
     @classmethod
     def get_schema(cls):
@@ -159,11 +159,11 @@ class ATTracking(scriptqueue.BaseScript):
         config : `types.SimpleNamespace`
             Script configuration.
         """
-        self.el = float(self.config.el)*u.deg
-        self.az = float(self.config.az)*u.deg
-        self.max_sep = float(self.config.max_sep)*u.deg
-        self.track_duration = float(self.config.track_duration)*u.hour
-        self.max_track_error = float(self.config.max_track_error)*u.arcsec
+        self.el = float(self.config.el) * u.deg
+        self.az = float(self.config.az) * u.deg
+        self.max_sep = float(self.config.max_sep) * u.deg
+        self.track_duration = float(self.config.track_duration) * u.hour
+        self.max_track_error = float(self.config.max_track_error) * u.arcsec
         self.enable_atmcs = bool(self.config.enable_atmcs)
         self.enable_atptg = bool(self.config.enable_atptg)
         self.enable_ataos = bool(self.config.enable_ataos)
@@ -186,25 +186,25 @@ class ATTracking(scriptqueue.BaseScript):
             await salobj.enable_csc(self.atmcs)
         else:
             data = await self.atmcs.evt_summaryState.next(flush=False)
-            self.assertEqual("ATMCS summaryState", data.summaryState, salobj.State.ENABLED,
-                             "ENABLED")
+            self.assertEqual(
+                "ATMCS summaryState", data.summaryState, salobj.State.ENABLED, "ENABLED"
+            )
         if self.enable_atptg:
             self.log.info("Enable ATPtg")
             await salobj.enable_csc(self.atptg)
         else:
             data = await self.atptg.evt_summaryState.next(flush=False)
-            self.assertEqual("ATPtg summaryState", data.summaryState, salobj.State.ENABLED,
-                             "ENABLED")
+            self.assertEqual(
+                "ATPtg summaryState", data.summaryState, salobj.State.ENABLED, "ENABLED"
+            )
         if self.enable_ataos:
             self.log.info("Enable ATAOS")
             await salobj.enable_csc(self.ataos, settingsToApply="test")
         else:
             data = await self.ataos.evt_summaryState.next(flush=False)
             self.assertEqual(
-                "ATAOS summaryState",
-                data.summaryState,
-                salobj.State.ENABLED,
-                "ENABLED")
+                "ATAOS summaryState", data.summaryState, salobj.State.ENABLED, "ENABLED"
+            )
         if self.enable_athexapod:
             self.log.info("Enable ATHexapod")
             await salobj.enable_csc(self.athexapod)
@@ -214,17 +214,21 @@ class ATTracking(scriptqueue.BaseScript):
                 "ATHexapod summaryState",
                 data.summaryState,
                 salobj.State.ENABLED,
-                "ENABLED")
+                "ENABLED",
+            )
         if self.enable_atpneumatics:
             self.log.info("Enable ATPneumatics")
             await salobj.enable_csc(self.atpneumatics)
         else:
-            data = await self.atpneumatics.evt_summaryState.next(flush=False, timeout=10)
+            data = await self.atpneumatics.evt_summaryState.next(
+                flush=False, timeout=10
+            )
             self.assertEqual(
                 "ATPneumatics summaryState",
                 data.summaryState,
                 salobj.State.ENABLED,
-                "ENABLED")
+                "ENABLED",
+            )
         if self.enable_atdome:
             self.log.info("Enable ATDome")
             await salobj.enable_csc(self.atdome)
@@ -234,22 +238,28 @@ class ATTracking(scriptqueue.BaseScript):
                 "ATDome summaryState",
                 data.summaryState,
                 salobj.State.ENABLED,
-                "ENABLED")
+                "ENABLED",
+            )
         if self.enable_atdometrajectory:
             self.log.info("Enable ATDometrajectory")
             await salobj.enable_csc(self.atdometrajectory)
         else:
-            data = await self.atdometrajectory.evt_summaryState.next(flush=False, timeout=10)
+            data = await self.atdometrajectory.evt_summaryState.next(
+                flush=False, timeout=10
+            )
             self.assertEqual(
                 "ATDome summaryState",
                 data.summaryState,
                 salobj.State.ENABLED,
-                "ENABLED")
+                "ENABLED",
+            )
 
         # Report current az/alt
         data = await self.atmcs.tel_mountEncoders.next(flush=False, timeout=1)
-        self.log.info(f"telescope initial el={data.elevationCalculatedAngle}, "
-                      f"az={data.azimuthCalculatedAngle}")
+        self.log.info(
+            f"telescope initial el={data.elevationCalculatedAngle}, "
+            f"az={data.azimuthCalculatedAngle}"
+        )
 
         await self.checkpoint("start_tracking")
         # Docker containers can have serious clock drift,
@@ -260,7 +270,9 @@ class ATTracking(scriptqueue.BaseScript):
         self.log.info(f"Time error={time_err.sec:0.2f} sec")
 
         # Compute RA/Dec for commanded az/el
-        cmd_elaz = AltAz(alt=self.el, az=self.az, obstime=curr_time_atptg.tai, location=self.location)
+        cmd_elaz = AltAz(
+            alt=self.el, az=self.az, obstime=curr_time_atptg.tai, location=self.location
+        )
         cmd_radec = cmd_elaz.transform_to(ICRS)
 
         # Start tracking
@@ -282,8 +294,10 @@ class ATTracking(scriptqueue.BaseScript):
             rotFrame=ATPtg.RotFrame.TARGET,
             rotMode=ATPtg.RotMode.FIELD,
         )
-        self.log.info(f"raDecTarget ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
-                      f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg")
+        self.log.info(
+            f"raDecTarget ra={self.atptg.cmd_raDecTarget.data.ra!r} hour; "
+            f"declination={self.atptg.cmd_raDecTarget.data.declination!r} deg"
+        )
         self.atmcs.evt_target.flush()
         self.atmcs.evt_allAxesInPosition.flush()
         self.ataos.cmd_enableCorrection.set(enableAll=True)
@@ -295,17 +309,32 @@ class ATTracking(scriptqueue.BaseScript):
         # Use time from the target event, since that is the time at which
         # the position was specified.
         data = await self.atmcs.evt_target.next(flush=True, timeout=1)
-        target_time = Time(data.time, scale="tai", format="unix")
+        # TODO DM-24051: ditch this hack when we no longer need ts_xml 4.8
+        if hasattr(data, "taiTime"):
+            event_tai = data.taiTime
+        else:
+            event_tai = data.time
+        target_time = Time(event_tai, scale="tai", format="unix")
         curr_time_local = Time.now()
-        dtime = data.time - curr_time_local.tai.unix
-        self.log.info(f"target event time={data.time:0.2f}; "
-                      f"current tai unix ={curr_time_local.tai.unix:0.2f}; "
-                      f"diff={dtime:0.2f} sec")
-        self.log.info(f"desired el={self.el.value:0.2f}, az={self.az.value:0.2f}; "
-                      f"target el={data.elevation:0.2f}, az={data.azimuth:0.2f} deg")
-        self.log.info(f"target velocity el={data.elevationVelocity:0.4f}, az={data.azimuthVelocity:0.4f}")
-        target_elaz = AltAz(alt=data.elevation*u.deg, az=data.azimuth*u.deg,
-                            obstime=target_time, location=self.location)
+        dtime = event_tai - curr_time_local.tai.unix
+        self.log.info(
+            f"target event time={event_tai:0.2f}; "
+            f"current tai unix ={curr_time_local.tai.unix:0.2f}; "
+            f"diff={dtime:0.2f} sec"
+        )
+        self.log.info(
+            f"desired el={self.el.value:0.2f}, az={self.az.value:0.2f}; "
+            f"target el={data.elevation:0.2f}, az={data.azimuth:0.2f} deg"
+        )
+        self.log.info(
+            f"target velocity el={data.elevationVelocity:0.4f}, az={data.azimuthVelocity:0.4f}"
+        )
+        target_elaz = AltAz(
+            alt=data.elevation * u.deg,
+            az=data.azimuth * u.deg,
+            obstime=target_time,
+            location=self.location,
+        )
 
         separation = cmd_elaz.separation(target_elaz).to(u.arcsec)
         self.log.info(f"el/az separation={separation}; max={self.max_sep}")
@@ -314,30 +343,48 @@ class ATTracking(scriptqueue.BaseScript):
 
         # Check that the telescope is heading towards the target
         data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
-        print(f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}")
-        curr_elaz0 = AltAz(alt=data.elevationCalculatedAngle*u.deg, az=data.azimuthCalculatedAngle*u.deg,
-                           obstime=Time.now(), location=self.location)
+        print(
+            f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}"
+        )
+        curr_elaz0 = AltAz(
+            alt=data.elevationCalculatedAngle * u.deg,
+            az=data.azimuthCalculatedAngle * u.deg,
+            obstime=Time.now(),
+            location=self.location,
+        )
         for i in range(5):
             data = await self.atmcs.tel_mountEncoders.next(flush=True, timeout=1)
-            print(f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}")
-        curr_elaz1 = AltAz(alt=data.elevationCalculatedAngle*u.deg, az=data.azimuthCalculatedAngle*u.deg,
-                           obstime=Time.now(), location=self.location)
+            print(
+                f"computed el={data.elevationCalculatedAngle}, az={data.azimuthCalculatedAngle}"
+            )
+        curr_elaz1 = AltAz(
+            alt=data.elevationCalculatedAngle * u.deg,
+            az=data.azimuthCalculatedAngle * u.deg,
+            obstime=Time.now(),
+            location=self.location,
+        )
         sep0 = cmd_elaz.separation(curr_elaz0).to(u.arcsec)
         sep1 = cmd_elaz.separation(curr_elaz1).to(u.arcsec)
         if sep0 <= sep1:
-            raise RuntimeError(f"az/alt separation between commanded and current is not "
-                               f"decreasing: sep0 = {sep0}; sep1 = {sep1}")
+            raise RuntimeError(
+                f"az/alt separation between commanded and current is not "
+                f"decreasing: sep0 = {sep0}; sep1 = {sep1}"
+            )
 
         # Monitor tracking for the specified duration
 
-        if self.track_duration == 0.:
+        if self.track_duration == 0.0:
             self.log.info("Skipping track test...")
             return
 
-        self.log.info(f"Monitoring tracking for {self.track_duration}. Wait for "
-                      f"allAxesInPosition event.")
+        self.log.info(
+            f"Monitoring tracking for {self.track_duration}. Wait for "
+            f"allAxesInPosition event."
+        )
         while True:
-            in_position = await self.atmcs.evt_allAxesInPosition.next(flush=False, timeout=20)
+            in_position = await self.atmcs.evt_allAxesInPosition.next(
+                flush=False, timeout=20
+            )
             self.log.debug(f"Got {in_position.inPosition}")
             if in_position.inPosition:
                 break
@@ -374,7 +421,8 @@ async def main():
         enable_athexapod=False,
         enable_atpneumatics=False,
         track_duration=0.06,
-        within=0.02)
+        within=0.02,
+    )
 
     print("*** configure")
     config_data = script.cmd_configure.DataType()
@@ -387,6 +435,6 @@ async def main():
     print("*** done")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     asyncio.get_event_loop().run_until_complete(main())

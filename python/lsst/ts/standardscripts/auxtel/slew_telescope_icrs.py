@@ -24,7 +24,7 @@ import yaml
 import asyncio
 
 from lsst.ts import salobj
-from .attcs import ATTCS
+from lsst.ts.observatory.control import ATCS, ATCSUsages
 from lsst.ts.idl.enums.Script import ScriptState
 
 
@@ -53,11 +53,14 @@ class SlewTelescopeIcrs(salobj.BaseScript):
     * If stopped or on failure and ``startTracking`` was issued
         then issues the ``stopTracking`` command to ATMCS.
     """
+
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        super().__init__(index=index, descr="Slew the auxiliary telescope to an ICRS position")
-        self.attcs = ATTCS(self.domain)
+        super().__init__(
+            index=index, descr="Slew the auxiliary telescope to an ICRS position"
+        )
+        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.Slew)
         self.tracking_started = False
 
     @classmethod
@@ -65,7 +68,7 @@ class SlewTelescopeIcrs(salobj.BaseScript):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/SlewTelescopeIcrs.yaml
-            title: SlewTelescopeIcrs v1
+            title: SlewTelescopeIcrs v2
             description: Configuration for SlewTelescopeIcrs
             type: object
             properties:
@@ -79,14 +82,14 @@ class SlewTelescopeIcrs(salobj.BaseScript):
                 type: number
                 minimum: -90
                 maximum: 90
-              rot_pa:
+              rot_sky:
                 description: Desired instrument position angle, Eastwards from North (deg)
                 type: number
                 default: 0
               target_name:
                 type: string
-                default: ""
-            required: [ra, dec, rot_pa, target_name]
+                default: "slew_icrs"
+            required: [ra, dec]
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -112,13 +115,17 @@ class SlewTelescopeIcrs(salobj.BaseScript):
 
     async def run(self):
 
-        self.log.info(f"Slew and track target_name={self.config.target_name}; "
-                      f"ra={self.config.ra}, dec={self.config.dec}; rot_pa={self.config.rot_pa}")
+        self.log.info(
+            f"Slew and track target_name={self.config.target_name}; "
+            f"ra={self.config.ra}, dec={self.config.dec}; rot_pa={self.config.rot_sky}"
+        )
 
-        await self.attcs.slew_icrs(ra=self.config.ra,
-                                   dec=self.config.dec,
-                                   rot_pa=self.config.rot_pa,
-                                   target_name=self.config.target_name)
+        await self.attcs.slew_icrs(
+            ra=self.config.ra,
+            dec=self.config.dec,
+            rot_sky=self.config.rot_sky,
+            target_name=self.config.target_name,
+        )
 
         self.tracking_started = True
 
@@ -126,10 +133,14 @@ class SlewTelescopeIcrs(salobj.BaseScript):
         if self.state.state != ScriptState.ENDING:
             # abnormal termination
             if self.tracking_started:
-                self.log.warning(f"Terminating with state={self.state.state}: sending "
-                                 f"stopTracking to ATMCS")
+                self.log.warning(
+                    f"Terminating with state={self.state.state}: sending "
+                    f"stopTracking to ATMCS"
+                )
                 try:
                     await self.attcs.atmcs.cmd_stopTracking.start(timeout=10)
                 except asyncio.TimeoutError as e:
-                    self.log.error("Stop tracking command timed out during cleanup procedure.")
+                    self.log.error(
+                        "Stop tracking command timed out during cleanup procedure."
+                    )
                     self.log.exception(e)
