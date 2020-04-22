@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["ATCamTakeImage"]
+__all__ = ["LatissTakeImage"]
 
 import collections
 
@@ -26,11 +26,11 @@ import numpy as np
 import yaml
 
 from lsst.ts import salobj
-from .latiss import LATISS
+from lsst.ts.observatory.control import LATISS, LATISSUsages
 
 
-class ATCamTakeImage(salobj.BaseScript):
-    """ Take a series of images with the ATCamera with set exposure times.
+class LatissTakeImage(salobj.BaseScript):
+    """Take a series of images with the ATCamera with set exposure times.
 
     Parameters
     ----------
@@ -45,9 +45,9 @@ class ATCamTakeImage(salobj.BaseScript):
     """
 
     def __init__(self, index):
-        super().__init__(index=index, descr="Test ATCamTakeImage")
+        super().__init__(index=index, descr="Take images with AT Camera")
 
-        self.latiss = LATISS(self.domain)
+        self.latiss = LATISS(self.domain, intended_usage=LATISSUsages.TakeImageFull)
         self.cmd_timeout = 60.0  # command timeout (sec)
         # large because of an issue with one of the components
 
@@ -55,9 +55,9 @@ class ATCamTakeImage(salobj.BaseScript):
     def get_schema(cls):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
-            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/ATCamTakeImage.yaml
-            title: ATCamTakeImage v2
-            description: Configuration for ATCamTakeImage.
+            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/LatissTakeImage.yaml
+            title: LatissTakeImage v2
+            description: Configuration for LatissTakeImage.
             type: object
             properties:
               nimages:

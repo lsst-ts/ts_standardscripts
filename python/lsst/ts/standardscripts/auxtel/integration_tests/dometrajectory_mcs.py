@@ -27,7 +27,7 @@ import yaml
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums.ATDome import AzimuthCommandedState, AzimuthState
-from ...utils import subtract_angles
+from lsst.ts.observatory.control import subtract_angles
 
 STD_TIMEOUT = 5  # timeout for normal commands (sec)
 SLEW_TIMEOUT = 60  # maximum time for dome and telescope to slew (sec)
@@ -487,9 +487,12 @@ class DomeTrajectoryMCS(salobj.BaseScript):
                 # TODO DM-24051: ditch this hack
                 # when we no longer need ts_xml 4.8
                 if hasattr(self.atmcs.cmd_trackTarget.DataType(), "taiTime"):
+                    self.log.info("taiTime")
                     time_kwargs = dict(taiTime=salobj.current_tai())
                 else:
+                    self.log.info("time")
                     time_kwargs = dict(time=salobj.current_tai())
+                self.log.info(f"{time_kwargs}")
                 self.atmcs.cmd_trackTarget.set(
                     elevation=self.track_elaz[0],
                     azimuth=self.track_elaz[1],

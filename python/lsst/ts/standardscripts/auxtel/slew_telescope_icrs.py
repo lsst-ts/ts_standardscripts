@@ -24,7 +24,7 @@ import yaml
 import asyncio
 
 from lsst.ts import salobj
-from .attcs import ATTCS
+from lsst.ts.observatory.control import ATCS, ATCSUsages
 from lsst.ts.idl.enums.Script import ScriptState
 
 
@@ -60,7 +60,7 @@ class SlewTelescopeIcrs(salobj.BaseScript):
         super().__init__(
             index=index, descr="Slew the auxiliary telescope to an ICRS position"
         )
-        self.attcs = ATTCS(self.domain)
+        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.Slew)
         self.tracking_started = False
 
     @classmethod
@@ -68,7 +68,7 @@ class SlewTelescopeIcrs(salobj.BaseScript):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/SlewTelescopeIcrs.yaml
-            title: SlewTelescopeIcrs v1
+            title: SlewTelescopeIcrs v2
             description: Configuration for SlewTelescopeIcrs
             type: object
             properties:
@@ -82,14 +82,14 @@ class SlewTelescopeIcrs(salobj.BaseScript):
                 type: number
                 minimum: -90
                 maximum: 90
-              rot_pa:
+              rot_sky:
                 description: Desired instrument position angle, Eastwards from North (deg)
                 type: number
                 default: 0
               target_name:
                 type: string
-                default: ""
-            required: [ra, dec, rot_pa, target_name]
+                default: "slew_icrs"
+            required: [ra, dec]
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -117,13 +117,13 @@ class SlewTelescopeIcrs(salobj.BaseScript):
 
         self.log.info(
             f"Slew and track target_name={self.config.target_name}; "
-            f"ra={self.config.ra}, dec={self.config.dec}; rot_pa={self.config.rot_pa}"
+            f"ra={self.config.ra}, dec={self.config.dec}; rot_pa={self.config.rot_sky}"
         )
 
         await self.attcs.slew_icrs(
             ra=self.config.ra,
             dec=self.config.dec,
-            rot_pa=self.config.rot_pa,
+            rot_sky=self.config.rot_sky,
             target_name=self.config.target_name,
         )
 
