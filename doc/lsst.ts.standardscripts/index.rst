@@ -24,12 +24,7 @@ Contributing
 ============
 
 ``lsst.ts.standardscripts`` is developed at https://github.com/lsst-ts/ts_standardscripts.
-You can find Jira issues for this module under the `ts_standardscripts <https://jira.lsstcorp.org/issues/?jql=project%20%3D%20DM%20AND%20component%20%3D%20ts_standardscripts>`_ component.
-
-.. If there are topics related to developing this module (rather than using it), link to this from a toctree placed here.
-
-.. .. toctree::
-..    :maxdepth: 1
+You can find Jira issues for this module using `labels=ts_standardscripts <https://jira.lsstcorp.org/issues/?jql=project%20%3D%20DM%20AND%20labels%20%20%3D%20ts_standardscripts>`_.
 
 .. _lsst.ts.standardscripts-pyapi:
 
