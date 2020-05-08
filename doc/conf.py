@@ -11,6 +11,6 @@ _g = globals()
 _g.update(
     build_package_configs(
         project_name="ts_standardscripts",
-        version=lsst.ts.standardscripts.version.__version__,
+        version=lsst.ts.standardscripts.__version__,
     )
 )
