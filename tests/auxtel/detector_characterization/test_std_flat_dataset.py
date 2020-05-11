@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 
+import shlex
 import random
 import astropy
 import asyncio
@@ -59,11 +60,17 @@ class TestATGetStdFlatDataset(standardscripts.BaseScriptTestCase, asynctest.Test
         return (self.script, self.at_cam, self.at_spec, self.at_headerservice)
 
     async def cmd_take_images_callback(self, data):
-        if "bias" in data.imageType.lower():
+        # parse keyValueMap to grab imageType
+        lexer = shlex.shlex(data.keyValueMap)
+        lexer.whitespace_split = True
+        lexer.whitespace = ","
+        parsed_data = dict(pair.split(":", 1) for pair in lexer)
+
+        if "bias" in parsed_data["imageType"].lower():
             self.n_bias += 1
-        elif "dark" in data.imageType.lower():
+        elif "dark" in parsed_data["imageType"].lower():
             self.n_dark += 1
-        elif "flat" in data.imageType.lower():
+        elif "flat" in parsed_data["imageType"].lower():
             self.n_flat += 1
 
         self.end_readout_tasks.append(asyncio.create_task(self.end_readout()))

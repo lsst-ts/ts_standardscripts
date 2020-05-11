@@ -35,7 +35,7 @@ def is_sequence(value):
     """
     if isinstance(value, str) or isinstance(value, bytes):
         return False
-    return isinstance(value, collections.Sequence)
+    return isinstance(value, collections.abc.Sequence)
 
 
 def as_array(value, dtype, nelt):
