@@ -10,7 +10,6 @@ import lsst.ts.standardscripts
 _g = globals()
 _g.update(
     build_package_configs(
-        project_name="ts_standardscripts",
-        version=lsst.ts.standardscripts.__version__,
+        project_name="ts_standardscripts", version=lsst.ts.standardscripts.__version__,
     )
 )
