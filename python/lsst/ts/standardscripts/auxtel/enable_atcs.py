@@ -20,6 +20,8 @@
 
 __all__ = ["EnableATTCS"]
 
+import yaml
+
 from lsst.ts import salobj
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 
@@ -45,19 +47,75 @@ class EnableATTCS(salobj.BaseScript):
     def __init__(self, index):
         super().__init__(index=index, descr="Enable ATCS.")
 
+        self.config = None
+
         self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.StateTransition)
 
     @classmethod
     def get_schema(cls):
-        # This script does not require any configuration
-        return None
+        schema_yaml = """
+            $schema: http://json-schema.org/draft-07/schema#
+            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/enable_atcs.yaml
+            title: EnableATTCS v1
+            description: Configuration for EnableATTCS
+            type: object
+            properties:
+                atmcs:
+                    description: Configuration for the ATMCS component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                atptg:
+                    description: Configuration for the ATPtg component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                ataos:
+                    description: Configuration for the ATAOS component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                atpneumatics:
+                    description: Configuration for the ATPneumatics component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                athexapod:
+                    description: Configuration for the ATHexapod component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                atdome:
+                    description: Configuration for the ATHexapod component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                atdometrajectory:
+                    description: Configuration for the ATHexapod component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+            additionalProperties: false
+        """
+        return yaml.safe_load(schema_yaml)
 
     async def configure(self, config):
-        # This script does not require any configuration
-        pass
+        self.config = config
 
     def set_metadata(self, metadata):
         metadata.duration = 60.0
 
     async def run(self):
-        await self.attcs.enable()
+        settings = (
+            dict([(comp, getattr(self.config, comp)) for comp in self.attcs.components])
+            if self.config is not None
+            else None
+        )
+        await self.attcs.enable(settings=settings)
