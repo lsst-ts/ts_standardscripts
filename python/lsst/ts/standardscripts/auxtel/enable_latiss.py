@@ -20,6 +20,8 @@
 
 __all__ = ["EnableLATISS"]
 
+import yaml
+
 from lsst.ts import salobj
 from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
 
@@ -44,20 +46,59 @@ class EnableLATISS(salobj.BaseScript):
 
         super().__init__(index=index, descr="Enable LATISS.")
 
+        self.config = None
+
         self.latiss = LATISS(self.domain, intended_usage=LATISSUsages.StateTransition)
 
     @classmethod
     def get_schema(cls):
-        # This script does not require any configuration
-        return None
+        schema_yaml = """
+            $schema: http://json-schema.org/draft-07/schema#
+            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/enable_latiss.yaml
+            title: EnableLATISS v1
+            description: Configuration for EnableLATISS
+            type: object
+            properties:
+                atcamera:
+                    description: Configuration for the ATCamera component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                atspectrograph:
+                    description: Configuration for the ATSpectrograph component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                atheaderservice:
+                    description: Configuration for the ATHeaderService component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                atarchiver:
+                    description: Configuration for the ATArchiver component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+            additionalProperties: false
+        """
+        return yaml.safe_load(schema_yaml)
 
     async def configure(self, config):
-        # This script does not require any configuration
-        pass
+        self.config = config
 
     def set_metadata(self, metadata):
         metadata.duration = 60.0
 
     async def run(self):
-
-        await self.latiss.enable()
+        settings = (
+            dict(
+                [(comp, getattr(self.config, comp)) for comp in self.latiss.components]
+            )
+            if self.config is not None
+            else None
+        )
+        await self.latiss.enable(settings=settings)
