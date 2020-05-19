@@ -106,9 +106,9 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
 
         self.assertTrue(script_path.is_file())
 
-        async with salobj.Domain() as domain:
-            remote = salobj.Remote(domain=domain, name="Script", index=index)
-            await remote.start_task
+        async with salobj.Domain() as domain, salobj.Remote(
+            domain=domain, name="Script", index=index
+        ) as remote:
 
             initial_path = os.environ["PATH"]
             try:

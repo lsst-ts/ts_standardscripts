@@ -29,7 +29,10 @@ from lsst.ts import salobj
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
 
-START_TIMEOUT = 30  # Time to start subprocesses (sec)
+# Long enough to perform any reasonable operation
+# including starting a CSC, loading a script,
+# or slewing the dome and telescope (sec)
+STD_TIMEOUT = 60
 
 random.seed(47)  # for set_random_lsst_dds_domain
 
@@ -59,28 +62,30 @@ class DomeTrajectoryMCSTestCase(standardscripts.BaseScriptTestCase, asynctest.Te
             await asyncio.create_subprocess_exec("run_atdometrajectory.py")
         )
 
+        print("*** Wait for DomeTrajectoryMCS script to start")
         self.script = DomeTrajectoryMCS(index=index)
+        await asyncio.wait_for(self.script.start_task, timeout=STD_TIMEOUT)
 
         print("*** Wait for ATMCS to start up")
         data = await self.script.atmcs.evt_summaryState.next(
-            flush=False, timeout=START_TIMEOUT
+            flush=False, timeout=STD_TIMEOUT
         )
         self.assertEqual(data.summaryState, salobj.State.STANDBY)
         print("*** Wait for ATDome to start up")
         data = await self.script.atdome.evt_summaryState.next(
-            flush=False, timeout=START_TIMEOUT
+            flush=False, timeout=STD_TIMEOUT
         )
         self.assertEqual(data.summaryState, salobj.State.STANDBY)
         print("*** Wait for ATDomeTrajectory to start up")
         data = await self.script.atdometraj.evt_summaryState.next(
-            flush=False, timeout=START_TIMEOUT
+            flush=False, timeout=STD_TIMEOUT
         )
         self.assertEqual(data.summaryState, salobj.State.STANDBY)
 
         return [self.script]
 
     async def test_integration(self):
-        async with self.make_script(timeout=START_TIMEOUT):
+        async with self.make_script(timeout=STD_TIMEOUT):
             print("*** Configure and run script")
             await self.configure_script()
             await self.run_script()
