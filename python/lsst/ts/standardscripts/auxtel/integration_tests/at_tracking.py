@@ -156,7 +156,7 @@ class ATTracking(scriptqueue.BaseScript):
         # Enable ATMCS and ATPgt, if requested, else check they are enabled
         await self.checkpoint("enable_cscs")
         if self.enable_atmcs:
-            self.log.info(f"Enable ATMCS")
+            self.log.info("Enable ATMCS")
             await salobj.enable_csc(self.atmcs)
         else:
             data = await self.atmcs.evt_summaryState.next(flush=False)

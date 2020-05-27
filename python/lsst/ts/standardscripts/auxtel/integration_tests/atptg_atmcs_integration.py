@@ -120,7 +120,7 @@ class ATPtgATMcsIntegration(salobj.BaseScript):
         # Enable ATMCS and ATPgt, if requested, else check they are enabled
         await self.checkpoint("enable_cscs")
         if self.config.enable_atmcs:
-            self.log.info(f"Enable ATMCS")
+            self.log.info("Enable ATMCS")
             await salobj.set_summary_state(self.atmcs, salobj.State.ENABLED)
         else:
             data = self.atmcs.evt_summaryState.get()
