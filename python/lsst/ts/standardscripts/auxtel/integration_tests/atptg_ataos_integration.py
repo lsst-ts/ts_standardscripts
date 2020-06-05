@@ -98,7 +98,7 @@ class ATPtgATAOSIntegration(salobj.BaseScript):
         # Enable ATAOS and ATPgt, if requested, else check they are enabled
         await self.checkpoint("enable_cscs")
         if self.config.enable_ataos:
-            self.log.info(f"Enable ATAOS")
+            self.log.info("Enable ATAOS")
             await salobj.set_summary_state(self.ataos, salobj.State.ENABLED)
         else:
             data = self.ataos.evt_summaryState.get()
@@ -109,7 +109,7 @@ class ATPtgATAOSIntegration(salobj.BaseScript):
                 )
 
         if self.config.enable_atptg:
-            self.log.info(f"Enable ATPtg")
+            self.log.info("Enable ATPtg")
             await salobj.set_summary_state(self.atptg, salobj.State.ENABLED)
         else:
             data = self.atptg.evt_summaryState.get()

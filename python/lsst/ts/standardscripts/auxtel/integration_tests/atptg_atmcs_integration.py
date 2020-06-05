@@ -120,7 +120,7 @@ class ATPtgATMcsIntegration(salobj.BaseScript):
         # Enable ATMCS and ATPgt, if requested, else check they are enabled
         await self.checkpoint("enable_cscs")
         if self.config.enable_atmcs:
-            self.log.info(f"Enable ATMCS")
+            self.log.info("Enable ATMCS")
             await salobj.set_summary_state(self.atmcs, salobj.State.ENABLED)
         else:
             data = self.atmcs.evt_summaryState.get()
@@ -196,11 +196,7 @@ class ATPtgATMcsIntegration(salobj.BaseScript):
         # Use time from the target event, since that is the time at which
         # the position was specified.
         data = await self.atmcs.evt_target.next(flush=True, timeout=1)
-        # TODO DM-24051: ditch this hack when we no longer need ts_xml 4.8
-        if hasattr(data, "taiTime"):
-            event_tai = data.taiTime
-        else:
-            event_tai = data.time
+        event_tai = data.taiTime
         target_time = Time(event_tai, scale="tai", format="unix")
         curr_time_local = Time.now()
         dtime = event_tai - curr_time_local.tai.unix
