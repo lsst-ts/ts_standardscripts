@@ -50,7 +50,7 @@ class TestEnableLATISS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
                 with self.subTest(f"{comp} summary state", comp=comp):
                     self.assertEqual(
                         getattr(
-                            self.latiss_mock, comp
+                            self.latiss_mock.controllers, comp
                         ).evt_summaryState.data.summaryState,
                         salobj.State.ENABLED,
                     )
