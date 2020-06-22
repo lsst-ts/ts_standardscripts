@@ -1,6 +1,6 @@
 # This file is part of ts_standardscripts
 #
-# Developed for the LSST Data Management System.
+# Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -50,7 +50,7 @@ class TestEnableLATISS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
                 with self.subTest(f"{comp} summary state", comp=comp):
                     self.assertEqual(
                         getattr(
-                            self.latiss_mock, comp
+                            self.latiss_mock.controllers, comp
                         ).evt_summaryState.data.summaryState,
                         salobj.State.ENABLED,
                     )

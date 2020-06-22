@@ -26,7 +26,7 @@ import numpy as np
 import yaml
 
 from lsst.ts import salobj
-from lsst.ts.observatory.control import LATISS, LATISSUsages
+from lsst.ts.observatory.control.auxtel import LATISS, LATISSUsages
 
 
 class LatissTakeImage(salobj.BaseScript):
