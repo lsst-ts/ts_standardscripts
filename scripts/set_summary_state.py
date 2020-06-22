@@ -19,6 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 
+import asyncio
+
 from lsst.ts.standardscripts import SetSummaryState
 
-SetSummaryState.main()
+asyncio.run(SetSummaryState.amain())

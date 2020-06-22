@@ -19,7 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 
+import asyncio
+
 from lsst.ts.standardscripts.auxtel import LatissTakeImage
 
-if __name__ == "__main__":
-    LatissTakeImage.main()
+asyncio.run(LatissTakeImage.amain())

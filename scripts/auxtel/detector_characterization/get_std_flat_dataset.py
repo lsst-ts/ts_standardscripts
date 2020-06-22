@@ -19,6 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 
+import asyncio
+
 from lsst.ts.standardscripts.auxtel.detector_characterization import ATGetStdFlatDataset
 
-ATGetStdFlatDataset.main()
+asyncio.run(ATGetStdFlatDataset.amain())

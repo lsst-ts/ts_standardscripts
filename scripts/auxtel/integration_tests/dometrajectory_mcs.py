@@ -19,6 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 
+import asyncio
+
 from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
 
-DomeTrajectoryMCS.main()
+asyncio.run(DomeTrajectoryMCS.amain())

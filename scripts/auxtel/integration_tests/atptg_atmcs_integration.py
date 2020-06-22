@@ -19,6 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 
+import asyncio
+
 from lsst.ts.standardscripts.auxtel.integration_tests import ATPtgATMcsIntegration
 
-ATPtgATMcsIntegration.main()
+asyncio.run(ATPtgATMcsIntegration.amain())
