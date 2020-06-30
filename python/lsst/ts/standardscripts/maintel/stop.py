@@ -18,13 +18,44 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .calsys_takedata import CalSysTakeData
-from .latiss_take_image import LatissTakeImage
-from .slew_telescope_icrs import *
-from .enable_atcs import *
-from .enable_latiss import *
-from .standby_latiss import *
-from .shutdown import *
-from .prepare_for_onsky import *
-from .prepare_for_flat import *
-from .stop import *
+__all__ = ["Stop"]
+
+from lsst.ts import salobj
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+
+
+class Stop(salobj.BaseScript):
+    """Stop telescope and dome.
+
+    Parameters
+    ----------
+    index : `int`
+        Index of Script SAL component.
+
+    Notes
+    -----
+    **Checkpoints**
+
+    **Details**
+
+    """
+
+    def __init__(self, index):
+        super().__init__(index=index, descr="Enable MTCS.")
+
+        self.config = None
+
+        self.mttcs = MTCS(self.domain, intended_usage=MTCSUsages.Shutdown)
+
+    @classmethod
+    def get_schema(cls):
+        return None
+
+    async def configure(self, config):
+        self.config = config
+
+    def set_metadata(self, metadata):
+        metadata.duration = 60.0
+
+    async def run(self):
+        await self.mttcs.stop_all()
