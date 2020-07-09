@@ -18,4 +18,44 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .get_std_flat_dataset import *
+__all__ = ["Stop"]
+
+from lsst.ts import salobj
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+
+
+class Stop(salobj.BaseScript):
+    """Stop telescope and dome.
+
+    Parameters
+    ----------
+    index : `int`
+        Index of Script SAL component.
+
+    Notes
+    -----
+    **Checkpoints**
+
+    **Details**
+
+    """
+
+    def __init__(self, index):
+        super().__init__(index=index, descr="Enable MTCS.")
+
+        self.config = None
+
+        self.mttcs = MTCS(self.domain, intended_usage=MTCSUsages.Shutdown)
+
+    @classmethod
+    def get_schema(cls):
+        return None
+
+    async def configure(self, config):
+        self.config = config
+
+    def set_metadata(self, metadata):
+        metadata.duration = 60.0
+
+    async def run(self):
+        await self.mttcs.stop_all()

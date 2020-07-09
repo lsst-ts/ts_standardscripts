@@ -18,4 +18,4 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .get_std_flat_dataset import *
+from .stop import *
