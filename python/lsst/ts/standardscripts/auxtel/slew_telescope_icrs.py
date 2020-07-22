@@ -24,7 +24,7 @@ import yaml
 import asyncio
 
 from lsst.ts import salobj
-from lsst.ts.observatory.control import ATCS, ATCSUsages
+from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages
 from lsst.ts.idl.enums.Script import ScriptState
 
 

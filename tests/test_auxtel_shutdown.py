@@ -1,6 +1,6 @@
 # This file is part of ts_standardscripts
 #
-# Developed for the LSST Data Management System.
+# Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -24,7 +24,7 @@ import unittest
 import asynctest
 
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.auxtel import PrepareForFlat
+from lsst.ts.standardscripts.auxtel import Shutdown
 from lsst.ts.observatory.control.mock import ATCSMock
 
 random.seed(47)  # for set_random_lsst_dds_domain
@@ -32,9 +32,9 @@ random.seed(47)  # for set_random_lsst_dds_domain
 logging.basicConfig()
 
 
-class TestPrepareForFlat(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestShutdown(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     async def basic_make_script(self, index):
-        self.script = PrepareForFlat(index=index)
+        self.script = Shutdown(index=index)
         self.atcs_mock = ATCSMock()
 
         return (self.script, self.atcs_mock)
@@ -49,7 +49,7 @@ class TestPrepareForFlat(standardscripts.BaseScriptTestCase, asynctest.TestCase)
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "prepare_for_flat.py"
+        script_path = scripts_dir / "auxtel" / "shutdown.py"
         await self.check_executable(script_path)
 
 

@@ -1,6 +1,6 @@
 # This file is part of ts_standardscripts
 #
-# Developed for the LSST Data Management System.
+# Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -22,12 +22,10 @@ __all__ = ["DomeTrajectoryMCS"]
 
 import asyncio
 import math
-
 import yaml
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums.ATDome import AzimuthCommandedState, AzimuthState
-from lsst.ts.observatory.control import subtract_angles
 
 STD_TIMEOUT = 5  # timeout for normal commands (sec)
 SLEW_TIMEOUT = 60  # maximum time for dome and telescope to slew (sec)
@@ -251,7 +249,8 @@ class DomeTrajectoryMCS(salobj.BaseScript):
             f"GoToPosition={AzimuthCommandedState.GOTOPOSITION}"
         )
         assert (
-            abs(subtract_angles(dome_pos.azimuthPosition, self.track_elaz[1])) <= 0.1
+            abs(salobj.angle_diff(dome_pos.azimuthPosition, self.track_elaz[1]).deg)
+            <= 0.1
         ), (
             f"Dome current azimuth={dome_pos.azimuthPosition:0.2f} != "
             f"{self.track_elaz[1]:0.2f} = telescope target azimuth"
@@ -290,7 +289,8 @@ class DomeTrajectoryMCS(salobj.BaseScript):
             f"dome current azimuth={dome_pos.azimuthPosition:0.2f}"
         )
         assert (
-            abs(subtract_angles(dome_pos.azimuthPosition, self.track_elaz[1])) <= 0.5
+            abs(salobj.angle_diff(dome_pos.azimuthPosition, self.track_elaz[1]).deg)
+            <= 0.5
         ), (
             f"Dome dome azimuthPosition={dome_pos.azimuthPosition:0.2f} != "
             f"{self.track_elaz[1]:0.2f} = telescope target azimuth"
@@ -328,7 +328,11 @@ class DomeTrajectoryMCS(salobj.BaseScript):
         )
         # use subtract_angles in case dome azimuth ~= 0
         assert (
-            abs(subtract_angles(dome_az_cmd_state.azimuth, dome_cmd_az_before_big_move))
+            abs(
+                salobj.angle_diff(
+                    dome_az_cmd_state.azimuth, dome_cmd_az_before_big_move
+                ).deg
+            )
             >= 0.1
         ), (
             f"Dome commanded azimuth={dome_az_cmd_state.azimuth:0.2f} == "
@@ -400,7 +404,11 @@ class DomeTrajectoryMCS(salobj.BaseScript):
         )
         # use subtract_angles in case dome azimuth ~= 0
         assert (
-            abs(subtract_angles(dome_pos.azimuthPosition, dome_cmd_az_after_big_move))
+            abs(
+                salobj.angle_diff(
+                    dome_pos.azimuthPosition, dome_cmd_az_after_big_move
+                ).deg
+            )
             <= 0.1
         ), (
             f"Dome azimuthPosition={dome_pos.azimuthPosition:0.2f} != "

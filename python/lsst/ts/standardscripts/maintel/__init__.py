@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
@@ -19,8 +18,4 @@
 #
 # You should have received a copy of the GNU General Public License
 
-import asyncio
-
-from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
-
-asyncio.run(DomeTrajectoryMCS.amain())
+from .stop import *

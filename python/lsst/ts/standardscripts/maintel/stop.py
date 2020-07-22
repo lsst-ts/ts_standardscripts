@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
@@ -19,8 +18,44 @@
 #
 # You should have received a copy of the GNU General Public License
 
-import asyncio
+__all__ = ["Stop"]
 
-from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
+from lsst.ts import salobj
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
-asyncio.run(DomeTrajectoryMCS.amain())
+
+class Stop(salobj.BaseScript):
+    """Stop telescope and dome.
+
+    Parameters
+    ----------
+    index : `int`
+        Index of Script SAL component.
+
+    Notes
+    -----
+    **Checkpoints**
+
+    **Details**
+
+    """
+
+    def __init__(self, index):
+        super().__init__(index=index, descr="Enable MTCS.")
+
+        self.config = None
+
+        self.mttcs = MTCS(self.domain, intended_usage=MTCSUsages.Shutdown)
+
+    @classmethod
+    def get_schema(cls):
+        return None
+
+    async def configure(self, config):
+        self.config = config
+
+    def set_metadata(self, metadata):
+        metadata.duration = 60.0
+
+    async def run(self):
+        await self.mttcs.stop_all()

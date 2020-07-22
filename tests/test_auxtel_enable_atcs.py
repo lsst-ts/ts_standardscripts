@@ -1,6 +1,6 @@
 # This file is part of ts_standardscripts
 #
-# Developed for the LSST Data Management System.
+# Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -23,8 +23,9 @@ import random
 import unittest
 import asynctest
 
+from lsst.ts import salobj
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.auxtel import Shutdown
+from lsst.ts.standardscripts.auxtel import EnableATTCS
 from lsst.ts.observatory.control.mock import ATCSMock
 
 random.seed(47)  # for set_random_lsst_dds_domain
@@ -32,9 +33,9 @@ random.seed(47)  # for set_random_lsst_dds_domain
 logging.basicConfig()
 
 
-class TestShutdown(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestEnableATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     async def basic_make_script(self, index):
-        self.script = Shutdown(index=index)
+        self.script = EnableATTCS(index=index)
         self.atcs_mock = ATCSMock()
 
         return (self.script, self.atcs_mock)
@@ -43,13 +44,20 @@ class TestShutdown(standardscripts.BaseScriptTestCase, asynctest.TestCase):
         async with self.make_script():
             await self.configure_script()
 
-            # TODO: Have to think about how to test this script.
+            await self.run_script()
 
-            # await self.run_script()
+            for comp in self.script.attcs.components:
+                with self.subTest(f"{comp} summary state", comp=comp):
+                    self.assertEqual(
+                        getattr(
+                            self.atcs_mock, comp
+                        ).evt_summaryState.data.summaryState,
+                        salobj.State.ENABLED,
+                    )
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "shutdown.py"
+        script_path = scripts_dir / "auxtel" / "enable_atcs.py"
         await self.check_executable(script_path)
 
 

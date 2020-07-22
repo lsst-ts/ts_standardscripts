@@ -21,6 +21,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
+from lsst.ts.standardscripts.maintel import Stop
 
-asyncio.run(DomeTrajectoryMCS.amain())
+asyncio.run(Stop.amain())
