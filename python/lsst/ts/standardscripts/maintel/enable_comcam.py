@@ -18,29 +18,25 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["EnableATTCS"]
+__all__ = ["EnableComCam"]
 
 import yaml
 
 from ..enable_group import EnableGroup
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
 
 
-class EnableATTCS(EnableGroup):
-    """Enable all ATCS components.
+class EnableComCam(EnableGroup):
+    """Enable all ComCam components.
 
     The Script configuration only accepts settings values for the CSCs that
     are configurable.
 
     The following CSCs will be enabled:
 
-        - ATMCS: not configurable
-        - ATPtg: not configurable
-        - ATAOS
-        - ATPneumatics: not configurable
-        - ATHexapod
-        - ATDome
-        - ATDomeTrajectory
+        - CCCamera
+        - CCHeaderService: not configurable
+        - CCArchiver
 
     Parameters
     ----------
@@ -58,47 +54,35 @@ class EnableATTCS(EnableGroup):
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        super().__init__(index=index, descr="Enable ATCS.")
+        super().__init__(index=index, descr="Enable ComCam.")
 
         self.config = None
 
-        self._attcs = ATCS(
-            self.domain, intended_usage=ATCSUsages.StateTransition, log=self.log
+        self._comcam = ComCam(
+            self.domain, intended_usage=ComCamUsages.StateTransition, log=self.log
         )
 
     @property
     def group(self):
-        return self._attcs
+        return self._comcam
 
     @classmethod
     def get_schema(cls):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
-            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/enable_atcs.yaml
-            title: EnableATTCS v1
-            description: Configuration for EnableATTCS. Only include those CSCs that are configurable.
+            $id: https://github.com/lsst-ts/ts_standardscripts/maintel/enable_mtcs.yaml
+            title: EnableComCam v1
+            description: Configuration for EnableComCam
             type: object
             properties:
-                ataos:
-                    description: Configuration for the ATAOS component.
+                cccamera:
+                    description: Configuration for the CCCamera component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
-                athexapod:
-                    description: Configuration for the ATHexapod component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
-                atdome:
-                    description: Configuration for the ATHexapod component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
-                atdometrajectory:
-                    description: Configuration for the ATHexapod component.
+                ccarchiver:
+                    description: Configuration for the CCArchiver component.
                     anyOf:
                       - type: string
                       - type: "null"

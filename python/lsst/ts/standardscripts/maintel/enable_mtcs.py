@@ -1,4 +1,4 @@
-# This file is part of ts_externalcripts
+# This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -18,16 +18,32 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["PrepareForOnSky"]
+__all__ = ["EnableMTCS"]
 
 import yaml
 
-from lsst.ts import salobj
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+from ..enable_group import EnableGroup
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 
-class PrepareForOnSky(salobj.BaseScript):
-    """Run ATTCS startup.
+class EnableMTCS(EnableGroup):
+    """Enable all MTCS components.
+
+    The Script configuration only accepts settings values for the CSCs that
+    are configurable.
+
+    The following CSCs will be enabled:
+
+        - NewMTMount
+        - MTPtg: not configurable
+        - MTAOS
+        - MTM1M3
+        - MTM2
+        - Hexapod:1
+        - Hexapod:2
+        - Rotator: not configurable
+        - Dome
+        - MTDomeTrajectory
 
     Parameters
     ----------
@@ -45,77 +61,80 @@ class PrepareForOnSky(salobj.BaseScript):
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        super().__init__(index=index, descr="Run ATCS startup.")
+        super().__init__(index=index, descr="Enable MTCS.")
 
         self.config = None
 
-        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.StartUp, log=self.log)
+        self._mtcs = MTCS(
+            self.domain, intended_usage=MTCSUsages.StateTransition, log=self.log
+        )
+
+    @property
+    def group(self):
+        return self._mtcs
 
     @classmethod
     def get_schema(cls):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
-            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/prepare_for_onsky.yaml
-            title: PrepareForOnSky v1
-            description: Configuration for PrepareForOnSky
+            $id: https://github.com/lsst-ts/ts_standardscripts/maintel/enable_mtcs.yaml
+            title: EnableMTCS v1
+            description: Configuration for EnableMTCS
             type: object
             properties:
-                atmcs:
-                    description: Configuration for the ATMCS component.
+                newmtmount:
+                    description: Configuration for the NewMTMount component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
-                atptg:
-                    description: Configuration for the ATPtg component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
-                ataos:
+                mtaos:
                     description: Configuration for the ATAOS component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
-                atpneumatics:
-                    description: Configuration for the ATPneumatics component.
+                mtm1m3:
+                    description: Configuration for the M1M3 component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
-                athexapod:
-                    description: Configuration for the ATHexapod component.
+                mtm2:
+                    description: Configuration for the MTM2 component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
-                atdome:
-                    description: Configuration for the ATHexapod component.
+                hexapod_1:
+                    description: Configuration for the Camera Hexapod component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
-                atdometrajectory:
-                    description: Configuration for the ATHexapod component.
+                hexapod_2:
+                    description: Configuration for the M2 Hexapod component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
+                dome:
+                    description: Configuration for the Dome component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                mtdometrajectory:
+                    description: Configuration for the MTDomeTrajectory component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                ignore:
+                    description: CSCs from the group to ignore.
+                    type: array
+                    items:
+                        type: string
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
-
-    async def configure(self, config):
-        self.config = config
-
-    def set_metadata(self, metadata):
-        metadata.duration = 600.0
-
-    async def run(self):
-        settings = (
-            dict([(comp, getattr(self.config, comp)) for comp in self.attcs.components])
-            if self.config is not None
-            else None
-        )
-        await self.attcs.startup(settings=settings)

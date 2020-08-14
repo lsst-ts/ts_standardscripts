@@ -18,14 +18,14 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["PrepareForFlat"]
+__all__ = ["StandbyATCS"]
 
-from lsst.ts import salobj
+from ..standby_group import StandbyGroup
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 
 
-class PrepareForFlat(salobj.BaseScript):
-    """Run prepare for flat on ATCS.
+class StandbyATCS(StandbyGroup):
+    """Put ATCS components in standby.
 
     Parameters
     ----------
@@ -43,23 +43,13 @@ class PrepareForFlat(salobj.BaseScript):
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        super().__init__(index=index, descr="Prepare to take flat field.")
 
-        self.attcs = ATCS(
-            self.domain, intended_usage=ATCSUsages.PrepareForFlatfield, log=self.log
+        super().__init__(index=index, descr="Put all ATCS components in standby state.")
+
+        self._atcs = ATCS(
+            self.domain, intended_usage=ATCSUsages.StateTransition, log=self.log
         )
 
-    @classmethod
-    def get_schema(cls):
-        # This script does not require any configuration
-        return None
-
-    async def configure(self, config):
-        # This script does not require any configuration
-        pass
-
-    def set_metadata(self, metadata):
-        metadata.duration = 600.0
-
-    async def run(self):
-        await self.attcs.prepare_for_flatfield()
+    @property
+    def group(self):
+        return self._atcs

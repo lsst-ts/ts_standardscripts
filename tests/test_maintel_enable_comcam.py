@@ -25,20 +25,20 @@ import asynctest
 
 from lsst.ts import salobj
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.auxtel import EnableATTCS
-from lsst.ts.observatory.control.mock import ATCSMock
+from lsst.ts.standardscripts.maintel import EnableComCam
+from lsst.ts.observatory.control.mock import ComCamMock
 
 random.seed(47)  # for set_random_lsst_dds_domain
 
 logging.basicConfig()
 
 
-class TestEnableATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestEnableComCam(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     async def basic_make_script(self, index):
-        self.script = EnableATTCS(index=index)
-        self.atcs_mock = ATCSMock()
+        self.script = EnableComCam(index=index)
+        self.mock = ComCamMock()
 
-        return (self.script, self.atcs_mock)
+        return (self.script, self.mock)
 
     async def test_run(self):
         async with self.make_script():
@@ -47,17 +47,18 @@ class TestEnableATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
             await self.run_script()
 
             for comp in self.script.group.components:
-                with self.subTest(f"{comp} summary state", comp=comp):
-                    self.assertEqual(
-                        getattr(
-                            self.atcs_mock.controllers, comp
-                        ).evt_summaryState.data.summaryState,
-                        salobj.State.ENABLED,
-                    )
+                if getattr(self.script.group.check, comp):
+                    with self.subTest(f"{comp} summary state", comp=comp):
+                        self.assertEqual(
+                            getattr(
+                                self.mock.controllers, comp
+                            ).evt_summaryState.data.summaryState,
+                            salobj.State.ENABLED,
+                        )
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "enable_atcs.py"
+        script_path = scripts_dir / "maintel" / "enable_comcam.py"
         await self.check_executable(script_path)
 
 

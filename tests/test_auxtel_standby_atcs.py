@@ -25,7 +25,7 @@ import asynctest
 
 from lsst.ts import salobj
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.auxtel import EnableATTCS
+from lsst.ts.standardscripts.auxtel import StandbyATCS
 from lsst.ts.observatory.control.mock import ATCSMock
 
 random.seed(47)  # for set_random_lsst_dds_domain
@@ -33,9 +33,9 @@ random.seed(47)  # for set_random_lsst_dds_domain
 logging.basicConfig()
 
 
-class TestEnableATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestStandbyATCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     async def basic_make_script(self, index):
-        self.script = EnableATTCS(index=index)
+        self.script = StandbyATCS(index=index)
         self.atcs_mock = ATCSMock()
 
         return (self.script, self.atcs_mock)
@@ -46,18 +46,18 @@ class TestEnableATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
             await self.run_script()
 
-            for comp in self.script.group.components:
+            for comp in self.atcs_mock.components:
                 with self.subTest(f"{comp} summary state", comp=comp):
                     self.assertEqual(
                         getattr(
                             self.atcs_mock.controllers, comp
                         ).evt_summaryState.data.summaryState,
-                        salobj.State.ENABLED,
+                        salobj.State.STANDBY,
                     )
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "enable_atcs.py"
+        script_path = scripts_dir / "auxtel" / "standby_atcs.py"
         await self.check_executable(script_path)
 
 

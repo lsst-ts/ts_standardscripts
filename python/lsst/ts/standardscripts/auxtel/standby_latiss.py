@@ -20,11 +20,11 @@
 
 __all__ = ["StandbyLATISS"]
 
-from lsst.ts import salobj
+from ..standby_group import StandbyGroup
 from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
 
 
-class StandbyLATISS(salobj.BaseScript):
+class StandbyLATISS(StandbyGroup):
     """Put LATISS components in standby.
 
     Parameters
@@ -48,20 +48,10 @@ class StandbyLATISS(salobj.BaseScript):
             index=index, descr="Put all LATISS components in standby state."
         )
 
-        self.latiss = LATISS(self.domain, intended_usage=LATISSUsages.StateTransition)
+        self._latiss = LATISS(
+            self.domain, intended_usage=LATISSUsages.StateTransition, log=self.log
+        )
 
-    @classmethod
-    def get_schema(cls):
-        # This script does not require any configuration
-        return None
-
-    async def configure(self, config):
-        # This script does not require any configuration
-        pass
-
-    def set_metadata(self, metadata):
-        metadata.duration = 60.0
-
-    async def run(self):
-
-        await self.latiss.standby()
+    @property
+    def group(self):
+        return self._latiss

@@ -45,7 +45,7 @@ class Stop(salobj.BaseScript):
 
         self.config = None
 
-        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.Shutdown)
+        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.Shutdown, log=self.log)
 
     @classmethod
     def get_schema(cls):
