@@ -21,6 +21,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import Slew
+from lsst.ts.standardscripts.maintel import TrackTarget
 
-asyncio.run(Slew.amain())
+asyncio.run(TrackTarget.amain())

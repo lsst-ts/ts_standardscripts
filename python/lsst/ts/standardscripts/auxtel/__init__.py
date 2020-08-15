@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU General Public License
 
 from .calsys_takedata import CalSysTakeData
-from .slew import *
 from .enable_atcs import *
 from .enable_latiss import *
 from .standby_atcs import *
@@ -29,3 +28,4 @@ from .prepare_for_onsky import *
 from .prepare_for_flat import *
 from .stop import *
 from .take_image_latiss import TakeImageLatiss
+from .track_target import *

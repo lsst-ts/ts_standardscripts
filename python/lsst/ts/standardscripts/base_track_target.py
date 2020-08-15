@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["BaseSlew"]
+__all__ = ["BaseTrackTarget"]
 
 import abc
 import yaml
@@ -28,22 +28,19 @@ from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
 
 
-class BaseSlew(salobj.BaseScript, metaclass=abc.ABCMeta):
-    """Base slew script.
+class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
+    """Base track target script.
 
     This script implements the basic configuration and run procedures for
-    slewing. It is a base class for both the Main and Auxiliary Telescope.
+    slewing and tracking a target, either by using ICRS coordinates or the
+    object name. It is a base class for both the Main and Auxiliary Telescope.
 
     Parameters
     ----------
     index : `int`
         Index of Script SAL component.
-
-    Notes
-    -----
-    **Checkpoints**
-
-    **Details**
+    descr : `str`
+        Short Script description.
 
     """
 
@@ -138,7 +135,7 @@ class BaseSlew(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        metadata : SAPY_Script.Script_logevent_metadataC
+        metadata : `Script_logevent_metadata`
         """
         metadata.duration = 1
 

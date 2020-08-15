@@ -61,7 +61,7 @@ class TestEnableMTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
             # Test the ignore feature
 
-            ignore = ["Dome", "MTDomeTrajectory"]
+            ignore = ["dome", "mtdometrajectory"]
 
             await self.configure_script(ignore=ignore)
 
@@ -85,10 +85,9 @@ class TestEnableMTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
                         )
 
             for comp in ignore:
-                rname = comp.lower().replace(":", "_")
                 current_state = salobj.State(
                     getattr(
-                        self.mtcs_mock.controllers, rname
+                        self.mtcs_mock.controllers, comp
                     ).evt_summaryState.data.summaryState
                 )
 

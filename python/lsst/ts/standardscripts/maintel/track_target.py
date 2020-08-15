@@ -18,25 +18,19 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["Slew"]
+__all__ = ["TrackTarget"]
 
-from ..base_slew import BaseSlew
+from ..base_track_target import BaseTrackTarget
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 
-class Slew(BaseSlew):
+class TrackTarget(BaseTrackTarget):
     """Execute a Slew/Track operation with the Main Telescope.
 
     Parameters
     ----------
     index : `int`
         Index of Script SAL component.
-
-    Notes
-    -----
-    **Checkpoints**
-
-    **Details**
 
     """
 

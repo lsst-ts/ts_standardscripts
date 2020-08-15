@@ -54,6 +54,13 @@ class StandbyGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def group(self):
         """Return group of CSC attribute.
+
+        Returns
+        -------
+        group
+            This property must return a subclass of `RemoteGroup` from
+            `lsst.ts.observatory.control`, e.g. `ATCS` or `MTCS`.
+
         """
         raise NotImplementedError()
 
@@ -67,7 +74,8 @@ class StandbyGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
             type: object
             properties:
                 ignore:
-                    description: CSCs from the group to ignore.
+                    description: >-
+                        CSCs from the group to ignore. Name must match those in self.group.components.
                     type: array
                     items:
                         type: string
@@ -85,14 +93,13 @@ class StandbyGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         if hasattr(self.config, "ignore"):
             for comp in self.config.ignore:
-                rname = comp.lower().replace(":", "_")
-                if rname not in self.group.components:
+                if comp not in self.group.components:
                     self.log.warning(
                         f"Component {comp} not in CSC Group. "
                         f"Must be one of {self.group.components}. Ignoring."
                     )
                 else:
                     self.log.debug(f"Ignoring {comp}.")
-                    setattr(self.group.check, rname, False)
+                    setattr(self.group.check, comp, False)
 
         await self.group.standby()

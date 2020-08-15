@@ -28,16 +28,40 @@ from lsst.ts import salobj
 class EnableGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
     """Base Script for enabling groups of CSCs.
 
+    This base class is setup to operate with minimum configuration. By default
+    it will try to access an attribute `self.config.ignore`, which is supposed
+    to contain a list of CSCs from the group to be ignored in the process.
+    Nevertheless, if the parent class does not provide an `ignore` property it
+    will be ignored.
+
+    In addition, when subclassing this base class, users can provide settings
+    for the configurable CSCs in the group. The name of the CSC in the
+    configuration must match the name of the CSC in `group.components`, which
+    is the name of the CSC in lowercase, replacing the ":" with "_" for indexed
+    components. For example,
+
+        * ATMCS -> atmcs
+        * NewMTMount -> newmtmount
+        * Hexapod:1 -> hexapod_1
+
     Parameters
     ----------
     index : `int`
         Index of Script SAL component.
 
+    descr : `str`
+        Short Script description.
+
     Notes
     -----
+
     **Checkpoints**
 
+    None
+
     **Details**
+
+    All CSCs will be enabled concurrently.
 
     """
 
@@ -52,6 +76,13 @@ class EnableGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def group(self):
         """Return group of CSC attribute.
+
+        Returns
+        -------
+        group
+            This property must return a subclass of `RemoteGroup` from
+            `lsst.ts.observatory.control`, e.g. `ATCS` or `MTCS`.
+
         """
         raise NotImplementedError()
 
@@ -64,15 +95,14 @@ class EnableGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
     async def run(self):
         if hasattr(self.config, "ignore"):
             for comp in self.config.ignore:
-                rname = comp.lower().replace(":", "_")
-                if rname not in self.group.components:
+                if comp not in self.group.components:
                     self.log.warning(
                         f"Component {comp} not in CSC Group. "
                         f"Must be one of {self.group.components}. Ignoring."
                     )
                 else:
                     self.log.debug(f"Ignoring component {comp}.")
-                    setattr(self.group.check, rname, False)
+                    setattr(self.group.check, comp, False)
 
         settings = (
             dict(

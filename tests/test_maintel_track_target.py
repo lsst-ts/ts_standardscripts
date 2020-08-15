@@ -26,7 +26,7 @@ import asynctest
 
 from lsst.ts import salobj
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.maintel import Slew
+from lsst.ts.standardscripts.maintel import TrackTarget
 
 random.seed(47)  # for set_random_lsst_dds_domain
 
@@ -35,7 +35,7 @@ logging.basicConfig()
 
 class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     async def basic_make_script(self, index):
-        self.script = Slew(index=index)
+        self.script = TrackTarget(index=index)
 
         return (self.script,)
 
@@ -163,7 +163,7 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "slew.py"
+        script_path = scripts_dir / "maintel" / "track_target.py"
         await self.check_executable(script_path)
 
 

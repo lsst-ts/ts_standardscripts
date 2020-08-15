@@ -20,8 +20,8 @@
 
 from .enable_comcam import *
 from .enable_mtcs import *
-from .slew import *
 from .standby_comcam import *
 from .standby_mtcs import *
 from .stop import *
 from .take_image_comcam import *
+from .track_target import *

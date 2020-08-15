@@ -25,15 +25,15 @@ import unittest
 import asynctest
 
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.auxtel import Slew
+from lsst.ts.standardscripts.auxtel import TrackTarget
 
 random.seed(47)  # for set_random_lsst_dds_domain
 
 logging.basicConfig()
 
 
-class TestATSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
-    """Test Auxiliary Telescope slew script.
+class TestATTrackTarget(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+    """Test Auxiliary Telescope track target script.
 
     Both AT and MT Slew scripts uses the same base script class. This unit
     test performs the basic checks on Script integrity. For a more detailed
@@ -41,7 +41,7 @@ class TestATSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     """
 
     async def basic_make_script(self, index):
-        self.script = Slew(index=index)
+        self.script = TrackTarget(index=index)
 
         return (self.script,)
 
@@ -84,7 +84,7 @@ class TestATSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "slew.py"
+        script_path = scripts_dir / "auxtel" / "track_target.py"
         await self.check_executable(script_path)
 
 
