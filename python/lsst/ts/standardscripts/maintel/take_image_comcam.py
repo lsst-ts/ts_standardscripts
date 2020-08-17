@@ -38,7 +38,7 @@ class TakeImageComCam(BaseTakeImage):
     -----
     **Checkpoints**
 
-    **Details**
+    * exposure {n} of {m}: before sending the CCCamera ``takeImages`` command
 
     """
 

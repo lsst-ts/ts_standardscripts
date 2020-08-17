@@ -32,6 +32,12 @@ class TrackTarget(BaseTrackTarget):
     index : `int`
         Index of Script SAL component.
 
+    Notes
+    -----
+    **Checkpoints**
+
+    None
+
     """
 
     __test__ = False  # stop pytest from warning that this is not a test

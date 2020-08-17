@@ -31,18 +31,35 @@ class EnableGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
     This base class is setup to operate with minimum configuration. By default
     it will try to access an attribute `self.config.ignore`, which is supposed
     to contain a list of CSCs from the group to be ignored in the process.
-    Nevertheless, if the parent class does not provide an `ignore` property it
-    will be ignored.
-
-    In addition, when subclassing this base class, users can provide settings
-    for the configurable CSCs in the group. The name of the CSC in the
-    configuration must match the name of the CSC in `group.components`, which
-    is the name of the CSC in lowercase, replacing the ":" with "_" for indexed
-    components. For example,
+    The name of the CSC must match the name of the CSC in `group.components`,
+    which is the name of the CSC in lowercase, replacing the ":" with "_" for
+    indexed components. For example,
 
         * ATMCS -> atmcs
         * NewMTMount -> newmtmount
         * Hexapod:1 -> hexapod_1
+
+    For instance, if one wants to ignore the MTDomeTrajectory and the Hexapod:1
+    (Hexapod with index=1) components from the MTCS the ignore field would look
+    like:
+
+        ignore:
+            - mtdometrajectory
+            - hexapod_1
+
+    Nevertheless, if the parent class does not provide an `ignore` property the
+    class will skip it.
+
+    In addition, when subclassing this base class, users can provide settings
+    for the configurable CSCs in the group. The naming *must* also follow the
+    same guidelines as for the ignore field, matching the value in
+    `group.components`. Following the example above, to pass in the labels
+    `special_configuration` and `lut_with_temperature` to configure the
+    MTDomeTrajectory and Hexapod:1, respectively, one would do;
+
+        mtdometrajectory: special_configuration
+        hexapod_1: lut_with_temperature
+
 
     Parameters
     ----------
@@ -86,6 +103,19 @@ class EnableGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError()
 
+    @staticmethod
+    @abc.abstractmethod
+    def components(cls):
+        """Return list of components name as appeared in
+        `self.group.components`.
+
+        Returns
+        -------
+        components : `list` of `str`.
+
+        """
+        raise NotImplementedError()
+
     async def configure(self, config):
         self.config = config
 
@@ -95,22 +125,17 @@ class EnableGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
     async def run(self):
         if hasattr(self.config, "ignore"):
             for comp in self.config.ignore:
-                if comp not in self.group.components:
+                if comp not in self.components():
                     self.log.warning(
                         f"Component {comp} not in CSC Group. "
-                        f"Must be one of {self.group.components}. Ignoring."
+                        f"Must be one of {self.components()}. Ignoring."
                     )
                 else:
                     self.log.debug(f"Ignoring component {comp}.")
                     setattr(self.group.check, comp, False)
 
         settings = (
-            dict(
-                [
-                    (comp, getattr(self.config, comp, ""))
-                    for comp in self.group.components
-                ]
-            )
+            dict([(comp, getattr(self.config, comp, "")) for comp in self.components()])
             if self.config is not None
             else None
         )

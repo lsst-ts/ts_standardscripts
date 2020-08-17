@@ -36,7 +36,7 @@ class StandbyLATISS(StandbyGroup):
     -----
     **Checkpoints**
 
-    **Details**
+    None
 
     """
 
@@ -55,3 +55,15 @@ class StandbyLATISS(StandbyGroup):
     @property
     def group(self):
         return self._latiss
+
+    @staticmethod
+    def components():
+        """Return list of components name as appeared in
+        `self.group.components`.
+
+        Returns
+        -------
+        components : `list` of `str`.
+
+        """
+        return set(["atcamera", "atspectrograph", "atheaderservice", "atarchiver"])

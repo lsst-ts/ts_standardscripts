@@ -36,7 +36,7 @@ class Shutdown(salobj.BaseScript):
     -----
     **Checkpoints**
 
-    **Details**
+    None
 
     """
 

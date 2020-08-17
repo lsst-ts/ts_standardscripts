@@ -34,12 +34,6 @@ class StandbyGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
     index : `int`
         Index of Script SAL component.
 
-    Notes
-    -----
-    **Checkpoints**
-
-    **Details**
-
     """
 
     __test__ = False  # stop pytest from warning that this is not a test
@@ -64,9 +58,22 @@ class StandbyGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError()
 
+    @staticmethod
+    @abc.abstractmethod
+    def components(cls):
+        """Return list of components name as appeared in
+        `self.group.components`.
+
+        Returns
+        -------
+        components : `list` of `str`.
+
+        """
+        raise NotImplementedError()
+
     @classmethod
     def get_schema(cls):
-        schema_yaml = """
+        schema_yaml = f"""
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/standby_group.yaml
             title: StandbyGroup v1
@@ -75,7 +82,10 @@ class StandbyGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
             properties:
                 ignore:
                     description: >-
-                        CSCs from the group to ignore. Name must match those in self.group.components.
+                        CSCs from the group to ignore. Name must match those in
+                        self.group.components, e.g.; mtdometrajectory or hexapod_1
+                        for the MTDomeTrajectory and Hexapod:1 components, respectively.
+                        Valid options are: {cls.components}.
                     type: array
                     items:
                         type: string
@@ -93,10 +103,10 @@ class StandbyGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         if hasattr(self.config, "ignore"):
             for comp in self.config.ignore:
-                if comp not in self.group.components:
+                if comp not in self.components():
                     self.log.warning(
                         f"Component {comp} not in CSC Group. "
-                        f"Must be one of {self.group.components}. Ignoring."
+                        f"Must be one of {self.components()}. Ignoring."
                     )
                 else:
                     self.log.debug(f"Ignoring {comp}.")

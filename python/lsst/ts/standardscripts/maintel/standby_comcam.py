@@ -36,7 +36,7 @@ class StandbyComCam(StandbyGroup):
     -----
     **Checkpoints**
 
-    **Details**
+    None
 
     """
 
@@ -55,3 +55,15 @@ class StandbyComCam(StandbyGroup):
     @property
     def group(self):
         return self._comcam
+
+    @staticmethod
+    def components():
+        """Return list of components name as appeared in
+        `self.group.components`.
+
+        Returns
+        -------
+        components : `list` of `str`.
+
+        """
+        return set(["cccamera", "ccheaderservice", "ccarchiver"])

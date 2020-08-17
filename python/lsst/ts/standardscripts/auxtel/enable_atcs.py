@@ -51,7 +51,7 @@ class EnableATTCS(EnableGroup):
     -----
     **Checkpoints**
 
-    **Details**
+    None
 
     """
 
@@ -70,9 +70,31 @@ class EnableATTCS(EnableGroup):
     def group(self):
         return self._attcs
 
+    @staticmethod
+    def components():
+        """Return list of components name as appeared in
+        `self.group.components`.
+
+        Returns
+        -------
+        components : `list` of `str`.
+
+        """
+        return set(
+            [
+                "atmcs",
+                "atptg",
+                "ataos",
+                "atpneumatics",
+                "athexapod",
+                "atdome",
+                "atdometrajectory",
+            ]
+        )
+
     @classmethod
     def get_schema(cls):
-        schema_yaml = """
+        schema_yaml = f"""
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/enable_atcs.yaml
             title: EnableATTCS v1
@@ -104,7 +126,10 @@ class EnableATTCS(EnableGroup):
                       - type: "null"
                     default: null
                 ignore:
-                    description: CSCs from the group to ignore.
+                    description: >-
+                        CSCs from the group to ignore. Name must match those in
+                        self.group.components, e.g.; atdometrajectory.
+                        Valid options are: {cls.components()}
                     type: array
                     items:
                         type: string

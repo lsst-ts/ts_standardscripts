@@ -40,6 +40,13 @@ class TestEnableLATISS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
         return (self.script, self.latiss_mock)
 
+    async def test_components(self):
+        async with self.make_script():
+            for component in self.script.group.components:
+                with self.subTest(f"Check {component}", component=component):
+                    if getattr(self.script.group.check, component):
+                        self.assertIn(component, self.script.components())
+
     async def test_run(self):
         async with self.make_script():
             await self.configure_script()

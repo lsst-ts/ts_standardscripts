@@ -55,6 +55,13 @@ class TestEnableATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
                         salobj.State.ENABLED,
                     )
 
+    async def test_components(self):
+        async with self.make_script():
+            for component in self.script.group.components:
+                with self.subTest(f"Check {component}", comp=component):
+                    if getattr(self.script.group.check, component):
+                        self.assertIn(component, self.script.components())
+
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
         script_path = scripts_dir / "auxtel" / "enable_atcs.py"

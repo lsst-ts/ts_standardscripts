@@ -36,7 +36,7 @@ class PrepareForFlat(salobj.BaseScript):
     -----
     **Checkpoints**
 
-    **Details**
+    None
 
     """
 

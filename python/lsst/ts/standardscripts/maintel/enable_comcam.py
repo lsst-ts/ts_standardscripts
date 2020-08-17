@@ -47,7 +47,7 @@ class EnableComCam(EnableGroup):
     -----
     **Checkpoints**
 
-    **Details**
+    None
 
     """
 
@@ -66,9 +66,21 @@ class EnableComCam(EnableGroup):
     def group(self):
         return self._comcam
 
+    @staticmethod
+    def components():
+        """Return list of components name as appeared in
+        `self.group.components`.
+
+        Returns
+        -------
+        components : `list` of `str`.
+
+        """
+        return set(["cccamera", "ccheaderservice", "ccarchiver"])
+
     @classmethod
     def get_schema(cls):
-        schema_yaml = """
+        schema_yaml = f"""
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/maintel/enable_mtcs.yaml
             title: EnableComCam v1
@@ -88,7 +100,10 @@ class EnableComCam(EnableGroup):
                       - type: "null"
                     default: null
                 ignore:
-                    description: CSCs from the group to ignore.
+                    description: >-
+                        CSCs from the group to ignore. Name must match those in
+                        self.group.components, e.g.; ccarchiver.
+                        Valid options are: {cls.components()}.
                     type: array
                     items:
                         type: string

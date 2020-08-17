@@ -36,7 +36,7 @@ class StandbyATCS(StandbyGroup):
     -----
     **Checkpoints**
 
-    **Details**
+    None
 
     """
 
@@ -53,3 +53,25 @@ class StandbyATCS(StandbyGroup):
     @property
     def group(self):
         return self._atcs
+
+    @staticmethod
+    def components():
+        """Return list of components name as appeared in
+        `self.group.components`.
+
+        Returns
+        -------
+        components : `list` of `str`.
+
+        """
+        return set(
+            [
+                "atmcs",
+                "atptg",
+                "ataos",
+                "atpneumatics",
+                "athexapod",
+                "atdome",
+                "atdometrajectory",
+            ]
+        )

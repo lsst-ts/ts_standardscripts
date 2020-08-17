@@ -39,6 +39,7 @@ class TakeImageLatiss(BaseTakeImage):
     **Checkpoints**
 
     * exposure {n} of {m}: before sending the ATCamera ``takeImages`` command
+
     """
 
     def __init__(self, index):

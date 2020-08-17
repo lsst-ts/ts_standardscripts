@@ -36,7 +36,7 @@ class StandbyMTCS(StandbyGroup):
     -----
     **Checkpoints**
 
-    **Details**
+    None
 
     """
 
@@ -53,3 +53,28 @@ class StandbyMTCS(StandbyGroup):
     @property
     def group(self):
         return self._mtcs
+
+    @staticmethod
+    def components():
+        """Return list of components name as appeared in
+        `self.group.components`.
+
+        Returns
+        -------
+        components : `list` of `str`.
+
+        """
+        return set(
+            [
+                "newmtmount",
+                "mtptg",
+                "mtaos",
+                "mtm1m3",
+                "mtm2",
+                "hexapod_1",
+                "hexapod_2",
+                "rotator",
+                "dome",
+                "mtdometrajectory",
+            ]
+        )

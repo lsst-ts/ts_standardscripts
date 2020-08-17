@@ -36,7 +36,11 @@ class Stop(salobj.BaseScript):
     -----
     **Checkpoints**
 
+    TBD
+
     **Details**
+
+    TBD
 
     """
 

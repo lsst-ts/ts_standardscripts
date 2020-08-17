@@ -38,7 +38,7 @@ class PrepareForOnSky(salobj.BaseScript):
     -----
     **Checkpoints**
 
-    **Details**
+    None
 
     """
 
