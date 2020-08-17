@@ -36,7 +36,11 @@ class Stop(salobj.BaseScript):
     -----
     **Checkpoints**
 
+    TBD
+
     **Details**
+
+    TBD
 
     """
 
@@ -45,7 +49,7 @@ class Stop(salobj.BaseScript):
 
         self.config = None
 
-        self.mttcs = MTCS(self.domain, intended_usage=MTCSUsages.Shutdown)
+        self.mttcs = MTCS(self.domain, intended_usage=MTCSUsages.Shutdown, log=self.log)
 
     @classmethod
     def get_schema(cls):

@@ -18,19 +18,19 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["LatissTakeImage"]
+__all__ = ["BaseTakeImage"]
 
+import abc
 import collections
 
 import numpy as np
 import yaml
 
 from lsst.ts import salobj
-from lsst.ts.observatory.control.auxtel import LATISS, LATISSUsages
 
 
-class LatissTakeImage(salobj.BaseScript):
-    """Take a series of images with the ATCamera with set exposure times.
+class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
+    """Base take images script.
 
     Parameters
     ----------
@@ -41,23 +41,37 @@ class LatissTakeImage(salobj.BaseScript):
     -----
     **Checkpoints**
 
-    * exposure {n} of {m}: before sending the ATCamera ``takeImages`` command
+    * exposure {n} of {m}: before sending the ``takeImages`` command
     """
 
-    def __init__(self, index):
-        super().__init__(index=index, descr="Take images with AT Camera")
+    def __init__(self, index, descr):
+        super().__init__(index=index, descr=descr)
 
-        self.latiss = LATISS(self.domain, intended_usage=LATISSUsages.TakeImageFull)
-        self.cmd_timeout = 60.0  # command timeout (sec)
-        # large because of an issue with one of the components
+        self.config = None
+
+    @property
+    @abc.abstractmethod
+    def camera(self):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_instrument_configuration(self):
+        """Get instrument configuration.
+
+        Returns
+        -------
+        instrument_configuration: `dict`
+            Dictionary with instrument configuration.
+        """
+        raise NotImplementedError()
 
     @classmethod
     def get_schema(cls):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/LatissTakeImage.yaml
-            title: LatissTakeImage v2
-            description: Configuration for LatissTakeImage.
+            title: BaseTakeImage v2
+            description: Configuration for BaseTakeImage.
             type: object
             properties:
               nimages:
@@ -83,29 +97,7 @@ class LatissTakeImage(salobj.BaseScript):
               image_type:
                 description: Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, OBJECT)
                 type: string
-                default: ""
-              filter:
-                description: Filter name or ID; if omitted the filter is not changed.
-                anyOf:
-                  - type: string
-                  - type: integer
-                    minimum: 1
-                  - type: "null"
-                default: null
-              grating:
-                description: Grating name; if omitted the grating is not changed.
-                anyOf:
-                  - type: string
-                  - type: integer
-                    minimum: 1
-                  - type: "null"
-                default: null
-              linear_stage:
-                description: Linear stage position; if omitted the linear stage is not moved.
-                anyOf:
-                  - type: number
-                  - type: "null"
-                default: null
+                enum: ["BIAS", "DARK", "FLAT", "OBJECT", "ENGTEST", "SPOT"]
             required: [image_type]
             additionalProperties: false
         """
@@ -119,17 +111,15 @@ class LatissTakeImage(salobj.BaseScript):
         config : `types.SimpleNamespace`
             Script configuration, as defined by `schema`.
         """
-        self.log.info("Configure started")
-
         self.config = config
 
-        nimages = config.nimages
-        if isinstance(config.exp_times, collections.Iterable):
+        nimages = self.config.nimages
+        if isinstance(self.config.exp_times, collections.Iterable):
             if nimages is not None:
-                if len(config.exp_times) != nimages:
+                if len(self.config.exp_times) != nimages:
                     raise ValueError(
                         f"nimages={nimages} specified and "
-                        f"exp_times={config.exp_times} is an array, "
+                        f"exp_times={self.config.exp_times} is an array, "
                         f"but the length does not match nimages"
                     )
         else:
@@ -137,38 +127,28 @@ class LatissTakeImage(salobj.BaseScript):
             # take that many images, else take 1 image
             if nimages is None:
                 nimages = 1
-            config.exp_times = [config.exp_times] * nimages
-
-        self.log.info(
-            f"exposure times={self.config.exp_times}, "
-            f"image_type={self.config.image_type}"
-            f"filter={self.config.filter}"
-            f"grating={self.config.grating}"
-            f"linear_stage={self.config.linear_stage}"
-        )
+            self.config.exp_times = [self.config.exp_times] * nimages
 
     def set_metadata(self, metadata):
         nimages = len(self.config.exp_times)
         mean_exptime = np.mean(self.config.exp_times)
         metadata.duration = (
-            mean_exptime + self.latiss.read_out_time + self.latiss.shutter_time * 2
-            if self.latiss.shutter_time
+            mean_exptime + self.camera.read_out_time + self.camera.shutter_time * 2
+            if self.camera.shutter_time
             else 0
         ) * nimages
 
     async def run(self):
         nimages = len(self.config.exp_times)
         for i, exposure in enumerate(self.config.exp_times):
-            self.log.debug(f"exposure {i+1} of {nimages}")
+            self.log.debug(
+                f"Exposing image {i+1} of {nimages} with exp_time={exposure}s."
+            )
             await self.checkpoint(f"exposure {i+1} of {nimages}")
-            end_readout = await self.latiss.take_imgtype(
+            await self.camera.take_imgtype(
                 self.config.image_type,
                 exposure,
                 1,
-                filter=self.config.filter,
-                grating=self.config.grating,
-                linear_stage=self.config.linear_stage,
                 group_id=self.group_id,
-                checkpoint=self.checkpoint,
+                **self.get_instrument_configuration(),
             )
-            self.log.debug(f"Took {end_readout}")

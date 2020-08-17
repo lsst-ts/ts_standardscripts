@@ -18,29 +18,32 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["EnableATTCS"]
+__all__ = ["EnableMTCS"]
 
 import yaml
 
 from ..enable_group import EnableGroup
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 
-class EnableATTCS(EnableGroup):
-    """Enable all ATCS components.
+class EnableMTCS(EnableGroup):
+    """Enable all MTCS components.
 
     The Script configuration only accepts settings values for the CSCs that
     are configurable.
 
     The following CSCs will be enabled:
 
-        - ATMCS: not configurable
-        - ATPtg: not configurable
-        - ATAOS
-        - ATPneumatics: not configurable
-        - ATHexapod
-        - ATDome
-        - ATDomeTrajectory
+        - NewMTMount
+        - MTPtg: not configurable
+        - MTAOS
+        - MTM1M3
+        - MTM2
+        - Hexapod:1
+        - Hexapod:2
+        - Rotator: not configurable
+        - Dome
+        - MTDomeTrajectory
 
     Parameters
     ----------
@@ -58,17 +61,17 @@ class EnableATTCS(EnableGroup):
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        super().__init__(index=index, descr="Enable ATCS.")
+        super().__init__(index=index, descr="Enable MTCS.")
 
         self.config = None
 
-        self._attcs = ATCS(
-            self.domain, intended_usage=ATCSUsages.StateTransition, log=self.log
+        self._mtcs = MTCS(
+            self.domain, intended_usage=MTCSUsages.StateTransition, log=self.log
         )
 
     @property
     def group(self):
-        return self._attcs
+        return self._mtcs
 
     @staticmethod
     def components():
@@ -82,13 +85,16 @@ class EnableATTCS(EnableGroup):
         """
         return set(
             [
-                "atmcs",
-                "atptg",
-                "ataos",
-                "atpneumatics",
-                "athexapod",
-                "atdome",
-                "atdometrajectory",
+                "newmtmount",
+                "mtptg",
+                "mtaos",
+                "mtm1m3",
+                "mtm2",
+                "hexapod_1",
+                "hexapod_2",
+                "rotator",
+                "dome",
+                "mtdometrajectory",
             ]
         )
 
@@ -96,31 +102,55 @@ class EnableATTCS(EnableGroup):
     def get_schema(cls):
         schema_yaml = f"""
             $schema: http://json-schema.org/draft-07/schema#
-            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/enable_atcs.yaml
-            title: EnableATTCS v1
-            description: Configuration for EnableATTCS. Only include those CSCs that are configurable.
+            $id: https://github.com/lsst-ts/ts_standardscripts/maintel/enable_mtcs.yaml
+            title: EnableMTCS v1
+            description: Configuration for EnableMTCS
             type: object
             properties:
-                ataos:
+                newmtmount:
+                    description: Configuration for the NewMTMount component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                mtaos:
                     description: Configuration for the ATAOS component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
-                athexapod:
-                    description: Configuration for the ATHexapod component.
+                mtm1m3:
+                    description: Configuration for the M1M3 component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
-                atdome:
-                    description: Configuration for the ATHexapod component.
+                mtm2:
+                    description: Configuration for the MTM2 component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
-                atdometrajectory:
-                    description: Configuration for the ATHexapod component.
+                hexapod_1:
+                    description: Configuration for the Camera Hexapod component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                hexapod_2:
+                    description: Configuration for the M2 Hexapod component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                dome:
+                    description: Configuration for the Dome component.
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                    default: null
+                mtdometrajectory:
+                    description: Configuration for the MTDomeTrajectory component.
                     anyOf:
                       - type: string
                       - type: "null"
@@ -128,8 +158,8 @@ class EnableATTCS(EnableGroup):
                 ignore:
                     description: >-
                         CSCs from the group to ignore. Name must match those in
-                        self.group.components, e.g.; atdometrajectory.
-                        Valid options are: {cls.components()}
+                        self.group.components, e.g.; hexapod_1.
+                        Valid options are: {cls.components()}.
                     type: array
                     items:
                         type: string

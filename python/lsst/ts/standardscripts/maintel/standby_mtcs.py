@@ -18,14 +18,14 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["PrepareForFlat"]
+__all__ = ["StandbyMTCS"]
 
-from lsst.ts import salobj
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+from ..standby_group import StandbyGroup
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 
-class PrepareForFlat(salobj.BaseScript):
-    """Run prepare for flat on ATCS.
+class StandbyMTCS(StandbyGroup):
+    """Put MTCS components in standby.
 
     Parameters
     ----------
@@ -43,23 +43,38 @@ class PrepareForFlat(salobj.BaseScript):
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index):
-        super().__init__(index=index, descr="Prepare to take flat field.")
 
-        self.attcs = ATCS(
-            self.domain, intended_usage=ATCSUsages.PrepareForFlatfield, log=self.log
+        super().__init__(index=index, descr="Put all MTCS components in standby state.")
+
+        self._mtcs = MTCS(
+            self.domain, intended_usage=MTCSUsages.StateTransition, log=self.log
         )
 
-    @classmethod
-    def get_schema(cls):
-        # This script does not require any configuration
-        return None
+    @property
+    def group(self):
+        return self._mtcs
 
-    async def configure(self, config):
-        # This script does not require any configuration
-        pass
+    @staticmethod
+    def components():
+        """Return list of components name as appeared in
+        `self.group.components`.
 
-    def set_metadata(self, metadata):
-        metadata.duration = 600.0
+        Returns
+        -------
+        components : `list` of `str`.
 
-    async def run(self):
-        await self.attcs.prepare_for_flatfield()
+        """
+        return set(
+            [
+                "newmtmount",
+                "mtptg",
+                "mtaos",
+                "mtm1m3",
+                "mtm2",
+                "hexapod_1",
+                "hexapod_2",
+                "rotator",
+                "dome",
+                "mtdometrajectory",
+            ]
+        )

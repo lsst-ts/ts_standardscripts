@@ -18,10 +18,36 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .enable_comcam import *
-from .enable_mtcs import *
-from .standby_comcam import *
-from .standby_mtcs import *
-from .stop import *
-from .take_image_comcam import *
-from .track_target import *
+__all__ = ["TrackTarget"]
+
+from ..base_track_target import BaseTrackTarget
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+
+
+class TrackTarget(BaseTrackTarget):
+    """Execute a Slew/Track operation with the Main Telescope.
+
+    Parameters
+    ----------
+    index : `int`
+        Index of Script SAL component.
+
+    Notes
+    -----
+    **Checkpoints**
+
+    None
+
+    """
+
+    __test__ = False  # stop pytest from warning that this is not a test
+
+    def __init__(self, index):
+        super().__init__(
+            index=index, descr="Slew and track a target with the main telescope."
+        )
+        self._mtcs = MTCS(self.domain, intended_usage=MTCSUsages.Slew, log=self.log)
+
+    @property
+    def tcs(self):
+        return self._mtcs
