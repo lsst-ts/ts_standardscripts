@@ -21,6 +21,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import SlewTelescopeIcrs
+from lsst.ts.standardscripts.maintel import StandbyComCam
 
-asyncio.run(SlewTelescopeIcrs.amain())
+asyncio.run(StandbyComCam.amain())

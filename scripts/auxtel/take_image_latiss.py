@@ -21,6 +21,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import LatissTakeImage
+from lsst.ts.standardscripts.auxtel import TakeImageLatiss
 
-asyncio.run(LatissTakeImage.amain())
+asyncio.run(TakeImageLatiss.amain())

@@ -22,12 +22,22 @@ __all__ = ["EnableLATISS"]
 
 import yaml
 
-from lsst.ts import salobj
+from ..enable_group import EnableGroup
 from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
 
 
-class EnableLATISS(salobj.BaseScript):
+class EnableLATISS(EnableGroup):
     """Enable all LATISS components.
+
+    The Script configuration only accepts settings values for the CSCs that
+    are configurable.
+
+    The following CSCs will be enabled:
+
+        - ATCamera
+        - ATSpectrograph
+        - ATHeaderService: not configurable
+        - ATArchiver
 
     Parameters
     ----------
@@ -38,7 +48,7 @@ class EnableLATISS(salobj.BaseScript):
     -----
     **Checkpoints**
 
-    **Details**
+    None
 
     """
 
@@ -48,11 +58,29 @@ class EnableLATISS(salobj.BaseScript):
 
         self.config = None
 
-        self.latiss = LATISS(self.domain, intended_usage=LATISSUsages.StateTransition)
+        self._latiss = LATISS(
+            self.domain, intended_usage=LATISSUsages.StateTransition, log=self.log
+        )
+
+    @property
+    def group(self):
+        return self._latiss
+
+    @staticmethod
+    def components():
+        """Return list of components name as appeared in
+        `self.group.components`.
+
+        Returns
+        -------
+        components : `list` of `str`.
+
+        """
+        return set(["atcamera", "atspectrograph", "atheaderservice", "atarchiver"])
 
     @classmethod
     def get_schema(cls):
-        schema_yaml = """
+        schema_yaml = f"""
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/enable_latiss.yaml
             title: EnableLATISS v1
@@ -71,34 +99,20 @@ class EnableLATISS(salobj.BaseScript):
                       - type: string
                       - type: "null"
                     default: null
-                atheaderservice:
-                    description: Configuration for the ATHeaderService component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
                 atarchiver:
                     description: Configuration for the ATArchiver component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
+                ignore:
+                    description: >-
+                        CSCs from the group to ignore. Name must match those in
+                        self.group.components, e.g.; atarchiver.
+                        Valid options are: {cls.components()}.
+                    type: array
+                    items:
+                        type: string
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
-
-    async def configure(self, config):
-        self.config = config
-
-    def set_metadata(self, metadata):
-        metadata.duration = 60.0
-
-    async def run(self):
-        settings = (
-            dict(
-                [(comp, getattr(self.config, comp)) for comp in self.latiss.components]
-            )
-            if self.config is not None
-            else None
-        )
-        await self.latiss.enable(settings=settings)

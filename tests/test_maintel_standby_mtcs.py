@@ -25,20 +25,20 @@ import asynctest
 
 from lsst.ts import salobj
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.auxtel import EnableLATISS
-from lsst.ts.observatory.control.mock import LATISSMock
+from lsst.ts.standardscripts.maintel import StandbyMTCS
+from lsst.ts.observatory.control.mock import MTCSMock
 
 random.seed(47)  # for set_random_lsst_dds_domain
 
 logging.basicConfig()
 
 
-class TestEnableLATISS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestStandbyMTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     async def basic_make_script(self, index):
-        self.script = EnableLATISS(index=index)
-        self.latiss_mock = LATISSMock()
+        self.script = StandbyMTCS(index=index)
+        self.mtcs_mock = MTCSMock()
 
-        return (self.script, self.latiss_mock)
+        return (self.script, self.mtcs_mock)
 
     async def test_components(self):
         async with self.make_script():
@@ -53,18 +53,26 @@ class TestEnableLATISS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
             await self.run_script()
 
-            for comp in self.latiss_mock.components:
-                with self.subTest(f"{comp} summary state", comp=comp):
-                    self.assertEqual(
+            for comp in self.script.group.components:
+
+                if getattr(self.script.group.check, comp):
+
+                    current_state = salobj.State(
                         getattr(
-                            self.latiss_mock.controllers, comp
-                        ).evt_summaryState.data.summaryState,
-                        salobj.State.ENABLED,
+                            self.mtcs_mock.controllers, comp
+                        ).evt_summaryState.data.summaryState
                     )
+
+                    with self.subTest(f"{comp} summary state", comp=comp):
+                        self.assertEqual(
+                            current_state,
+                            salobj.State.STANDBY,
+                            f"{comp}:  {current_state!r} != {salobj.State.STANDBY!r}",
+                        )
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "enable_latiss.py"
+        script_path = scripts_dir / "maintel" / "standby_mtcs.py"
         await self.check_executable(script_path)
 
 

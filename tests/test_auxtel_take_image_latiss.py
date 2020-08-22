@@ -27,7 +27,7 @@ import asynctest
 
 from lsst.ts import salobj
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.auxtel import LatissTakeImage
+from lsst.ts.standardscripts.auxtel import TakeImageLatiss
 
 random.seed(47)  # for set_random_lsst_dds_domain
 
@@ -36,7 +36,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     async def basic_make_script(self, index):
-        self.script = LatissTakeImage(index=index)
+        self.script = TakeImageLatiss(index=index)
         self.atcam = salobj.Controller(name="ATCamera")
         self.atspec = salobj.Controller(name="ATSpectrograph")
         self.atheaderservice = salobj.Controller(name="ATHeaderService")
@@ -62,8 +62,8 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
     async def cmd_take_images_callback(self, data):
         one_exp_time = (
             data.expTime
-            + self.script.latiss.read_out_time
-            + self.script.latiss.shutter_time
+            + self.script.camera.read_out_time
+            + self.script.camera.shutter_time
         )
         await asyncio.sleep(one_exp_time * data.numImages)
         self.nimages += 1
@@ -180,7 +180,7 @@ class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase)
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "latiss_take_image.py"
+        script_path = scripts_dir / "auxtel" / "take_image_latiss.py"
         await self.check_executable(script_path)
 
 

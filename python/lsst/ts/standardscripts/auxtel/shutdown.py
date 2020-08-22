@@ -36,7 +36,7 @@ class Shutdown(salobj.BaseScript):
     -----
     **Checkpoints**
 
-    **Details**
+    None
 
     """
 
@@ -45,7 +45,7 @@ class Shutdown(salobj.BaseScript):
     def __init__(self, index):
         super().__init__(index=index, descr="Run ATCS shutdown.")
 
-        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.Shutdown)
+        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.Shutdown, log=self.log)
 
     @classmethod
     def get_schema(cls):

@@ -18,14 +18,14 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["Stop"]
+__all__ = ["StandbyATCS"]
 
-from lsst.ts import salobj
+from ..standby_group import StandbyGroup
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 
 
-class Stop(salobj.BaseScript):
-    """Stop telescope and dome.
+class StandbyATCS(StandbyGroup):
+    """Put ATCS components in standby.
 
     Parameters
     ----------
@@ -36,30 +36,42 @@ class Stop(salobj.BaseScript):
     -----
     **Checkpoints**
 
-    TBD
-
-    **Details**
-
-    TBD
+    None
 
     """
 
+    __test__ = False  # stop pytest from warning that this is not a test
+
     def __init__(self, index):
-        super().__init__(index=index, descr="Enable ATCS.")
 
-        self.config = None
+        super().__init__(index=index, descr="Put all ATCS components in standby state.")
 
-        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.Shutdown, log=self.log)
+        self._atcs = ATCS(
+            self.domain, intended_usage=ATCSUsages.StateTransition, log=self.log
+        )
 
-    @classmethod
-    def get_schema(cls):
-        return None
+    @property
+    def group(self):
+        return self._atcs
 
-    async def configure(self, config):
-        self.config = config
+    @staticmethod
+    def components():
+        """Return list of components name as appeared in
+        `self.group.components`.
 
-    def set_metadata(self, metadata):
-        metadata.duration = 60.0
+        Returns
+        -------
+        components : `list` of `str`.
 
-    async def run(self):
-        await self.attcs.stop_all()
+        """
+        return set(
+            [
+                "atmcs",
+                "atptg",
+                "ataos",
+                "atpneumatics",
+                "athexapod",
+                "atdome",
+                "atdometrajectory",
+            ]
+        )

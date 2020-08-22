@@ -38,7 +38,7 @@ class PrepareForOnSky(salobj.BaseScript):
     -----
     **Checkpoints**
 
-    **Details**
+    None
 
     """
 
@@ -49,7 +49,7 @@ class PrepareForOnSky(salobj.BaseScript):
 
         self.config = None
 
-        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.StartUp)
+        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.StartUp, log=self.log)
 
     @classmethod
     def get_schema(cls):
