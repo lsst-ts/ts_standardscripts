@@ -27,6 +27,8 @@ import asyncio
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
 
+from lsst.ts.observatory.control.utils import RotType
+
 
 class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
     """Base track target script.
@@ -65,7 +67,7 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
 
     @classmethod
     def get_schema(cls):
-        schema_yaml = """
+        schema_yaml = f"""
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/base_slew.yaml
             title: BaseSlew v1
@@ -90,13 +92,40 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
                 type: number
                 default: 0
               rot_strategy:
-                description: Rotator strategy.
+                description: >-
+                  Rotator strategy. Options are:
+                    Sky: Sky position angle strategy. The rotator is positioned with respect
+                         to the North axis so rot_angle=0. means y-axis is aligned with North.
+                         Angle grows clock-wise.
+
+                    SkyAuto: Same as sky position angle but it will verify that the requested
+                             angle is achievable and wrap it to a valid range.
+
+                    Parallactic: This strategy is required for taking optimum spectra with
+                                 LATISS. If set to zero, the rotator is positioned so that the
+                                 y-axis (dispersion axis) is aligned with the parallactic
+                                 angle.
+
+                    PhysicalSky: This strategy allows users to select the **initial** position
+                                  of the rotator in terms of the physical rotator angle (in the
+                                  reference frame of the telescope). Note that the telescope
+                                  will resume tracking the sky rotation.
+
+                    Physical: Select a fixed position for the rotator in the reference frame of
+                              the telescope. Rotator will not track in this mode.
                 type: string
-                enum: ["sky", "parallactic", "physical_sky"]
-                default: sky
+                enum: ["Sky", "SkyAuto", "Parallactic", "PhysicalSky", "Physical"]
+                default: SkyAuto
               target_name:
                 description: Target name
                 type: string
+              ignore:
+                description: >-
+                    CSCs from the group to ignore in status check. Name must
+                    match those in self.group.components, e.g.; hexapod_1.
+                type: array
+                items:
+                    type: string
             if:
               properties:
                 ra:
@@ -124,11 +153,18 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
         if hasattr(self.config, "ra"):
             self.slew_icrs = True
 
-        if self.config.rot_strategy != "sky":
-            # TODO: Implement other rotation strategies (DM-26321).
-            raise NotImplementedError(
-                f"(DM-26321): {self.config.rot_strategy} not implemented. Use sky."
-            )
+        self.config.rot_strategy = getattr(RotType, self.config.rot_strategy)
+
+        if hasattr(self.config, "ignore"):
+            for comp in self.config.ignore:
+                if comp not in self.tcs.components_attr:
+                    self.log.warning(
+                        f"Component {comp} not in CSC Group. "
+                        f"Must be one of {self.tcs.components_attr}. Ignoring."
+                    )
+                else:
+                    self.log.debug(f"Ignoring component {comp}.")
+                    setattr(self.tcs.check, comp, False)
 
     def set_metadata(self, metadata):
         """Compute estimated duration.
@@ -149,23 +185,26 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
             self.log.info(
                 f"Slew and track target_name={target_name}; "
                 f"ra={self.config.ra}, dec={self.config.dec};"
-                f"rot_value={self.config.rot_value}; rot_strategy={self.config.rot_strategy}"
+                f"rot={self.config.rot_value}; rot_type={self.config.rot_strategy}"
             )
 
-            # TODO: Implement other rotation strategies (DM-26321).
             await self.tcs.slew_icrs(
                 ra=self.config.ra,
                 dec=self.config.dec,
-                rot_sky=self.config.rot_value,
+                rot=self.config.rot_value,
+                rot_type=self.config.rot_strategy,
                 target_name=target_name,
             )
         else:
             self.log.info(
                 f"Slew and track target_name={target_name}; "
-                f"rot_value={self.config.rot_value}; rot_strategy={self.config.rot_strategy}"
+                f"rot={self.config.rot_value}; rot_type={self.config.rot_strategy}"
             )
-            # TODO: Implement other rotation strategies (DM-26321).
-            await self.tcs.slew_object(name=target_name, rot_sky=self.config.rot_value)
+            await self.tcs.slew_object(
+                name=target_name,
+                rot=self.config.rot_value,
+                rot_type=self.config.rot_strategy,
+            )
 
     async def cleanup(self):
 
