@@ -28,6 +28,8 @@ from lsst.ts import salobj
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.maintel import TrackTarget
 
+from lsst.ts.observatory.control import RotType
+
 random.seed(47)  # for set_random_lsst_dds_domain
 
 logging.basicConfig()
@@ -82,24 +84,22 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
             # Script can be configure with ra, dec only
             await self.configure_script(ra=1.0, dec=-10.0)
 
-            # Configure passing rotator angle and rotator strategy
+            # Configure passing rotator angle and all rotator strategies
+            for rot_strategy in RotType:
+                with self.subTest(
+                    f"rot_strategy={rot_strategy.name}", rot_strategy=rot_strategy.name
+                ):
+                    await self.configure_script(
+                        ra=1.0, dec=-10.0, rot_value=10, rot_strategy=rot_strategy.name
+                    )
+
+            # Test ignore feature.
             await self.configure_script(
-                ra=1.0, dec=-10.0, rot_value=10, rot_strategy="sky"
+                target_name="eta Car", ignore=["mtdometrajectory", "hexapod_1"]
             )
 
-            # Configure passing rotator angle and rotator strategy
-            # TODO: Implement other rotation strategies (DM-26321).
-            with self.assertRaises(salobj.ExpectedError):
-                await self.configure_script(
-                    ra=1.0, dec=-10.0, rot_value=10, rot_strategy="parallactic"
-                )
-
-            # Configure passing rotator angle and rotator strategy
-            # TODO: Implement other rotation strategies (DM-26321).
-            with self.assertRaises(salobj.ExpectedError):
-                await self.configure_script(
-                    ra=1.0, dec=-10.0, rot_value=10, rot_strategy="physical_sky"
-                )
+            self.assertFalse(self.script.tcs.check.mtdometrajectory)
+            self.assertFalse(self.script.tcs.check.hexapod_1)
 
     async def test_run_slew_target_name(self):
 
@@ -126,9 +126,6 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
             self.script.tcs.slew_object = asynctest.CoroutineMock()
             self.script.tcs.stop_tracking = asynctest.CoroutineMock()
 
-            self.script.tcs.slew_object.reset_mock()
-            self.script.tcs.slew_icrs.reset_mock()
-
             # Check running with ra dec only
             await self.configure_script(ra=1.0, dec=-10.0)
 
@@ -147,9 +144,6 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
             )
             self.script.tcs.slew_object = asynctest.CoroutineMock()
             self.script.tcs.stop_tracking = asynctest.CoroutineMock()
-
-            self.script.tcs.slew_object.reset_mock()
-            self.script.tcs.slew_icrs.reset_mock()
 
             # Check running with ra dec only
             await self.configure_script(ra=1.0, dec=-10.0)

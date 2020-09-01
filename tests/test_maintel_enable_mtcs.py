@@ -42,7 +42,7 @@ class TestEnableMTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
     async def test_components(self):
         async with self.make_script():
-            for component in self.script.group.components:
+            for component in self.script.group.components_attr:
                 with self.subTest(f"Check {component}", component=component):
                     if getattr(self.script.group.check, component):
                         self.assertIn(component, self.script.components())
@@ -53,7 +53,7 @@ class TestEnableMTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
             await self.run_script()
 
-            for comp in self.script.group.components:
+            for comp in self.script.group.components_attr:
                 if getattr(self.script.group.check, comp):
                     with self.subTest(f"{comp} summary state", comp=comp):
                         self.assertEqual(
@@ -72,7 +72,7 @@ class TestEnableMTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
             await self.run_script()
 
-            for comp in self.script.group.components:
+            for comp in self.script.group.components_attr:
 
                 if getattr(self.script.group.check, comp):
 
