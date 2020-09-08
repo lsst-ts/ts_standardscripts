@@ -26,7 +26,7 @@ test:
     - pytest-cov
     - asynctest
     - pytest-tornasync
-    - black
+    - black == 19.10b0
     - numpy
     - astropy
     - astroquery
