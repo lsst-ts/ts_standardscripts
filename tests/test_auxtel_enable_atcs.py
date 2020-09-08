@@ -46,7 +46,7 @@ class TestEnableATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
             await self.run_script()
 
-            for comp in self.script.group.components:
+            for comp in self.script.group.components_attr:
                 with self.subTest(f"{comp} summary state", comp=comp):
                     self.assertEqual(
                         getattr(
@@ -57,7 +57,7 @@ class TestEnableATTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
     async def test_components(self):
         async with self.make_script():
-            for component in self.script.group.components:
+            for component in self.script.group.components_attr:
                 with self.subTest(f"Check {component}", comp=component):
                     if getattr(self.script.group.check, component):
                         self.assertIn(component, self.script.components())
