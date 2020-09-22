@@ -70,28 +70,28 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/base_slew.yaml
-            title: BaseSlew v1
-            description: Configuration for BaseSlew
+            title: BaseTrackTarget v1
+            description: Configuration for BaseTrackTarget.
             type: object
             properties:
               ra:
-                description: ICRS right ascension (hour)
+                description: ICRS right ascension (hour).
                 anyOf:
                   - type: number
                     minimum: 0
                     maximum: 24
               dec:
-                description: ICRS declination (deg)
+                description: ICRS declination (deg).
                 anyOf:
                   - type: number
                     minimum: -90
                     maximum: 90
               rot_value:
                 description: >-
-                  Rotator position value. Actual meaning depends on rot_strategy.
+                  Rotator position value. Actual meaning depends on rot_type.
                 type: number
                 default: 0
-              rot_strategy:
+              rot_type:
                 description: >-
                   Rotator strategy. Options are:
                     Sky: Sky position angle strategy. The rotator is positioned with respect
@@ -119,6 +119,20 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
               target_name:
                 description: Target name
                 type: string
+              track_for:
+                description: >-
+                    How long to track target for (in seconds). If zero, the default,
+                    finish script as soon as in position, otherwise, continue tracking
+                    target until time expires.
+                type: number
+                minimum: 0
+                default: 0
+              stop_when_done:
+                description: >-
+                    Stop tracking once tracking time expires. Only valid if
+                    `track_for` is larger than zero.
+                type: boolean
+                default: False
               ignore:
                 description: >-
                     CSCs from the group to ignore in status check. Name must
@@ -153,7 +167,7 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
         if hasattr(self.config, "ra"):
             self.slew_icrs = True
 
-        self.config.rot_strategy = getattr(RotType, self.config.rot_strategy)
+        self.config.rot_type = getattr(RotType, self.config.rot_type)
 
         if hasattr(self.config, "ignore"):
             for comp in self.config.ignore:
@@ -173,7 +187,7 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
         ----------
         metadata : `Script_logevent_metadata`
         """
-        metadata.duration = 1
+        metadata.duration = 10.0 + self.config.track_for
 
     async def run(self):
 
@@ -185,26 +199,35 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
             self.log.info(
                 f"Slew and track target_name={target_name}; "
                 f"ra={self.config.ra}, dec={self.config.dec};"
-                f"rot={self.config.rot_value}; rot_type={self.config.rot_strategy}"
+                f"rot={self.config.rot_value}; rot_type={self.config.rot_type}"
             )
 
             await self.tcs.slew_icrs(
                 ra=self.config.ra,
                 dec=self.config.dec,
                 rot=self.config.rot_value,
-                rot_type=self.config.rot_strategy,
+                rot_type=self.config.rot_type,
                 target_name=target_name,
             )
         else:
             self.log.info(
                 f"Slew and track target_name={target_name}; "
-                f"rot={self.config.rot_value}; rot_type={self.config.rot_strategy}"
+                f"rot={self.config.rot_value}; rot_type={self.config.rot_type}"
             )
             await self.tcs.slew_object(
                 name=target_name,
                 rot=self.config.rot_value,
-                rot_type=self.config.rot_strategy,
+                rot_type=self.config.rot_type,
             )
+
+        if self.config.track_for > 0.0:
+            self.log.info(f"Tracking for {self.config.track_for}s .")
+            await self.tcs.check_tracking(self.config.track_for)
+            if self.config.stop_when_done:
+                self.log.info(f"Tracking completed. Stop tracking.")
+                await self.tcs.stop_tracking()
+            else:
+                self.log.info(f"Tracking completed.")
 
     async def cleanup(self):
 
