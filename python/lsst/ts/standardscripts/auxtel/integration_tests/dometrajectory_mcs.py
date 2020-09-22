@@ -176,6 +176,7 @@ class DomeTrajectoryMCS(salobj.BaseScript):
         # Wait for the dome to stop
         self.log.info("Wait for the dome to stop")
         az_state = self.atdome.evt_azimuthState.get()
+        self.atdome.evt_azimuthState.flush()
         while az_state.state != AzimuthState.NOTINMOTION:
             az_state = await self.atdome.evt_azimuthState.next(
                 flush=False, timeout=SLEW_TIMEOUT
@@ -258,6 +259,7 @@ class DomeTrajectoryMCS(salobj.BaseScript):
 
         # Wait for elevation and azimuth; ignore rotators and M3
         data = self.atmcs.evt_elevationInPosition.get()
+        self.atmcs.evt_elevationInPosition.flush()
         if not data.inPosition:
             # the axis needs to slew
             self.log.info("Wait for telescope elevation axis to finish slewing")
@@ -266,6 +268,7 @@ class DomeTrajectoryMCS(salobj.BaseScript):
             )
             assert data.inPosition, "Got unexpected elevationInPosition event"
         data = self.atmcs.evt_azimuthInPosition.get()
+        self.atmcs.evt_azimuthInPosition.flush()
         if not data.inPosition:
             self.log.info("Wait for telescope azimuth axis to finish slewing")
             data = await self.atmcs.evt_azimuthInPosition.next(
