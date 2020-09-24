@@ -21,6 +21,7 @@
 __all__ = ["get_scripts_dir"]
 
 import pathlib
+import collections.abc
 
 
 def get_scripts_dir():
@@ -34,3 +35,59 @@ def get_scripts_dir():
     """
     # 4 for python/lsst/ts/standardscripts
     return pathlib.Path(__file__).resolve().parents[4] / "scripts"
+
+def format_as_list(value, recurrences):
+    """
+    Reformat single instance of the attribute `value` as a list with
+    a specified number of reccurances.
+
+    Configurations often allow a single value for an attribute to be passed that
+    needs to be replicated as a list. This occurs when the (YAML) type is specified
+    as an array but a user provides a single value (as a float/int/string etc).
+    For example, an instrument setup for 5 different exposure times
+    may only be given a single value for filter. However, often the single filter value needs to be
+    reformatted of a list of length 5.
+
+    This function returns the input as a list, with the desired
+    of recurrences.
+    
+    Parameters
+    ----------
+    value: `str, float, int, boolean`
+        A single element of any type. Must not be a list.
+    recurrences: `int`
+        An integer specifying the number of occurrences and length of the returned list
+
+    Returns
+    -------
+    list:
+        A list of length `recurrences`, where all elements are the input parameter `value`
+    """
+
+    # Check to see if the input data is iterable (not a scalar)
+    # Strings are iterable, so check if it's a string as well
+    if isinstance(value, collections.abc.Iterable) and not isinstance(value, str):
+
+        # Verify that the array is the correct number of recurrences
+        # if specified as a list then it should already have the
+        # correct number of instances.
+        if len(value) != recurrences:
+            raise ValueError(
+                f"The input data {value} is already an array of "
+                f"length {len(value)}, "
+                "but the length does not match the number of "
+                f"desired reccurences ({recurrences}). "
+                "Verify that all array "
+                "inputs have the correct length(s) or are singular"
+                " values."
+            )
+        else:
+            # input already an iterable array with correct
+            # number of elements, so just return the array
+            print("Input formatted correctly, returning " "input unchanged.")
+            return value
+
+    # value is a scalar, convert to a list repeating the scalar value
+    _value_as_list = [value] * recurrences
+    print("Input was a scalar, returning list of " f"length {recurrences}.")
+    return _value_as_list
