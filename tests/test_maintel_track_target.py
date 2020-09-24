@@ -74,9 +74,9 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
             with self.assertRaises(salobj.ExpectedError):
                 await self.configure_script(ra=1.0, dec=90.1)
 
-            # Invalid rot_strategy
+            # Invalid rot_type
             with self.assertRaises(salobj.ExpectedError):
-                await self.configure_script(ra=1.0, dec=-10.0, rot_strategy="invalid")
+                await self.configure_script(ra=1.0, dec=-10.0, rot_type="invalid")
 
             # Script can be configured with target name only
             await self.configure_script(target_name="eta Car")
@@ -85,12 +85,10 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
             await self.configure_script(ra=1.0, dec=-10.0)
 
             # Configure passing rotator angle and all rotator strategies
-            for rot_strategy in RotType:
-                with self.subTest(
-                    f"rot_strategy={rot_strategy.name}", rot_strategy=rot_strategy.name
-                ):
+            for rot_type in RotType:
+                with self.subTest(f"rot_type={rot_type.name}", rot_type=rot_type.name):
                     await self.configure_script(
-                        ra=1.0, dec=-10.0, rot_value=10, rot_strategy=rot_strategy.name
+                        ra=1.0, dec=-10.0, rot_value=10, rot_type=rot_type.name
                     )
 
             # Test ignore feature.
