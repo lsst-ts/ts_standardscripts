@@ -39,14 +39,14 @@ class TestUtils(unittest.TestCase):
     def test_format_as_list(self):
         recurrences = 4
         # Check case of single values sent
-        test_case = ['string', 2, 2.0]
+        test_case = ["string", 2, 2.0]
         for test in test_case:
             new_list = standardscripts.utils.format_as_list(test, recurrences)
             print(new_list)
             self.assertEqual(new_list.count(test), recurrences)
 
         # Verify that if input is correct it just returns
-        test_case = ['test', 'test']
+        test_case = ["test", "test"]
         recurrences = 2
         new_list = standardscripts.utils.format_as_list(test_case, recurrences)
         self.assertIs(new_list, test_case)
