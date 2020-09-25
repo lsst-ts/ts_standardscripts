@@ -21,7 +21,6 @@
 __all__ = ["SetSummaryState"]
 
 import asyncio
-import re
 
 import yaml
 
@@ -130,11 +129,7 @@ class SetSummaryState(salobj.BaseScript):
         # parse the data
         nameind_state_settings = []
         for elt in config.data:
-            match = re.match(r"(?P<name>[a-zA-Z_-]+)(:(?P<index>\d+))?$", elt[0])
-            if not match:
-                raise ValueError(f"{elt}[0] is not of the form CSC_name:index")
-            name = match["name"]
-            index = 0 if match["index"] is None else int(match["index"])
+            name, index = salobj.name_to_name_index(elt[0])
             state_name = elt[1]
             if not isinstance(state_name, str):
                 raise ValueError(f"{elt} summary state {state_name!r} is not a string")
