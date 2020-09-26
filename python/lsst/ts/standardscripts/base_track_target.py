@@ -224,10 +224,10 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
             self.log.info(f"Tracking for {self.config.track_for}s .")
             await self.tcs.check_tracking(self.config.track_for)
             if self.config.stop_when_done:
-                self.log.info(f"Tracking completed. Stop tracking.")
+                self.log.info("Tracking completed. Stop tracking.")
                 await self.tcs.stop_tracking()
             else:
-                self.log.info(f"Tracking completed.")
+                self.log.info("Tracking completed.")
 
     async def cleanup(self):
 
