@@ -66,7 +66,7 @@ class TestEnableMTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     async def test_ignore_feature(self):
         async with self.make_script():
 
-            ignore = ["dome", "mtdometrajectory"]
+            ignore = ["mtdome", "mtdometrajectory"]
 
             await self.configure_script(ignore=ignore)
 

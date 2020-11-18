@@ -39,10 +39,10 @@ class EnableMTCS(EnableGroup):
         - MTAOS
         - MTM1M3
         - MTM2
-        - Hexapod:1
-        - Hexapod:2
-        - Rotator: not configurable
-        - Dome
+        - MTHexapod:1
+        - MTHexapod:2
+        - MTRotator: not configurable
+        - MTDome
         - MTDomeTrajectory
 
     Parameters
@@ -90,10 +90,10 @@ class EnableMTCS(EnableGroup):
                 "mtaos",
                 "mtm1m3",
                 "mtm2",
-                "hexapod_1",
-                "hexapod_2",
-                "rotator",
-                "dome",
+                "mthexapod_1",
+                "mthexapod_2",
+                "mtrotator",
+                "mtdome",
                 "mtdometrajectory",
             ]
         )
@@ -131,20 +131,20 @@ class EnableMTCS(EnableGroup):
                       - type: string
                       - type: "null"
                     default: null
-                hexapod_1:
+                mthexapod_1:
                     description: Configuration for the Camera Hexapod component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
-                hexapod_2:
+                mthexapod_2:
                     description: Configuration for the M2 Hexapod component.
                     anyOf:
                       - type: string
                       - type: "null"
                     default: null
-                dome:
-                    description: Configuration for the Dome component.
+                mtdome:
+                    description: Configuration for the MTDome component.
                     anyOf:
                       - type: string
                       - type: "null"
@@ -158,7 +158,7 @@ class EnableMTCS(EnableGroup):
                 ignore:
                     description: >-
                         CSCs from the group to ignore. Name must match those in
-                        self.group.components, e.g.; hexapod_1.
+                        self.group.components, e.g.; mthexapod_1.
                         Valid options are: {cls.components()}.
                     type: array
                     items:
