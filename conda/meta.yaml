@@ -34,8 +34,8 @@ test:
     - pyyaml
     - boto3
     - moto
-    - ts-idl
-    - ts-salobj
+    - ts-idl {{ idl_version }}
+    - ts-salobj {{ salobj_version }}
     - ts-atdome
     - ts-atmcs-simulator
     - ts-atdometrajectory
