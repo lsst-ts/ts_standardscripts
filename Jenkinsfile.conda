@@ -24,7 +24,7 @@ pipeline {
                     docker run --name ${container_name} -di --rm \
                         --env TS_CONFIG_OCS_DIR=/home/saluser/ts_config_ocs \
                         --env TS_CONFIG_ATTCS_DIR=/home/saluser/ts_config_attcs \
-                        --env LSST_DDS_DOMAIN=citest \
+                        --env LSST_DDS_PARTITION_PREFIX=citest \
                         -v ${WORKSPACE}:/home/saluser/source ${dockerImageName}
                     """
                 }
@@ -52,7 +52,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                    docker exec ${container_name} sh -c 'cd ~/source/conda && source ~/miniconda3/bin/activate && source "\$OSPL_HOME/release.com" && conda build --prefix-length 100 .'
+                    docker exec ${container_name} sh -c 'source ~/.setup.sh && cd ~/source/conda && conda install ts-ddsconfig && conda build --prefix-length 100 .'
                     """
                 }
             }

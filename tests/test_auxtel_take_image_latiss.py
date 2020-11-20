@@ -29,7 +29,7 @@ from lsst.ts import salobj
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel import TakeImageLatiss
 
-random.seed(47)  # for set_random_lsst_dds_domain
+random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
 logging.basicConfig(level=logging.DEBUG)
 

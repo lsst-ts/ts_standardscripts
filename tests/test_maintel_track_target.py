@@ -30,7 +30,7 @@ from lsst.ts.standardscripts.maintel import TrackTarget
 
 from lsst.ts.observatory.control import RotType
 
-random.seed(47)  # for set_random_lsst_dds_domain
+random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
 logging.basicConfig()
 

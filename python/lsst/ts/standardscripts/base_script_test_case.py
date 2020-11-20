@@ -36,7 +36,7 @@ import yaml
 from lsst.ts.idl.enums import Script
 from lsst.ts import salobj
 
-MAKE_TIMEOUT = 30  # Default time for make_script (seconds)
+MAKE_TIMEOUT = 90  # Default time for make_script (seconds)
 
 
 class BaseScriptTestCase(metaclass=abc.ABCMeta):
@@ -100,6 +100,8 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
         script_path : `str`
             Full path to script.
         """
+        salobj.set_random_lsst_dds_partition_prefix()
+
         index = self.next_index()
 
         script_path = pathlib.Path(script_path).resolve()
@@ -117,11 +119,10 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
                     str(script_path), str(index)
                 )
 
-                state = await remote.evt_state.next(flush=False, timeout=60)
+                state = await remote.evt_state.next(flush=False, timeout=MAKE_TIMEOUT)
                 self.assertEqual(state.state, Script.ScriptState.UNCONFIGURED)
-
-                process.terminate()
             finally:
+                process.terminate()
                 os.environ["PATH"] = initial_path
 
     async def configure_script(self, **kwargs):
@@ -180,7 +181,7 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
         verbose : `bool`
             Log data? This can be helpful for setting ``timeout``.
         """
-        salobj.set_random_lsst_dds_domain()
+        salobj.set_random_lsst_dds_partition_prefix()
 
         items_to_await = await self.wait_for(
             self.basic_make_script(index=self.next_index()),
