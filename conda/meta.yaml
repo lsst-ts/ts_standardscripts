@@ -13,40 +13,32 @@ build:
     - PYTHONPATH
     - LD_LIBRARY_PATH
     - OSPL_HOME
+    - OSPL_URI
     - PYTHON_BUILD_VERSION
     - PYTHON_BUILD_LOCATION
-    - LSST_DDS_DOMAIN
+    - LSST_DDS_DOMAIN_ID
+    - LSST_DDS_HISTORYSYNC
+    - OSPL_MASTER_PRIORITY
     - TS_CONFIG_OCS_DIR
     - TS_CONFIG_ATTCS_DIR
 
 test:
   requires:
-    - pytest
-    - pytest-flake8
-    - pytest-cov
-    - asynctest
-    - pytest-tornasync
-    - black == 19.10b0
-    - numpy
-    - astropy
     - astroquery
-    - jsonschema
-    - pyyaml
-    - boto3
-    - moto
-    - ts-idl
-    - ts-salobj
     - ts-atdome
-    - ts-atmcs-simulator
     - ts-atdometrajectory
+    - ts-atmcs-simulator
+    - ts-conda-build
+    - ts-idl
     - ts-observatory-control
+    - ts-salobj
   source_files:
     - python
     - tests
     - scripts
     - setup.cfg
   commands:
-    - py.test
+    - py.test -vxs
 
 requirements:
   host:

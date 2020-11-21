@@ -28,7 +28,7 @@ from lsst.ts import standardscripts
 from lsst.ts.standardscripts.maintel import EnableMTCS
 from lsst.ts.observatory.control.mock import MTCSMock
 
-random.seed(47)  # for set_random_lsst_dds_domain
+random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
 logging.basicConfig()
 
@@ -66,7 +66,7 @@ class TestEnableMTCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     async def test_ignore_feature(self):
         async with self.make_script():
 
-            ignore = ["dome", "mtdometrajectory"]
+            ignore = ["mtdome", "mtdometrajectory"]
 
             await self.configure_script(ignore=ignore)
 

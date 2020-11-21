@@ -39,7 +39,7 @@ setup(
     },
     data_files=data_files,
     include_package_data=True,
-    setup_requires=["setuptools_scm", "pytest-runner"],
+    setup_requires=["setuptools_scm"],
     install_requires=install_requires,
     package_dir={"": "python"},
     packages=find_namespace_packages(where="python"),

@@ -30,7 +30,7 @@ from lsst.ts.standardscripts.maintel import TrackTarget
 
 from lsst.ts.observatory.control import RotType
 
-random.seed(47)  # for set_random_lsst_dds_domain
+random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
 logging.basicConfig()
 
@@ -93,11 +93,11 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
             # Test ignore feature.
             await self.configure_script(
-                target_name="eta Car", ignore=["mtdometrajectory", "hexapod_1"]
+                target_name="eta Car", ignore=["mtdometrajectory", "mthexapod_1"]
             )
 
             self.assertFalse(self.script.tcs.check.mtdometrajectory)
-            self.assertFalse(self.script.tcs.check.hexapod_1)
+            self.assertFalse(self.script.tcs.check.mthexapod_1)
 
     async def test_run_slew_target_name(self):
 

@@ -71,10 +71,10 @@ class StandbyMTCS(StandbyGroup):
                 "mtaos",
                 "mtm1m3",
                 "mtm2",
-                "hexapod_1",
-                "hexapod_2",
-                "rotator",
-                "dome",
+                "mthexapod_1",
+                "mthexapod_2",
+                "mtrotator",
+                "mtdome",
                 "mtdometrajectory",
             ]
         )
