@@ -29,9 +29,9 @@ test:
     - ts-atdometrajectory
     - ts-atmcs-simulator
     - ts-conda-build
-    - ts-idl
+    - ts-idl {{ idl_version }}
+    - ts-salobj {{ salobj_version }}
     - ts-observatory-control
-    - ts-salobj
   source_files:
     - python
     - tests
