@@ -66,7 +66,7 @@ class StandbyMTCS(StandbyGroup):
         """
         return set(
             [
-                "newmtmount",
+                "mtmount",
                 "mtptg",
                 "mtaos",
                 "mtm1m3",
