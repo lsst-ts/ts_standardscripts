@@ -34,7 +34,7 @@ class EnableMTCS(EnableGroup):
 
     The following CSCs will be enabled:
 
-        - NewMTMount
+        - MTMount
         - MTPtg: not configurable
         - MTAOS
         - MTM1M3
@@ -85,7 +85,7 @@ class EnableMTCS(EnableGroup):
         """
         return set(
             [
-                "newmtmount",
+                "mtmount",
                 "mtptg",
                 "mtaos",
                 "mtm1m3",
@@ -107,8 +107,8 @@ class EnableMTCS(EnableGroup):
             description: Configuration for EnableMTCS
             type: object
             properties:
-                newmtmount:
-                    description: Configuration for the NewMTMount component.
+                mtmount:
+                    description: Configuration for the MTMount component.
                     anyOf:
                       - type: string
                       - type: "null"
