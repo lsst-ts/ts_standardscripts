@@ -49,7 +49,7 @@ class PrepareForOnSky(salobj.BaseScript):
 
         self.config = None
 
-        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.StartUp, log=self.log)
+        self.atcs = ATCS(self.domain, intended_usage=ATCSUsages.StartUp, log=self.log)
 
     @classmethod
     def get_schema(cls):
@@ -60,26 +60,8 @@ class PrepareForOnSky(salobj.BaseScript):
             description: Configuration for PrepareForOnSky
             type: object
             properties:
-                atmcs:
-                    description: Configuration for the ATMCS component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
-                atptg:
-                    description: Configuration for the ATPtg component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
                 ataos:
                     description: Configuration for the ATAOS component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
-                atpneumatics:
-                    description: Configuration for the ATPneumatics component.
                     anyOf:
                       - type: string
                       - type: "null"
@@ -109,13 +91,30 @@ class PrepareForOnSky(salobj.BaseScript):
     async def configure(self, config):
         self.config = config
 
+    @staticmethod
+    def configurable_components():
+        """Return list of components name as appeared in
+        `self.group.components`.
+
+        Returns
+        -------
+        components : `list` of `str`.
+
+        """
+        return set(["ataos", "athexapod", "atdome", "atdometrajectory",])
+
     def set_metadata(self, metadata):
         metadata.duration = 600.0
 
     async def run(self):
         settings = (
-            dict([(comp, getattr(self.config, comp)) for comp in self.attcs.components])
+            dict(
+                [
+                    (comp, getattr(self.config, comp))
+                    for comp in self.configurable_components()
+                ]
+            )
             if self.config is not None
             else None
         )
-        await self.attcs.startup(settings=settings)
+        await self.atcs.prepare_for_onsky(settings=settings)
