@@ -114,7 +114,12 @@ class PrepareForOnSky(salobj.BaseScript):
 
     async def run(self):
         settings = (
-            dict([(comp, getattr(self.config, comp)) for comp in self.attcs.components])
+            dict(
+                [
+                    (comp, getattr(self.config, comp))
+                    for comp in self.attcs.components_attr
+                ]
+            )
             if self.config is not None
             else None
         )
