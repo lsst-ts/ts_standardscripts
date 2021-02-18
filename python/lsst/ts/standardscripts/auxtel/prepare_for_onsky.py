@@ -123,4 +123,4 @@ class PrepareForOnSky(salobj.BaseScript):
             if self.config is not None
             else None
         )
-        await self.attcs.startup(settings=settings)
+        await self.attcs.prepare_for_onsky(settings=settings)
