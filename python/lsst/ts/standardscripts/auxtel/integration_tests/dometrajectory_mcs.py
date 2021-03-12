@@ -234,6 +234,13 @@ class DomeTrajectoryMCS(salobj.BaseScript):
         self.log.info("Enable ATDomeTrajectory")
         await self.atdometraj.cmd_enable.start(timeout=STD_TIMEOUT)
 
+        # xml 8/8.1 compatibility
+        if hasattr(self.atdometraj, "cmd_setFollowingMode"):
+            self.log.debug("Enable ATDomeTrajectory following mode.")
+            await self.atdometraj.cmd_setFollowingMode.set_start(
+                enable=True, timeout=STD_TIMEOUT
+            )
+
         # Commanded dome azimuth should match target azimuth
         dome_pos = await self.atdome.tel_position.next(flush=True, timeout=STD_TIMEOUT)
         dome_az_cmd_state = await self.atdome.evt_azimuthCommandedState.next(
@@ -428,6 +435,13 @@ class DomeTrajectoryMCS(salobj.BaseScript):
         # Stop tracking
         self.log.info("Stop telescope tracking")
         self.stop_track_telescope()
+
+        # xml 8/8.1 compatibility
+        if hasattr(self.atdometraj, "cmd_setFollowingMode"):
+            self.log.debug("Disable ATDomeTrajectory following mode.")
+            await self.atdometraj.cmd_setFollowingMode.set_start(
+                enable=False, timeout=STD_TIMEOUT
+            )
 
         # Disable ATDomeTrajectory
         self.log.info("Disable ATDomeTrajectory")
