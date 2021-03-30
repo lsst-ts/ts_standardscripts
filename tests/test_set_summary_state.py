@@ -93,8 +93,7 @@ class TestSetSummaryState(standardscripts.BaseScriptTestCase, asynctest.TestCase
         await asyncio.gather(*[controller.close() for controller in self.controllers])
 
     async def test_configure_errors(self):
-        """Test error handling in the do_configure method.
-        """
+        """Test error handling in the do_configure method."""
         async with self.make_script():
             name_ind = "Test:1"
             config_data = self.script.cmd_configure.DataType()

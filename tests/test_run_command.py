@@ -40,8 +40,7 @@ class TestRunCommand(standardscripts.BaseScriptTestCase, asynctest.TestCase):
         self.controller.evt_scalars.set_put(float0=data.float0, string0=data.string0)
 
     async def test_configure_errors(self):
-        """Test error handling in the do_configure method.
-        """
+        """Test error handling in the do_configure method."""
         async with self.make_script():
             for bad_config in (
                 {},  # need component name and command name
@@ -53,8 +52,7 @@ class TestRunCommand(standardscripts.BaseScriptTestCase, asynctest.TestCase):
                         await self.configure_script(**bad_config)
 
     async def test_configure_good(self):
-        """Test the configure method with a valid configuration.
-        """
+        """Test the configure method with a valid configuration."""
         async with self.make_script():
 
             # Basic providing only component and command
@@ -107,8 +105,7 @@ class TestRunCommand(standardscripts.BaseScriptTestCase, asynctest.TestCase):
             self.assertEqual(self.script.remote.cmd_setScalars.data.string0, "12345")
 
     async def test_run(self):
-        """Run test with Test component.
-        """
+        """Run test with Test component."""
 
         async with self.make_script():
 

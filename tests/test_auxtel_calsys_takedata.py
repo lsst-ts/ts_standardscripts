@@ -39,8 +39,7 @@ logging.basicConfig()
 
 class TestATCalSysTakeData(standardscripts.BaseScriptTestCase, asynctest.TestCase):
     async def basic_make_script(self, index):
-        """Make script and controllers and return a list of all made.
-        """
+        """Make script and controllers and return a list of all made."""
         self.script = CalSysTakeData(index=index)
 
         # mock controllers that use callback functions defined below
@@ -80,8 +79,7 @@ class TestATCalSysTakeData(standardscripts.BaseScriptTestCase, asynctest.TestCas
         await asyncio.sleep(data.scanDuration)
 
     async def captureSpectImage(self, data):
-        """Callback for FiberSpectrograph captureSpectImage command.
-        """
+        """Callback for FiberSpectrograph captureSpectImage command."""
         self.image_data.append(data)
         await asyncio.sleep(data.duration)
 

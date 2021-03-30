@@ -31,8 +31,7 @@ from lsst.ts import salobj
 
 
 def is_sequence(value):
-    """Return True if value is a sequence that is not a `str` or `bytes`.
-    """
+    """Return True if value is a sequence that is not a `str` or `bytes`."""
     if isinstance(value, str) or isinstance(value, bytes):
         return False
     return isinstance(value, collections.abc.Sequence)
@@ -71,8 +70,7 @@ def as_array(value, dtype, nelt):
 
 
 class CalSysTakeData(salobj.BaseScript):
-    """
-    """
+    """"""
 
     def __init__(self, index):
         super().__init__(

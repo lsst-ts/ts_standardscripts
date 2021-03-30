@@ -1,35 +1,52 @@
 .. py:currentmodule:: lsst.ts.standardscripts
 
-.. _lsst.ts.standardscripts:
+.. _standardscripts:
 
-#######################
-lsst.ts.standardscripts
-#######################
+################
+Standard Scripts
+################
 
-SAL scripts for operating the Vera Rubin Observatory.
+.. image:: https://img.shields.io/badge/GitHub-ts_standardscripts-green.svg
+    :target: https://github.com/lsst-ts/ts_standardscripts
+.. image:: https://img.shields.io/badge/Jenkins-ts_standardscripts-green.svg
+    :target: https://tssw-ci.lsst.org/job/LSST_Telescope-and-Site/job/ts_standardscripts/
+.. image:: https://img.shields.io/badge/Jira-ts_standardscripts-green.svg
+    :target: https://jira.lsstcorp.org/issues/?jql=labels+%3D+ts_standardscripts
 
-SAL scripts live in the `scripts` directory and can be launched with the `script queue <https://ts-scriptqueue.lsst.io/>`_.
+.. _overview:
 
-The library (lsst.ts.standardscripts) provides utilities and implementation for some scripts.
-The ``ts_observatory_control`` package contains many useful classes for writing SAL scripts.
+Overview
+========
 
-.. _lsst.ts.standardscripts-contributing:
+TBD
+.. _user-documentation:
 
-Contributing
-============
+User Documentation
+==================
 
-``lsst.ts.standardscripts`` is developed at https://github.com/lsst-ts/ts_standardscripts.
-You can find Jira issues for this module using `labels=ts_standardscripts <https://jira.lsstcorp.org/issues/?jql=project%20%3D%20DM%20AND%20labels%20%20%3D%20ts_standardscripts>`_.
+TBD
 
-.. _lsst.ts.standardscripts-pyapi:
+.. toctree::
+    user-guide/user-guide
+    :maxdepth: 1
 
-Python API reference
-====================
 
-.. automodapi:: lsst.ts.standardscripts
-   :no-main-docstr:
-   :no-inheritance-diagram:
+.. _development-documentation:
 
-.. automodapi:: lsst.ts.standardscripts.auxtel
-   :no-main-docstr:
-   :no-inheritance-diagram:
+Developer Documentation
+=======================
+
+TBD
+
+.. toctree::
+    developer-guide/developer-guide
+    :maxdepth: 1
+
+.. version-history:
+
+Version History
+===============
+
+.. toctree::
+    version_history
+    :maxdepth: 1
