@@ -78,7 +78,9 @@ class TestTakeImageComCam(standardscripts.BaseScriptTestCase, asynctest.TestCase
             exp_times = [0, 2, 0.5]
             filter = 2
             await self.configure_script(
-                exp_times=exp_times, image_type=image_type, filter=filter,
+                exp_times=exp_times,
+                image_type=image_type,
+                filter=filter,
             )
             self.assertEqual(self.script.config.exp_times, exp_times)
             self.assertEqual(self.script.config.image_type, image_type)
@@ -100,7 +102,10 @@ class TestTakeImageComCam(standardscripts.BaseScriptTestCase, asynctest.TestCase
             nimages = 5
 
             await self.configure_script(
-                nimages=nimages, exp_times=1.0, image_type="OBJECT", filter=1,
+                nimages=nimages,
+                exp_times=1.0,
+                image_type="OBJECT",
+                filter=1,
             )
 
             await self.run_script()

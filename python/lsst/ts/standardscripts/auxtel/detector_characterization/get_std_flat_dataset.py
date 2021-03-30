@@ -178,8 +178,7 @@ class ATGetStdFlatDataset(salobj.BaseScript):
             )
 
     async def run(self):
-        """Run the script.
-        """
+        """Run the script."""
         self.log.info(f"Taking {self.config.n_bias} pre-flat bias images...")
         await self.latiss.take_bias(
             nbias=self.config.n_bias, checkpoint=self.checkpoint

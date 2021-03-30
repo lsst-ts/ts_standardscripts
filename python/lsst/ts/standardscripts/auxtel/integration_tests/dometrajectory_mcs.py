@@ -487,8 +487,7 @@ class DomeTrajectoryMCS(salobj.BaseScript):
             self._track_task = asyncio.ensure_future(self._track_telescope_loop())
 
     def stop_track_telescope(self):
-        """Command ATMCS to stop tracking.
-        """
+        """Command ATMCS to stop tracking."""
         if self._track_task is None or self._track_task.done():
             return
         self._track_task.cancel()
