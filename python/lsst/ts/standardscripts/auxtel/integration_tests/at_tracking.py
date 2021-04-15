@@ -384,8 +384,8 @@ class ATTracking(scriptqueue.BaseScript):
             athexapod_positionupdate = self.athexapod.evt_positionUpdate.next(
                 flush=True, timeout=30
             )
-            ataos_hexapod_correction_completed = self.ataos.evt_hexapodCorrectionCompleted.next(
-                flush=True, timeout=30
+            ataos_hexapod_correction_completed = (
+                self.ataos.evt_hexapodCorrectionCompleted.next(flush=True, timeout=30)
             )
             atpneumatic_m1_set_pressure = self.atpneumatics.evt_m1SetPressure.next(
                 flush=True, timeout=120

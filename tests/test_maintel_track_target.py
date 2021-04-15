@@ -42,8 +42,7 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
         return (self.script,)
 
     async def test_configure(self):
-        """Test different configuration scenarios.
-        """
+        """Test different configuration scenarios."""
         async with self.make_script():
 
             # Test no default configuration. User must provide something.
