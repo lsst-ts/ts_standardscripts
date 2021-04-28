@@ -20,6 +20,8 @@
 
 from .enable_comcam import *
 from .enable_mtcs import *
+from .offline_comcam import *
+from .offline_mtcs import *
 from .standby_comcam import *
 from .standby_mtcs import *
 from .stop import *

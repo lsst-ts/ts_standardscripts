@@ -4,6 +4,13 @@
 Version History
 ===============
 
+v1.6.3
+------
+
+* Add offline scripts for auxtel.
+* Add offline scripts for maintel.
+* Update ``tests/SConscript`` to make scons work when building with the licensed version of OpenSplice.
+
 v1.6.2
 ------
 
