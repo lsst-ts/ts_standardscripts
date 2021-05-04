@@ -23,8 +23,6 @@ import logging
 import random
 import unittest
 
-import asynctest
-
 from lsst.ts import salobj
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.integration_tests import DomeTrajectoryMCS
@@ -39,7 +37,9 @@ random.seed(47)  # for set_random_lsst_dds_partition_prefix
 logging.basicConfig()
 
 
-class DomeTrajectoryMCSTestCase(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class DomeTrajectoryMCSTestCase(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
     def setUp(self):
         self.processes = []
 

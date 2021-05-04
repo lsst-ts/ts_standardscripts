@@ -21,7 +21,6 @@
 import logging
 import random
 import unittest
-import asynctest
 
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel import PrepareForFlat
@@ -32,7 +31,9 @@ random.seed(47)  # for set_random_lsst_dds_partition_prefix
 logging.basicConfig()
 
 
-class TestPrepareForFlat(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestPrepareForFlat(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
     async def basic_make_script(self, index):
         self.script = PrepareForFlat(index=index)
         self.atcs_mock = ATCSMock()
