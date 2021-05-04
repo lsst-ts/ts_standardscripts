@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v1.6.4
+------
+
+* Use unittest instead of the deprecated asynctest package.
+
 v1.6.3
 ------
 
