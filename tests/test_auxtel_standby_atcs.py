@@ -21,7 +21,6 @@
 import logging
 import random
 import unittest
-import asynctest
 
 from lsst.ts import salobj
 from lsst.ts import standardscripts
@@ -33,7 +32,9 @@ random.seed(47)  # for set_random_lsst_dds_partition_prefix
 logging.basicConfig()
 
 
-class TestStandbyATCS(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestStandbyATCS(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
     async def basic_make_script(self, index):
         self.script = StandbyATCS(index=index)
         self.atcs_mock = ATCSMock()

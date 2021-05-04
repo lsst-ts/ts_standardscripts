@@ -44,7 +44,7 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
 
     Subclasses must:
 
-    * Inherit both from this and `asynctest.TestCase`.
+    * Inherit both from this and `unittest.IsolatedAsyncioTestCase`.
     * Override `basic_make_script` to make the script and any other
       controllers, remotes and such, and return a list of scripts,
       controllers and remotes that you made.

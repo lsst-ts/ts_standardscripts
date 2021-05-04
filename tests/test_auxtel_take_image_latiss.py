@@ -23,8 +23,6 @@ import logging
 import random
 import unittest
 
-import asynctest
-
 from lsst.ts import salobj
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel import TakeImageLatiss
@@ -34,7 +32,9 @@ random.seed(47)  # for set_random_lsst_dds_partition_prefix
 logging.basicConfig(level=logging.DEBUG)
 
 
-class TestATCamTakeImage(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestATCamTakeImage(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
     async def basic_make_script(self, index):
         self.script = TakeImageLatiss(index=index)
         self.atcam = salobj.Controller(name="ATCamera")

@@ -21,8 +21,6 @@
 import random
 import unittest
 
-import asynctest
-
 from lsst.ts import salobj
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.maintel import TakeImageComCam
@@ -30,7 +28,9 @@ from lsst.ts.standardscripts.maintel import TakeImageComCam
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
 
-class TestTakeImageComCam(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestTakeImageComCam(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
     async def basic_make_script(self, index):
 
         self.script = TakeImageComCam(index=index)
@@ -97,7 +97,7 @@ class TestTakeImageComCam(standardscripts.BaseScriptTestCase, asynctest.TestCase
 
         async with self.make_script():
 
-            self.script.camera.take_imgtype = asynctest.CoroutineMock()
+            self.script.camera.take_imgtype = unittest.mock.AsyncMock()
 
             nimages = 5
 
