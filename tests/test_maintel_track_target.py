@@ -22,8 +22,6 @@ import logging
 import random
 import unittest
 
-import asynctest
-
 from lsst.ts import salobj
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.maintel import TrackTarget
@@ -35,7 +33,7 @@ random.seed(47)  # for set_random_lsst_dds_partition_prefix
 logging.basicConfig()
 
 
-class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     async def basic_make_script(self, index):
         self.script = TrackTarget(index=index)
 
@@ -102,9 +100,9 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
         async with self.make_script():
 
-            self.script.tcs.slew_icrs = asynctest.CoroutineMock()
-            self.script.tcs.slew_object = asynctest.CoroutineMock()
-            self.script.tcs.stop_tracking = asynctest.CoroutineMock()
+            self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
+            self.script.tcs.slew_object = unittest.mock.AsyncMock()
+            self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
 
             # Check running with target_name only
             await self.configure_script(target_name="eta Car")
@@ -119,9 +117,9 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
         async with self.make_script():
 
-            self.script.tcs.slew_icrs = asynctest.CoroutineMock()
-            self.script.tcs.slew_object = asynctest.CoroutineMock()
-            self.script.tcs.stop_tracking = asynctest.CoroutineMock()
+            self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
+            self.script.tcs.slew_object = unittest.mock.AsyncMock()
+            self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
 
             # Check running with ra dec only
             await self.configure_script(ra=1.0, dec=-10.0)
@@ -136,11 +134,11 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
         async with self.make_script():
 
-            self.script.tcs.slew_icrs = asynctest.CoroutineMock(
+            self.script.tcs.slew_icrs = unittest.mock.AsyncMock(
                 side_effect=RuntimeError
             )
-            self.script.tcs.slew_object = asynctest.CoroutineMock()
-            self.script.tcs.stop_tracking = asynctest.CoroutineMock()
+            self.script.tcs.slew_object = unittest.mock.AsyncMock()
+            self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
 
             # Check running with ra dec only
             await self.configure_script(ra=1.0, dec=-10.0)

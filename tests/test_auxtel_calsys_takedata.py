@@ -23,7 +23,6 @@ import logging
 import random
 import unittest
 
-import asynctest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
@@ -37,7 +36,9 @@ random.seed(47)  # for set_random_lsst_dds_partition_prefix
 logging.basicConfig()
 
 
-class TestATCalSysTakeData(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestATCalSysTakeData(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
     async def basic_make_script(self, index):
         """Make script and controllers and return a list of all made."""
         self.script = CalSysTakeData(index=index)

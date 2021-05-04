@@ -21,15 +21,15 @@
 import random
 import unittest
 
-import asynctest
-
 from lsst.ts import salobj
 from lsst.ts import standardscripts
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
 
-class TestRunCommand(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestRunCommand(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
     async def basic_make_script(self, index):
         self.script = standardscripts.RunCommand(index=index)
         self.controller = salobj.Controller("Test", index=1)

@@ -25,8 +25,6 @@ import asyncio
 import logging
 import unittest
 
-import asynctest
-
 from lsst.ts import salobj
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.detector_characterization import ATGetStdFlatDataset
@@ -38,7 +36,9 @@ index_gen = salobj.index_generator()
 logging.basicConfig(level=logging.DEBUG)
 
 
-class TestATGetStdFlatDataset(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestATGetStdFlatDataset(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
     async def basic_make_script(self, index):
         self.script = ATGetStdFlatDataset(index=index)
 

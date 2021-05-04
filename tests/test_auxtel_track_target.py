@@ -22,8 +22,6 @@ import logging
 import random
 import unittest
 
-import asynctest
-
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel import TrackTarget
 
@@ -32,7 +30,9 @@ random.seed(47)  # for set_random_lsst_dds_partition_prefix
 logging.basicConfig()
 
 
-class TestATTrackTarget(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestATTrackTarget(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
     """Test Auxiliary Telescope track target script.
 
     Both AT and MT Slew scripts uses the same base script class. This unit
@@ -49,9 +49,9 @@ class TestATTrackTarget(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
         async with self.make_script():
 
-            self.script.tcs.slew_icrs = asynctest.CoroutineMock()
-            self.script.tcs.slew_object = asynctest.CoroutineMock()
-            self.script.tcs.stop_tracking = asynctest.CoroutineMock()
+            self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
+            self.script.tcs.slew_object = unittest.mock.AsyncMock()
+            self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
 
             # Check running with target_name only
             await self.configure_script(target_name="eta Car")
@@ -66,9 +66,9 @@ class TestATTrackTarget(standardscripts.BaseScriptTestCase, asynctest.TestCase):
 
         async with self.make_script():
 
-            self.script.tcs.slew_icrs = asynctest.CoroutineMock()
-            self.script.tcs.slew_object = asynctest.CoroutineMock()
-            self.script.tcs.stop_tracking = asynctest.CoroutineMock()
+            self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
+            self.script.tcs.slew_object = unittest.mock.AsyncMock()
+            self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
 
             self.script.tcs.slew_object.reset_mock()
             self.script.tcs.slew_icrs.reset_mock()

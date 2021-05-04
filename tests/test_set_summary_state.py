@@ -23,8 +23,6 @@ import logging
 import random
 import unittest
 
-import asynctest
-
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts import standardscripts
@@ -75,7 +73,9 @@ class TrivialController(salobj.Controller):
         self.put_state(salobj.State.DISABLED)
 
 
-class TestSetSummaryState(standardscripts.BaseScriptTestCase, asynctest.TestCase):
+class TestSetSummaryState(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
     async def basic_make_script(self, index):
         self.script = standardscripts.SetSummaryState(index=index)
         self.controllers = []
