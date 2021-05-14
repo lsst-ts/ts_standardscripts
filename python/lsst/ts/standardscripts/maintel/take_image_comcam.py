@@ -53,6 +53,8 @@ class TakeImageComCam(BaseTakeImage):
             self.domain, intended_usage=ComCamUsages.TakeImage, log=self.log
         )
 
+        self.instrument_setup_time = self._comcam.filter_change_timeout
+
     @property
     def camera(self):
         return self._comcam
