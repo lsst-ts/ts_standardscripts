@@ -98,6 +98,7 @@ class TestTakeImageComCam(
         async with self.make_script():
 
             self.script.camera.take_imgtype = unittest.mock.AsyncMock()
+            self.script.camera.setup_instrument = unittest.mock.AsyncMock()
 
             nimages = 5
 
@@ -111,6 +112,8 @@ class TestTakeImageComCam(
             await self.run_script()
 
             self.assertEqual(nimages, self.script.camera.take_imgtype.await_count)
+            self.script.camera.setup_instrument.assert_awaited_once()
+            self.script.camera.setup_instrument.assert_awaited_with(filter=1)
 
     async def test_executable(self):
 

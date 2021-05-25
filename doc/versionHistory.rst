@@ -4,6 +4,14 @@
 Version History
 ===============
 
+v1.6.5
+------
+
+* Update `BaseTakeImage`:
+ * Add instrument setup time to duration estimation.
+ * Only setup instrument configuration in the first image.
+ * Update unit tests.
+
 v1.6.4
 ------
 

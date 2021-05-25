@@ -49,6 +49,8 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         self.config = None
 
+        self.instrument_setup_time = 0.0
+
     @property
     @abc.abstractmethod
     def camera(self):
@@ -120,7 +122,7 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
         self.config = config
 
         nimages = self.config.nimages
-        if isinstance(self.config.exp_times, collections.Iterable):
+        if isinstance(self.config.exp_times, collections.abc.Iterable):
             if nimages is not None:
                 if len(self.config.exp_times) != nimages:
                     raise ValueError(
@@ -139,15 +141,22 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
         nimages = len(self.config.exp_times)
         mean_exptime = np.mean(self.config.exp_times)
         metadata.duration = (
-            mean_exptime + self.camera.read_out_time + self.camera.shutter_time * 2
-            if self.camera.shutter_time
-            else 0
-        ) * nimages
+            self.instrument_setup_time
+            + (
+                mean_exptime + self.camera.read_out_time + self.camera.shutter_time * 2
+                if self.camera.shutter_time
+                else 0
+            )
+            * nimages
+        )
 
     async def run(self):
         nimages = len(self.config.exp_times)
         group_id = getattr(self.config, "group_id", self.group_id)
         note = getattr(self.config, "note", None)
+        await self.checkpoint("setup instrument")
+        await self.camera.setup_instrument(**self.get_instrument_configuration())
+
         for i, exposure in enumerate(self.config.exp_times):
             self.log.debug(
                 f"Exposing image {i+1} of {nimages} with exp_time={exposure}s."
@@ -159,5 +168,4 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
                 1,
                 group_id=group_id,
                 note=note,
-                **self.get_instrument_configuration(),
             )
