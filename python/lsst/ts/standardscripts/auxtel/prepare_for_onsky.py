@@ -23,7 +23,12 @@ __all__ = ["PrepareForOnSky"]
 import yaml
 
 from lsst.ts import salobj
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+from lsst.ts.observatory.control.auxtel.atcs import (
+    ATCS,
+    LATISS,
+    ATCSUsages,
+    LATISSUsages,
+)
 
 
 class PrepareForOnSky(salobj.BaseScript):
@@ -50,6 +55,9 @@ class PrepareForOnSky(salobj.BaseScript):
         self.config = None
 
         self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.StartUp, log=self.log)
+        self.latiss = LATISS(
+            self.domain, intended_usage=LATISSUsages.StateTransition, log=self.log
+        )
 
     @classmethod
     def get_schema(cls):
@@ -122,5 +130,8 @@ class PrepareForOnSky(salobj.BaseScript):
             )
             if self.config is not None
             else None
+        )
+        await self.latiss.assert_all_enabled(
+            message="All LATISS components need to be enabled to prepare for sky observations."
         )
         await self.attcs.prepare_for_onsky(settings=settings)
