@@ -23,7 +23,7 @@ __all__ = ["PrepareForOnSky"]
 import yaml
 
 from lsst.ts import salobj
-from lsst.ts.observatory.control.auxtel.atcs import (
+from lsst.ts.observatory.control.auxtel import (
     ATCS,
     LATISS,
     ATCSUsages,
