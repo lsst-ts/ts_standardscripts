@@ -96,6 +96,10 @@ properties:
   obs_time:
     type: number
     description: When should slew start.
+  estimated_slew_time:
+    type: number
+    description: An estimative of how much a slew will take.
+    default: 0
   num_exp:
     type: integer
     description: Number of exposures.
@@ -145,7 +149,7 @@ additionalProperties: false
         ----------
         metadata : `Script_logevent_metadata`
         """
-        metadata.duration = sum(self.config.exp_times)
+        metadata.duration = sum(self.config.exp_times) + self.config.estimated_slew_time
 
     async def run(self):
 
