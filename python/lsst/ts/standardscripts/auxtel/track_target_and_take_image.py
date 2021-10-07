@@ -86,9 +86,10 @@ properties:
         minimum: -90
         maximum: 90
       - type: string
-  ang:
+  rot_sky:
     description: >-
-      Rotator position value. Actual meaning depends on rot_type.
+      The position angle in the Sky. 0 deg means that North is pointing up >- 
+      in the images.
     type: number
   name:
     description: Target name
@@ -158,14 +159,14 @@ additionalProperties: false
         await self.checkpoint(
             f"Slew and track target_name={self.config.name}; "
             f"ra={self.config.ra}, dec={self.config.dec};"
-            f"rot={self.config.ang}; rot_type={RotType.Sky}"
+            f"rot={self.config.rot_sky}; rot_type={RotType.Sky}"
         )
 
         await asyncio.gather(
             self.atcs.slew_icrs(
                 ra=self.config.ra,
                 dec=self.config.dec,
-                rot=self.config.ang,
+                rot=self.config.rot_sky,
                 rot_type=RotType.Sky,
                 target_name=self.config.name,
             ),
