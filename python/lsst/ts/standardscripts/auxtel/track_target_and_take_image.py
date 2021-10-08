@@ -120,7 +120,7 @@ properties:
 required:
   - ra
   - dec
-  - ang
+  - rot_sky
   - name
   - obs_time
   - num_exp
