@@ -40,20 +40,24 @@ class TrackTargetAndTakeImage(salobj.BaseScript):
     ----------
     index : `int`
         Index of Script SAL component.
-    descr : `str`
-        Short Script description.
-
+    add_remotes : `bool` (optional)
+        Create remotes to control components (default: `True`)? If False, the
+        script will not work for normal operations. Useful for unit testing.
     """
 
     __test__ = False  # stop pytest from warning that this is not a test
 
-    def __init__(self, index):
+    def __init__(self, index, add_remotes: bool = True):
         super().__init__(index=index, descr="Track target and take image.")
 
-        self.atcs = ATCS(self.domain, intended_usage=ATCSUsages.Slew, log=self.log)
-        self.latiss = LATISS(
-            self.domain, intended_usage=LATISSUsages.TakeImageFull, log=self.log
+        atcs_usage, latiss_usage = (
+            (ATCSUsages.Slew, LATISSUsages.TakeImageFull)
+            if add_remotes
+            else (ATCSUsages.DryTest, LATISSUsages.DryTest)
         )
+
+        self.atcs = ATCS(self.domain, intended_usage=atcs_usage, log=self.log)
+        self.latiss = LATISS(self.domain, intended_usage=latiss_usage, log=self.log)
 
         self.config = None
 
@@ -88,7 +92,7 @@ properties:
       - type: string
   rot_sky:
     description: >-
-      The position angle in the Sky. 0 deg means that North is pointing up >- 
+      The position angle in the Sky. 0 deg means that North is pointing up
       in the images.
     type: number
   name:
@@ -189,7 +193,7 @@ additionalProperties: false
     async def take_data(self):
 
         for exptime in self.config.exp_times:
-            await self.latiss.take_object(exptime = exptime)
+            await self.latiss.take_object(exptime=exptime)
 
     async def cleanup(self):
 
