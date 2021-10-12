@@ -20,46 +20,25 @@
 
 __all__ = ["StopTracking"]
 
-from lsst.ts import salobj
+from ..base_stop_tracking import BaseStopTracking
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 
 
-class StopTracking(salobj.BaseScript):
+class StopTracking(BaseStopTracking):
     """Stop telescope and dome tracking.
 
     Parameters
     ----------
     index : `int`
         Index of Script SAL component.
-
-    Notes
-    -----
-    **Checkpoints**
-
-    TBD
-
-    **Details**
-
-    TBD
-
     """
 
     def __init__(self, index):
-        super().__init__(index=index, descr="Enable ATCS.")
 
-        self.config = None
+        super().__init__(index=index, descr="ATCS stop tracking.")
 
-        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.Shutdown, log=self.log)
+        self._atcs = ATCS(self.domain, intended_usage=ATCSUsages.Slew, log=self.log)
 
-    @classmethod
-    def get_schema(cls):
-        return None
-
-    async def configure(self, config):
-        self.config = config
-
-    def set_metadata(self, metadata):
-        metadata.duration = 60.0
-
-    async def run(self):
-        await self.attcs.stop_tracking()
+    @property
+    def tcs(self):
+        return self._atcs
