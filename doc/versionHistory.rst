@@ -4,6 +4,18 @@
 Version History
 ===============
 
+v1.6.7
+------
+
+* Add track target and take image script for auxtel.
+* Add stop tracking scrit for auxtel.
+
+v1.6.6
+------
+
+* Update prepare for onsky Script to check that LATISS components are enabled before executing.
+* Fix import statement in `prepare_for_onsky`
+
 v1.6.5
 ------
 

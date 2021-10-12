@@ -18,18 +18,22 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .calsys_takedata import CalSysTakeData
-from .enable_atcs import *
-from .enable_latiss import *
-from .standby_atcs import *
-from .standby_latiss import *
-from .shutdown import *
-from .offline_atcs import *
-from .offline_latiss import *
-from .prepare_for_onsky import *
-from .prepare_for_flat import *
-from .stop import *
-from .stop_tracking import *
-from .take_image_latiss import TakeImageLatiss
-from .track_target import *
-from .track_target_and_take_image import *
+import unittest
+
+from lsst.ts import standardscripts
+
+
+class TestStopTracking(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
+    async def basic_make_script(self, index):
+        pass
+
+    async def test_executable(self):
+        scripts_dir = standardscripts.get_scripts_dir()
+        script_path = scripts_dir / "auxtel" / "stop_tracking.py"
+        await self.check_executable(script_path)
+
+
+if __name__ == "__main__":
+    unittest.main()
