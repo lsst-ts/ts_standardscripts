@@ -4,6 +4,13 @@
 Version History
 ===============
 
+v1.6.8
+------
+
+* Add new BaseTrackTargetAndTakeImage script, that implements a simple script to track a target and take images.
+* Update auxtel/track_target_and_take_image script to use the new BaseTrackTargetAndTakeImage.
+* Adds maintel/track_target_and_take_image_comcam script to do a simple track target and take image with the Main Telescope and ComCam.
+
 v1.6.7
 ------
 
