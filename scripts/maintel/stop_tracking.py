@@ -1,4 +1,5 @@
-# This file is part of ts_salkafka.
+#!/usr/bin/env python
+# This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -17,18 +18,9 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import unittest
-import pathlib
+import asyncio
 
-from lsst.ts import salobj
+from lsst.ts.standardscripts.maintel.stop_tracking import StopTracking
 
-
-class BlackTestCase(unittest.TestCase):
-    def test_black_formatted(self):
-        salobj.assert_black_formatted(pathlib.Path(__file__).parents[1])
-
-
-if __name__ == "__main__":
-    unittest.main()
+asyncio.run(StopTracking.amain())

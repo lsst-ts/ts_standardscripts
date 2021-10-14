@@ -23,14 +23,13 @@ __all__ = ["TrackTargetAndTakeImage"]
 import yaml
 import asyncio
 
-from lsst.ts import salobj
-from lsst.ts.idl.enums.Script import ScriptState
+from ..base_track_target_and_take_image import BaseTrackTargetAndTakeImage
 
 from lsst.ts.observatory.control.utils import RotType
 from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages, LATISS, LATISSUsages
 
 
-class TrackTargetAndTakeImage(salobj.BaseScript):
+class TrackTargetAndTakeImage(BaseTrackTargetAndTakeImage):
     """Track target and take image script.
 
     This script implements a simple visit consistig of slewing to a target,
@@ -48,7 +47,7 @@ class TrackTargetAndTakeImage(salobj.BaseScript):
     __test__ = False  # stop pytest from warning that this is not a test
 
     def __init__(self, index, add_remotes: bool = True):
-        super().__init__(index=index, descr="Track target and take image.")
+        super().__init__(index=index, descr="Track target and take image with AuxTel.")
 
         atcs_usage, latiss_usage = (
             (ATCSUsages.Slew, LATISSUsages.TakeImageFull)
@@ -59,112 +58,41 @@ class TrackTargetAndTakeImage(salobj.BaseScript):
         self.atcs = ATCS(self.domain, intended_usage=atcs_usage, log=self.log)
         self.latiss = LATISS(self.domain, intended_usage=latiss_usage, log=self.log)
 
-        self.config = None
-
-        # Flag to monitor if tracking started for cleanup task.
-        self.tracking_started = False
-
     @classmethod
     def get_schema(cls):
+
         schema_yaml = """
 $schema: http://json-schema.org/draft-07/schema#
 $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/track_target_and_take_image.py
 title: TrackTargetAndTakeImage v1
-description: Configuration for TrackTargetAndTakeImage.
+description: Configuration for TrackTargetAndTakeImage with AuxTel.
 type: object
 properties:
-  targetid:
-    description: Id of the target.
-    type: integer
-  ra:
-    description: ICRS right ascension (hour).
-    anyOf:
-      - type: number
-        minimum: 0
-        maximum: 24
-      - type: string
-  dec:
-    description: ICRS declination (deg).
-    anyOf:
-      - type: number
-        minimum: -90
-        maximum: 90
-      - type: string
-  rot_sky:
-    description: >-
-      The position angle in the Sky. 0 deg means that North is pointing up
-      in the images.
-    type: number
-  name:
-    description: Target name
-    type: string
-  obs_time:
-    type: number
-    description: When should slew start.
-  estimated_slew_time:
-    type: number
-    description: An estimative of how much a slew will take.
-    default: 0
-  num_exp:
-    type: integer
-    description: Number of exposures.
-  exp_times:
-    description: Exposure times in seconds.
-    type: array
-    minItems: 1
-    items:
-      type: number
-      minimum: 0
-  band_filter:
-    description: Name of the filter for observation.
-    type: string
   grating:
     description: Name of the grating for observation.
     type: string
 required:
-  - ra
-  - dec
-  - rot_sky
-  - name
-  - obs_time
-  - num_exp
-  - exp_times
-  - band_filter
   - grating
 additionalProperties: false
         """
-        return yaml.safe_load(schema_yaml)
 
-    async def configure(self, config):
-        """Configure the script.
+        schema_dict = yaml.safe_load(schema_yaml)
 
-        Parameters
-        ----------
-        config : `types.SimpleNamespace`
-            Configuration
-        """
+        base_schema_dict = cls.get_base_schema()
 
-        self.log.debug(f"Configured with {config}.")
-        self.config = config
+        for properties in base_schema_dict["properties"]:
+            schema_dict["properties"][properties] = base_schema_dict["properties"][
+                properties
+            ]
 
-    def set_metadata(self, metadata):
-        """Compute estimated duration.
+        schema_dict["required"] += base_schema_dict["required"]
 
-        Parameters
-        ----------
-        metadata : `Script_logevent_metadata`
-        """
-        metadata.duration = sum(self.config.exp_times) + self.config.estimated_slew_time
+        return schema_dict
 
-    async def run(self):
+    async def track_target_and_setup_instrument(self):
+        """Track target and setup instrument in parallel."""
 
         self.tracking_started = True
-
-        await self.checkpoint(
-            f"Slew and track target_name={self.config.name}; "
-            f"ra={self.config.ra}, dec={self.config.dec};"
-            f"rot={self.config.rot_sky}; rot_type={RotType.Sky}"
-        )
 
         await asyncio.gather(
             self.atcs.slew_icrs(
@@ -179,35 +107,24 @@ additionalProperties: false
             ),
         )
 
-        await self.checkpoint("Taking data")
+        await self.checkpoint("done")
+
+    async def take_data(self):
+        """Take data while making sure ATCS is tracking."""
 
         tasks = [
-            asyncio.create_task(self.take_data()),
+            asyncio.create_task(self._take_data()),
             asyncio.create_task(self.atcs.check_tracking()),
         ]
 
         await self.atcs.process_as_completed(tasks)
 
-        await self.checkpoint("done")
-
-    async def take_data(self):
+    async def _take_data(self):
+        """Take data."""
 
         for exptime in self.config.exp_times:
             await self.latiss.take_object(exptime=exptime)
 
-    async def cleanup(self):
-
-        if self.state.state != ScriptState.ENDING:
-            # abnormal termination
-            if self.tracking_started:
-                self.log.warning(
-                    f"Terminating with state={self.state.state}: stop tracking."
-                )
-                try:
-                    await asyncio.wait_for(self.atcs.stop_tracking(), timeout=5)
-                except asyncio.TimeoutError:
-                    self.log.exception(
-                        "Stop tracking command timed out during cleanup procedure."
-                    )
-                except Exception:
-                    self.log.exception("Unexpected exception in stop_tracking.")
+    async def stop_tracking(self):
+        """Execute stop_tracking command on ATCS."""
+        await self.atcs.stop_tracking()

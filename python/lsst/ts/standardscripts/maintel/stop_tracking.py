@@ -21,7 +21,7 @@
 __all__ = ["StopTracking"]
 
 from ..base_stop_tracking import BaseStopTracking
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 
 class StopTracking(BaseStopTracking):
@@ -35,10 +35,10 @@ class StopTracking(BaseStopTracking):
 
     def __init__(self, index):
 
-        super().__init__(index=index, descr="ATCS stop tracking.")
+        super().__init__(index=index, descr="MTCS stop tracking.")
 
-        self._atcs = ATCS(self.domain, intended_usage=ATCSUsages.Slew, log=self.log)
+        self._mtcs = MTCS(self.domain, intended_usage=MTCSUsages.Slew, log=self.log)
 
     @property
     def tcs(self):
-        return self._atcs
+        return self._mtcs

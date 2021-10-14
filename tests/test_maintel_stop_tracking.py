@@ -18,27 +18,22 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["StopTracking"]
+import unittest
 
-from ..base_stop_tracking import BaseStopTracking
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+from lsst.ts import standardscripts
 
 
-class StopTracking(BaseStopTracking):
-    """Stop telescope and dome tracking.
+class TestStopTracking(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
+    async def basic_make_script(self, index):
+        pass
 
-    Parameters
-    ----------
-    index : `int`
-        Index of Script SAL component.
-    """
+    async def test_executable(self):
+        scripts_dir = standardscripts.get_scripts_dir()
+        script_path = scripts_dir / "maintel" / "stop_tracking.py"
+        await self.check_executable(script_path)
 
-    def __init__(self, index):
 
-        super().__init__(index=index, descr="ATCS stop tracking.")
-
-        self._atcs = ATCS(self.domain, intended_usage=ATCSUsages.Slew, log=self.log)
-
-    @property
-    def tcs(self):
-        return self._atcs
+if __name__ == "__main__":
+    unittest.main()
