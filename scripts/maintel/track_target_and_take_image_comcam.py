@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
@@ -18,27 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["StopTracking"]
+import asyncio
 
-from ..base_stop_tracking import BaseStopTracking
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+from lsst.ts.standardscripts.maintel import TrackTargetAndTakeImageComCam
 
-
-class StopTracking(BaseStopTracking):
-    """Stop telescope and dome tracking.
-
-    Parameters
-    ----------
-    index : `int`
-        Index of Script SAL component.
-    """
-
-    def __init__(self, index):
-
-        super().__init__(index=index, descr="ATCS stop tracking.")
-
-        self._atcs = ATCS(self.domain, intended_usage=ATCSUsages.Slew, log=self.log)
-
-    @property
-    def tcs(self):
-        return self._atcs
+asyncio.run(TrackTargetAndTakeImageComCam.amain())

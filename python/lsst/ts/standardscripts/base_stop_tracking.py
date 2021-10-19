@@ -18,27 +18,49 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["StopTracking"]
+__all__ = ["BaseStopTracking"]
 
-from ..base_stop_tracking import BaseStopTracking
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+import abc
+
+from lsst.ts import salobj
 
 
-class StopTracking(BaseStopTracking):
-    """Stop telescope and dome tracking.
+class BaseStopTracking(salobj.BaseScript):
+    """A base script that implements stop_tracking functionality for `BaseTCS`
+    classes.
 
     Parameters
     ----------
     index : `int`
         Index of Script SAL component.
+
+    Notes
+    -----
+    **Checkpoints**
+
+    Stop tracking: Before issuing stop tracking.
+    Done: After issuing stop tracking.
     """
 
-    def __init__(self, index):
-
-        super().__init__(index=index, descr="ATCS stop tracking.")
-
-        self._atcs = ATCS(self.domain, intended_usage=ATCSUsages.Slew, log=self.log)
+    def __init__(self, index, descr):
+        super().__init__(index=index, descr=descr)
 
     @property
+    @abc.abstractmethod
     def tcs(self):
-        return self._atcs
+        raise NotImplementedError()
+
+    @classmethod
+    def get_schema(cls):
+        return None
+
+    async def configure(self, config):
+        pass
+
+    def set_metadata(self, metadata):
+        metadata.duration = self.tcs.tel_settle_time
+
+    async def run(self):
+        await self.checkpoint("Stop tracking")
+        await self.tcs.stop_tracking()
+        await self.checkpoint("Done")
