@@ -21,6 +21,8 @@
 # import pathlib
 import unittest
 
+import pytest
+
 from lsst.ts import standardscripts
 
 
@@ -28,13 +30,13 @@ class TestUtils(unittest.TestCase):
     def test_get_scripts_dir(self):
         scripts_dir = standardscripts.get_scripts_dir()
         print(f"*** script dir: {scripts_dir}")
-        self.assertTrue(scripts_dir.is_dir())
+        assert scripts_dir.is_dir()
 
         # This does not work when doing pip install or conda build
         # pkg_path = pathlib.Path(__file__).resolve().parent.parent
         # predicted_path = pkg_path / "scripts"
         # print(f"*** predicted path: {predicted_path}")
-        # self.assertTrue(scripts_dir.samefile(predicted_path))
+        # assert (scripts_dir.samefile(predicted_path))
 
     def test_format_as_list(self):
         recurrences = 4
@@ -43,17 +45,17 @@ class TestUtils(unittest.TestCase):
         for test in test_case:
             new_list = standardscripts.utils.format_as_list(test, recurrences)
             print(new_list)
-            self.assertEqual(new_list.count(test), recurrences)
+            assert new_list.count(test) == recurrences
 
         # Verify that if input is correct it just returns
         test_case = ["test", "test"]
         recurrences = 2
         new_list = standardscripts.utils.format_as_list(test_case, recurrences)
-        self.assertIs(new_list, test_case)
+        assert new_list is test_case
 
         # Verify that it will fail if a list is provided with the wrong number
         # of occurrences
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             recurrences = 3
             new_list = standardscripts.utils.format_as_list(test_case, recurrences)
 

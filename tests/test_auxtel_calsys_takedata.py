@@ -25,6 +25,7 @@ import unittest
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
+import pytest
 
 from lsst.ts.idl.enums import ATMonochromator, Script
 from lsst.ts import salobj
@@ -110,11 +111,11 @@ class TestATCalSysTakeData(
 
         async with self.make_script():
             # configure requires wavelengths and integration_times
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script()
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(wavelengths=100)
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(integration_times=100)
 
             # if configured with a scalar then every element has length 1
@@ -123,8 +124,8 @@ class TestATCalSysTakeData(
             assert_array_equal(self.script.config.integration_times, [31])
             for argname in argnames:
                 arg = getattr(self.script.config, argname)
-                self.assertIs(type(arg), np.ndarray)
-                self.assertEqual(len(arg), 1)
+                assert isinstance(arg, np.ndarray)
+                assert len(arg) == 1
 
             # if configured with an array then
             # every element has the same length
@@ -133,8 +134,8 @@ class TestATCalSysTakeData(
             assert_array_equal(self.script.config.integration_times, [31, 31])
             for argname in argnames:
                 arg = getattr(self.script.config, argname)
-                self.assertIs(type(arg), np.ndarray)
-                self.assertEqual(len(arg), 2)
+                assert isinstance(arg, np.ndarray)
+                assert len(arg) == 2
 
             await self.configure_script(
                 wavelengths=100, integration_times=31, grating_types=[1, 2]
@@ -144,8 +145,8 @@ class TestATCalSysTakeData(
             assert_array_equal(self.script.config.grating_types, [1, 2])
             for argname in argnames:
                 arg = getattr(self.script.config, argname)
-                self.assertIs(type(arg), np.ndarray)
-                self.assertEqual(len(arg), 2)
+                assert isinstance(arg, np.ndarray)
+                assert len(arg) == 2
 
     async def test_run(self):
         async with self.make_script():
@@ -160,22 +161,22 @@ class TestATCalSysTakeData(
                 spectrometer_delays=[1.03, 1.04],
             )
             nimages = len(self.script.config.wavelengths)
-            self.assertEqual(nimages, 2)
-            self.assertEqual(self.script.state.state, Script.ScriptState.CONFIGURED)
+            assert nimages == 2
+            assert self.script.state.state == Script.ScriptState.CONFIGURED
 
             await self.run_script()
-            self.assertEqual(self.script.state.state, Script.ScriptState.DONE)
+            assert self.script.state.state == Script.ScriptState.DONE
 
             desired_scan_durations = [
                 config.integration_times[i] + 2 * config.spectrometer_delays[i]
                 for i in range(nimages)
             ]
             assert_array_almost_equal(self.scan_durations, desired_scan_durations)
-            self.assertEqual([imd.type for imd in self.image_data], config.image_types)
+            assert [imd.type for imd in self.image_data] == config.image_types
             assert_array_almost_equal(
                 [imd.duration for imd in self.image_data], config.integration_times
             )
-            self.assertEqual([imd.source for imd in self.image_data], config.lamps)
+            assert [imd.source for imd in self.image_data] == config.lamps
             assert_array_almost_equal(self.wavelengths, config.wavelengths)
             assert_array_almost_equal(self.grating_types, config.grating_types)
             desired_slits = []
@@ -185,11 +186,11 @@ class TestATCalSysTakeData(
                 desired_slits.append(ATMonochromator.Slit.ENTRY)
                 desired_slit_widths.append(config.exit_slit_widths[i])
                 desired_slit_widths.append(config.entrance_slit_widths[i])
-            self.assertEqual([sd.slit for sd in self.slit_data], desired_slits)
+            assert [sd.slit for sd in self.slit_data] == desired_slits
             assert_array_almost_equal(
                 [sd.slitWidth for sd in self.slit_data], desired_slit_widths
             )
-            self.assertEqual(self.grating_types, config.grating_types)
+            assert self.grating_types == config.grating_types
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()

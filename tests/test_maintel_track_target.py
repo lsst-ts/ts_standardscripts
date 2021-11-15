@@ -22,6 +22,8 @@ import logging
 import random
 import unittest
 
+import pytest
+
 from lsst.ts import salobj
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.maintel import TrackTarget
@@ -44,35 +46,35 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
         async with self.make_script():
 
             # Test no default configuration. User must provide something.
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script()
 
             # If RA is given Dec must be given too.
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(ra=10.0)
 
             # If Dec is given ra must be given too.
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(dec=-10.0)
 
             # Invalid RA
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(ra=-0.1, dec=0.0)
 
             # Invalid RA
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(ra=24.1, dec=0.0)
 
             # Invalid Dec
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(ra=1.0, dec=-90.1)
 
             # Invalid Dec
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(ra=1.0, dec=90.1)
 
             # Invalid rot_type
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(ra=1.0, dec=-10.0, rot_type="invalid")
 
             # Script can be configured with target name only
@@ -93,8 +95,8 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
                 target_name="eta Car", ignore=["mtdometrajectory", "mthexapod_1"]
             )
 
-            self.assertFalse(self.script.tcs.check.mtdometrajectory)
-            self.assertFalse(self.script.tcs.check.mthexapod_1)
+            assert not self.script.tcs.check.mtdometrajectory
+            assert not self.script.tcs.check.mthexapod_1
 
     async def test_run_slew_target_name(self):
 
@@ -143,7 +145,7 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             # Check running with ra dec only
             await self.configure_script(ra=1.0, dec=-10.0)
 
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 await self.run_script()
 
             self.script.tcs.slew_icrs.assert_awaited_once()

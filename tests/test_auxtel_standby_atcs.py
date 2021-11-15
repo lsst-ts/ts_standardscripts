@@ -46,7 +46,7 @@ class TestStandbyATCS(
             for component in self.script.group.components_attr:
                 with self.subTest(f"Check {component}", component=component):
                     if getattr(self.script.group.check, component):
-                        self.assertIn(component, self.script.components())
+                        assert component in self.script.components()
 
     async def test_run(self):
         async with self.make_script():
@@ -56,11 +56,11 @@ class TestStandbyATCS(
 
             for comp in self.atcs_mock.components:
                 with self.subTest(f"{comp} summary state", comp=comp):
-                    self.assertEqual(
+                    assert (
                         getattr(
                             self.atcs_mock.controllers, comp
-                        ).evt_summaryState.data.summaryState,
-                        salobj.State.STANDBY,
+                        ).evt_summaryState.data.summaryState
+                        == salobj.State.STANDBY
                     )
 
     async def test_executable(self):

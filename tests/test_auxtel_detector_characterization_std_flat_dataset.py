@@ -112,15 +112,15 @@ class TestATGetStdFlatDataset(
 
             await self.run_script()
 
-            self.assertEqual(self.n_bias, self.script.config.n_bias * 2)
-            self.assertEqual(self.n_dark, self.script.config.n_dark)
-            self.assertEqual(
-                self.n_flat,
-                len(self.script.config.flat_dn_range) * self.script.config.n_flat,
+            assert self.n_bias == self.script.config.n_bias * 2
+            assert self.n_dark == self.script.config.n_dark
+            assert (
+                self.n_flat
+                == len(self.script.config.flat_dn_range) * self.script.config.n_flat
             )
-            self.assertEqual(self.filter, config.filter)
-            self.assertEqual(self.grating, config.grating)
-            self.assertEqual(self.linear_stage, config.linear_stage)
+            assert self.filter == config.filter
+            assert self.grating == config.grating
+            assert self.linear_stage == config.linear_stage
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()

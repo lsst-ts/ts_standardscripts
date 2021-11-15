@@ -106,7 +106,7 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
 
         script_path = pathlib.Path(script_path).resolve()
 
-        self.assertTrue(script_path.is_file())
+        assert script_path.is_file()
 
         async with salobj.Domain() as domain, salobj.Remote(
             domain=domain, name="Script", index=index
@@ -120,7 +120,7 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
                 )
 
                 state = await remote.evt_state.next(flush=False, timeout=MAKE_TIMEOUT)
-                self.assertEqual(state.state, Script.ScriptState.UNCONFIGURED)
+                assert state.state == Script.ScriptState.UNCONFIGURED
             finally:
                 process.terminate()
                 os.environ["PATH"] = initial_path
@@ -152,7 +152,7 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
         if kwargs:
             config_data.config = yaml.safe_dump(kwargs)
         await self.script.do_configure(config_data)
-        self.assertEqual(self.script.state.state, Script.ScriptState.CONFIGURED)
+        assert self.script.state.state == Script.ScriptState.CONFIGURED
         if hasattr(self.script, "cmd_setGroupId"):
             group_id_data = self.script.cmd_setGroupId.DataType(
                 groupId=astropy.time.Time.now().isot
@@ -223,7 +223,7 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
         run_data = self.script.cmd_run.DataType()
         await self.script.do_run(run_data)
         await self.script.done_task
-        self.assertEqual(self.script.state.state, Script.ScriptState.DONE)
+        assert self.script.state.state == Script.ScriptState.DONE
 
     async def wait_for(self, coro, timeout, description, verbose):
         """A wrapper around asyncio.wait_for that prints timing information.

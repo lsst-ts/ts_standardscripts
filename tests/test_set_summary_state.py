@@ -23,6 +23,8 @@ import logging
 import random
 import unittest
 
+import pytest
+
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts import standardscripts
@@ -112,7 +114,7 @@ class TestSetSummaryState(
             ):
                 with self.subTest(bad_config=bad_config):
                     config_data.config = bad_config
-                    with self.assertRaises(salobj.ExpectedError):
+                    with pytest.raises(salobj.ExpectedError):
                         await self.script.do_configure(config_data)
 
     async def test_configure_good(self):
@@ -149,13 +151,14 @@ class TestSetSummaryState(
             await self.configure_script(data=data)
 
             # There are three controllers but two have the same index
-            self.assertEqual(len(self.script.remotes), 2)
+            assert len(self.script.remotes) == 2
 
             for i in range(len(data)):
                 desired_settings = "" if settings_list[i] is None else settings_list[i]
-                self.assertEqual(
-                    self.script.nameind_state_settings[i],
-                    (name_index_list[i], state_enums[i], desired_settings),
+                assert self.script.nameind_state_settings[i] == (
+                    name_index_list[i],
+                    state_enums[i],
+                    desired_settings,
                 )
 
     async def test_do_run(self):
@@ -171,19 +174,19 @@ class TestSetSummaryState(
 
             data = ((name_ind, "standby"), (name_ind, "enabled", settings))
             await self.configure_script(data=data)
-            self.assertEqual(len(self.controllers), 1)
-            self.assertEqual(len(self.script.remotes), 1)
+            assert len(self.controllers) == 1
+            assert len(self.script.remotes) == 1
 
             await self.run_script()
             controller = self.controllers[0]
-            self.assertEqual(controller.n_standby, 1)
-            self.assertEqual(controller.n_start, 1)
-            self.assertEqual(controller.n_enable, 1)
-            self.assertEqual(controller.n_disable, 0)
-            self.assertEqual(controller.n_exitControl, 0)
-            self.assertEqual(len(controller.settings), 1)
-            self.assertEqual(controller.settings[0], settings)
-            self.assertEqual(self.script.state.state, ScriptState.DONE)
+            assert controller.n_standby == 1
+            assert controller.n_start == 1
+            assert controller.n_enable == 1
+            assert controller.n_disable == 0
+            assert controller.n_exitControl == 0
+            assert len(controller.settings) == 1
+            assert controller.settings[0] == settings
+            assert self.script.state.state == ScriptState.DONE
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()

@@ -27,6 +27,7 @@ import logging
 import unittest
 import contextlib
 
+import pytest
 
 from lsst.ts import salobj
 from lsst.ts.observatory.control.utils import RotType
@@ -76,10 +77,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
             configuration_full = await self.configure_script_full()
 
             for key in configuration_full:
-                self.assertEqual(
-                    configuration_full[key],
-                    getattr(self.script.config, key),
-                )
+                assert configuration_full[key] == getattr(self.script.config, key)
 
             required_fields = {
                 "ra",
@@ -95,7 +93,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
             for required_field in required_fields:
                 bad_configuration = copy.deepcopy(configuration_full)
                 bad_configuration.pop(required_field)
-                with self.assertRaises(salobj.ExpectedError):
+                with pytest.raises(salobj.ExpectedError):
                     await self.configure_script(**bad_configuration)
 
     async def test_run_already_in_filter(self):
@@ -178,7 +176,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
 
             configuration_full = await self.configure_script_full(band_filter="z")
 
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 await self.run_script()
 
             self.script.mtcs.slew_icrs.assert_awaited_once_with(
@@ -207,7 +205,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
 
             configuration_full = await self.configure_script_full(band_filter="g")
 
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 await self.run_script()
 
             slew_icrs_expected_calls = [
@@ -237,7 +235,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
 
             configuration_full = await self.configure_script_full(band_filter="g")
 
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 await self.run_script()
 
             slew_icrs_expected_calls = [
@@ -280,7 +278,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
 
             configuration_full = await self.configure_script_full(band_filter="g")
 
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 await self.run_script()
 
             slew_icrs_expected_calls = [

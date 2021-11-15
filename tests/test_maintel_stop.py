@@ -22,6 +22,8 @@ import logging
 import random
 import unittest
 
+import pytest
+
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.maintel import Stop
 
@@ -42,7 +44,7 @@ class TestStartup(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
     async def test_run(self):
         async with self.make_script():
             await self.configure_script()
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 await self.run_script()
 
     async def test_executable(self):

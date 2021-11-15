@@ -21,6 +21,8 @@
 import random
 import unittest
 
+import pytest
+
 from lsst.ts import salobj
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.maintel import TakeImageComCam
@@ -44,9 +46,9 @@ class TestTakeImageComCam(
             exp_times = 1.1
             image_type = "OBJECT"
             await self.configure_script(exp_times=exp_times, image_type=image_type)
-            self.assertEqual(self.script.config.exp_times, [exp_times])
-            self.assertEqual(self.script.config.image_type, image_type)
-            self.assertIsNone(self.script.config.filter)
+            assert self.script.config.exp_times == [exp_times]
+            assert self.script.config.image_type == image_type
+            assert self.script.config.filter is None
 
             exp_times = 1.1
             image_type = "OBJECT"
@@ -58,9 +60,9 @@ class TestTakeImageComCam(
                 nimages=nimages,
                 filter=filter,
             )
-            self.assertEqual(self.script.config.exp_times, [exp_times, exp_times])
-            self.assertEqual(self.script.config.image_type, image_type)
-            self.assertEqual(self.script.config.filter, filter)
+            assert self.script.config.exp_times == [exp_times, exp_times]
+            assert self.script.config.image_type == image_type
+            assert self.script.config.filter == filter
 
             exp_times = 1.1
             nimages = 2
@@ -71,9 +73,9 @@ class TestTakeImageComCam(
                 nimages=nimages,
                 filter=filter,
             )
-            self.assertEqual(self.script.config.exp_times, [exp_times, exp_times])
-            self.assertEqual(self.script.config.image_type, image_type)
-            self.assertEqual(self.script.config.filter, filter)
+            assert self.script.config.exp_times == [exp_times, exp_times]
+            assert self.script.config.image_type == image_type
+            assert self.script.config.filter == filter
 
             exp_times = [0, 2, 0.5]
             filter = 2
@@ -82,13 +84,13 @@ class TestTakeImageComCam(
                 image_type=image_type,
                 filter=filter,
             )
-            self.assertEqual(self.script.config.exp_times, exp_times)
-            self.assertEqual(self.script.config.image_type, image_type)
-            self.assertEqual(self.script.config.filter, filter)
+            assert self.script.config.exp_times == exp_times
+            assert self.script.config.image_type == image_type
+            assert self.script.config.filter == filter
 
             exp_times = [0, 2, 0.5]
             nimages = len(exp_times) + 1
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(
                     exp_times=exp_times, image_type=image_type, nimages=nimages
                 )
@@ -111,7 +113,7 @@ class TestTakeImageComCam(
 
             await self.run_script()
 
-            self.assertEqual(nimages, self.script.camera.take_imgtype.await_count)
+            assert nimages == self.script.camera.take_imgtype.await_count
             self.script.camera.setup_instrument.assert_awaited_once()
             self.script.camera.setup_instrument.assert_awaited_with(filter=1)
 

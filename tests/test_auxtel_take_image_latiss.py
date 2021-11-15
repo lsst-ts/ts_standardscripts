@@ -23,6 +23,8 @@ import logging
 import random
 import unittest
 
+import pytest
+
 from lsst.ts import salobj
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel import TakeImageLatiss
@@ -92,11 +94,11 @@ class TestATCamTakeImage(
             exp_times = 1.1
             image_type = "OBJECT"
             await self.configure_script(exp_times=exp_times, image_type=image_type)
-            self.assertEqual(self.script.config.exp_times, [exp_times])
-            self.assertEqual(self.script.config.image_type, image_type)
-            self.assertIsNone(self.script.config.filter)
-            self.assertIsNone(self.script.config.grating)
-            self.assertIsNone(self.script.config.linear_stage)
+            assert self.script.config.exp_times == [exp_times]
+            assert self.script.config.image_type == image_type
+            assert self.script.config.filter is None
+            assert self.script.config.grating is None
+            assert self.script.config.linear_stage is None
 
             exp_times = 1.1
             image_type = "OBJECT"
@@ -110,10 +112,10 @@ class TestATCamTakeImage(
                 filter=filter,
                 grating=grating,
             )
-            self.assertEqual(self.script.config.exp_times, [exp_times, exp_times])
-            self.assertEqual(self.script.config.image_type, image_type)
-            self.assertEqual(self.script.config.filter, filter)
-            self.assertEqual(self.script.config.grating, grating)
+            assert self.script.config.exp_times == [exp_times, exp_times]
+            assert self.script.config.image_type == image_type
+            assert self.script.config.filter == filter
+            assert self.script.config.grating == grating
 
             exp_times = 1.1
             nimages = 2
@@ -128,11 +130,11 @@ class TestATCamTakeImage(
                 grating=grating,
                 linear_stage=linear_stage,
             )
-            self.assertEqual(self.script.config.exp_times, [exp_times, exp_times])
-            self.assertEqual(self.script.config.image_type, image_type)
-            self.assertEqual(self.script.config.filter, filter)
-            self.assertEqual(self.script.config.grating, grating)
-            self.assertEqual(self.script.config.linear_stage, linear_stage)
+            assert self.script.config.exp_times == [exp_times, exp_times]
+            assert self.script.config.image_type == image_type
+            assert self.script.config.filter == filter
+            assert self.script.config.grating == grating
+            assert self.script.config.linear_stage == linear_stage
 
             exp_times = [0, 2, 0.5]
             filter = 2
@@ -144,15 +146,15 @@ class TestATCamTakeImage(
                 grating=grating,
                 linear_stage=linear_stage,
             )
-            self.assertEqual(self.script.config.exp_times, exp_times)
-            self.assertEqual(self.script.config.image_type, image_type)
-            self.assertEqual(self.script.config.filter, filter)
-            self.assertEqual(self.script.config.grating, grating)
-            self.assertEqual(self.script.config.linear_stage, linear_stage)
+            assert self.script.config.exp_times == exp_times
+            assert self.script.config.image_type == image_type
+            assert self.script.config.filter == filter
+            assert self.script.config.grating == grating
+            assert self.script.config.linear_stage == linear_stage
 
             exp_times = [0, 2, 0.5]
             nimages = len(exp_times) + 1
-            with self.assertRaises(salobj.ExpectedError):
+            with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(
                     exp_times=exp_times, image_type=image_type, nimages=nimages
                 )
@@ -169,14 +171,14 @@ class TestATCamTakeImage(
             )
             await self.run_script()
 
-            self.assertEqual(self.nimages, config.nimages)
-            self.assertEqual(len(self.selected_filter), config.nimages)
-            self.assertEqual(len(self.selected_disperser), config.nimages)
-            self.assertEqual(len(self.selected_linear_stage), config.nimages)
+            assert self.nimages == config.nimages
+            assert len(self.selected_filter) == config.nimages
+            assert len(self.selected_disperser) == config.nimages
+            assert len(self.selected_linear_stage) == config.nimages
 
-            self.assertIn(config.filter, self.selected_filter)
-            self.assertIn(config.grating, self.selected_disperser)
-            self.assertIn(config.linear_stage, self.selected_linear_stage)
+            assert config.filter in self.selected_filter
+            assert config.grating in self.selected_disperser
+            assert config.linear_stage in self.selected_linear_stage
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
