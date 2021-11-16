@@ -6,6 +6,16 @@
 Version History
 ===============
 
+v1.6.9
+------
+
+* Remove AuxTel integration test scripts (some of which were broken).
+  Integration tests now use Jupyter notebooks.
+* Remove unnecessary `__test__ = False` statements.
+  These are only useful for classes whose names begin with "Test".
+* Modernize the unit tests to use bare assert.
+* Clean up the package documentation.
+
 v1.6.8
 ------
 
