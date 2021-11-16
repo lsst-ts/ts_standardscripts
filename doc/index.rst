@@ -13,36 +13,27 @@ Standard Scripts
 .. image:: https://img.shields.io/badge/Jira-ts_standardscripts-green.svg
     :target: https://jira.lsstcorp.org/issues/?jql=labels+%3D+ts_standardscripts
 
-.. _overview:
-
 Overview
 ========
 
-TBD
-.. _user-documentation:
+The standard SAL scripts run by the `script queue <https://ts-scriptqueue.lsst.io>`_.
 
 User Documentation
 ==================
 
-TBD
+To add a script to this package:
 
-.. toctree::
-    user-guide/user-guide
-    :maxdepth: 1
-
-
-.. _development-documentation:
+* Read `SAL Scripts <https://ts-salobj.lsst.io/sal_scripts.html>`_ to learn the basics of writing a SAL script.
+* Add your script implementation to the library: ``python/lsst/ts/standardscripts``.
+* Add a test suite to the ``tests`` directory.
+* Add a bin script to the ``scripts`` directory.
 
 Developer Documentation
 =======================
 
-TBD
-
 .. toctree::
-    developer-guide/developer-guide
+    developer_guide
     :maxdepth: 1
-
-.. version-history:
 
 Version History
 ===============
