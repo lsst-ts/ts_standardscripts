@@ -46,7 +46,7 @@ class TestStandbyComCam(
             for component in self.script.group.components_attr:
                 with self.subTest(f"Check {component}", component=component):
                     if getattr(self.script.group.check, component):
-                        self.assertIn(component, self.script.components())
+                        assert component in self.script.components()
 
     async def test_run(self):
         async with self.make_script():
@@ -65,11 +65,7 @@ class TestStandbyComCam(
                     )
 
                     with self.subTest(f"{comp} summary state", comp=comp):
-                        self.assertEqual(
-                            current_state,
-                            salobj.State.STANDBY,
-                            f"{comp}:  {current_state!r} != {salobj.State.STANDBY!r}",
-                        )
+                        assert current_state == salobj.State.STANDBY
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()

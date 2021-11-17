@@ -46,7 +46,7 @@ class TestEnableMTCS(
             for component in self.script.group.components_attr:
                 with self.subTest(f"Check {component}", component=component):
                     if getattr(self.script.group.check, component):
-                        self.assertIn(component, self.script.components())
+                        assert component in self.script.components()
 
     async def test_run(self):
         async with self.make_script():
@@ -57,11 +57,11 @@ class TestEnableMTCS(
             for comp in self.script.group.components_attr:
                 if getattr(self.script.group.check, comp):
                     with self.subTest(f"{comp} summary state", comp=comp):
-                        self.assertEqual(
+                        assert (
                             getattr(
                                 self.mtcs_mock.controllers, comp
-                            ).evt_summaryState.data.summaryState,
-                            salobj.State.ENABLED,
+                            ).evt_summaryState.data.summaryState
+                            == salobj.State.ENABLED
                         )
 
     async def test_ignore_feature(self):
@@ -84,11 +84,7 @@ class TestEnableMTCS(
                     )
 
                     with self.subTest(f"{comp} summary state", comp=comp):
-                        self.assertEqual(
-                            current_state,
-                            salobj.State.ENABLED,
-                            f"{comp}:  {current_state!r} != {salobj.State.ENABLED!r}",
-                        )
+                        assert current_state == salobj.State.ENABLED
 
             for comp in ignore:
                 current_state = salobj.State(
@@ -98,11 +94,7 @@ class TestEnableMTCS(
                 )
 
                 with self.subTest(f"{comp} summary state", comp=comp):
-                    self.assertEqual(
-                        current_state,
-                        salobj.State.STANDBY,
-                        f"{comp}:  {current_state!r} != {salobj.State.STANDBY!r}",
-                    )
+                    assert current_state == salobj.State.STANDBY
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()

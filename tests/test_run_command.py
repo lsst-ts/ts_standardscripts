@@ -21,6 +21,8 @@
 import random
 import unittest
 
+import pytest
+
 from lsst.ts import salobj
 from lsst.ts import standardscripts
 
@@ -48,7 +50,7 @@ class TestRunCommand(
                 {"cmd": "setScalars"},  # need component name
             ):
                 with self.subTest(bad_config=bad_config):
-                    with self.assertRaises(salobj.ExpectedError):
+                    with pytest.raises(salobj.ExpectedError):
                         await self.configure_script(**bad_config)
 
     async def test_configure_good(self):
@@ -58,33 +60,33 @@ class TestRunCommand(
             # Basic providing only component and command
             await self.configure_script(component="Test:1", cmd="setScalars")
 
-            self.assertEqual(self.script.name, "Test")
-            self.assertEqual(self.script.index, 1)
-            self.assertEqual(self.script.cmd, "setScalars")
-            self.assertIsNone(self.script.event)
-            self.assertFalse(self.script.flush)
+            assert self.script.name == "Test"
+            assert self.script.index == 1
+            assert self.script.cmd == "setScalars"
+            assert self.script.event is None
+            assert not self.script.flush
 
             # Provide event
             await self.configure_script(
                 component="Test:1", cmd="setScalars", event="scalars"
             )
 
-            self.assertEqual(self.script.name, "Test")
-            self.assertEqual(self.script.index, 1)
-            self.assertEqual(self.script.cmd, "setScalars")
-            self.assertEqual(self.script.event, "scalars")
-            self.assertTrue(self.script.flush)
+            assert self.script.name == "Test"
+            assert self.script.index == 1
+            assert self.script.cmd == "setScalars"
+            assert self.script.event == "scalars"
+            assert self.script.flush
 
             # Provide event with flush = False
             await self.configure_script(
                 component="Test:1", cmd="setScalars", event="scalars", flush=False
             )
 
-            self.assertEqual(self.script.name, "Test")
-            self.assertEqual(self.script.index, 1)
-            self.assertEqual(self.script.cmd, "setScalars")
-            self.assertEqual(self.script.event, "scalars")
-            self.assertFalse(self.script.flush)
+            assert self.script.name == "Test"
+            assert self.script.index == 1
+            assert self.script.cmd == "setScalars"
+            assert self.script.event == "scalars"
+            assert not self.script.flush
 
             # Provide parameter for the command
             await self.configure_script(
@@ -94,15 +96,15 @@ class TestRunCommand(
                 parameters={"float0": 1.2345, "string0": "12345"},
             )
 
-            self.assertEqual(self.script.name, "Test")
-            self.assertEqual(self.script.index, 1)
-            self.assertEqual(self.script.cmd, "setScalars")
-            self.assertEqual(self.script.event, "scalars")
-            self.assertTrue(self.script.flush)
-            self.assertAlmostEqual(
-                self.script.remote.cmd_setScalars.data.float0, 1.2345, places=5
+            assert self.script.name == "Test"
+            assert self.script.index == 1
+            assert self.script.cmd == "setScalars"
+            assert self.script.event == "scalars"
+            assert self.script.flush
+            assert self.script.remote.cmd_setScalars.data.float0 == pytest.approx(
+                1.2345, abs=0.00005
             )
-            self.assertEqual(self.script.remote.cmd_setScalars.data.string0, "12345")
+            assert self.script.remote.cmd_setScalars.data.string0 == "12345"
 
     async def test_run(self):
         """Run test with Test component."""
@@ -119,10 +121,10 @@ class TestRunCommand(
 
             await self.run_script()
 
-            self.assertAlmostEqual(
-                self.controller.evt_scalars.data.float0, 1.2345, places=5
+            assert self.controller.evt_scalars.data.float0 == pytest.approx(
+                1.2345, abs=0.00005
             )
-            self.assertEqual(self.controller.evt_scalars.data.string0, "12345")
+            assert self.controller.evt_scalars.data.string0 == "12345"
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()

@@ -25,6 +25,8 @@ import logging
 import unittest
 import contextlib
 
+import pytest
+
 from lsst.ts import salobj
 from lsst.ts.observatory.control.utils import RotType
 from lsst.ts import standardscripts
@@ -61,10 +63,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             configuration_full = await self.configure_script_full()
 
             for key in configuration_full:
-                self.assertEqual(
-                    configuration_full[key],
-                    getattr(self.script.config, key),
-                )
+                assert configuration_full[key] == getattr(self.script.config, key)
 
             required_fields = {
                 "ra",
@@ -81,7 +80,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             for required_field in required_fields:
                 bad_configuration = copy.deepcopy(configuration_full)
                 bad_configuration.pop(required_field)
-                with self.assertRaises(salobj.ExpectedError):
+                with pytest.raises(salobj.ExpectedError):
                     await self.configure_script(**bad_configuration)
 
     async def test_run(self):
@@ -127,7 +126,7 @@ class TestAuxTelTrackTargetAndTakeImage(
 
             configuration_full = await self.configure_script_full()
 
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 await self.run_script()
 
             self.script.atcs.slew_icrs.assert_awaited_once_with(
@@ -155,7 +154,7 @@ class TestAuxTelTrackTargetAndTakeImage(
 
             configuration_full = await self.configure_script_full()
 
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 await self.run_script()
 
             self.script.atcs.slew_icrs.assert_awaited_once_with(
@@ -185,7 +184,7 @@ class TestAuxTelTrackTargetAndTakeImage(
 
             configuration_full = await self.configure_script_full()
 
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 await self.run_script()
 
             self.script.atcs.slew_icrs.assert_awaited_once_with(

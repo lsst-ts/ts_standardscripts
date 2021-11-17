@@ -40,8 +40,6 @@ class StandbyComCam(StandbyGroup):
 
     """
 
-    __test__ = False  # stop pytest from warning that this is not a test
-
     def __init__(self, index):
 
         super().__init__(

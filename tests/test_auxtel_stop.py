@@ -73,7 +73,7 @@ class TestStartup(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
             "ATPtg.stopTracking",
             "ATMCS.stopTracking",
         ):
-            self.assertEqual(self.num_calls[name], 1)
+            assert self.num_calls[name] == 1
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
