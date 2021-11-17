@@ -49,11 +49,11 @@ class TestEnableATTCS(
 
             for comp in self.script.group.components_attr:
                 with self.subTest(f"{comp} summary state", comp=comp):
-                    self.assertEqual(
+                    assert (
                         getattr(
                             self.atcs_mock.controllers, comp
-                        ).evt_summaryState.data.summaryState,
-                        salobj.State.ENABLED,
+                        ).evt_summaryState.data.summaryState
+                        == salobj.State.ENABLED
                     )
 
     async def test_components(self):
@@ -61,7 +61,7 @@ class TestEnableATTCS(
             for component in self.script.group.components_attr:
                 with self.subTest(f"Check {component}", comp=component):
                     if getattr(self.script.group.check, component):
-                        self.assertIn(component, self.script.components())
+                        assert component in self.script.components()
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()

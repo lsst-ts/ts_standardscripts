@@ -43,8 +43,6 @@ class BaseTrackTargetAndTakeImage(salobj.BaseScript):
         script will not work for normal operations. Useful for unit testing.
     """
 
-    __test__ = False  # stop pytest from warning that this is not a test
-
     def __init__(self, index: int, descr: str, add_remotes: bool = True):
         super().__init__(index=index, descr=descr)
 

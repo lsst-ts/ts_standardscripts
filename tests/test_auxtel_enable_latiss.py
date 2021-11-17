@@ -46,7 +46,7 @@ class TestEnableLATISS(
             for component in self.script.group.components_attr:
                 with self.subTest(f"Check {component}", component=component):
                     if getattr(self.script.group.check, component):
-                        self.assertIn(component, self.script.components())
+                        assert component in self.script.components()
 
     async def test_run(self):
         async with self.make_script():
@@ -56,11 +56,11 @@ class TestEnableLATISS(
 
             for comp in self.latiss_mock.components:
                 with self.subTest(f"{comp} summary state", comp=comp):
-                    self.assertEqual(
+                    assert (
                         getattr(
                             self.latiss_mock.controllers, comp
-                        ).evt_summaryState.data.summaryState,
-                        salobj.State.ENABLED,
+                        ).evt_summaryState.data.summaryState
+                        == salobj.State.ENABLED
                     )
 
     async def test_executable(self):

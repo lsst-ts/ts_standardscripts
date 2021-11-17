@@ -1,8 +1,20 @@
-.. _Version_History:
+.. py:currentmodule:: lsst.ts.standardscripts
+
+.. _lsst.ts.standardscripts.version_history:
 
 ===============
 Version History
 ===============
+
+v1.6.9
+------
+
+* Remove AuxTel integration test scripts (some of which were broken).
+  Integration tests now use Jupyter notebooks.
+* Remove unnecessary `__test__ = False` statements.
+  These are only useful for classes whose names begin with "Test".
+* Modernize the unit tests to use bare assert.
+* Clean up the package documentation.
 
 v1.6.8
 ------
@@ -27,9 +39,10 @@ v1.6.5
 ------
 
 * Update `BaseTakeImage`:
- * Add instrument setup time to duration estimation.
- * Only setup instrument configuration in the first image.
- * Update unit tests.
+
+  * Add instrument setup time to duration estimation.
+  * Only setup instrument configuration in the first image.
+  * Update unit tests.
 
 v1.6.4
 ------
