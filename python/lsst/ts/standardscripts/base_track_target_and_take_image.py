@@ -105,6 +105,18 @@ properties:
   band_filter:
     description: Name of the filter for observation.
     type: string
+  reason:
+    description: Optional reason for taking the data.
+    anyOf:
+      - type: string
+      - type: "null"
+    default: null
+  program:
+    description: Optional name of the program this data belongs to, e.g. WFD, DD, etc.
+    anyOf:
+      - type: string
+      - type: "null"
+    default: null
 required:
   - ra
   - dec

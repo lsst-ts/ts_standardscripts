@@ -100,8 +100,11 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
                 description: Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, OBJECT)
                 type: string
                 enum: ["BIAS", "DARK", "FLAT", "OBJECT", "ENGTEST", "SPOT"]
-              group_id:
-                description: A group ID for the set of images.
+              reason:
+                description: Optional reason for taking the data.
+                type: string
+              program:
+                description: Name of the program this data belongs to, e.g. WFD, DD, etc.
                 type: string
               note:
                 description: A descriptive note about the image being taken.
@@ -152,8 +155,10 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
 
     async def run(self):
         nimages = len(self.config.exp_times)
-        group_id = getattr(self.config, "group_id", self.group_id)
         note = getattr(self.config, "note", None)
+        reason = getattr(self.config, "reason", None)
+        program = getattr(self.config, "program", None)
+
         await self.checkpoint("setup instrument")
         await self.camera.setup_instrument(**self.get_instrument_configuration())
 
@@ -166,6 +171,8 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
                 self.config.image_type,
                 exposure,
                 1,
-                group_id=group_id,
+                reason=reason,
+                program=program,
+                group_id=self.group_id,
                 note=note,
             )

@@ -157,7 +157,12 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
         """Take data."""
 
         for exptime in self.config.exp_times:
-            await self.comcam.take_object(exptime=exptime)
+            await self.comcam.take_object(
+                exptime=exptime,
+                group_id=self.group_id,
+                reason=self.config.reason,
+                program=self.config.program,
+            )
 
     async def stop_tracking(self):
         """Execute stop tracking on MTCS."""
