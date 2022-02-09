@@ -6,6 +6,11 @@
 Version History
 ===============
 
+v1.7.0
+------
+
+* Implement new reason/program image feature on auxtel and comcam scripts.
+
 v1.6.9
 ------
 

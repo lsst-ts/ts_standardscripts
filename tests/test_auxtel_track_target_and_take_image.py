@@ -107,7 +107,12 @@ class TestAuxTelTrackTargetAndTakeImage(
                 filter=configuration_full["band_filter"],
             )
             latiss_take_object_calls = [
-                unittest.mock.call(exptime=exptime)
+                unittest.mock.call(
+                    exptime=exptime,
+                    group_id=self.script.group_id,
+                    reason=configuration_full["reason"],
+                    program=configuration_full["program"],
+                )
                 for exptime in configuration_full["exp_times"]
             ]
 
@@ -199,7 +204,12 @@ class TestAuxTelTrackTargetAndTakeImage(
                 filter=configuration_full["band_filter"],
             )
             latiss_take_object_calls = [
-                unittest.mock.call(exptime=configuration_full["exp_times"][0]),
+                unittest.mock.call(
+                    exptime=configuration_full["exp_times"][0],
+                    group_id=self.script.group_id,
+                    reason=configuration_full["reason"],
+                    program=configuration_full["program"],
+                ),
             ]
 
             self.script.latiss.take_object.assert_has_awaits(latiss_take_object_calls)
@@ -237,6 +247,8 @@ class TestAuxTelTrackTargetAndTakeImage(
             exp_times=[2.0, 1.0],
             band_filter="r",
             grating="empty_1",
+            reason="Unit testing",
+            program="UTEST",
         )
 
         await self.configure_script(**configuration_full)
@@ -255,9 +267,17 @@ class TestAuxTelTrackTargetAndTakeImage(
         await asyncio.sleep(1.0)
         raise RuntimeError("Check tracking failed.")
 
-    async def take_object_side_effect(self, exptime):
+    async def take_object_side_effect(
+        self,
+        exptime,
+        group_id,
+        reason,
+        program,
+    ):
 
-        self.log.debug(f"Exptime: {exptime}s")
+        self.log.debug(
+            f"exptime: {exptime}s, group_id: {group_id}, reason: {reason}, program: {program}"
+        )
         await asyncio.sleep(exptime)
 
 

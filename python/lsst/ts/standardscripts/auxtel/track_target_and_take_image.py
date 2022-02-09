@@ -121,7 +121,12 @@ additionalProperties: false
         """Take data."""
 
         for exptime in self.config.exp_times:
-            await self.latiss.take_object(exptime=exptime)
+            await self.latiss.take_object(
+                exptime=exptime,
+                group_id=self.group_id,
+                reason=self.config.reason,
+                program=self.config.program,
+            )
 
     async def stop_tracking(self):
         """Execute stop_tracking command on ATCS."""
