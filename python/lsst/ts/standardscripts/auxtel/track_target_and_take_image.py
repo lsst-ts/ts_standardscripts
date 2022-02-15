@@ -75,6 +75,10 @@ properties:
         items:
           type: string
       - type: string
+  filter_prefix:
+    description: Prefix to add to filter name.
+    type: string
+    default: ""
 required:
   - grating
 additionalProperties: false
@@ -120,7 +124,8 @@ additionalProperties: false
                 target_name=self.config.name,
             ),
             self.latiss.setup_atspec(
-                grating=self.grating[0], filter=self.band_filter[0]
+                grating=self.grating[0],
+                filter=f"{self.config.filter_prefix}{self.band_filter[0]}",
             ),
         )
 
@@ -145,7 +150,7 @@ additionalProperties: false
             await self.latiss.take_object(
                 exptime=exptime,
                 group_id=self.group_id,
-                filter=band_filter,
+                filter=f"{self.config.filter_prefix}{band_filter}",
                 grating=grating,
                 reason=self.config.reason,
                 program=self.config.program,
