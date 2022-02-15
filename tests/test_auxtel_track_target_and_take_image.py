@@ -110,10 +110,58 @@ class TestAuxTelTrackTargetAndTakeImage(
                 unittest.mock.call(
                     exptime=exptime,
                     group_id=self.script.group_id,
+                    grating=configuration_full["grating"],
+                    filter=configuration_full["band_filter"],
                     reason=configuration_full["reason"],
                     program=configuration_full["program"],
                 )
                 for exptime in configuration_full["exp_times"]
+            ]
+
+            self.script.latiss.take_object.assert_has_awaits(latiss_take_object_calls)
+            self.script.atcs.check_tracking.assert_awaited_once()
+
+            self.script.atcs.stop_tracking.assert_not_awaited()
+
+    async def test_run_multiple_filters(self):
+
+        async with self.make_script(), self.setup_mocks():
+
+            self.script.atcs.check_tracking.side_effect = (
+                self.check_tracking_forever_side_effect
+            )
+
+            configuration_full = await self.configure_script_full(
+                band_filter=["g", "r"], grating=["empty_1", "empty_2"]
+            )
+
+            await self.run_script()
+
+            self.script.atcs.slew_icrs.assert_awaited_once_with(
+                ra=configuration_full["ra"],
+                dec=configuration_full["dec"],
+                rot=configuration_full["rot_sky"],
+                rot_type=RotType.Sky,
+                target_name=configuration_full["name"],
+            )
+            self.script.latiss.setup_atspec.assert_awaited_once_with(
+                grating=configuration_full["grating"][0],
+                filter=configuration_full["band_filter"][0],
+            )
+            latiss_take_object_calls = [
+                unittest.mock.call(
+                    exptime=exptime,
+                    group_id=self.script.group_id,
+                    grating=grating,
+                    filter=band_filter,
+                    reason=configuration_full["reason"],
+                    program=configuration_full["program"],
+                )
+                for exptime, grating, band_filter in zip(
+                    configuration_full["exp_times"],
+                    configuration_full["grating"],
+                    configuration_full["band_filter"],
+                )
             ]
 
             self.script.latiss.take_object.assert_has_awaits(latiss_take_object_calls)
@@ -207,6 +255,8 @@ class TestAuxTelTrackTargetAndTakeImage(
                 unittest.mock.call(
                     exptime=configuration_full["exp_times"][0],
                     group_id=self.script.group_id,
+                    grating=configuration_full["grating"],
+                    filter=configuration_full["band_filter"],
                     reason=configuration_full["reason"],
                     program=configuration_full["program"],
                 ),
@@ -234,7 +284,7 @@ class TestAuxTelTrackTargetAndTakeImage(
 
         yield
 
-    async def configure_script_full(self):
+    async def configure_script_full(self, band_filter="r", grating="empty_1"):
         configuration_full = dict(
             targetid=10,
             ra="10:00:00",
@@ -245,8 +295,8 @@ class TestAuxTelTrackTargetAndTakeImage(
             estimated_slew_time=5.0,
             num_exp=2,
             exp_times=[2.0, 1.0],
-            band_filter="r",
-            grating="empty_1",
+            band_filter=band_filter,
+            grating=grating,
             reason="Unit testing",
             program="UTEST",
         )
@@ -270,6 +320,8 @@ class TestAuxTelTrackTargetAndTakeImage(
     async def take_object_side_effect(
         self,
         exptime,
+        filter,
+        grating,
         group_id,
         reason,
         program,
