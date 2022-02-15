@@ -104,7 +104,12 @@ properties:
       minimum: 0
   band_filter:
     description: Name of the filter for observation.
-    type: string
+    anyOf:
+      - type: array
+        minItems: 1
+        items:
+          type: string
+      - type: string
   reason:
     description: Optional reason for taking the data.
     anyOf:
