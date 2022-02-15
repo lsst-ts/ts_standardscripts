@@ -24,6 +24,7 @@ import yaml
 import asyncio
 
 from ..base_track_target_and_take_image import BaseTrackTargetAndTakeImage
+from ..utils import format_as_list
 
 from lsst.ts.observatory.control.utils import RotType
 from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages, LATISS, LATISSUsages
@@ -68,7 +69,12 @@ type: object
 properties:
   grating:
     description: Name of the grating for observation.
-    type: string
+    anyOf:
+      - type: array
+        minItems: 1
+        items:
+          type: string
+      - type: string
 required:
   - grating
 additionalProperties: false
@@ -87,6 +93,19 @@ additionalProperties: false
 
         return schema_dict
 
+    async def configure(self, config):
+        """Configure the script.
+
+        Parameters
+        ----------
+        config : `types.SimpleNamespace`
+            Configuration
+        """
+        await super().configure(config)
+
+        self.grating = format_as_list(config.grating, len(config.exp_times))
+        self.band_filter = format_as_list(config.band_filter, len(config.exp_times))
+
     async def track_target_and_setup_instrument(self):
         """Track target and setup instrument in parallel."""
 
@@ -101,7 +120,7 @@ additionalProperties: false
                 target_name=self.config.name,
             ),
             self.latiss.setup_atspec(
-                grating=self.config.grating, filter=self.config.band_filter
+                grating=self.grating[0], filter=self.band_filter[0]
             ),
         )
 
@@ -120,10 +139,14 @@ additionalProperties: false
     async def _take_data(self):
         """Take data."""
 
-        for exptime in self.config.exp_times:
+        for exptime, grating, band_filter in zip(
+            self.config.exp_times, self.grating, self.band_filter
+        ):
             await self.latiss.take_object(
                 exptime=exptime,
                 group_id=self.group_id,
+                filter=band_filter,
+                grating=grating,
                 reason=self.config.reason,
                 program=self.config.program,
             )
