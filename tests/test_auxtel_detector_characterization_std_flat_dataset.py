@@ -26,12 +26,13 @@ import logging
 import unittest
 
 from lsst.ts import salobj
+from lsst.ts import utils
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.detector_characterization import ATGetStdFlatDataset
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
-index_gen = salobj.index_generator()
+index_gen = utils.index_generator()
 
 logging.basicConfig(level=logging.DEBUG)
 

@@ -35,6 +35,7 @@ import yaml
 
 from lsst.ts.idl.enums import Script
 from lsst.ts import salobj
+from lsst.ts import utils
 
 MAKE_TIMEOUT = 90  # Default time for make_script (seconds)
 
@@ -60,7 +61,7 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
                 # ... test the results of running the script
     """
 
-    _index_iter = salobj.index_generator()
+    _index_iter = utils.index_generator()
 
     @abc.abstractmethod
     async def basic_make_script(self, index):
