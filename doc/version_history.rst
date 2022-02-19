@@ -13,6 +13,7 @@ v1.8.0
 * In `auxtel.TrackTargetAndTakeImage`, allow grating to be a list or a string, implement handling of list of grating/filters.
 * Update unit tests for `auxtel.TrackTargetAndTakeImage` to account for handling lists of filters/grating.
 * In `auxtel.TrackTargetAndTakeImage` add prefix for filter name.
+* Update to use ts_utils
 
 v1.7.0
 ------
