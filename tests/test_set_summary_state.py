@@ -42,37 +42,38 @@ class TrivialController(salobj.Controller):
         self.n_exitControl = 0
         self.n_standby = 0
         self.n_start = 0
-        self.settings = []
+        self.overrides = []
         self.cmd_disable.callback = self.do_disable
         self.cmd_enable.callback = self.do_enable
         self.cmd_exitControl.callback = self.do_exitControl
         self.cmd_standby.callback = self.do_standby
         self.cmd_start.callback = self.do_start
-        self.put_state(initial_state)
+        self.evt_summaryState.set(summaryState=initial_state)
 
-    def put_state(self, state):
-        self.evt_summaryState.set_put(summaryState=state, force_output=True)
+    async def start(self):
+        await self.evt_summaryState.write()
+        await super().start()
 
-    def do_disable(self, data):
+    async def do_disable(self, data):
         self.n_disable += 1
-        self.put_state(salobj.State.DISABLED)
+        await self.evt_summaryState.set_write(summaryState=salobj.State.DISABLED)
 
-    def do_enable(self, data):
+    async def do_enable(self, data):
         self.n_enable += 1
-        self.put_state(salobj.State.ENABLED)
+        await self.evt_summaryState.set_write(summaryState=salobj.State.ENABLED)
 
-    def do_exitControl(self, data):
+    async def do_exitControl(self, data):
         self.n_exitControl += 1
-        self.put_state(salobj.State.OFFLINE)
+        await self.evt_summaryState.set_write(summaryState=salobj.State.OFFLINE)
 
-    def do_standby(self, data):
+    async def do_standby(self, data):
         self.n_standby += 1
-        self.put_state(salobj.State.STANDBY)
+        await self.evt_summaryState.set_write(summaryState=salobj.State.STANDBY)
 
-    def do_start(self, data):
+    async def do_start(self, data):
         self.n_start += 1
-        self.settings.append(data.settingsToApply)
-        self.put_state(salobj.State.DISABLED)
+        self.overrides.append(data.configurationOverride)
+        await self.evt_summaryState.set_write(summaryState=salobj.State.DISABLED)
 
 
 class TestSetSummaryState(
@@ -133,19 +134,19 @@ class TestSetSummaryState(
                 salobj.State.STANDBY,
             )
             state_names = [elt.name for elt in state_enums]
-            settings_list = ("foo", None, "")
+            override_list = ("foo", None, "")
 
             data = []
             name_index_list = []
-            for controller, state, settings in zip(
-                self.controllers, state_names, settings_list
+            for controller, state, override in zip(
+                self.controllers, state_names, override_list
             ):
                 index = controller.salinfo.index
                 name_index = f"Test:{index}"
-                if settings is None:
+                if override is None:
                     data.append((name_index, state))
                 else:
-                    data.append((name_index, state, settings))
+                    data.append((name_index, state, override))
                 name_index_list.append(("Test", index))
 
             await self.configure_script(data=data)
@@ -154,15 +155,15 @@ class TestSetSummaryState(
             assert len(self.script.remotes) == 2
 
             for i in range(len(data)):
-                desired_settings = "" if settings_list[i] is None else settings_list[i]
-                assert self.script.nameind_state_settings[i] == (
+                desired_override = "" if override_list[i] is None else override_list[i]
+                assert self.script.nameind_state_override[i] == (
                     name_index_list[i],
                     state_enums[i],
-                    desired_settings,
+                    desired_override,
                 )
 
     async def test_do_run(self):
-        """Set one remote to two states, including settings.
+        """Set one remote to two states, including overrides.
 
         Transition FAULT -standby> STANDBY -start> DISABLED -enable> ENABLED
         """
@@ -170,9 +171,9 @@ class TestSetSummaryState(
             await self.add_controller(initial_state=salobj.State.FAULT)
             test_index = self.controllers[0].salinfo.index
             name_ind = f"Test:{test_index}"
-            settings = "foo"
+            override = "foo"
 
-            data = ((name_ind, "standby"), (name_ind, "enabled", settings))
+            data = ((name_ind, "standby"), (name_ind, "enabled", override))
             await self.configure_script(data=data)
             assert len(self.controllers) == 1
             assert len(self.script.remotes) == 1
@@ -184,8 +185,8 @@ class TestSetSummaryState(
             assert controller.n_enable == 1
             assert controller.n_disable == 0
             assert controller.n_exitControl == 0
-            assert len(controller.settings) == 1
-            assert controller.settings[0] == settings
+            assert len(controller.overrides) == 1
+            assert controller.overrides[0] == override
             assert self.script.state.state == ScriptState.DONE
 
     async def test_executable(self):

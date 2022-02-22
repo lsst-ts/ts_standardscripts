@@ -132,9 +132,9 @@ class EnableGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
                     self.log.debug(f"Ignoring component {comp}.")
                     setattr(self.group.check, comp, False)
 
-        settings = (
+        overrides = (
             dict([(comp, getattr(self.config, comp, "")) for comp in self.components()])
             if self.config is not None
             else None
         )
-        await self.group.enable(settings=settings)
+        await self.group.enable(overrides=overrides)
