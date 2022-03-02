@@ -42,7 +42,7 @@ class SetSummaryState(salobj.BaseScript):
       Thus if you want to configure a CSC you should specify it twice:
 
       * First with state "STANDBY".
-      * Next with state "DISABLED" or "ENABLED" and the desired settings.
+      * Next with state "DISABLED" or "ENABLED" and the desired override.
 
     * Dynamically loads IDL files as needed.
     """
@@ -68,9 +68,9 @@ class SetSummaryState(salobj.BaseScript):
             type: object
             properties:
               data:
-                description: List of (CSC_name[:index], state_name [, settings_to_apply]);
+                description: List of (CSC_name[:index], state_name [, override_to_apply]);
                     the default index is 0;
-                    the default settings_to_apply is ""
+                    the default override_to_apply is ""
                 type: array
                 minItems: 1
                 items:
@@ -88,7 +88,7 @@ class SetSummaryState(salobj.BaseScript):
         """Configure the script.
 
         Specify the CSCs to command, and for each CSC,
-        specify the desired summary state optionally the settings.
+        specify the desired summary state optionally the override.
 
         Parameters
         ----------
@@ -103,20 +103,21 @@ class SetSummaryState(salobj.BaseScript):
                   or specify ``:0``, as you prefer.
                 * Name of desired summary state, case blind, e.g. "enabled"
                   or "STANDBY". The "fault" state is not supported.
-                * The value of ``settingsToApply`` in the ``start`` command
-                  for each CSC. Ignored unless the ``start`` command is issued
-                  (i.e. the CSC transitions from "STANDBY" to "DISABLED").
-                  If omitted then "" is used.
+                * The value of ``configurationOverride`` in the ``start``
+                  command for each CSC. Ignored unless the ``start`` command
+                  is issued (i.e. the CSC transitions from "STANDBY" to
+                  "DISABLED"). If omitted then "" is used.
 
         Notes
         -----
         Saves the results as two attributes:
 
-        * ``nameind_state_settings``: a list, each element of which is a tuple:
+        * ``nameind_state_override``: a list, each element of which is a tuple
+          with three elements:
 
             * (csc_name, index)
             * desired summary state, as an `lsst.ts.salobj.State`
-            * settings string, or "" if none specified
+            * override, or "" if none specified
 
         * remotes: a dict of (csc_name, index): remote,
           an `lsst.ts.salobj.Remote`
@@ -127,7 +128,7 @@ class SetSummaryState(salobj.BaseScript):
         self.log.info("Configure started")
 
         # parse the data
-        nameind_state_settings = []
+        nameind_state_override = []
         for elt in config.data:
             name, index = salobj.name_to_name_index(elt[0])
             state_name = elt[1]
@@ -140,16 +141,16 @@ class SetSummaryState(salobj.BaseScript):
             if state == salobj.State.FAULT:
                 raise ValueError(f"{elt} state cannot be FAULT")
             if len(elt) == 3:
-                settings = elt[2]
-                if not isinstance(settings, str):
-                    raise ValueError(f"{elt} settings {settings!r} is not a string")
+                override = elt[2]
+                if not isinstance(override, str):
+                    raise ValueError(f"{elt} override {override!r} is not a string")
             else:
-                settings = ""
-            nameind_state_settings.append(((name, index), state, settings))
+                override = ""
+            nameind_state_override.append(((name, index), state, override))
 
         # construct remotes
         remotes = dict()
-        for elt in nameind_state_settings:
+        for elt in nameind_state_override:
             name_index = elt[0]
             name, index = name_index
             self.log.debug(f"Create remote {name}:{index}")
@@ -159,7 +160,7 @@ class SetSummaryState(salobj.BaseScript):
                 )
                 remotes[name_index] = remote
 
-        self.nameind_state_settings = nameind_state_settings
+        self.nameind_state_override = nameind_state_override
         self.remotes = remotes
 
     def set_metadata(self, metadata):
@@ -171,7 +172,7 @@ class SetSummaryState(salobj.BaseScript):
         """
         # a crude estimate; state transitions are typically quick
         # but we don't know how many of them there will be
-        metadata.duration = len(self.nameind_state_settings) * 2
+        metadata.duration = len(self.nameind_state_override) * 2
 
     async def run(self):
         """Run script."""
@@ -184,10 +185,10 @@ class SetSummaryState(salobj.BaseScript):
             self.log.info(f"Waiting for {len(tasks)} remotes to be ready")
             await asyncio.gather(*tasks)
 
-        for name_index, state, settings in self.nameind_state_settings:
+        for name_index, state, override in self.nameind_state_override:
             name, index = name_index
             await self.checkpoint(f"set {name}:{index}")
             remote = self.remotes[(name, index)]
             await salobj.set_summary_state(
-                remote, state, settings, timeout=self.cmd_timeout
+                remote=remote, state=state, override=override, timeout=self.cmd_timeout
             )

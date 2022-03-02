@@ -39,7 +39,9 @@ class TestRunCommand(
         return [self.script, self.controller]
 
     async def set_scalars_callback(self, data):
-        self.controller.evt_scalars.set_put(float0=data.float0, string0=data.string0)
+        await self.controller.evt_scalars.set_write(
+            float0=data.float0, string0=data.string0
+        )
 
     async def test_configure_errors(self):
         """Test error handling in the do_configure method."""

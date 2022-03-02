@@ -6,6 +6,21 @@
 Version History
 ===============
 
+v1.9.0
+------
+
+* Update for ts_salobj v7, which is required.
+  This also requires ts_xml 11.
+
+v1.8.0
+------
+
+* In `BaseTrackTargetAndTakeImage` allow filter to be a list or a single string.
+* In `auxtel.TrackTargetAndTakeImage`, allow grating to be a list or a string, implement handling of list of grating/filters.
+* Update unit tests for `auxtel.TrackTargetAndTakeImage` to account for handling lists of filters/grating.
+* In `auxtel.TrackTargetAndTakeImage` add prefix for filter name.
+* Update to use ts_utils
+
 v1.7.0
 ------
 

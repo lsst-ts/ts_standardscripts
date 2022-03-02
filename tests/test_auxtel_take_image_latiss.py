@@ -73,9 +73,9 @@ class TestATCamTakeImage(
 
     async def finish_take_images(self):
         await asyncio.sleep(0.5)
-        self.atcam.evt_endReadout.set_put(imageName="AT_image_2020_001")
+        await self.atcam.evt_endReadout.set_write(imageName="AT_image_2020_001")
         await asyncio.sleep(0.5)
-        self.atheaderservice.evt_largeFileObjectAvailable.put()
+        await self.atheaderservice.evt_largeFileObjectAvailable.write()
 
     async def cmd_changeFilter_callback(self, data):
         self.selected_filter.append(data.filter)

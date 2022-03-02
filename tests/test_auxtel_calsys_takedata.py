@@ -77,7 +77,7 @@ class TestATCalSysTakeData(
         """Callback for Electrometer startScanDt command."""
         self.scan_durations.append(data.scanDuration)
         await asyncio.sleep(1.0)
-        self.electrometer.evt_detailedState.put()
+        await self.electrometer.evt_detailedState.write()
         await asyncio.sleep(data.scanDuration)
 
     async def captureSpectImage(self, data):

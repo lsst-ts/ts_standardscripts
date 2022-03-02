@@ -26,12 +26,13 @@ import logging
 import unittest
 
 from lsst.ts import salobj
+from lsst.ts import utils
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.detector_characterization import ATGetStdFlatDataset
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
-index_gen = salobj.index_generator()
+index_gen = utils.index_generator()
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -82,9 +83,9 @@ class TestATGetStdFlatDataset(
         date_id = astropy.time.Time.now().tai.isot.split("T")[0].replace("-", "")
         image_name = f"test_latiss_{date_id}_{next(index_gen)}"
 
-        self.at_cam.evt_endReadout.set_put(imageName=image_name)
+        await self.at_cam.evt_endReadout.set_write(imageName=image_name)
 
-        self.at_headerservice.evt_largeFileObjectAvailable.put()
+        await self.at_headerservice.evt_largeFileObjectAvailable.write()
 
     async def cmd_change_filter_callback(self, data):
         self.filter = data.filter
