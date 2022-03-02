@@ -147,7 +147,7 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
             based on the input arguments; it has nothing to do
             with the script.
         """
-        self.script.set_state(Script.ScriptState.UNCONFIGURED)
+        await self.script.set_state(Script.ScriptState.UNCONFIGURED)
         config = types.SimpleNamespace(**kwargs)
         config_data = self.script.cmd_configure.DataType()
         if kwargs:

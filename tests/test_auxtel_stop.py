@@ -50,7 +50,9 @@ class TestStartup(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
             name, index = salobj.name_to_name_index(name_index)
             controller = salobj.Controller(name=name, index=index)
             self.controllers[name_index] = controller
-            controller.evt_summaryState.set_put(summaryState=salobj.State.ENABLED)
+            await controller.evt_summaryState.set_write(
+                summaryState=salobj.State.ENABLED
+            )
             for command_name in controller.salinfo.command_names:
                 name = f"{name_index}.{command_name}"
                 self.num_calls[name] = 0
