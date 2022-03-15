@@ -210,13 +210,24 @@ class TestAuxTelTrackTargetAndTakeImage(
             with pytest.raises(AssertionError):
                 await self.run_script()
 
-            self.script.atcs.slew_icrs.assert_awaited_once_with(
-                ra=configuration_full["ra"],
-                dec=configuration_full["dec"],
-                rot=configuration_full["rot_sky"],
-                rot_type=RotType.Sky,
-                target_name=configuration_full["name"],
-            )
+            slew_icrs_expected_calls = [
+                unittest.mock.call(
+                    ra=configuration_full["ra"],
+                    dec=configuration_full["dec"],
+                    rot=configuration_full["rot_sky"],
+                    rot_type=RotType.Sky,
+                    target_name=configuration_full["name"],
+                ),
+                unittest.mock.call(
+                    ra=configuration_full["ra"],
+                    dec=configuration_full["dec"],
+                    rot=180.0 + configuration_full["rot_sky"],
+                    rot_type=RotType.Sky,
+                    target_name=configuration_full["name"],
+                ),
+            ]
+
+            self.script.atcs.slew_icrs.assert_has_awaits(slew_icrs_expected_calls)
             self.script.latiss.setup_atspec.assert_awaited_once_with(
                 grating=configuration_full["grating"],
                 filter=configuration_full["band_filter"],
