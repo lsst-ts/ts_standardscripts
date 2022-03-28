@@ -64,4 +64,4 @@ class OfflineComCam(OfflineGroup):
         components : `list` of `str`.
 
         """
-        return {"cccamera", "ccheaderservice", "ccarchiver"}
+        return {"cccamera", "ccheaderservice", "ccoods"}

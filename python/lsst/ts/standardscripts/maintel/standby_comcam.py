@@ -64,4 +64,4 @@ class StandbyComCam(StandbyGroup):
         components : `list` of `str`.
 
         """
-        return set(["cccamera", "ccheaderservice", "ccarchiver"])
+        return set(["cccamera", "ccheaderservice", "ccoods"])

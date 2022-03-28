@@ -36,7 +36,7 @@ class EnableComCam(EnableGroup):
 
         - CCCamera
         - CCHeaderService: not configurable
-        - CCArchiver
+        - CCOODS
 
     Parameters
     ----------
@@ -74,7 +74,7 @@ class EnableComCam(EnableGroup):
         components : `list` of `str`.
 
         """
-        return set(["cccamera", "ccheaderservice", "ccarchiver"])
+        return set(["cccamera", "ccheaderservice", "ccoods"])
 
     @classmethod
     def get_schema(cls):
@@ -91,8 +91,8 @@ class EnableComCam(EnableGroup):
                       - type: string
                       - type: "null"
                     default: null
-                ccarchiver:
-                    description: Configuration for the CCArchiver component.
+                ccoods:
+                    description: Configuration for the CCOODS component.
                     anyOf:
                       - type: string
                       - type: "null"
@@ -100,7 +100,7 @@ class EnableComCam(EnableGroup):
                 ignore:
                     description: >-
                         CSCs from the group to ignore. Name must match those in
-                        self.group.components, e.g.; ccarchiver.
+                        self.group.components, e.g.; ccoods.
                         Valid options are: {cls.components()}.
                     type: array
                     items:

@@ -37,7 +37,7 @@ class EnableLATISS(EnableGroup):
         - ATCamera
         - ATSpectrograph
         - ATHeaderService: not configurable
-        - ATArchiver
+        - ATOODS
 
     Parameters
     ----------
@@ -76,7 +76,7 @@ class EnableLATISS(EnableGroup):
         components : `list` of `str`.
 
         """
-        return set(["atcamera", "atspectrograph", "atheaderservice", "atarchiver"])
+        return set(["atcamera", "atspectrograph", "atheaderservice", "atoods"])
 
     @classmethod
     def get_schema(cls):
@@ -99,8 +99,8 @@ class EnableLATISS(EnableGroup):
                       - type: string
                       - type: "null"
                     default: null
-                atarchiver:
-                    description: Configuration for the ATArchiver component.
+                atoods:
+                    description: Configuration for the ATOODS component.
                     anyOf:
                       - type: string
                       - type: "null"
@@ -108,7 +108,7 @@ class EnableLATISS(EnableGroup):
                 ignore:
                     description: >-
                         CSCs from the group to ignore. Name must match those in
-                        self.group.components, e.g.; atarchiver.
+                        self.group.components, e.g.; atoods.
                         Valid options are: {cls.components()}.
                     type: array
                     items:
