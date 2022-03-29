@@ -64,4 +64,4 @@ class OfflineLATISS(OfflineGroup):
         components : `list` of `str`.
 
         """
-        return {"atcamera", "atspectrograph", "atheaderservice", "atarchiver"}
+        return {"atcamera", "atspectrograph", "atheaderservice", "atoods"}
