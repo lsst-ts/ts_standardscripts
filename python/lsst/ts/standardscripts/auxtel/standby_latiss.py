@@ -64,4 +64,4 @@ class StandbyLATISS(StandbyGroup):
         components : `list` of `str`.
 
         """
-        return set(["atcamera", "atspectrograph", "atheaderservice", "atarchiver"])
+        return set(["atcamera", "atspectrograph", "atheaderservice", "atoods"])
