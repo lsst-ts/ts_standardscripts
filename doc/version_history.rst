@@ -6,6 +6,11 @@
 Version History
 ===============
 
+v1.10.1
+-------
+
+* Make auxtel/prepare_for_onsky.py script not gather ATCS config and just assert enabled.
+
 v1.10.0
 -------
 
