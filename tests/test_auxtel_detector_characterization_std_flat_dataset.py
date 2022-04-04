@@ -72,7 +72,7 @@ class TestATGetStdFlatDataset(
                 one_exp_time += self.shutter_time
             await asyncio.sleep(one_exp_time)
 
-            self.end_readout_tasks.append(asyncio.create_task(self.end_readout(data)))
+            self.end_readout_tasks.append(asyncio.create_task(self.end_readout()))
 
             if "bias" in parsed_data["imageType"].lower():
                 self.n_bias += 1
