@@ -20,8 +20,6 @@
 
 __all__ = ["PrepareForOnSky"]
 
-import yaml
-
 from lsst.ts import salobj
 from lsst.ts.observatory.control.auxtel import (
     ATCS,
@@ -59,77 +57,21 @@ class PrepareForOnSky(salobj.BaseScript):
 
     @classmethod
     def get_schema(cls):
-        schema_yaml = """
-            $schema: http://json-schema.org/draft-07/schema#
-            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/prepare_for_onsky.yaml
-            title: PrepareForOnSky v1
-            description: Configuration for PrepareForOnSky
-            type: object
-            properties:
-                atmcs:
-                    description: Configuration for the ATMCS component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
-                atptg:
-                    description: Configuration for the ATPtg component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
-                ataos:
-                    description: Configuration for the ATAOS component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
-                atpneumatics:
-                    description: Configuration for the ATPneumatics component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
-                athexapod:
-                    description: Configuration for the ATHexapod component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
-                atdome:
-                    description: Configuration for the ATHexapod component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
-                atdometrajectory:
-                    description: Configuration for the ATHexapod component.
-                    anyOf:
-                      - type: string
-                      - type: "null"
-                    default: null
-            additionalProperties: false
-        """
-        return yaml.safe_load(schema_yaml)
+        # This script does not require any configuration
+        return None
 
     async def configure(self, config):
-        self.config = config
+        # This script does not require any configuration
+        pass
 
     def set_metadata(self, metadata):
         metadata.duration = 600.0
 
     async def run(self):
-        settings = (
-            dict(
-                [
-                    (comp, getattr(self.config, comp))
-                    for comp in self.attcs.components_attr
-                ]
-            )
-            if self.config is not None
-            else None
+        await self.attcs.assert_all_enabled(
+            message="All ATCS components need to be enabled to prepare for sky observations."
         )
         await self.latiss.assert_all_enabled(
             message="All LATISS components need to be enabled to prepare for sky observations."
         )
-        await self.attcs.prepare_for_onsky(settings=settings)
+        await self.attcs.prepare_for_onsky()
