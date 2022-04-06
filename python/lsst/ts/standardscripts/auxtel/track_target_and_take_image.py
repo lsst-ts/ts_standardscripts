@@ -160,17 +160,39 @@ additionalProperties: false
     async def _take_data(self):
         """Take data."""
 
-        for exptime, grating, band_filter in zip(
-            self.config.exp_times, self.grating, self.band_filter
+        if all(
+            [
+                len(set(item))
+                for item in (self.config.exp_times, self.grating, self.band_filter)
+            ]
         ):
+            self.log.debug(
+                f"Same instrument setup for all images. using n={len(self.config.exp_times)}."
+            )
             await self.latiss.take_object(
-                exptime=exptime,
+                exptime=self.config.exp_times[0],
+                n=len(self.config.exp_times),
                 group_id=self.group_id,
-                filter=f"{self.config.filter_prefix}{band_filter}",
-                grating=grating,
                 reason=self.config.reason,
                 program=self.config.program,
             )
+
+        else:
+            self.log.debug(
+                "Different instrument setup for images. Taking one at a time."
+            )
+
+            for exptime, grating, band_filter in zip(
+                self.config.exp_times, self.grating, self.band_filter
+            ):
+                await self.latiss.take_object(
+                    exptime=exptime,
+                    group_id=self.group_id,
+                    filter=f"{self.config.filter_prefix}{band_filter}",
+                    grating=grating,
+                    reason=self.config.reason,
+                    program=self.config.program,
+                )
 
     async def stop_tracking(self):
         """Execute stop_tracking command on ATCS."""
