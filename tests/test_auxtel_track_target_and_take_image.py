@@ -109,6 +109,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             latiss_take_object_calls = [
                 unittest.mock.call(
                     exptime=exptime,
+                    n=1,
                     group_id=self.script.group_id,
                     grating=configuration_full["grating"],
                     filter=configuration_full["band_filter"],
@@ -116,6 +117,44 @@ class TestAuxTelTrackTargetAndTakeImage(
                     program=configuration_full["program"],
                 )
                 for exptime in configuration_full["exp_times"]
+            ]
+
+            self.script.latiss.take_object.assert_has_awaits(latiss_take_object_calls)
+            self.script.atcs.check_tracking.assert_awaited_once()
+
+            self.script.atcs.stop_tracking.assert_not_awaited()
+
+    async def test_run_standard_visit(self):
+
+        async with self.make_script(), self.setup_mocks():
+
+            self.script.atcs.check_tracking.side_effect = (
+                self.check_tracking_forever_side_effect
+            )
+
+            configuration_std_visit = await self.configure_script_standard_visit()
+
+            await self.run_script()
+
+            self.script.atcs.slew_icrs.assert_awaited_once_with(
+                ra=configuration_std_visit["ra"],
+                dec=configuration_std_visit["dec"],
+                rot=configuration_std_visit["rot_sky"],
+                rot_type=RotType.Sky,
+                target_name=configuration_std_visit["name"],
+            )
+            self.script.latiss.setup_atspec.assert_awaited_once_with(
+                grating=configuration_std_visit["grating"],
+                filter=configuration_std_visit["band_filter"],
+            )
+            latiss_take_object_calls = [
+                unittest.mock.call(
+                    exptime=configuration_std_visit["exp_times"][0],
+                    n=configuration_std_visit["num_exp"],
+                    group_id=self.script.group_id,
+                    reason=configuration_std_visit["reason"],
+                    program=configuration_std_visit["program"],
+                )
             ]
 
             self.script.latiss.take_object.assert_has_awaits(latiss_take_object_calls)
@@ -151,6 +190,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             latiss_take_object_calls = [
                 unittest.mock.call(
                     exptime=exptime,
+                    n=1,
                     group_id=self.script.group_id,
                     grating=grating,
                     filter=band_filter,
@@ -265,6 +305,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             latiss_take_object_calls = [
                 unittest.mock.call(
                     exptime=configuration_full["exp_times"][0],
+                    n=1,
                     group_id=self.script.group_id,
                     grating=configuration_full["grating"],
                     filter=configuration_full["band_filter"],
@@ -316,6 +357,27 @@ class TestAuxTelTrackTargetAndTakeImage(
 
         return configuration_full
 
+    async def configure_script_standard_visit(self, band_filter="r", grating="empty_1"):
+        configuration_std_visit = dict(
+            targetid=10,
+            ra="10:00:00",
+            dec="-10:00:00",
+            rot_sky=0.0,
+            name="unit_test_target",
+            obs_time=7.0,
+            estimated_slew_time=5.0,
+            num_exp=2,
+            exp_times=[1.0, 1.0],
+            band_filter=band_filter,
+            grating=grating,
+            reason="Unit testing",
+            program="UTEST",
+        )
+
+        await self.configure_script(**configuration_std_visit)
+
+        return configuration_std_visit
+
     async def check_tracking_forever_side_effect(self):
         """Emulates a check tracking routine."""
         self.log.debug("Wait for ever.")
@@ -331,17 +393,20 @@ class TestAuxTelTrackTargetAndTakeImage(
     async def take_object_side_effect(
         self,
         exptime,
-        filter,
-        grating,
-        group_id,
-        reason,
-        program,
+        n=1,
+        filter=None,
+        grating=None,
+        group_id=None,
+        reason=None,
+        program=None,
     ):
 
         self.log.debug(
-            f"exptime: {exptime}s, group_id: {group_id}, reason: {reason}, program: {program}"
+            f"exptime: {exptime}s, n: {n}, filter: {filter}, "
+            f"grating: {grating}, group_id: {group_id}, "
+            f"reason: {reason}, program: {program}"
         )
-        await asyncio.sleep(exptime)
+        await asyncio.sleep(exptime * n)
 
 
 if __name__ == "__main__":
