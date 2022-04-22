@@ -6,6 +6,27 @@
 Version History
 ===============
 
+v1.11.0
+-------
+
+* In ``auxtel/track_target_and_take_image`` implement taking data with n>1.
+* Fix ``tests/test_auxtel_detector_characterization_std_flat_dataset.py`` to take into account snaps.
+* In ``auxtel/track_target_and_take_image`` script, implement a rotator flipping routine.
+  First it will try to slew the telescope with the provided rotation angle, if that doesn't work, flip 180 degrees and try again.
+* Add unit tests for the load snapshot scheduler scripts.
+* Add unit tests for the stop scheduler scripts.
+* Add unit tests for the resume scheduler scripts.
+* Add unit tests for the standby scheduler scripts.
+* Add unit tests for the enable scheduler scripts.
+* Add executables for the main telescope scheduler operational scripts.
+* Add executables for the auxiliary telescope scheduler operational scripts.
+* Add scheduler operations scripts for the Main Telescope.
+* Add scheduler operations scripts for the Auxiliary Telescope.
+* Add test utilities for the scheduler operational scripts.
+* Add scheduler submodule with base scripts for operating the Scheduler.
+  These are generic implementations that can be used for both the AT and MT schedulers.
+* Update setup.cfg to specify async_mode for pytest.
+    
 v1.10.1
 -------
 
