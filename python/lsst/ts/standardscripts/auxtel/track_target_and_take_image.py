@@ -160,18 +160,60 @@ additionalProperties: false
     async def _take_data(self):
         """Take data."""
 
-        for exptime, grating, band_filter in zip(
-            self.config.exp_times, self.grating, self.band_filter
-        ):
+        if self.is_standard_visit():
+            self.log.debug(
+                f"Same instrument setup for all images. using n={len(self.config.exp_times)}."
+            )
+            # Note that we are not passing the filter and grating information
+            # take_object, this is handled in track_target_and_setup_instrument
+            # concurrently to slewing to the target. Since all exposures have
+            # the same configuration, we don't need to set them here again.
             await self.latiss.take_object(
-                exptime=exptime,
+                exptime=self.config.exp_times[0],
+                n=len(self.config.exp_times),
                 group_id=self.group_id,
-                filter=f"{self.config.filter_prefix}{band_filter}",
-                grating=grating,
                 reason=self.config.reason,
                 program=self.config.program,
             )
 
+        else:
+            self.log.debug(
+                "Different instrument setup for images. Taking one at a time."
+            )
+
+            for exptime, grating, band_filter in zip(
+                self.config.exp_times, self.grating, self.band_filter
+            ):
+                await self.latiss.take_object(
+                    exptime=exptime,
+                    n=1,
+                    group_id=self.group_id,
+                    filter=f"{self.config.filter_prefix}{band_filter}",
+                    grating=grating,
+                    reason=self.config.reason,
+                    program=self.config.program,
+                )
+
     async def stop_tracking(self):
         """Execute stop_tracking command on ATCS."""
         await self.atcs.stop_tracking()
+
+    def is_standard_visit(self) -> bool:
+        """Determine if script configuration specify a standard visit or a
+        set of observations with different configurations.
+
+        A standard visit consists of a sequence of images with the
+        same instrument configuration and exposure time.
+
+        Returns
+        -------
+        bool
+            True if instrument configuration and exposure time is the same for
+            all exposures.
+        """
+        return all(
+            [
+                len(set(item)) == 1
+                for item in (self.config.exp_times, self.grating, self.band_filter)
+            ]
+        )
