@@ -115,19 +115,35 @@ additionalProperties: false
 
         self.tracking_started = True
 
-        await asyncio.gather(
-            self.atcs.slew_icrs(
+        setup_atspec_task = asyncio.create_task(
+            self.latiss.setup_atspec(
+                grating=self.grating[0],
+                filter=f"{self.config.filter_prefix}{self.band_filter[0]}",
+            )
+        )
+
+        try:
+            await self.atcs.slew_icrs(
                 ra=self.config.ra,
                 dec=self.config.dec,
                 rot=self.config.rot_sky,
                 rot_type=RotType.Sky,
                 target_name=self.config.name,
-            ),
-            self.latiss.setup_atspec(
-                grating=self.grating[0],
-                filter=f"{self.config.filter_prefix}{self.band_filter[0]}",
-            ),
-        )
+            )
+        except Exception:
+            self.log.exception(
+                "Failed to slew with required angle. "
+                f"Trying +180 degrees: {180 - self.config.rot_sky}."
+            )
+            await self.atcs.slew_icrs(
+                ra=self.config.ra,
+                dec=self.config.dec,
+                rot=180 - self.config.rot_sky,
+                rot_type=RotType.Sky,
+                target_name=self.config.name,
+            )
+
+        await setup_atspec_task
 
         await self.checkpoint("done")
 
