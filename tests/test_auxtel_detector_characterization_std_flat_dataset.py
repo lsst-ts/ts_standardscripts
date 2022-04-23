@@ -56,6 +56,8 @@ class TestATGetStdFlatDataset(
         self.grating = None
         self.linear_stage = None
 
+        self.shutter_time = 1.0
+
         self.end_readout_tasks = []
 
         return (self.script, self.at_cam, self.at_spec, self.at_headerservice)
@@ -67,14 +69,26 @@ class TestATGetStdFlatDataset(
         lexer.whitespace = ","
         parsed_data = dict(pair.split(":", 1) for pair in lexer)
 
-        if "bias" in parsed_data["imageType"].lower():
-            self.n_bias += 1
-        elif "dark" in parsed_data["imageType"].lower():
-            self.n_dark += 1
-        elif "flat" in parsed_data["imageType"].lower():
-            self.n_flat += 1
+        for i in range(data.numImages):
+            one_exp_time = data.expTime
+            if data.shutter:
+                one_exp_time += self.shutter_time
+            await asyncio.sleep(one_exp_time)
 
-        self.end_readout_tasks.append(asyncio.create_task(self.end_readout()))
+            self.end_readout_tasks.append(asyncio.create_task(self.end_readout()))
+
+            if "bias" in parsed_data["imageType"].lower():
+                self.n_bias += 1
+            elif "dark" in parsed_data["imageType"].lower():
+                self.n_dark += 1
+            elif "flat" in parsed_data["imageType"].lower():
+                self.n_flat += 1
+
+        # The end readout tasks are scheduled sequentially and they all do the
+        # exact same thing (wait read_out_time seconds and publish some
+        # events). There they should all end sequentially and the last one
+        # should end last, so we only need wait for the last one to complete.
+        await self.end_readout_tasks[-1]
 
     async def end_readout(self):
 
