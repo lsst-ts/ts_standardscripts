@@ -18,19 +18,16 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["BaseTakeImage"]
+__all__ = ["BaseTakeStuttered"]
 
 import abc
-import collections
-
-import numpy as np
 import yaml
 
 from lsst.ts import salobj
 
 
-class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
-    """Base take images script.
+class BaseTakeStuttered(salobj.BaseScript, metaclass=abc.ABCMeta):
+    """Base class for take stuttered images script.
 
     Parameters
     ----------
@@ -71,35 +68,30 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
     def get_schema(cls):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
-            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/LatissTakeImage.yaml
+            $id: https://github.com/lsst-ts/ts_standardscripts/base_take_stuttered.py
             title: BaseTakeImage v2
             description: Configuration for BaseTakeImage.
             type: object
             properties:
-              nimages:
-                description: The number of images to take; if omitted then use the length of
-                    exp_times or take a single exposure if exp_times is a scalar.
-                anyOf:
-                  - type: integer
-                    minimum: 1
-                  - type: "null"
-                default: null
-              exp_times:
-                description: The exposure time of each image (sec). If a single value,
-                  then the same exposure time is used for each exposure.
-                anyOf:
-                  - type: array
-                    minItems: 1
-                    items:
-                      type: number
-                      minimum: 0
-                  - type: number
-                    minimum: 0
-                default: 0
-              image_type:
-                description: Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, OBJECT)
-                type: string
-                enum: ["BIAS", "DARK", "FLAT", "OBJECT", "ENGTEST", "ACQ", "SPOT"]
+              n_images:
+                description: The number of images to take.
+                minimum: 0
+                type: integer
+                default: 1
+              n_shift:
+                description: Number of shift-expose sequences.
+                minimum: 1
+                type: integer
+                default: 20
+              row_shift:
+                description: How many rows to shift at each sequence.
+                minimum: 1
+                type: integer
+                default: 100
+              exp_time:
+                description: The exposure time (sec).
+                type: number
+                minimum: 0
               reason:
                 description: Optional reason for taking the data.
                 type: string
@@ -109,7 +101,7 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
               note:
                 description: A descriptive note about the image being taken.
                 type: string
-            required: [image_type]
+            required: [exp_time]
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -124,37 +116,15 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
         """
         self.config = config
 
-        nimages = self.config.nimages
-        if isinstance(self.config.exp_times, collections.abc.Iterable):
-            if nimages is not None:
-                if len(self.config.exp_times) != nimages:
-                    raise ValueError(
-                        f"nimages={nimages} specified and "
-                        f"exp_times={self.config.exp_times} is an array, "
-                        f"but the length does not match nimages"
-                    )
-        else:
-            # exp_time is a scalar; if nimages is specified then
-            # take that many images, else take 1 image
-            if nimages is None:
-                nimages = 1
-            self.config.exp_times = [self.config.exp_times] * nimages
-
     def set_metadata(self, metadata):
-        nimages = len(self.config.exp_times)
-        mean_exptime = np.mean(self.config.exp_times)
-        metadata.duration = (
-            self.instrument_setup_time
-            + (
-                mean_exptime + self.camera.read_out_time + self.camera.shutter_time * 2
-                if self.camera.shutter_time
-                else 0
-            )
-            * nimages
+        metadata.duration = self.instrument_setup_time + (
+            self.config.n_shift
+            * self.config.row_shift
+            * self.config.n_images
+            * self.config.exp_time
         )
 
     async def run(self):
-        nimages = len(self.config.exp_times)
         note = getattr(self.config, "note", None)
         reason = getattr(self.config, "reason", None)
         program = getattr(self.config, "program", None)
@@ -162,17 +132,14 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
         await self.checkpoint("setup instrument")
         await self.camera.setup_instrument(**self.get_instrument_configuration())
 
-        for i, exposure in enumerate(self.config.exp_times):
-            self.log.debug(
-                f"Exposing image {i+1} of {nimages} with exp_time={exposure}s."
-            )
-            await self.checkpoint(f"exposure {i+1} of {nimages}")
-            await self.camera.take_imgtype(
-                self.config.image_type,
-                exposure,
-                1,
-                reason=reason,
-                program=program,
-                group_id=self.group_id,
-                note=note,
-            )
+        await self.checkpoint("Take stuttered")
+        await self.camera.take_stuttered(
+            exptime=self.config.exp_time,
+            n_shift=self.config.n_shift,
+            row_shift=self.config.row_shift,
+            n=self.config.n_images,
+            reason=reason,
+            program=program,
+            group_id=self.group_id,
+            note=note,
+        )
