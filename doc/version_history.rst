@@ -6,6 +6,13 @@
 Version History
 ===============
 
+v1.12.0
+-------
+
+* Add ``BaseTakeStuttered`` script to take stuttered images.
+* In ``BaseTakeImage``, add option to take acquisition images.
+* Add ``TakeStutteredLatiss`` script to take stuttered images with LATISS.
+
 v1.11.0
 -------
 
