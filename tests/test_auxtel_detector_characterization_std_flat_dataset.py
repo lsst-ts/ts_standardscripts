@@ -123,7 +123,13 @@ class TestATGetStdFlatDataset(
             await self.configure_script()
 
             # Now configure the spectrograph
-            config = await self.configure_script(filter=1, grating=3, linear_stage=10)
+            config = await self.configure_script(
+                filter=1,
+                grating=3,
+                linear_stage=10,
+                flat_dn_range=[1, 2, 3],
+                t_dark=1.0,
+            )
 
             await self.run_script()
 
