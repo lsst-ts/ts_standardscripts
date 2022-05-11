@@ -12,6 +12,8 @@ v1.12.0
 * Add ``BaseTakeStuttered`` script to take stuttered images.
 * In ``BaseTakeImage``, add option to take acquisition images.
 * Add ``TakeStutteredLatiss`` script to take stuttered images with LATISS.
+* In ``GetStdFlatDataset``, pass ``group_id`` to ``take_bias``, ``take_flats`` and ``take_darks`` to group data together.
+* Update ``GetStdFlatDataset`` unit test to reduce script test time by reducing the exposure time for darks and using a smaller sequence of flat-fields.
 
 v1.11.0
 -------

@@ -181,7 +181,9 @@ class ATGetStdFlatDataset(salobj.BaseScript):
         """Run the script."""
         self.log.info(f"Taking {self.config.n_bias} pre-flat bias images...")
         await self.latiss.take_bias(
-            nbias=self.config.n_bias, checkpoint=self.checkpoint
+            nbias=self.config.n_bias,
+            checkpoint=self.checkpoint,
+            group_id=self.group_id,
         )
 
         self.log.info(f"Taking {self.config.n_flat} flat-field images")
@@ -193,11 +195,14 @@ class ATGetStdFlatDataset(salobj.BaseScript):
                 grating=self.config.grating,
                 linear_stage=self.config.linear_stage,
                 checkpoint=self.checkpoint,
+                group_id=self.group_id,
             )
 
         self.log.info(f"Taking {self.config.n_bias} post-flat bias images...")
         await self.latiss.take_bias(
-            nbias=self.config.n_bias, checkpoint=self.checkpoint
+            nbias=self.config.n_bias,
+            checkpoint=self.checkpoint,
+            group_id=self.group_id,
         )
 
         self.log.info(f"Taking {self.config.n_dark} dark images...")
@@ -205,6 +210,7 @@ class ATGetStdFlatDataset(salobj.BaseScript):
             exptime=self.config.t_dark,
             ndarks=self.config.n_dark,
             checkpoint=self.checkpoint,
+            group_id=self.group_id,
         )
 
         await self.checkpoint("done")
