@@ -103,7 +103,7 @@ class EnableGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
 
     @staticmethod
     @abc.abstractmethod
-    def components(cls):
+    def components():
         """Return list of components name as appeared in
         `self.group.components`.
 
