@@ -6,6 +6,18 @@
 Version History
 ===============
 
+v1.12.1
+-------
+
+* Wait for SalInfo instances to start before writing messages:
+
+    * Call ``super().start()`` first in overrides of start methods.
+    * test_auxtel_stop.py: await self.controller.start_task before writing.
+
+* Remove ``cls`` argument from abstract static methods.
+* doc/conf.py: make linters happier
+* git ignore .hypothesis
+
 v1.12.0
 -------
 
