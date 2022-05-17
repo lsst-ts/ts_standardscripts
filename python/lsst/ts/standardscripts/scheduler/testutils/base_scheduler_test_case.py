@@ -44,8 +44,7 @@ class BaseSchedulerTestCase(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
             index=1,
             initial_state=initial_state,
             publish_initial_state=publish_initial_state,
-        ) as controller:
-            self.controller = controller
+        ) as self.controller:
             yield
 
     def assert_run(
