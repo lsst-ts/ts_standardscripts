@@ -27,8 +27,10 @@ v1.12.1
     * test_auxtel_stop.py: await self.controller.start_task before writing.
 
 * Remove ``cls`` argument from abstract static methods.
-* doc/conf.py: make linters happier
-* git ignore .hypothesis
+* doc/conf.py: make linters happier.
+* git ignore .hypothesis.
+* Use pre-commit to run flake8 and maintain black formatting.
+* update build files to use ``pyproject.toml``.
 
 v1.12.0
 -------
