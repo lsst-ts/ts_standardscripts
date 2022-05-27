@@ -33,8 +33,7 @@ def get_scripts_dir():
         Absolute path to the specified scripts directory.
 
     """
-    # 4 for python/lsst/ts/standardscripts
-    return pathlib.Path(__file__).resolve().parents[4] / "scripts"
+    return pathlib.Path(__file__).resolve().parent / "data" / "scripts"
 
 
 def format_as_list(value, recurrences):

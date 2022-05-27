@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 
-# import pathlib
+import pathlib
 import unittest
 
 import pytest
@@ -32,11 +32,12 @@ class TestUtils(unittest.TestCase):
         print(f"*** script dir: {scripts_dir}")
         assert scripts_dir.is_dir()
 
-        # This does not work when doing pip install or conda build
-        # pkg_path = pathlib.Path(__file__).resolve().parent.parent
-        # predicted_path = pkg_path / "scripts"
-        # print(f"*** predicted path: {predicted_path}")
-        # assert (scripts_dir.samefile(predicted_path))
+        pkg_path = pathlib.Path(__file__).resolve().parent.parent
+        predicted_path = (
+            pkg_path / "python" / "lsst" / "ts" / "standardscripts" / "data" / "scripts"
+        )
+        print(f"*** predicted path: {predicted_path}")
+        assert scripts_dir.samefile(predicted_path)
 
     def test_format_as_list(self):
         recurrences = 4
