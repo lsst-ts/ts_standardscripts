@@ -37,6 +37,7 @@ test:
     - tests
     - scripts
     - setup.cfg
+    - pyproject.toml
   commands:
     - py.test -vxs
 
