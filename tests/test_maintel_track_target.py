@@ -51,43 +51,56 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
 
             # If RA is given Dec must be given too.
             with pytest.raises(salobj.ExpectedError):
-                await self.configure_script(ra=10.0)
+                await self.configure_script(slew_icrs=dict(ra=10.0))
 
             # If Dec is given ra must be given too.
             with pytest.raises(salobj.ExpectedError):
-                await self.configure_script(dec=-10.0)
+                await self.configure_script(slew_icrs=dict(dec=-10.0))
 
             # Invalid RA
             with pytest.raises(salobj.ExpectedError):
-                await self.configure_script(ra=-0.1, dec=0.0)
+                await self.configure_script(slew_icrs=dict(ra=-0.1, dec=0.0))
 
             # Invalid RA
             with pytest.raises(salobj.ExpectedError):
-                await self.configure_script(ra=24.1, dec=0.0)
+                await self.configure_script(slew_icrs=dict(ra=24.1, dec=0.0))
 
             # Invalid Dec
             with pytest.raises(salobj.ExpectedError):
-                await self.configure_script(ra=1.0, dec=-90.1)
+                await self.configure_script(slew_icrs=dict(ra=1.0, dec=-90.1))
 
             # Invalid Dec
             with pytest.raises(salobj.ExpectedError):
-                await self.configure_script(ra=1.0, dec=90.1)
+                await self.configure_script(slew_icrs=dict(ra=1.0, dec=90.1))
 
             # Invalid rot_type
             with pytest.raises(salobj.ExpectedError):
-                await self.configure_script(ra=1.0, dec=-10.0, rot_type="invalid")
+                await self.configure_script(
+                    slew_icrs=dict(
+                        ra=1.0,
+                        dec=-10.0,
+                    ),
+                    rot_type="invalid",
+                )
 
             # Script can be configured with target name only
             await self.configure_script(target_name="eta Car")
 
-            # Script can be configure with ra, dec only
-            await self.configure_script(ra=1.0, dec=-10.0)
+            # Script can be configured with ra, dec only
+            await self.configure_script(slew_icrs=dict(ra=1.0, dec=-10.0))
+
+            # Script can be configured with az/el
+            await self.configure_script(
+                find_target=dict(az=1.0, el=80.0, mag_limit=8.0)
+            )
 
             # Configure passing rotator angle and all rotator strategies
             for rot_type in RotType:
                 with self.subTest(f"rot_type={rot_type.name}", rot_type=rot_type.name):
                     await self.configure_script(
-                        ra=1.0, dec=-10.0, rot_value=10, rot_type=rot_type.name
+                        slew_icrs=dict(ra=1.0, dec=-10.0),
+                        rot_value=10,
+                        rot_type=rot_type.name,
                     )
 
             # Test ignore feature.
@@ -111,9 +124,29 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
 
             await self.run_script()
 
-            self.script.tcs.slew_object.assert_awaited_once()
-            self.script.tcs.slew_icrs.assert_not_awaited()
-            self.script.tcs.stop_tracking.assert_not_awaited()
+            self.assert_slew_target_name()
+
+    async def test_run_slew_azel(self):
+        async with self.make_script():
+
+            self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
+            self.script.tcs.slew_object = unittest.mock.AsyncMock()
+            self.script.tcs.find_target = unittest.mock.AsyncMock(
+                return_value="eta Car"
+            )
+            self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
+
+            self.script.tcs.slew_object.reset_mock()
+            self.script.tcs.slew_icrs.reset_mock()
+
+            # Check running with ra dec only
+            config = dict(find_target=dict(az=0.0, el=80.0, mag_limit=1.0))
+
+            await self.configure_script(**config)
+
+            await self.run_script()
+
+            self.assert_slew_azel(find_target_config=config["find_target"])
 
     async def test_run_slew_radec(self):
 
@@ -124,13 +157,11 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
 
             # Check running with ra dec only
-            await self.configure_script(ra=1.0, dec=-10.0)
+            await self.configure_script(slew_icrs=dict(ra=1.0, dec=-10.0))
 
             await self.run_script()
 
-            self.script.tcs.slew_icrs.assert_awaited_once()
-            self.script.tcs.slew_object.assert_not_awaited()
-            self.script.tcs.stop_tracking.assert_not_awaited()
+            self.assert_slew_radec()
 
     async def test_run_slew_fails(self):
 
@@ -143,19 +174,46 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
 
             # Check running with ra dec only
-            await self.configure_script(ra=1.0, dec=-10.0)
+            await self.configure_script(slew_icrs=dict(ra=1.0, dec=-10.0))
 
             with pytest.raises(AssertionError):
                 await self.run_script()
 
-            self.script.tcs.slew_icrs.assert_awaited_once()
-            self.script.tcs.slew_object.assert_not_awaited()
-            self.script.tcs.stop_tracking.assert_awaited_once()
+            self.assert_slew_fails()
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
         script_path = scripts_dir / "maintel" / "track_target.py"
         await self.check_executable(script_path)
+
+    def assert_slew_radec(self):
+
+        self.script.tcs.slew_icrs.assert_awaited_once()
+        self.script.tcs.slew_object.assert_not_awaited()
+        self.script.tcs.stop_tracking.assert_not_awaited()
+
+    def assert_slew_target_name(self):
+        self.script.tcs.slew_object.assert_awaited_once()
+        self.script.tcs.slew_object.assert_awaited_with(
+            name="eta Car",
+            rot=0.0,
+            rot_type=RotType.SkyAuto,
+            offset_x=0.0,
+            offset_y=0.0,
+        )
+        self.script.tcs.slew_icrs.assert_not_awaited()
+        self.script.tcs.stop_tracking.assert_not_awaited()
+
+    def assert_slew_azel(self, find_target_config):
+
+        self.script.tcs.find_target.assert_awaited_once()
+        self.script.tcs.find_target.assert_awaited_with(**find_target_config)
+        self.assert_slew_target_name()
+
+    def assert_slew_fails(self):
+        self.script.tcs.slew_icrs.assert_awaited_once()
+        self.script.tcs.slew_object.assert_not_awaited()
+        self.script.tcs.stop_tracking.assert_awaited_once()
 
 
 if __name__ == "__main__":

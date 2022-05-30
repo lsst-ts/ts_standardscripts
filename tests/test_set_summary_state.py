@@ -51,8 +51,8 @@ class TrivialController(salobj.Controller):
         self.evt_summaryState.set(summaryState=initial_state)
 
     async def start(self):
-        await self.evt_summaryState.write()
         await super().start()
+        await self.evt_summaryState.write()
 
     async def do_disable(self, data):
         self.n_disable += 1

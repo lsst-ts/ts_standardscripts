@@ -50,6 +50,7 @@ class TestStartup(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
             name, index = salobj.name_to_name_index(name_index)
             controller = salobj.Controller(name=name, index=index)
             self.controllers[name_index] = controller
+            await controller.start_task
             await controller.evt_summaryState.set_write(
                 summaryState=salobj.State.ENABLED
             )

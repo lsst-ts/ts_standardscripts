@@ -21,6 +21,7 @@
 __all__ = ["BaseTrackTarget"]
 
 import abc
+import enum
 import yaml
 import asyncio
 
@@ -28,6 +29,12 @@ from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
 
 from lsst.ts.observatory.control.utils import RotType
+
+
+class SlewType(enum.IntEnum):
+    OBJECT = enum.auto()
+    ICRS = enum.auto()
+    AZEL = enum.auto()
 
 
 class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
@@ -56,7 +63,7 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # Flag to specify which type of slew will be performend:
         # slew_icrs or slew_object
-        self.slew_icrs = False
+        self.slew_type = SlewType.OBJECT
 
     @property
     @abc.abstractmethod
@@ -72,18 +79,69 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
             description: Configuration for BaseTrackTarget.
             type: object
             properties:
-              ra:
-                description: ICRS right ascension (hour).
-                anyOf:
-                  - type: number
+              slew_icrs:
+                type: object
+                description: >-
+                    Optional configuration section. Slew to icrs ra/dec coordinates.
+                    If not specified it will be ignored.
+                additionalProperties: false
+                required:
+                    - ra
+                    - dec
+                properties:
+                  ra:
+                    description: ICRS right ascension (hour).
+                    type: number
                     minimum: 0
                     maximum: 24
-              dec:
-                description: ICRS declination (deg).
-                anyOf:
-                  - type: number
+                  dec:
+                    description: ICRS declination (deg).
+                    type: number
                     minimum: -90
                     maximum: 90
+              find_target:
+                type: object
+                additionalProperties: false
+                required:
+                  - az
+                  - el
+                  - mag_limit
+                description: >-
+                    Optional configuration section. Find a target to perform CWFS in the given
+                    position and magnitude range. If not specified, the step is ignored.
+                properties:
+                  az:
+                    type: number
+                    description: Azimuth (in degrees) to find a target.
+                  el:
+                    type: number
+                    description: Elevation (in degrees) to find a target.
+                  mag_limit:
+                    type: number
+                    description: Minimum (brightest) V-magnitude limit.
+                  mag_range:
+                    type: number
+                    description: >-
+                        Magnitude range. The maximum/faintest limit is defined as
+                        mag_limit+mag_range.
+                  radius:
+                    type: number
+                    description: Radius of the cone search (in degrees).
+              offset:
+                type: object
+                additionalProperties: false
+                description: >-
+                    Optional configuration section. Apply offset in xy to the original
+                    pointing position.
+                properties:
+                  x:
+                    type: number
+                    description: Offset the field in the x-axis (arcsec).
+                    default: 0
+                  y:
+                    type: number
+                    description: Offset the field in the y-axis (arcsec).
+                    default: 0
               rot_value:
                 description: >-
                   Rotator position value. Actual meaning depends on rot_type.
@@ -140,13 +198,17 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
                     type: string
             if:
               properties:
-                ra:
+                slew_icrs:
                   const: null
-                dec:
-                  const: null
-              required: ["target_name"]
+            then:
+              oneOf:
+                - required:
+                  - target_name
+                - required:
+                  - find_target
             else:
-              required: ["ra", "dec"]
+              required:
+                - slew_icrs
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -162,8 +224,12 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         self.config = config
 
-        if hasattr(self.config, "ra"):
-            self.slew_icrs = True
+        if hasattr(self.config, "slew_icrs"):
+            self.slew_type = SlewType.ICRS
+        elif hasattr(self.config, "find_target"):
+            self.slew_type = SlewType.AZEL
+
+        self.log.debug(f"Slew type: {self.slew_type!r}.")
 
         self.config.rot_type = getattr(RotType, self.config.rot_type)
 
@@ -193,29 +259,61 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         self.tracking_started = True
 
-        if self.slew_icrs:
+        offset_x = self.config.offset["x"]
+        offset_y = self.config.offset["y"]
+
+        if self.slew_type == SlewType.ICRS:
+            ra = self.config.slew_icrs["ra"]
+            dec = self.config.slew_icrs["dec"]
+
             self.log.info(
                 f"Slew and track target_name={target_name}; "
-                f"ra={self.config.ra}, dec={self.config.dec};"
-                f"rot={self.config.rot_value}; rot_type={self.config.rot_type}"
+                f"ra={ra}, dec={dec}; "
+                f"rot={self.config.rot_value}; rot_type={self.config.rot_type}; "
+                f"offset by; x={offset_x}; y={offset_y}"
             )
 
             await self.tcs.slew_icrs(
-                ra=self.config.ra,
-                dec=self.config.dec,
+                ra=ra,
+                dec=dec,
                 rot=self.config.rot_value,
                 rot_type=self.config.rot_type,
                 target_name=target_name,
+                offset_x=offset_x,
+                offset_y=offset_y,
+            )
+        elif self.slew_type == SlewType.AZEL:
+            az = self.config.find_target["az"]
+            el = self.config.find_target["el"]
+
+            self.log.info(
+                "Find target around azel; "
+                f"az={az}, el={el}; "
+                f"rot={self.config.rot_value}; rot_type={self.config.rot_type}; "
+                f"offset by; x={offset_x}; y={offset_y}"
+            )
+
+            target_name = await self.tcs.find_target(**self.config.find_target)
+
+            await self.tcs.slew_object(
+                name=target_name,
+                rot=self.config.rot_value,
+                rot_type=self.config.rot_type,
+                offset_x=offset_x,
+                offset_y=offset_y,
             )
         else:
             self.log.info(
                 f"Slew and track target_name={target_name}; "
-                f"rot={self.config.rot_value}; rot_type={self.config.rot_type}"
+                f"rot={self.config.rot_value}; rot_type={self.config.rot_type}; "
+                f"offset by; x={offset_x}; y={offset_y}"
             )
             await self.tcs.slew_object(
                 name=target_name,
                 rot=self.config.rot_value,
                 rot_type=self.config.rot_type,
+                offset_x=offset_x,
+                offset_y=offset_y,
             )
 
         if self.config.track_for > 0.0:

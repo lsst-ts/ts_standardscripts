@@ -65,11 +65,10 @@ class MockScheduler(salobj.Controller):
         self.evt_summaryState.set(summaryState=initial_state)
 
     async def start(self):
+        await super().start()
         if self.publish_initial_state:
             await self.evt_summaryState.write()
             await self.evt_largeFileObjectAvailable.set_write(url=self.valid_snapshot)
-
-        await super().start()
 
         self._heartbeat_task = asyncio.create_task(self.publish_heartbeat())
 
