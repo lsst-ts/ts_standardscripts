@@ -1,6 +1,6 @@
 # This file is part of ts_externalcripts
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for the Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -17,10 +17,12 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ["PrepareForOnSky"]
 
 from lsst.ts import salobj
+import yaml
 from lsst.ts.observatory.control.auxtel import (
     ATCS,
     LATISS,
@@ -57,12 +59,35 @@ class PrepareForOnSky(salobj.BaseScript):
 
     @classmethod
     def get_schema(cls):
-        # This script does not require any configuration
-        return None
+        schema_yaml = """
+            $schema: http://json-schema.org/draft-07/schema#
+            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/enable_atcs.yaml
+            title: EnableATTCS v1
+            description: Configuration for EnableATTCS. Only include those CSCs that are configurable.
+            type: object
+            properties:
+                ignore:
+                    description: >-
+                        CSCs from the group to ignore, e.g.; atdometrajectory.
+                    type: array
+                    items:
+                        type: string
+            additionalProperties: false
+        """
+        return yaml.safe_load(schema_yaml)
 
     async def configure(self, config):
         # This script does not require any configuration
-        pass
+        if hasattr(config, "ignore"):
+            for comp in config.ignore:
+                if comp not in self.attcs.components_attr:
+                    self.log.warning(
+                        f"Component {comp} not in CSC Group. "
+                        f"Must be one of {self.attcs.components_attr}. Ignoring."
+                    )
+                else:
+                    self.log.debug(f"Ignoring component {comp}.")
+                    setattr(self.attcs.check, comp, False)
 
     def set_metadata(self, metadata):
         metadata.duration = 600.0
