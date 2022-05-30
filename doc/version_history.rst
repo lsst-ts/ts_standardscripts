@@ -6,6 +6,18 @@
 Version History
 ===============
 
+v1.13.0
+-------
+
+* In ``BaseTrackTarget``:
+
+  * Update schema to have a ``slew_icr`` session and a ``find_target`` session.
+    The first works the same way the previous ra/dec parameters worked, the second will find a target around the specified az/el coordinate to track.
+
+* In ``AuxTel/PrepareForOnsky`` add configuration to allow users to ignore certain CSCs.
+* Add unit tests for ``prepare_for_onsky`` script.
+
+
 v1.12.1
 -------
 
