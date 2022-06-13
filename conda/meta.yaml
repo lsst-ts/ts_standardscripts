@@ -7,20 +7,8 @@ source:
   path: ../
 
 build:
+  noarch: generic
   script: python -m pip install --no-deps --ignore-installed .
-  script_env:
-    - PATH
-    - PYTHONPATH
-    - LD_LIBRARY_PATH
-    - OSPL_HOME
-    - OSPL_URI
-    - PYTHON_BUILD_VERSION
-    - PYTHON_BUILD_LOCATION
-    - LSST_DDS_DOMAIN_ID
-    - LSST_DDS_HISTORYSYNC
-    - OSPL_MASTER_PRIORITY
-    - TS_CONFIG_OCS_DIR
-    - TS_CONFIG_ATTCS_DIR
 
 test:
   requires:
@@ -37,6 +25,7 @@ test:
     - tests
     - scripts
     - setup.cfg
+    - pyproject.toml
   commands:
     - py.test -vxs
 

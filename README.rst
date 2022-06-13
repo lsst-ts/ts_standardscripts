@@ -5,11 +5,10 @@ ts_standardscripts
 Standard SAL scripts for operating the LSST via the `lsst.ts.scriptqueue.ScriptQueue`.
 Each script is a subclass of `lsst.ts.scriptqueue.ScriptBase`.
 
-Put common code and complicated implementations in ``python/lsst/ts/standardscripts``
-and the actual scripts in ``scripts`` in the desired hierarchy.
+`Documentation <https://ts-standardscripts.lsst.io>`_
 
-This code is automatically formatted by ``black`` using a git pre-commit hook.
+This code uses ``pre-commit`` to maintain ``black`` formatting and ``flake8`` compliance.
 To enable this:
 
-* Install the ``black`` Python package.
-* Run ``git config core.hooksPath .githooks`` once in this repository.
+* Run ``pre-commit install`` once.
+* If directed, run ``git config --unset-all core.hooksPath`` once.

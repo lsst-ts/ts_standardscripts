@@ -11,7 +11,7 @@ Standard Scripts
 .. image:: https://img.shields.io/badge/Jenkins-ts_standardscripts-green.svg
     :target: https://tssw-ci.lsst.org/job/LSST_Telescope-and-Site/job/ts_standardscripts/
 .. image:: https://img.shields.io/badge/Jira-ts_standardscripts-green.svg
-    :target: https://jira.lsstcorp.org/issues/?jql=labels+%3D+ts_standardscripts
+    :target: https://jira.lsstcorp.org/issues/?jql=project%3DDM%20AND%20labels%3Dts_standardscripts
 
 Overview
 ========
@@ -26,7 +26,7 @@ To add a script to this package:
 * Read `SAL Scripts <https://ts-salobj.lsst.io/sal_scripts.html>`_ to learn the basics of writing a SAL script.
 * Add your script implementation to the library: ``python/lsst/ts/standardscripts``.
 * Add a test suite to the ``tests`` directory.
-* Add a bin script to the ``scripts`` directory.
+* Add a bin script to the ``python/lsst/ts/standardscripts/data/scripts`` directory.
 
 Developer Documentation
 =======================
