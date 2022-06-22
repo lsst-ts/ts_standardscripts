@@ -23,7 +23,6 @@ test:
   source_files:
     - python
     - tests
-    - scripts
     - setup.cfg
     - pyproject.toml
   commands:
