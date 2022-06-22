@@ -6,6 +6,18 @@
 Version History
 ===============
 
+v1.14.1
+-------
+
+* Fix conda recipe by removing directory ``scripts`` from the ``test/source_files`` section.
+
+v1.14.0
+-------
+
+* Switch to pyproject.toml.
+  In this process the scripts executables were relocated to the python module to better fit pypi/conda data files model. 
+
+
 v1.13.0
 -------
 
