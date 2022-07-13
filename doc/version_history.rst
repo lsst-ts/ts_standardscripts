@@ -6,6 +6,19 @@
 Version History
 ===============
 
+v1.14.1
+-------
+
+* Update eups table to account for renaming of ts_ATMCSSimulator -> ts_atmcssimulator.
+* Update conda recipe to improve handling python versions.
+
+v1.14.0
+-------
+
+* Update build files to use pyproject.toml
+* Update location of scripts directory
+* Move scripts to python/.../data/scripts
+
 v1.13.0
 -------
 

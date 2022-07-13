@@ -1,7 +1,9 @@
 pipeline {
     agent any
     options {
-      disableConcurrentBuilds()
+      disableConcurrentBuilds(
+        abortPrevious: true,
+      )
     }
     environment {
         network_name = "n_${BUILD_ID}_${JENKINS_NODE_COOKIE}"
@@ -115,11 +117,11 @@ pipeline {
                 }
             }
         }
-        stage("Checkout ts_ATMCSSimulator") {
+        stage("Checkout ts_atmcssimulator") {
             steps {
                 script {
                     sh """
-                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_ATMCSSimulator && git fetch -p && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_atmcssimulator && git fetch -p && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
                     """
                 }
             }
