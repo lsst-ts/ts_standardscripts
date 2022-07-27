@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
@@ -18,13 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .enable_comcam import *
-from .enable_mtcs import *
-from .offline_comcam import *
-from .offline_mtcs import *
-from .setup_mtcs import *
-from .standby_comcam import *
-from .standby_mtcs import *
-from .stop import *
-from .take_image_comcam import *
-from .track_target import *
+import asyncio
+
+from lsst.ts.standardscripts.maintel import SetupMTCS
+
+asyncio.run(SetupMTCS.amain())

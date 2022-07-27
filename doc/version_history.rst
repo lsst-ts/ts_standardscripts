@@ -6,6 +6,11 @@
 Version History
 ===============
 
+v1.14.2
+-------
+
+* Create new script maintel/setup_mtcs.py with its associated class and unit tests.
+
 v1.14.1
 -------
 
