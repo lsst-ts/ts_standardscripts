@@ -20,9 +20,7 @@
 
 __all__ = ["SetupMTCS"]
 
-import asyncio
 import yaml
-
 import pandas as pd
 
 from lsst.ts import salobj
@@ -341,7 +339,7 @@ class SetupMTCS(salobj.BaseScript):
         )
 
         self.log.info("Raising M1M3")
-        asyncio.create_task(self.mtcs.raise_m1m3())
+        await self.mtcs.raise_m1m3()
 
         self.log.info("M1M3 - Enable and reset balance forces")
         await self.mtcs.enable_m1m3_balance_system()
@@ -376,7 +374,7 @@ class SetupMTCS(salobj.BaseScript):
             overrides={component: self.config.overrides[component]},
         )
 
-        await self.mtcs.enable_compensation_mode(components=component)
+        await self.mtcs.enable_compensation_mode(component=component)
 
         if index == 1:
             await self.mtcs.reset_camera_hexapod_position()
