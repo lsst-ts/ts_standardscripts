@@ -6,6 +6,14 @@
 Version History
 ===============
 
+v1.14.3
+-------
+
+* In ``maintel/SetupMTCS``
+
+  * fix bug that caused ``mtcs.raise_m1m3`` to start but not to complete.
+  * fix ``mtcs.enable_compensation_mode`` argument.
+
 v1.14.2
 -------
 
