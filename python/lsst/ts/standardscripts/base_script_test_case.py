@@ -27,6 +27,7 @@ import contextlib
 import logging
 import os
 import pathlib
+import stat
 import time
 import types
 
@@ -114,8 +115,10 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
         ) as remote:
 
             initial_path = os.environ["PATH"]
+            process = None
             try:
                 os.environ["PATH"] = str(script_path.parent) + ":" + initial_path
+                os.chmod(script_path, stat.S_IXUSR)
                 process = await asyncio.create_subprocess_exec(
                     str(script_path), str(index)
                 )
@@ -123,8 +126,9 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
                 state = await remote.evt_state.next(flush=False, timeout=MAKE_TIMEOUT)
                 assert state.state == Script.ScriptState.UNCONFIGURED
             finally:
-                process.terminate()
                 os.environ["PATH"] = initial_path
+                assert process is not None
+                process.terminate()
 
     async def configure_script(self, **kwargs):
         """Configure the script and set the group ID (if using ts_salobj
