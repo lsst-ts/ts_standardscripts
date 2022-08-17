@@ -37,7 +37,16 @@ class TestUtils(unittest.TestCase):
             pkg_path / "python" / "lsst" / "ts" / "standardscripts" / "data" / "scripts"
         )
         print(f"*** predicted path: {predicted_path}")
-        assert scripts_dir.samefile(predicted_path)
+        assert predicted_path.is_dir()
+
+        assert (
+            scripts_dir.relative_to(
+                scripts_dir.parent.parent.parent.parent.parent
+            ).as_posix()
+            == predicted_path.relative_to(
+                predicted_path.parent.parent.parent.parent.parent
+            ).as_posix()
+        )
 
     def test_format_as_list(self):
         recurrences = 4
