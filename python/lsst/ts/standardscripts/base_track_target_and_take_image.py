@@ -122,6 +122,15 @@ properties:
       - type: string
       - type: "null"
     default: null
+  camera_playlist:
+    description: >-
+      Optional name a camera playlist to load before running the script.
+      This parameter is mostly designed to use for integration tests and is
+      switched off by default (e.g. null).
+    anyOf:
+      - type: string
+      - type: "null"
+    default: null
 required:
   - ra
   - dec
@@ -157,6 +166,15 @@ required:
 
     async def run(self):
 
+        if self.config.camera_playlist is not None:
+            await self.checkpoint(f"Loading playlist: {self.config.camera_playlist}.")
+            self.log.warning(
+                f"Running script with playlist: {self.config.camera_playlist}. "
+                "This is only suitable for test-type run and should not be used for "
+                "on-sky observations. If you are on sky, check your script configuration."
+            )
+            await self.load_playlist()
+
         await self.checkpoint(
             f"Track target and setup instrument::[target_name={self.config.name}; "
             f"ra={self.config.ra}, dec={self.config.dec};"
@@ -170,6 +188,11 @@ required:
         await self.take_data()
 
         await self.checkpoint("done")
+
+    @abc.abstractstaticmethod
+    async def load_playlist(self):
+        """Load playlist."""
+        raise NotImplementedError()
 
     @abc.abstractstaticmethod
     async def track_target_and_setup_instrument(self):
