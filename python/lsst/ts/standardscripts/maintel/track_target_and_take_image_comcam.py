@@ -73,6 +73,14 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
 
         return schema_dict
 
+    async def load_playlist(self):
+        """Load playlist."""
+        await self.comcam.rem.cccamera.cmd_play.set_start(
+            playlist=self.config.camera_playlist,
+            repeat=True,
+            timeout=self.comcam.fast_timeout,
+        )
+
     async def track_target_and_setup_instrument(self):
         """Track target and setup instrument in parallel."""
 
