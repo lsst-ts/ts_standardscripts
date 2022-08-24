@@ -176,18 +176,29 @@ required:
             await self.load_playlist()
 
         await self.checkpoint(
-            f"Track target and setup instrument::[target_name={self.config.name}; "
+            f"[{self.config.name}; "
             f"ra={self.config.ra}, dec={self.config.dec};"
-            f"rot={self.config.rot_sky}]"
+            f"rot={self.config.rot_sky:0.2f}]::"
+            "Track target and setup instrument."
         )
 
         await self.track_target_and_setup_instrument()
 
-        await self.checkpoint("Taking data")
+        await self.checkpoint(
+            f"[{self.config.name}; "
+            f"ra={self.config.ra}, dec={self.config.dec};"
+            f"rot={self.config.rot_sky:0.2f}]::"
+            "Take data."
+        )
 
         await self.take_data()
 
-        await self.checkpoint("done")
+        await self.checkpoint(
+            f"[{self.config.name}; "
+            f"ra={self.config.ra}, dec={self.config.dec};"
+            f"rot={self.config.rot_sky:0.2f}]::"
+            "done"
+        )
 
     @abc.abstractstaticmethod
     async def load_playlist(self):
