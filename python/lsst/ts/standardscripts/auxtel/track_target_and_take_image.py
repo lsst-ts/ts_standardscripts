@@ -110,6 +110,14 @@ additionalProperties: false
         self.grating = format_as_list(config.grating, len(config.exp_times))
         self.band_filter = format_as_list(config.band_filter, len(config.exp_times))
 
+    async def load_playlist(self):
+        """Load playlist."""
+        await self.latiss.rem.atcamera.cmd_play.set_start(
+            playlist=self.config.camera_playlist,
+            repeat=True,
+            timeout=self.latiss.fast_timeout,
+        )
+
     async def track_target_and_setup_instrument(self):
         """Track target and setup instrument in parallel."""
 
