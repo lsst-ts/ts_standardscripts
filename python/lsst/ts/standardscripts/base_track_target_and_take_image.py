@@ -50,6 +50,7 @@ class BaseTrackTargetAndTakeImage(salobj.BaseScript):
 
         # Flag to monitor if tracking started for cleanup task.
         self.tracking_started = False
+        self.run_started = False
 
     @classmethod
     def get_base_schema(cls):
@@ -166,6 +167,10 @@ required:
 
     async def run(self):
 
+        self.run_started = True
+
+        await self.assert_feasibility()
+
         if self.config.camera_playlist is not None:
             await self.checkpoint(f"Loading playlist: {self.config.camera_playlist}.")
             self.log.warning(
@@ -206,8 +211,15 @@ required:
         raise NotImplementedError()
 
     @abc.abstractstaticmethod
+    async def assert_feasibility(self):
+        """Verify that the system is in a feasible state to execute the
+        script.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractstaticmethod
     async def track_target_and_setup_instrument(self):
-        """Implement slewing and setting up instrumment.
+        """slewing of telescope and setting up of instrument.
 
         Ideally this would be done in parallel to save time.
         """
@@ -227,9 +239,11 @@ required:
 
         if self.state.state != ScriptState.ENDING:
             # abnormal termination
-            if self.tracking_started:
+            if self.run_started or self.tracking_started:
                 self.log.warning(
-                    f"Terminating with state={self.state.state}: stop tracking."
+                    f"Terminating with state={self.state.state}: stop tracking. "
+                    f"Run started: {self.run_started}. "
+                    f"Tracking started: {self.tracking_started}."
                 )
                 try:
                     await asyncio.wait_for(self.stop_tracking(), timeout=5)
