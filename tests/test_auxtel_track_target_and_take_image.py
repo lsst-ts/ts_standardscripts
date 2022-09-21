@@ -22,6 +22,7 @@ import asyncio
 import copy
 import random
 import logging
+import types
 import unittest
 import contextlib
 
@@ -319,6 +320,35 @@ class TestAuxTelTrackTargetAndTakeImage(
 
             self.script.atcs.stop_tracking.assert_awaited_once()
 
+    async def test_run_fail_assert_feasibility(self):
+
+        async with self.make_script(), self.setup_mocks():
+
+            self._ataos_evt_correction_enabled.hexapod = False
+
+            await self.configure_script_full()
+
+            with pytest.raises(AssertionError):
+                await self.run_script()
+
+            # Making additional checks for when this condition happens.
+            # Slew icrs should not have been awaited because this happens after
+            # the check.
+            self.script.atcs.slew_icrs.assert_not_awaited()
+            # Setup of the instrument happens at the same time as the slew,
+            # and should also not have been awaited.
+            self.script.latiss.setup_atspec.assert_not_awaited()
+
+            # These are even more downstream than the previous two check,
+            # Take objects and check tracking should also not been awaited.
+            self.script.latiss.take_object.assert_not_awaited()
+            self.script.atcs.check_tracking.assert_not_awaited()
+
+            # The run method was initiated, the script is set such that it
+            # will call stop tracking in this condition, so make sure stop
+            # tracking was awaited once.
+            self.script.atcs.stop_tracking.assert_awaited_once()
+
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
         script_path = scripts_dir / "auxtel" / "track_target_and_take_image.py"
@@ -333,8 +363,32 @@ class TestAuxTelTrackTargetAndTakeImage(
         self.script.latiss.take_object = unittest.mock.AsyncMock(
             side_effect=self.take_object_side_effect
         )
+        self._ataos_evt_correction_enabled = types.SimpleNamespace(
+            m1=True,
+            hexapod=True,
+            m2=False,
+            focus=False,
+            atspectrograph=True,
+            moveWhileExposing=False,
+        )
+
+        self.script.atcs.rem.ataos = unittest.mock.AsyncMock(
+            spec=[
+                "evt_correctionEnabled",
+            ],
+        )
+        self.script.atcs.rem.ataos.configure_mock(
+            **{
+                "evt_correctionEnabled.aget.side_effect": self.ataos_evt_correction_enabled
+            }
+        )
 
         yield
+
+    async def ataos_evt_correction_enabled(
+        self, *args, **kwargs
+    ) -> types.SimpleNamespace:
+        return self._ataos_evt_correction_enabled
 
     async def configure_script_full(self, band_filter="r", grating="empty_1"):
         configuration_full = dict(
