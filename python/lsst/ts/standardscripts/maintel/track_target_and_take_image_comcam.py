@@ -81,6 +81,15 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
             timeout=self.comcam.fast_timeout,
         )
 
+    async def assert_feasibility(self):
+        """Verify that the system is in a feasible state to execute the
+        script.
+        """
+        await asyncio.gather(
+            self.mtcs.assert_all_enabled(),
+            self.comcam.assert_all_enabled(),
+        )
+
     async def track_target_and_setup_instrument(self):
         """Track target and setup instrument in parallel."""
 

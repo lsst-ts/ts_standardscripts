@@ -6,6 +6,26 @@
 Version History
 ===============
 
+v1.15.1
+-------
+
+* In python/lsst/ts/standardscripts/auxtel/track_target_and_take_image.py, implement new abstract method ``check_feasibility``.
+
+* In python/lsst/ts/standardscripts/base_track_target_and_take_image.py, add new ``assert_feasibility`` abstract method to ``BaseTrackTargetAndTakeImage``, that is called before running to verify that the system is in a feasible state to execute the script.
+
+* In python/lsst/ts/standardscripts/maintel/track_target_and_take_image_comcam.py, implement new abstract method ``assert_feasibility``.
+
+v1.15.0
+-------
+
+* In ``BaseTrackTargetAndTakeImage``, add configuration parameter to allow specifying a camera playlist and, if specified, load it before running the script.
+
+* In ``base_track_target_and_take_image``, improve checkpoints messages.
+
+* In maintel/track_target_and_take_image_comcam.py implement ``load_playlist``.
+
+* In auxtel/track_target_and_take_image, implement ``load_playlist`` method.
+
 v1.14.3
 -------
 
