@@ -19,6 +19,19 @@
 # You should have received a copy of the GNU General Public License
 
 from lsst.ts import salobj
+from typing import Dict
+from abc import abstractmethod
+from yaml import safe_load
+from types import SimpleNamespace
+
+_ATWhiteLightSchema = """
+$schema: http://json-schema.org/draft-07/schema#
+$id: TODOTODOTODO
+title: AuxtelWhiteLightControl{script_suffix} v1
+description: Control the auxtel white light system
+type: object
+additionalProperties: false
+"""
 
 class WhiteLightControlScriptBase(salobj.BaseScript):
     SCRIPT_DESCR_NAME: str = "BaseClass"
@@ -37,5 +50,29 @@ class WhiteLightControlScriptBase(salobj.BaseScript):
 
         self._whitelight = salobj.Remote(self.domain, "ATWhiteLight")
 
+    @classmethod
+    def get_schema(cls) -> Dict:
+        ourschema = _ATWhiteLightSchema.format(
+            script_suffix=cls.SCRIPT_DESCR_NAME.capitalize())
+        return safe_load(ourschema)
 
+    async def configure(self, config: SimpleNamespace):
+        #NOTE: as yet there are no configuration options worth checking!
+        pass
+
+    def set_metadata(self, metadata): ...
+
+    async def run(self) -> None: ...
+
+    @abstractmethod
+    async def _exec_whitelight_onoff_action(self) -> None: ...
+
+
+class WhiteLightControlScriptTurnOn(WhiteLightControlScriptBase):
+    SCRIPT_DESCR_NAME: str = "on"
+    async def _exec_whitelight_onoff_action(self) -> None: ...
+
+class WhiteLightControlScriptTurnOff(WhiteLightControlScriptBase):
+    SCRIPT_DESCR_NAME: str = "off"
+    async def _exec_whitelight_onoff_action(self) -> None: ...
 
