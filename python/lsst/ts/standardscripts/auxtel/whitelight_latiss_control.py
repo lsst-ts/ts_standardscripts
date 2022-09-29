@@ -1,0 +1,41 @@
+# This file is part of ts_standardscripts
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+
+from lsst.ts import salobj
+
+class WhiteLightControlScriptBase(salobj.BaseScript):
+    SCRIPT_DESCR_NAME: str = "BaseClass"
+    """ White Light Control script base class for Auxtel
+
+        This is a SAL script to control the functions of the auxtel
+        white light calibration system.
+
+        Until that is installed, in the meantime it will be able to control
+        the red LED dome flat projector on and off in auxtel"""
+
+
+    def __init__(self, index: int):
+        descr = f"Turn the auxtel White Light {self.SCRIPT_DESCR_NAME}"
+        super().__init__(index=index, descr=descr)
+
+        self._whitelight = salobj.Remote(self.domain, "ATWhiteLight")
+
+
+
