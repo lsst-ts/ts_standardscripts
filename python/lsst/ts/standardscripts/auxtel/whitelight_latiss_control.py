@@ -30,8 +30,14 @@ $id: TODOTODOTODO
 title: AuxtelWhiteLightControl{script_suffix} v1
 description: Control the auxtel white light system
 type: object
-additionalProperties: false
+properties:
+    event_timeout:
+        description: Timeout (seconds) to wait for SAL events
+        type: number
+        default: 30
 """
+
+_CSC_CMP_NAME = "ATWhiteLight"
 
 class WhiteLightControlScriptBase(salobj.BaseScript):
     SCRIPT_DESCR_NAME: str = "BaseClass"
@@ -48,7 +54,7 @@ class WhiteLightControlScriptBase(salobj.BaseScript):
         descr = f"Turn the auxtel White Light {self.SCRIPT_DESCR_NAME}"
         super().__init__(index=index, descr=descr)
 
-        self._whitelight = salobj.Remote(self.domain, "ATWhiteLight")
+        self._whitelight = salobj.Remote(self.domain, _CSC_CMP_NAME)
 
     @classmethod
     def get_schema(cls) -> Dict:
@@ -57,12 +63,17 @@ class WhiteLightControlScriptBase(salobj.BaseScript):
         return safe_load(ourschema)
 
     async def configure(self, config: SimpleNamespace):
-        #NOTE: as yet there are no configuration options worth checking!
-        pass
+        self._config = config
 
     def set_metadata(self, metadata): ...
 
-    async def run(self) -> None: ...
+    async def run(self) -> None:
+        #first check if ATWhiteLight is enabled
+        ss = await self._whitelight.evt_summaryState.aget(timeout=self._config.event_timeout)
+        state = salobj.State(ss)
+
+        if state != salobj.State.ENABLED:
+            raise AssertionError(f"{_CSC_CMP_NAME} needs to be enabled to run this script")
 
     @abstractmethod
     async def _exec_whitelight_onoff_action(self) -> None: ...
