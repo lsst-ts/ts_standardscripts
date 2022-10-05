@@ -34,3 +34,4 @@ from .take_image_latiss import *
 from .take_stuttered_latiss import *
 from .track_target import *
 from .track_target_and_take_image import *
+from .whitelight_latiss_control import *
