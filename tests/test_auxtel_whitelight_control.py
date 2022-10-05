@@ -25,6 +25,7 @@ from typing import Optional
 
 from lsst.ts.standardscripts.auxtel import WhiteLightControlScriptTurnOn, WhiteLightControlScriptTurnOff
 from lsst.ts import standardscripts
+from lsst.ts.standardscripts import auxtel
 from lsst.ts import salobj
 
 
@@ -73,10 +74,10 @@ class TestAuxtelWhiteLightScripts(
                                             event_timeout=self.TEST_TIMEOUT_VALUE)
 
                 await self.run_script()
-                match sc:
-                    case WhiteLightControlScriptTurnOff:
+                match type(sc):
+                    case auxtel.WhiteLightControlScriptTurnOff:
                         assert self._lamp_state == False
-                    case WhiteLightControlScriptTurnOn:
+                    case auxtel.WhiteLightControlScriptTurnOn:
                         assert self._lamp_state == True
 
 
