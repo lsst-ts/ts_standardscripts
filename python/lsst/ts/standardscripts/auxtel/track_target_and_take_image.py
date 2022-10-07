@@ -79,6 +79,10 @@ properties:
     description: Prefix to add to filter name.
     type: string
     default: ""
+  filter_suffix:
+    description: Suffix to append to filter name.
+    type: string
+    default: ""
 required:
   - grating
 additionalProperties: false
@@ -126,7 +130,7 @@ additionalProperties: false
         setup_atspec_task = asyncio.create_task(
             self.latiss.setup_atspec(
                 grating=self.grating[0],
-                filter=f"{self.config.filter_prefix}{self.band_filter[0]}",
+                filter=f"{self.config.filter_prefix}{self.band_filter[0]}{self.config.filter_suffix}",
             )
         )
 
