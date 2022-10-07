@@ -182,7 +182,7 @@ additionalProperties: false
             # the same configuration, we don't need to set them here again.
             await self.latiss.take_object(
                 exptime=self.config.exp_times[0],
-                n=len(self.config.exp_times),
+                n_snaps=len(self.config.exp_times),
                 group_id=self.group_id,
                 reason=self.config.reason,
                 program=self.config.program,
