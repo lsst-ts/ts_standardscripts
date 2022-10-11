@@ -37,7 +37,7 @@ properties:
         default: 30
     lamp_power:
         description: Desired lamp power in Watts
-        type: float
+        type: number
         default: 1200
 """
 
@@ -72,7 +72,7 @@ class WhiteLightControlScriptBase(salobj.BaseScript):
         self._lamppower: float = config.lamp_power
 
     def set_metadata(self, metadata):
-        ...
+        pass
 
     async def run(self) -> None:
         # first check if ATWhiteLight is enabled
