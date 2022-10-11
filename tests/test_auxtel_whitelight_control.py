@@ -22,7 +22,6 @@ from __future__ import annotations
 import logging
 import unittest
 from typing import Optional
-from contextlib import asynccontextmanager
 
 from lsst.ts.standardscripts.auxtel import (
     WhiteLightControlScriptTurnOn,
@@ -44,9 +43,9 @@ class TestAuxtelWhiteLightScripts(
     TEST_TIMEOUT_VALUE: int = 35
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args,**kwargs)
+        super().__init__(*args, **kwargs)
         self._lamp_state: Optional[bool] = None
-        
+
     # NOTE the below is overriding base class with different
     # signature, is that OK??
     async def basic_make_script(self, index: int):
@@ -92,6 +91,7 @@ class TestAuxtelWhiteLightScripts(
                         assert self._lamp_state is False
                     case auxtel.WhiteLightControlScriptTurnOn:
                         assert self._lamp_state is True
+
 
 if __name__ == "__main__":
     unittest.main()
