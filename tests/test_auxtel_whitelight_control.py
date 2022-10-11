@@ -18,9 +18,11 @@
 #
 # You should have received a copy of the GNU General Public License
 
+from __future__ import annotations
 import logging
 import unittest
 from typing import Optional
+from contextlib import asynccontextmanager
 
 from lsst.ts.standardscripts.auxtel import (
     WhiteLightControlScriptTurnOn,
@@ -41,13 +43,14 @@ class TestAuxtelWhiteLightScripts(
     TEST_POWER_VALUE: float = 800.0
     TEST_TIMEOUT_VALUE: int = 35
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
         self._lamp_state: Optional[bool] = None
-
+        
     # NOTE the below is overriding base class with different
     # signature, is that OK??
-    async def basic_make_script(self, index: int, scripttp: salobj.BaseScript):
-        self.script = scripttp(index)
+    async def basic_make_script(self, index: int):
+        self.script = self._scripttp(index)
         self.atwhitelight = salobj.Controller(name="ATWhiteLight")
 
         self.atwhitelight.cmd_turnLampOn.callback = self.cmd_turnon_callback
@@ -64,7 +67,8 @@ class TestAuxtelWhiteLightScripts(
     async def test_configure(self):
 
         for sc in self.TEST_SCRIPTS:
-            async with self.basic_make_script(1, sc):
+            self._scripttp = sc
+            async with self.make_script(sc):
                 await self.configure_script(
                     lamp_power=self.TEST_POWER_VALUE,
                     event_timeout=self.TEST_TIMEOUT_VALUE,
@@ -75,7 +79,8 @@ class TestAuxtelWhiteLightScripts(
 
     async def test_run(self):
         for sc in self.TEST_SCRIPTS:
-            async with self.basic_make_script(1, sc) as (script, whitelight):
+            self._scripttp = sc
+            async with self.make_script(sc):
                 await self.configure_script(
                     lamp_power=self.TEST_POWER_VALUE,
                     event_timeout=self.TEST_TIMEOUT_VALUE,
@@ -87,3 +92,6 @@ class TestAuxtelWhiteLightScripts(
                         assert self._lamp_state is False
                     case auxtel.WhiteLightControlScriptTurnOn:
                         assert self._lamp_state is True
+
+if __name__ == "__main__":
+    unittest.main()
