@@ -20,6 +20,8 @@
 # You should have received a copy of the GNU General Public License
 
 import asyncio
-from lsst.ts.standardscripts.auxtel.whitelight_latiss_control import WhiteLightControlScriptTurnOff
+from lsst.ts.standardscripts.auxtel.whitelight_latiss_control import (
+    WhiteLightControlScriptTurnOff,
+)
 
 asyncio.run(WhiteLightControlScriptTurnOff.amain())

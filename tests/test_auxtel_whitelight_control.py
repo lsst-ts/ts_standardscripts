@@ -18,12 +18,14 @@
 #
 # You should have received a copy of the GNU General Public License
 
-import asyncio
 import logging
 import unittest
 from typing import Optional
 
-from lsst.ts.standardscripts.auxtel import WhiteLightControlScriptTurnOn, WhiteLightControlScriptTurnOff
+from lsst.ts.standardscripts.auxtel import (
+    WhiteLightControlScriptTurnOn,
+    WhiteLightControlScriptTurnOff,
+)
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts import auxtel
 from lsst.ts import salobj
@@ -31,17 +33,20 @@ from lsst.ts import salobj
 
 logging.basicConfig(level=logging.DEBUG)
 
+
 class TestAuxtelWhiteLightScripts(
-        standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
     TEST_SCRIPTS = [WhiteLightControlScriptTurnOff, WhiteLightControlScriptTurnOn]
-    TEST_POWER_VALUE: float = 800.
+    TEST_POWER_VALUE: float = 800.0
     TEST_TIMEOUT_VALUE: int = 35
 
     def __init__(self):
         self._lamp_state: Optional[bool] = None
 
-    #NOTE the below is overriding base class with different signature, is that OK??
-    async def basic_make_script(self, index:int, scripttp: salobj.BaseScript):
+    # NOTE the below is overriding base class with different
+    # signature, is that OK??
+    async def basic_make_script(self, index: int, scripttp: salobj.BaseScript):
         self.script = scripttp(index)
         self.atwhitelight = salobj.Controller(name="ATWhiteLight")
 
@@ -60,32 +65,25 @@ class TestAuxtelWhiteLightScripts(
 
         for sc in self.TEST_SCRIPTS:
             async with self.basic_make_script(1, sc):
-                await self.configure_script(lamp_power=self.TEST_POWER_VALUE,
-                                            event_timeout=self.TEST_TIMEOUT_VALUE)
+                await self.configure_script(
+                    lamp_power=self.TEST_POWER_VALUE,
+                    event_timeout=self.TEST_TIMEOUT_VALUE,
+                )
 
                 assert self.script._evttimeout == self.TEST_TIMEOUT_VALUE
                 assert self.script._lamppower == self.TEST_POWER_VALUE
 
-
     async def test_run(self):
         for sc in self.TEST_SCRIPTS:
             async with self.basic_make_script(1, sc) as (script, whitelight):
-                await self.configure_script(lamp_power=self.TEST_POWER_VALUE,
-                                            event_timeout=self.TEST_TIMEOUT_VALUE)
+                await self.configure_script(
+                    lamp_power=self.TEST_POWER_VALUE,
+                    event_timeout=self.TEST_TIMEOUT_VALUE,
+                )
 
                 await self.run_script()
                 match type(sc):
                     case auxtel.WhiteLightControlScriptTurnOff:
-                        assert self._lamp_state == False
+                        assert self._lamp_state is False
                     case auxtel.WhiteLightControlScriptTurnOn:
-                        assert self._lamp_state == True
-
-
-
-
-
-
-
-
-
-
+                        assert self._lamp_state is True

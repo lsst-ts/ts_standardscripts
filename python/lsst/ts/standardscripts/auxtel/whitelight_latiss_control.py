@@ -43,6 +43,7 @@ properties:
 
 _CSC_CMP_NAME = "ATWhiteLight"
 
+
 class WhiteLightControlScriptBase(salobj.BaseScript):
     SCRIPT_DESCR_NAME: str = "BaseClass"
     """ White Light Control script base class for Auxtel
@@ -53,7 +54,6 @@ class WhiteLightControlScriptBase(salobj.BaseScript):
         Until that is installed, in the meantime it will be able to control
         the red LED dome flat projector on and off in auxtel"""
 
-
     def __init__(self, index: int):
         descr = f"Turn the auxtel White Light {self.SCRIPT_DESCR_NAME}"
         super().__init__(index=index, descr=descr)
@@ -63,37 +63,44 @@ class WhiteLightControlScriptBase(salobj.BaseScript):
     @classmethod
     def get_schema(cls) -> Dict:
         ourschema = _ATWhiteLightSchema.format(
-            script_suffix=cls.SCRIPT_DESCR_NAME.capitalize())
+            script_suffix=cls.SCRIPT_DESCR_NAME.capitalize()
+        )
         return safe_load(ourschema)
 
     async def configure(self, config: SimpleNamespace):
         self._evttimeout: int = config.event_timeout
         self._lamppower: float = config.lamp_power
 
-    def set_metadata(self, metadata): ...
+    def set_metadata(self, metadata):
+        ...
 
     async def run(self) -> None:
-        #first check if ATWhiteLight is enabled
+        # first check if ATWhiteLight is enabled
         ss = await self._whitelight.evt_summaryState.aget(timeout=self._evttimeout)
         state = salobj.State(ss)
 
         if state != salobj.State.ENABLED:
-            raise AssertionError(f"{_CSC_CMP_NAME} needs to be enabled to run this script")
+            raise AssertionError(
+                f"{_CSC_CMP_NAME} needs to be enabled to run this script"
+            )
 
-        #now turn on (or off, depending on instantiation) the lamp
+        # now turn on (or off, depending on instantiation) the lamp
         await self._exec_whitelight_onoff_action()
 
     @abstractmethod
-    async def _exec_whitelight_onoff_action(self) -> None: ...
+    async def _exec_whitelight_onoff_action(self) -> None:
+        ...
 
 
 class WhiteLightControlScriptTurnOn(WhiteLightControlScriptBase):
     SCRIPT_DESCR_NAME: str = "on"
+
     async def _exec_whitelight_onoff_action(self) -> None:
         await self._whitelight.cmd_turnLampOn(self._lamppower)
 
+
 class WhiteLightControlScriptTurnOff(WhiteLightControlScriptBase):
     SCRIPT_DESCR_NAME: str = "off"
+
     async def _exec_whitelight_onoff_action(self) -> None:
         await self._whitelight.cmd_turnLampOff()
-
