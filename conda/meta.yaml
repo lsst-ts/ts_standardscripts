@@ -13,9 +13,6 @@ build:
 test:
   requires:
     - astroquery
-    - ts-atdome
-    - ts-atdometrajectory
-    - ts-atmcs-simulator
     - ts-conda-build =0.3
     - ts-idl {{ idl_version }}
     - ts-salobj {{ salobj_version }}

@@ -88,44 +88,6 @@ pipeline {
             }
         }
 
-
-        stage("Checkout ts_atdometrajectory") {
-            steps {
-                script {
-                    sh """
-                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_atdometrajectory && git fetch -p && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
-                    """
-                }
-            }
-        }
-
-        stage("Checkout ts_atdome") {
-            steps {
-                script {
-                    sh """
-                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_atdome && git fetch -p && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
-                    """
-                }
-            }
-        }
-        stage("Checkout ts_externalscripts") {
-            steps {
-                script {
-                    sh """
-                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_externalscripts && git fetch -p && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
-                    """
-                }
-            }
-        }
-        stage("Checkout ts_atmcssimulator") {
-            steps {
-                script {
-                    sh """
-                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_atmcssimulator && git fetch -p && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
-                    """
-                }
-            }
-        }
         stage("Checkout ts_config_attcs") {
             steps {
                 script {
