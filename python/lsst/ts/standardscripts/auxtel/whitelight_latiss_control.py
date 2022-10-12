@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU General Public License
 
 from lsst.ts import salobj
-from typing import Dict
 from abc import abstractmethod
 from yaml import safe_load
 from types import SimpleNamespace
@@ -41,47 +40,49 @@ properties:
         default: 1200
 """
 
-_CSC_CMP_NAME = "ATWhiteLight"
-
 
 class WhiteLightControlScriptBase(salobj.BaseScript):
-    SCRIPT_DESCR_NAME: str = "BaseClass"
-    """ White Light Control script base class for Auxtel
+    """White Light Control script base class for Auxtel
 
-        This is a SAL script to control the functions of the auxtel
-        white light calibration system.
+    This is a SAL script to control the functions of the auxtel
+    white light calibration system.
 
-        Until that is installed, in the meantime it will be able to control
-        the red LED dome flat projector on and off in auxtel"""
+    Until that is installed, in the meantime it will be able to control
+    the red LED dome flat projector on and off in auxtel"""
+
+    @property
+    @abstractmethod
+    def script_descr_name(self) -> str:
+        pass
 
     def __init__(self, index: int):
-        descr = f"Turn the auxtel White Light {self.SCRIPT_DESCR_NAME}"
+        descr = f"Turn the auxtel White Light {self.script_descr_name}"
         super().__init__(index=index, descr=descr)
 
-        self._whitelight = salobj.Remote(self.domain, _CSC_CMP_NAME)
+        self._whitelight = salobj.Remote(self.domain, "ATWhiteLight")
 
     @classmethod
-    def get_schema(cls) -> Dict:
+    def get_schema(cls) -> dict:
         ourschema = _ATWhiteLightSchema.format(
             script_suffix=cls.SCRIPT_DESCR_NAME.capitalize()
         )
         return safe_load(ourschema)
 
     async def configure(self, config: SimpleNamespace):
-        self._evttimeout: int = config.event_timeout
-        self._lamppower: float = config.lamp_power
+        self.event_timeout: int = config.event_timeout
+        self.lamp_power: float = config.lamp_power
 
     def set_metadata(self, metadata):
         pass
 
     async def run(self) -> None:
         # first check if ATWhiteLight is enabled
-        ss = await self._whitelight.evt_summaryState.aget(timeout=self._evttimeout)
+        ss = await self._whitelight.evt_summaryState.aget(timeout=self._eventt_timeout)
         state = salobj.State(ss)
 
         if state != salobj.State.ENABLED:
             raise AssertionError(
-                f"{_CSC_CMP_NAME} needs to be enabled to run this script"
+                f"{self._whitelight.name} needs to be enabled to run this script"
             )
 
         # now turn on (or off, depending on instantiation) the lamp
@@ -93,14 +94,18 @@ class WhiteLightControlScriptBase(salobj.BaseScript):
 
 
 class WhiteLightControlScriptTurnOn(WhiteLightControlScriptBase):
-    SCRIPT_DESCR_NAME: str = "on"
+    @property
+    def script_descr_name(self) -> str:
+        return "on"
 
     async def _exec_whitelight_onoff_action(self) -> None:
-        await self._whitelight.cmd_turnLampOn(self._lamppower)
+        await self._whitelight.cmd_turnLampOn(self._lamp_power)
 
 
 class WhiteLightControlScriptTurnOff(WhiteLightControlScriptBase):
-    SCRIPT_DESCR_NAME: str = "off"
+    @property
+    def script_descr_name(self) -> str:
+        return "off"
 
     async def _exec_whitelight_onoff_action(self) -> None:
         await self._whitelight.cmd_turnLampOff()
