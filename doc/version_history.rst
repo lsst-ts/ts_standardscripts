@@ -9,7 +9,9 @@ Version History
 v1.15.2
 -------
 
-* Update eups dependencies for ts_atdome and ts_atdometrajectory to their lower case names.
+* Update unit tests to be compatible with ts_salobj 7.2, while remaining backwards compatible.
+* Remove unused dependencies, including ts_atdome, ts_atdometrajectory and ts_atmcssimulator.
+* Modernize the CI Jenkinsfile.
 
 v1.15.1
 -------
