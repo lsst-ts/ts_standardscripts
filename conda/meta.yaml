@@ -23,7 +23,7 @@ test:
     - setup.cfg
     - pyproject.toml
   commands:
-    - py.test -vxs
+    - pytest
 
 requirements:
   host:
