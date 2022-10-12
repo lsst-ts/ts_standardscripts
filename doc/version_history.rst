@@ -6,6 +6,11 @@
 Version History
 ===============
 
+v1.15.2
+-------
+
+* Update eups dependencies for ts_atdome and ts_atdometrajectory to their lower case names.
+
 v1.15.1
 -------
 
