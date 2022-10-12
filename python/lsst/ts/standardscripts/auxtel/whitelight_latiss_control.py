@@ -22,6 +22,7 @@ from lsst.ts import salobj
 from abc import abstractmethod
 from yaml import safe_load
 from types import SimpleNamespace
+import asyncio
 
 _ATWhiteLightSchema = """
 $schema: http://json-schema.org/draft-07/schema#
@@ -38,6 +39,10 @@ properties:
         description: Desired lamp power in Watts
         type: number
         default: 1200
+    chiller_turnon_wait:
+        description: Time to wait if we need to turn the chiller on in seconds
+        type: number
+        default: 120
 """
 
 
@@ -71,12 +76,13 @@ class WhiteLightControlScriptBase(salobj.BaseScript):
     async def configure(self, config: SimpleNamespace):
         self.event_timeout: int = config.event_timeout
         self.lamp_power: float = config.lamp_power
+        self.chiller_turnon_wait: float = config.chiller_turnon_wait
 
     def set_metadata(self, metadata):
         pass
 
     async def run(self) -> None:
-        # first check if ATWhiteLight is enabled
+        # First check if ATWhiteLight is enabled.
         ss = await self._whitelight.evt_summaryState.aget(timeout=self._eventt_timeout)
         state = salobj.State(ss)
 
@@ -85,7 +91,7 @@ class WhiteLightControlScriptBase(salobj.BaseScript):
                 f"{self._whitelight.name} needs to be enabled to run this script"
             )
 
-        # now turn on (or off, depending on instantiation) the lamp
+        # Now turn on (or off, depending on instantiation) the lamp
         await self._exec_whitelight_onoff_action()
 
     @abstractmethod
@@ -99,6 +105,20 @@ class WhiteLightControlScriptTurnOn(WhiteLightControlScriptBase):
         return "on"
 
     async def _exec_whitelight_onoff_action(self) -> None:
+        # If we are turning on the lamp, first need to verify
+        # that the chiller is turned on. If not, turn it on
+        chillerState = await self._whitelight.evt_chillerWatchdog(
+            timeout=self._event_timeout
+        )
+        # Note: 2 is chillerState.RUN
+        if chillerState != 2:
+            await self._whitelight.cmd_startChiller()
+            await asyncio.sleep(self.chiller_turnon_wait)
+        chillerState = await self._whitelight.evt_chillerWatchdog(
+            timeout=self._event_timeout
+        )
+        if chillerState != 2:
+            raise RuntimeError("chiller failed to turn on in the specified time")
         await self._whitelight.cmd_turnLampOn(self._lamp_power)
 
 

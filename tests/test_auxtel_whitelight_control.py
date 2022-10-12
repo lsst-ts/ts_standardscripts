@@ -41,6 +41,7 @@ class TestAuxtelWhiteLightScripts(
     TEST_SCRIPTS = [WhiteLightControlScriptTurnOff, WhiteLightControlScriptTurnOn]
     TEST_POWER_VALUE: float = 800.0
     TEST_TIMEOUT_VALUE: int = 35
+    TEST_CHILLER_TURNON_VALUE: float = 120.0
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -71,10 +72,12 @@ class TestAuxtelWhiteLightScripts(
                 await self.configure_script(
                     lamp_power=self.TEST_POWER_VALUE,
                     event_timeout=self.TEST_TIMEOUT_VALUE,
+                    chiller_turnon_wait=self.TEST_CHILLER_TURNON_VALUE,
                 )
 
-                assert self.script._evttimeout == self.TEST_TIMEOUT_VALUE
-                assert self.script._lamppower == self.TEST_POWER_VALUE
+                assert self.script.event_timeout == self.TEST_TIMEOUT_VALUE
+                assert self.script.lamp_power == self.TEST_POWER_VALUE
+                assert self.script.chiller_turnon_wait == self.TEST_CHILLER_TURNON_VALUE
 
     async def test_run(self):
         for sc in self.TEST_SCRIPTS:
@@ -83,6 +86,7 @@ class TestAuxtelWhiteLightScripts(
                 await self.configure_script(
                     lamp_power=self.TEST_POWER_VALUE,
                     event_timeout=self.TEST_TIMEOUT_VALUE,
+                    chilller_turnon_wait=self.TEST_CHILLER_TURNON_VALUE
                 )
 
                 await self.run_script()
