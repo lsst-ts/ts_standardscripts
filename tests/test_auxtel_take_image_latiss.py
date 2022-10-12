@@ -100,6 +100,7 @@ class TestATCamTakeImage(
             assert self.script.config.grating is None
             assert self.script.config.linear_stage is None
 
+        async with self.make_script():
             exp_times = 1.1
             image_type = "OBJECT"
             nimages = 2
@@ -117,6 +118,7 @@ class TestATCamTakeImage(
             assert self.script.config.filter == filter
             assert self.script.config.grating == grating
 
+        async with self.make_script():
             exp_times = 1.1
             nimages = 2
             filter = "blue"
@@ -136,6 +138,7 @@ class TestATCamTakeImage(
             assert self.script.config.grating == grating
             assert self.script.config.linear_stage == linear_stage
 
+        async with self.make_script():
             exp_times = [0, 2, 0.5]
             filter = 2
             grating = "a grating"
@@ -152,6 +155,7 @@ class TestATCamTakeImage(
             assert self.script.config.grating == grating
             assert self.script.config.linear_stage == linear_stage
 
+        async with self.make_script():
             exp_times = [0, 2, 0.5]
             nimages = len(exp_times) + 1
             with pytest.raises(salobj.ExpectedError):

@@ -42,7 +42,6 @@ class TestTakeImageComCam(
     async def test_configure(self):
 
         async with self.make_script():
-
             exp_times = 1.1
             image_type = "OBJECT"
             await self.configure_script(exp_times=exp_times, image_type=image_type)
@@ -50,6 +49,7 @@ class TestTakeImageComCam(
             assert self.script.config.image_type == image_type
             assert self.script.config.filter is None
 
+        async with self.make_script():
             exp_times = 1.1
             image_type = "OBJECT"
             nimages = 2
@@ -64,6 +64,7 @@ class TestTakeImageComCam(
             assert self.script.config.image_type == image_type
             assert self.script.config.filter == filter
 
+        async with self.make_script():
             exp_times = 1.1
             nimages = 2
             filter = "blue"
@@ -77,6 +78,7 @@ class TestTakeImageComCam(
             assert self.script.config.image_type == image_type
             assert self.script.config.filter == filter
 
+        async with self.make_script():
             exp_times = [0, 2, 0.5]
             filter = 2
             await self.configure_script(
@@ -88,6 +90,7 @@ class TestTakeImageComCam(
             assert self.script.config.image_type == image_type
             assert self.script.config.filter == filter
 
+        async with self.make_script():
             exp_times = [0, 2, 0.5]
             nimages = len(exp_times) + 1
             with pytest.raises(salobj.ExpectedError):
