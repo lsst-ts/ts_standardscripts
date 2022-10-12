@@ -89,21 +89,21 @@ pipeline {
         }
 
 
-        stage("Checkout ts_ATDomeTrajectory") {
+        stage("Checkout ts_atdometrajectory") {
             steps {
                 script {
                     sh """
-                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_ATDomeTrajectory && git fetch -p && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_atdometrajectory && git fetch -p && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
                     """
                 }
             }
         }
 
-        stage("Checkout ts_ATDome") {
+        stage("Checkout ts_atdome") {
             steps {
                 script {
                     sh """
-                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_ATDome && git fetch -p && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
+                    docker exec -u saluser \${container_name} sh -c \"source ~/.setup.sh && cd /home/saluser/repos/ts_atdome && git fetch -p && /home/saluser/.checkout_repo.sh \${work_branches} && git pull\"
                     """
                 }
             }
