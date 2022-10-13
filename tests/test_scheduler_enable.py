@@ -41,24 +41,21 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
 
     async def test_configure_errors(self):
         """Test error handling in the do_configure method."""
-        async with self.make_script():
-            config_data = self.script.cmd_configure.DataType()
-            for bad_config in (
-                "",  # need at least one configuration
-                "confog: valid_test_config.yaml",  # typo in "config" should fail
-            ):
-                with self.subTest(bad_config=bad_config):
-                    config_data.config = bad_config
+        for bad_config in (
+            dict(),  # need a config
+            dict(confog="valid_test_config.yaml"),  # typo in "config"
+        ):
+            with self.subTest(bad_config=bad_config):
+                async with self.make_script():
                     with pytest.raises(salobj.ExpectedError):
-                        await self.script.do_configure(config_data)
+                        await self.configure_script(**bad_config)
 
     async def test_configure_good(self):
-        """Test the configure method with a valid configuration.
+        """Test the configure method.
 
         Also exercise verbose=True for make_script.
         """
         async with self.make_script(verbose=True):
-
             with self.assertLogs(self.script.log, level=logging.DEBUG) as script_logs:
                 await self.configure_script(config="valid_test_config.yaml")
 

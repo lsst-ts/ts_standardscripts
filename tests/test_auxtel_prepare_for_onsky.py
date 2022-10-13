@@ -42,15 +42,16 @@ class TestPrepareForOnSky(
 
     async def test_configure(self):
         async with self.make_script():
-
             # works with no configuration
             await self.configure_script()
 
+        async with self.make_script():
             await self.configure_script(ignore=["atpneumatics", "ataos"])
 
             assert not self.script.attcs.check.atpneumatics
             assert not self.script.attcs.check.ataos
 
+        async with self.make_script():
             with self.assertLogs(self.script.log, level=logging.WARNING) as script_logs:
                 await self.configure_script(ignore=["nonono"])
 

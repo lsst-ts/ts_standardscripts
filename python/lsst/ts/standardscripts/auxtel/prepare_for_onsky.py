@@ -1,4 +1,4 @@
-# This file is part of ts_externalcripts
+# This file is part of ts_standardscripts
 #
 # Developed for the Vera Rubin Observatory.
 # This product includes software developed by the LSST Project

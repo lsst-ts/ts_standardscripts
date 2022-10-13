@@ -66,21 +66,22 @@ class TestAuxTelTrackTargetAndTakeImage(
             for key in configuration_full:
                 assert configuration_full[key] == getattr(self.script.config, key)
 
-            required_fields = {
-                "ra",
-                "dec",
-                "rot_sky",
-                "name",
-                "obs_time",
-                "num_exp",
-                "exp_times",
-                "band_filter",
-                "grating",
-            }
+        required_fields = {
+            "ra",
+            "dec",
+            "rot_sky",
+            "name",
+            "obs_time",
+            "num_exp",
+            "exp_times",
+            "band_filter",
+            "grating",
+        }
 
-            for required_field in required_fields:
-                bad_configuration = copy.deepcopy(configuration_full)
-                bad_configuration.pop(required_field)
+        for required_field in required_fields:
+            bad_configuration = copy.deepcopy(configuration_full)
+            bad_configuration.pop(required_field)
+            async with self.make_script():
                 with pytest.raises(salobj.ExpectedError):
                     await self.configure_script(**bad_configuration)
 

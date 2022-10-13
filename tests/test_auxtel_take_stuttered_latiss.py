@@ -85,17 +85,17 @@ class TestATCamTakeImage(
             assert self.script.config.note == config.note
 
     async def test_configure_bad(self):
-        async with self.make_script():
-
-            for bad_config in (
-                dict(),  # no config
-                dict(n_images=0),
-                dict(n_shift=0),
-                dict(row_shift=0),
-                dict(exptime=-1.0),
-            ):
-                with self.assertRaises(salobj.ExpectedError):
-                    await self.configure_script(**bad_config)
+        for bad_config in (
+            dict(),  # no config
+            dict(n_images=0),
+            dict(n_shift=0),
+            dict(row_shift=0),
+            dict(exptime=-1.0),
+        ):
+            with self.subTest(bad_config=bad_config):
+                async with self.make_script():
+                    with self.assertRaises(salobj.ExpectedError):
+                        await self.configure_script(**bad_config)
 
     async def test_run(self):
         async with self.make_script():

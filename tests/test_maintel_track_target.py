@@ -44,35 +44,41 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
     async def test_configure(self):
         """Test different configuration scenarios."""
         async with self.make_script():
-
             # Test no default configuration. User must provide something.
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script()
 
+        async with self.make_script():
             # If RA is given Dec must be given too.
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(slew_icrs=dict(ra=10.0))
 
+        async with self.make_script():
             # If Dec is given ra must be given too.
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(slew_icrs=dict(dec=-10.0))
 
+        async with self.make_script():
             # Invalid RA
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(slew_icrs=dict(ra=-0.1, dec=0.0))
 
+        async with self.make_script():
             # Invalid RA
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(slew_icrs=dict(ra=24.1, dec=0.0))
 
+        async with self.make_script():
             # Invalid Dec
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(slew_icrs=dict(ra=1.0, dec=-90.1))
 
+        async with self.make_script():
             # Invalid Dec
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(slew_icrs=dict(ra=1.0, dec=90.1))
 
+        async with self.make_script():
             # Invalid rot_type
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(
@@ -83,26 +89,31 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
                     rot_type="invalid",
                 )
 
+        async with self.make_script():
             # Script can be configured with target name only
             await self.configure_script(target_name="eta Car")
 
+        async with self.make_script():
             # Script can be configured with ra, dec only
             await self.configure_script(slew_icrs=dict(ra=1.0, dec=-10.0))
 
+        async with self.make_script():
             # Script can be configured with az/el
             await self.configure_script(
                 find_target=dict(az=1.0, el=80.0, mag_limit=8.0)
             )
 
-            # Configure passing rotator angle and all rotator strategies
-            for rot_type in RotType:
-                with self.subTest(f"rot_type={rot_type.name}", rot_type=rot_type.name):
+        # Configure passing rotator angle and all rotator strategies
+        for rot_type in RotType:
+            with self.subTest(f"rot_type={rot_type.name}", rot_type=rot_type.name):
+                async with self.make_script():
                     await self.configure_script(
                         slew_icrs=dict(ra=1.0, dec=-10.0),
                         rot_value=10,
                         rot_type=rot_type.name,
                     )
 
+        async with self.make_script():
             # Test ignore feature.
             await self.configure_script(
                 target_name="eta Car", ignore=["mtdometrajectory", "mthexapod_1"]
