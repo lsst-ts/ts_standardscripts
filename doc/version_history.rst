@@ -12,6 +12,9 @@ v1.15.2
 * Update unit tests to be compatible with ts_salobj 7.2, while remaining backwards compatible.
 * Remove unused dependencies, including ts_atdome, ts_atdometrajectory and ts_atmcssimulator.
 * Modernize the CI Jenkinsfile.
+* In ``auxtel/track_target_and_take_image.py``:
+  * Use snaps instead of isolated observations when visit is standard.
+  * Add a new configuration parameter "filter_suffix" to allow appending strings to the filter name.
 
 v1.15.1
 -------
