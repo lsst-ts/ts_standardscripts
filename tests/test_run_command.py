@@ -45,20 +45,19 @@ class TestRunCommand(
 
     async def test_configure_errors(self):
         """Test error handling in the do_configure method."""
-        async with self.make_script():
-            for bad_config in (
-                {},  # need component name and command name
-                {"component": "Test:1"},  # need command name
-                {"cmd": "setScalars"},  # need component name
-            ):
-                with self.subTest(bad_config=bad_config):
+        for bad_config in (
+            {},  # need component name and command name
+            {"component": "Test:1"},  # need command name
+            {"cmd": "setScalars"},  # need component name
+        ):
+            with self.subTest(bad_config=bad_config):
+                async with self.make_script():
                     with pytest.raises(salobj.ExpectedError):
                         await self.configure_script(**bad_config)
 
     async def test_configure_good(self):
         """Test the configure method with a valid configuration."""
         async with self.make_script():
-
             # Basic providing only component and command
             await self.configure_script(component="Test:1", cmd="setScalars")
 
@@ -68,6 +67,7 @@ class TestRunCommand(
             assert self.script.event is None
             assert not self.script.flush
 
+        async with self.make_script():
             # Provide event
             await self.configure_script(
                 component="Test:1", cmd="setScalars", event="scalars"
@@ -79,6 +79,7 @@ class TestRunCommand(
             assert self.script.event == "scalars"
             assert self.script.flush
 
+        async with self.make_script():
             # Provide event with flush = False
             await self.configure_script(
                 component="Test:1", cmd="setScalars", event="scalars", flush=False
@@ -90,6 +91,7 @@ class TestRunCommand(
             assert self.script.event == "scalars"
             assert not self.script.flush
 
+        async with self.make_script():
             # Provide parameter for the command
             await self.configure_script(
                 component="Test:1",

@@ -66,21 +66,22 @@ class TestAuxTelTrackTargetAndTakeImage(
             for key in configuration_full:
                 assert configuration_full[key] == getattr(self.script.config, key)
 
-            required_fields = {
-                "ra",
-                "dec",
-                "rot_sky",
-                "name",
-                "obs_time",
-                "num_exp",
-                "exp_times",
-                "band_filter",
-                "grating",
-            }
+        required_fields = {
+            "ra",
+            "dec",
+            "rot_sky",
+            "name",
+            "obs_time",
+            "num_exp",
+            "exp_times",
+            "band_filter",
+            "grating",
+        }
 
-            for required_field in required_fields:
-                bad_configuration = copy.deepcopy(configuration_full)
-                bad_configuration.pop(required_field)
+        for required_field in required_fields:
+            bad_configuration = copy.deepcopy(configuration_full)
+            bad_configuration.pop(required_field)
+            async with self.make_script():
                 with pytest.raises(salobj.ExpectedError):
                     await self.configure_script(**bad_configuration)
 
@@ -151,7 +152,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             latiss_take_object_calls = [
                 unittest.mock.call(
                     exptime=configuration_std_visit["exp_times"][0],
-                    n=configuration_std_visit["num_exp"],
+                    n_snaps=configuration_std_visit["num_exp"],
                     group_id=self.script.group_id,
                     reason=configuration_std_visit["reason"],
                     program=configuration_std_visit["program"],
@@ -448,6 +449,7 @@ class TestAuxTelTrackTargetAndTakeImage(
         self,
         exptime,
         n=1,
+        n_snaps=1,
         filter=None,
         grating=None,
         group_id=None,
@@ -456,9 +458,14 @@ class TestAuxTelTrackTargetAndTakeImage(
     ):
 
         self.log.debug(
-            f"exptime: {exptime}s, n: {n}, filter: {filter}, "
-            f"grating: {grating}, group_id: {group_id}, "
-            f"reason: {reason}, program: {program}"
+            f"exptime: {exptime}s, "
+            f"n: {n}, "
+            f"n_snaps: {n_snaps}, "
+            f"filter: {filter}, "
+            f"grating: {grating}, "
+            f"group_id: {group_id}, "
+            f"reason: {reason}, "
+            f"program: {program}"
         )
         await asyncio.sleep(exptime * n)
 

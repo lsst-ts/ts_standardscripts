@@ -113,11 +113,16 @@ class TestATCalSysTakeData(
             # configure requires wavelengths and integration_times
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script()
+
+        async with self.make_script():
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(wavelengths=100)
+
+        async with self.make_script():
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(integration_times=100)
 
+        async with self.make_script():
             # if configured with a scalar then every element has length 1
             await self.configure_script(wavelengths=100, integration_times=31)
             assert_array_equal(self.script.config.wavelengths, [100])
@@ -127,6 +132,7 @@ class TestATCalSysTakeData(
                 assert isinstance(arg, np.ndarray)
                 assert len(arg) == 1
 
+        async with self.make_script():
             # if configured with an array then
             # every element has the same length
             await self.configure_script(wavelengths=[100, 200], integration_times=31)
@@ -137,6 +143,7 @@ class TestATCalSysTakeData(
                 assert isinstance(arg, np.ndarray)
                 assert len(arg) == 2
 
+        async with self.make_script():
             await self.configure_script(
                 wavelengths=100, integration_times=31, grating_types=[1, 2]
             )

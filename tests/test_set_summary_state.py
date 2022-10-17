@@ -97,26 +97,25 @@ class TestSetSummaryState(
 
     async def test_configure_errors(self):
         """Test error handling in the do_configure method."""
-        async with self.make_script():
-            name_ind = "Test:1"
-            config_data = self.script.cmd_configure.DataType()
-            for bad_config in (
-                "data: []",  # need at least one tuple
-                "data: [[]]",  # tuple has 0 values; need 2 or 3
-                f'data: [["{name_ind}"]]',  # tuple has 1 item; need 2 or 3
-                # tuple has 4 items; need 2 or 3
-                f'data: [["{name_ind}", "enabled", "", "4th field not allowed"]]',
-                '[("invalid csc name:5", "enabled")]',  # bad CSC name format
-                '[("invalid*csc*name:5", "enabled")]',  # bad CSC name format
-                '[("no_such_CSC:5", "enabled")]',  # no such CSC
-                '[(name_ind, "invalid_state")]',  # no such state
-                '[(name_ind, "fault")]',  # fault state is not supported
-                "[(name_ind, 1)]",  # integer states are not supported
-            ):
-                with self.subTest(bad_config=bad_config):
-                    config_data.config = bad_config
+        name_ind = "Test:1"
+        for bad_data in (
+            "[]",  # need at least one tuple
+            "[[]]",  # tuple has 0 items; need 2 or 3
+            f'[["{name_ind}"]]',  # tuple has 1 item; need 2 or 3
+            # tuple has 4 items; need 2 or 3:
+            f'[["{name_ind}", "enabled", "", "4th field not allowed"]]',
+            '[("invalid csc name:5", "enabled")]',  # bad CSC name format
+            '[("invalid*csc*name:5", "enabled")]',  # bad CSC name format
+            '[("no_such_CSC:5", "enabled")]',  # no such CSC
+            '[(name_ind, "invalid_state")]',  # no such state
+            '[(name_ind, "fault")]',  # fault state is not supported
+            "[(name_ind, 1)]",  # integer states are not supported
+        ):
+            bad_config = dict(data=bad_data)
+            with self.subTest(bad_config=bad_config):
+                async with self.make_script():
                     with pytest.raises(salobj.ExpectedError):
-                        await self.script.do_configure(config_data)
+                        await self.configure_script(**bad_config)
 
     async def test_configure_good(self):
         """Test the configure method with a valid configuration.

@@ -43,27 +43,26 @@ class TestSetupMTCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
     async def test_configure_errors(self):
         """Test error handling in the do_configure method."""
-        async with self.make_script():
-
-            # Check schema validation.
-            for bad_config in (
-                # The only *bad* case is that ccw_following has invalid value
-                {"ccw_following": "BADVALUE"},
-            ):
-                with self.subTest(bad_config=bad_config):
+        # Check schema validation.
+        for bad_config in (
+            # The only *bad* case is that ccw_following has invalid value
+            {"ccw_following": "BADVALUE"},
+        ):
+            with self.subTest(bad_config=bad_config):
+                async with self.make_script():
                     with self.assertRaises(salobj.ExpectedError):
                         await self.configure_script(**bad_config)
 
     async def test_configure_good(self):
         """Test configure method with valid configurations."""
         async with self.make_script():
-
             # Start with default configuration
             await self.configure_script()
 
             # The default value for `ccw_following` is True
             self.assertEqual(self.script.config.ccw_following, True)
 
+        async with self.make_script():
             # Now try to change that to False
             ccw_following = False
             await self.configure_script(
