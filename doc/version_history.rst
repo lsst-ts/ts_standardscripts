@@ -6,6 +6,12 @@
 Version History
 ===============
 
+v1.15.3
+-------
+
+* `BaseScriptTestCase` fix a potential unbound local variable error in ``check_executable``.
+  This is only triggered if the process cannot be created or $PATH cannot be set, so it obscures some other problem.
+
 v1.15.2
 -------
 
