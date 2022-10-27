@@ -6,6 +6,12 @@
 Version History
 ===============
 
+v1.15.4
+-------
+
+* Add maintel/track_target_and_take_image_comcam.py with new ``TrackTargetAndTakeImageGenCam``. 
+* Add unit tests for ``TrackTargetAndTakeImageGenCam``
+
 v1.15.3
 -------
 
