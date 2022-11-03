@@ -90,6 +90,7 @@ class SetupMTCS(salobj.BaseScript):
         self.checkpoints_activities = [
             ("Check that MTCS Components have heartbeats", self.mtcs.assert_liveliness),
             ("Start MTPtg", self.start_mtptg),
+            ("Prepare MTMount and MTRotator", self.prepare_mtmount_and_mtrotator),
             ("Start MTMount", self.start_mtmount),
             ("Start MTRotator", self.start_mtrotator),
             ("Check Rotator and CCW", self.check_rotator_and_ccw),
@@ -209,6 +210,22 @@ class SetupMTCS(salobj.BaseScript):
             overrides=dict(mtptg=self.config.overrides["mtptg"]),
         )
 
+    async def prepare_mtmount_and_mtrotator(self):
+        """Put both mtmount and mtrotator in DISABLED state. This is required
+        before enabling them because they share telemetry."""
+        self.log.info("Putting mtmount to DISABLED state")
+        await self.mtcs.set_state(
+            salobj.State.DISABLED,
+            components=["mtmount"],
+            overrides=dict(mtmount=self.config.overrides["mtmount"]),
+        )
+        self.log.info("Putting mtrotator to DISABLED state")
+        await self.mtcs.set_state(
+            salobj.State.DISABLED,
+            components=["mtrotator"],
+            overrides=dict(mtmount=self.config.overrides["mtmount"]),
+        )
+
     async def start_mtmount(self):
         """Starts mtmount"""
         self.log.info("Start mtmount")
@@ -217,6 +234,8 @@ class SetupMTCS(salobj.BaseScript):
             components=["mtmount"],
             overrides=dict(mtmount=self.config.overrides["mtmount"]),
         )
+        self.log.info("Home mtmount")
+        await self.mtcs.rem.mtmount.cmd_homeBothAxes.set_start()
 
     async def start_mtrotator(self):
         """Start mtrotator"""
