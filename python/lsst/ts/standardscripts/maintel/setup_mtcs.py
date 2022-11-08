@@ -234,8 +234,9 @@ class SetupMTCS(salobj.BaseScript):
             components=["mtmount"],
             overrides=dict(mtmount=self.config.overrides["mtmount"]),
         )
+        # TODO: DM-36932
         self.log.info("Home mtmount")
-        await self.mtcs.rem.mtmount.cmd_homeBothAxes.set_start()
+        await self.mtcs.rem.mtmount.cmd_homeBothAxes.start(timeout=300)
 
     async def start_mtrotator(self):
         """Start mtrotator"""
