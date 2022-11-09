@@ -6,6 +6,13 @@
 Version History
 ===============
 
+v1.15.5
+-------
+
+* Update maintel/setup_mtcs.py 
+  * Now put the mount and the rotator into disabled state so they can share telemetry.
+  * Do the homing of the mount
+
 v1.15.4
 -------
 
