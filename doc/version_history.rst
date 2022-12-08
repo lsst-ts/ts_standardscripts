@@ -6,6 +6,11 @@
 Version History
 ===============
 
+v1.16.0
+-------
+
+* Add daytime_checkout SAL scripts, executables, and tests
+
 v1.15.5
 -------
 

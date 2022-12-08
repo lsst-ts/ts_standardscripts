@@ -18,10 +18,11 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["get_scripts_dir"]
+__all__ = ["get_scripts_dir", "get_topic_time_utc"]
 
 import pathlib
 import collections.abc
+from lsst.ts.utils import astropy_time_from_tai_unix
 
 
 def get_scripts_dir():
@@ -92,3 +93,23 @@ def format_as_list(value, recurrences):
     value_as_list = [value] * recurrences
 
     return value_as_list
+
+
+def get_topic_time_utc(topic):
+    """Reformat a topic command time from TAI unix to UTC.
+
+    Parameters
+    ----------
+    topic: `salobj.BaseMsgType`
+        A single event message.
+
+    Returns
+    -------
+    topic_time_utc: `str`
+        Value of salobj.BaseMsgType.private_sndStamp in UTC str time.
+    """
+
+    topic_time = astropy_time_from_tai_unix(topic.private_sndStamp)
+    topic_time.format = "iso"
+    topic_time_utc = topic_time.utc
+    return topic_time_utc
