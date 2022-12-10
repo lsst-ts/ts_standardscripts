@@ -18,19 +18,37 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .calsys_takedata import *
-from .enable_atcs import *
-from .enable_latiss import *
-from .standby_atcs import *
-from .standby_latiss import *
-from .shutdown import *
-from .offline_atcs import *
-from .offline_latiss import *
-from .prepare_for.onsky import *
-from .prepare_for.flats import *
-from .stop import *
-from .stop_tracking import *
-from .take_image_latiss import *
-from .take_stuttered_latiss import *
-from .track_target import *
-from .track_target_and_take_image import *
+__all__ = ["PrepareForVent"]
+
+from lsst.ts import salobj
+from lsst.ts.observatory.control.auxtel.atcs import ATCS
+
+
+class PrepareForVent(salobj.BaseScript):
+    """Run prepare for vent on ATCS.
+
+    Parameters
+    ----------
+    index : `int`
+        Index of Script SAL component.
+    """
+
+    def __init__(self, index):
+        super().__init__(index=index, descr="Prepare for vent.")
+
+        self.atcs = ATCS(self.domain, log=self.log)
+
+    @classmethod
+    def get_schema(cls):
+        # This script does not require any configuration
+        return None
+
+    async def configure(self, config):
+        # This script does not require any configuration
+        pass
+
+    def set_metadata(self, metadata):
+        metadata.duration = 600.0
+
+    async def run(self):
+        await self.atcs.prepare_for_vent()

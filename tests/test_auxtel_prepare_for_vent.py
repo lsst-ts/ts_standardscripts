@@ -23,7 +23,7 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForFlat
+from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForVent
 from lsst.ts.observatory.control.mock import ATCSMock
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -31,26 +31,18 @@ random.seed(47)  # for set_random_lsst_dds_partition_prefix
 logging.basicConfig()
 
 
-class TestPrepareForFlat(
+class TestPrepareForOnSky(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
     async def basic_make_script(self, index):
-        self.script = PrepareForFlat(index=index)
+        self.script = PrepareForVent(index=index)
         self.atcs_mock = ATCSMock()
 
         return (self.script, self.atcs_mock)
 
-    async def test_run(self):
-        async with self.make_script():
-            await self.configure_script()
-
-            # TODO: Have to think about how to test this script.
-
-            # await self.run_script()
-
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "prepare_for" / "flat.py"
+        script_path = scripts_dir / "auxtel" / "prepare_for" / "vent.py"
         await self.check_executable(script_path)
 
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
@@ -18,19 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .calsys_takedata import *
-from .enable_atcs import *
-from .enable_latiss import *
-from .standby_atcs import *
-from .standby_latiss import *
-from .shutdown import *
-from .offline_atcs import *
-from .offline_latiss import *
-from .prepare_for.onsky import *
-from .prepare_for.flats import *
-from .stop import *
-from .stop_tracking import *
-from .take_image_latiss import *
-from .take_stuttered_latiss import *
-from .track_target import *
-from .track_target_and_take_image import *
+import asyncio
+
+from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForFlat
+
+asyncio.run(PrepareForFlat.amain())
