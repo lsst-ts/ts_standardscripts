@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["ATPnuematicsCheckout"]
+__all__ = ["ATPneumaticsCheckout"]
 
 from lsst.ts import salobj
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
@@ -27,11 +27,11 @@ from ...utils import get_topic_time_utc
 STD_TIMEOUT = 5  # seconds
 
 
-class ATPnuematicsCheckout(salobj.BaseScript):
-    """Pnuematics Checkout SAL Script.
+class ATPneumaticsCheckout(salobj.BaseScript):
+    """Pneumatics Checkout SAL Script.
 
     This script performs the daytime checkout of the Auxiliary
-    Telescope pnuematics system to ensure it is ready to be released
+    Telescope pneumatics system to ensure it is ready to be released
     for nighttime operations.
 
     Parameters
@@ -43,7 +43,7 @@ class ATPnuematicsCheckout(salobj.BaseScript):
     -----
     **Checkpoints**
 
-    - "Opening pnuematics valves": Before opening pnuematics valves, this will
+    - "Opening pneumatics valves": Before opening pneumatics valves, this will
     pressurize the system.
     - "Turning on ATAOS coerrections": Before turning on ATAOS corrections.
     - "Turning off ATAOS coerrections": Before turning off ATAOS corrections.
@@ -54,7 +54,7 @@ class ATPnuematicsCheckout(salobj.BaseScript):
     **Details**
 
     This script performs a daytime checkout of the Auxiliary Telescope
-    Pnuematics system. It will first turn on the valves and check that the line
+    Pneumatics system. It will first turn on the valves and check that the line
     pressure is sufficient for operations. Then, it will turn on/off the ATAOS
     corrections before lowering the mirror back down onto its hardpoints.
     Finally the mirror cover and vents are opened and closed. No telescope
@@ -65,7 +65,7 @@ class ATPnuematicsCheckout(salobj.BaseScript):
 
         super().__init__(
             index=index,
-            descr="Execute daytime checkout of AT Pnuematics.",
+            descr="Execute daytime checkout of AT Pneumatics.",
         )
 
         atcs_usage = ATCSUsages.All if add_remotes else ATCSUsages.DryTest
@@ -95,10 +95,10 @@ class ATPnuematicsCheckout(salobj.BaseScript):
 
         await self.assert_feasibility()
 
-        await self.checkpoint("Opening pnuematics valves")
+        await self.checkpoint("Opening pneumatics valves")
 
         await self.atcs.open_valves()
-        pressure = await self.atcs.rem.atpnuematics.tel_mainAirSourcePressure.next(
+        pressure = await self.atcs.rem.atpneumatics.tel_mainAirSourcePressure.next(
             flush=True, timeout=STD_TIMEOUT
         )
         if (
@@ -127,7 +127,7 @@ class ATPnuematicsCheckout(salobj.BaseScript):
         cmd_time = get_topic_time_utc(cmd)
         self.log.info(f"ATAOS corrections enabled -- {cmd.result} at {cmd_time} UT")
 
-        m1_pressure = await self.atcs.rem.atpnuematics.tel_m1AirPressure.aget(timeout=5)
+        m1_pressure = await self.atcs.rem.atpneumatics.tel_m1AirPressure.aget(timeout=5)
         self.log.info(
             f"M1 Air pressure with enabled ATAOS corrections is {m1_pressure.pressure:0.0f} Pascals"
         )
@@ -144,8 +144,8 @@ class ATPnuematicsCheckout(salobj.BaseScript):
         await self.checkpoint("Lowering Mirror to hardpoints")
 
         # Lower mirror back on hard points
-        cmd = await self.atcs.rem.atpnuematics.cmd_m1SetPressure.set_start(pressure=0)
-        m1_pressure = await self.atcs.rem.atpnuematics.tel_m1AirPressure.aget(
+        cmd = await self.atcs.rem.atpneumatics.cmd_m1SetPressure.set_start(pressure=0)
+        m1_pressure = await self.atcs.rem.atpneumatics.tel_m1AirPressure.aget(
             timeout=STD_TIMEOUT
         )
         self.log.info(

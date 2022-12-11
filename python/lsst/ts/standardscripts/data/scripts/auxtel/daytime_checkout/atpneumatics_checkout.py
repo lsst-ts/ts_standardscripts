@@ -21,6 +21,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.daytime_checkout import ATPnuematicsCheckout
+from lsst.ts.standardscripts.auxtel.daytime_checkout import ATPneumaticsCheckout
 
-asyncio.run(ATPnuematicsCheckout.amain())
+asyncio.run(ATPneumaticsCheckout.amain())
