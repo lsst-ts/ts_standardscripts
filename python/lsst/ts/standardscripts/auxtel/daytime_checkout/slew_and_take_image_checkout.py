@@ -131,7 +131,7 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
         # Take an Engineering test frame and verify ingestion at OODS
         await self.checkpoint("Slew and take image 1/2")
 
-        await self.latiss.rem.atoods.evt_imageInOODS.flush()
+        self.latiss.rem.atoods.evt_imageInOODS.flush()
         await self.latiss.take_engtest(2, filter=0, grating=0)
         try:
             ingest_event = await self.latiss.rem.atoods.evt_imageInOODS.next(
@@ -172,7 +172,7 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
         )
 
         # Take an Engineering test frame and verify ingestion at OODS
-        await self.latiss.rem.atoods.evt_imageInOODS.flush()
+        self.latiss.rem.atoods.evt_imageInOODS.flush()
         await self.latiss.take_engtest(2, filter=1, grating=1)
         try:
             ingest_event = await self.latiss.rem.atoods.evt_imageInOODS.next(
@@ -224,3 +224,20 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
             self.atcs.assert_all_enabled(),
             self.latiss.assert_all_enabled(),
         )
+
+    async def cleanup(self):
+
+        if self.state.state != ScriptState.ENDING:
+            try:
+                await self.atcs.stop_tracking()
+            except asyncio.TimeoutError:
+                self.log.exception(
+                    "Stop tracking command timed out during cleanup procedure."
+                )
+            except Exception:
+                self.log.exception("Unexpected exception in stop_tracking.")
+
+            try:
+                await self.atcs.disable_ataos_corrections()
+            except Exception:
+                self.log.exception("Unexpected exception disabling ataos corrections.")
