@@ -18,27 +18,102 @@
 #
 # You should have received a copy of the GNU General Public License
 
-import logging
-import random
 import unittest
+from unittest.mock import patch, Mock, AsyncMock
 
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForVent
-from lsst.ts.observatory.control.mock import ATCSMock
-
-random.seed(47)  # for set_random_lsst_dds_partition_prefix
-
-logging.basicConfig()
 
 
 class TestPrepareForOnSky(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
     async def basic_make_script(self, index):
-        self.script = PrepareForVent(index=index)
-        self.atcs_mock = ATCSMock()
+        self.script = PrepareForVent(index=index, remotes=False)
 
-        return (self.script, self.atcs_mock)
+        return (self.script,)
+
+    async def test_config(self):
+
+        async with self.make_script():
+            config = dict()
+            await self.configure_script(**config)
+            assert self.script.config.end_at_sun_elevation == 0
+
+            config = dict(end_at_sun_elevation=10.0)
+            await self.configure_script(**config)
+            assert (
+                self.script.config.end_at_sun_elevation
+                == config["end_at_sun_elevation"]
+            )
+
+    async def test_assert_vent_feasibility(self):
+        expected_feasibility = [
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            True,
+            True,
+            False,
+            False,
+        ]
+        sun_azel_sample = [
+            (116.51, 0.59),
+            (107.35, 16.61),
+            (99.06, 33.42),
+            (90.18, 50.61),
+            (76.71, 67.76),
+            (24.81, 82.10),
+            (292.31, 73.68),
+            (273.66, 56.82),
+            (263.92, 39.58),
+            (255.63, 22.60),
+            (245.19, 3.38),
+            (243.40, 0.55),
+        ]
+
+        async with self.make_script():
+            for feasibility, sun_azel in zip(expected_feasibility, sun_azel_sample):
+                with self.subTest(feasibility=feasibility, sun_azel=sun_azel):
+                    if feasibility:
+                        self.script.assert_vent_feasibility(*sun_azel)
+                    else:
+                        with self.assertRaisesRegex(
+                            RuntimeError, "Vent constraints not met."
+                        ):
+                            self.script.assert_vent_feasibility(*sun_azel)
+
+    async def test_estimate_duration(self):
+        async with self.make_script():
+            duration = self.script.estimate_duration()
+            assert duration > 0
+
+    @patch.multiple(
+        PrepareForVent,
+        get_sun_azel=Mock(
+            side_effect=[
+                (255.63, 22.60),
+                (245.19, 3.38),
+                (243.40, -0.55),
+            ]
+        ),
+        prepare_for_vent=AsyncMock(),
+        reposition_telescope_and_dome=AsyncMock(),
+    )
+    async def test_run(self):
+        async with self.make_script():
+            await self.configure_script()
+            self.script.track_sun_sleep_time = 0.5
+            await self.run_script()
+
+            self.script.get_sun_azel.assert_called()
+            self.script.prepare_for_vent.assert_awaited()
+            self.script.reposition_telescope_and_dome.assert_awaited()
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
