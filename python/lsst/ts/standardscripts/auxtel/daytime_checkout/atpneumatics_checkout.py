@@ -22,7 +22,6 @@ __all__ = ["ATPneumaticsCheckout"]
 
 from lsst.ts import salobj
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
-from ...utils import get_topic_time_utc
 
 STD_TIMEOUT = 5  # seconds
 
@@ -121,11 +120,7 @@ class ATPneumaticsCheckout(salobj.BaseScript):
 
         await self.checkpoint("Turning on ATAOS corrections")
 
-        cmd = await self.atcs.rem.ataos.cmd_enableCorrection.set_start(
-            m1=True, hexapod=True, atspectrograph=True
-        )
-        cmd_time = get_topic_time_utc(cmd)
-        self.log.info(f"ATAOS corrections enabled -- {cmd.result} at {cmd_time} UT")
+        await self.atcs.enable_ataos_corrections()
 
         m1_pressure = await self.atcs.rem.atpneumatics.tel_m1AirPressure.aget(timeout=5)
         self.log.info(
@@ -135,16 +130,8 @@ class ATPneumaticsCheckout(salobj.BaseScript):
         await self.checkpoint("Turning off ATAOS corrections")
 
         # Turn off ATAOS correction(s)
-        cmd = await self.atcs.rem.ataos.cmd_disableCorrection.set_start(
-            m1=True, hexapod=True, atspectrograph=True
-        )
-        cmd_time = get_topic_time_utc(cmd)
-        self.log.info(f"Corrections disabled -- {cmd.result} at {cmd_time} UT")
+        await self.atcs.disable_ataos_corrections()
 
-        await self.checkpoint("Lowering Mirror to hardpoints")
-
-        # Lower mirror back on hard points
-        cmd = await self.atcs.rem.atpneumatics.cmd_m1SetPressure.set_start(pressure=0)
         m1_pressure = await self.atcs.rem.atpneumatics.tel_m1AirPressure.aget(
             timeout=STD_TIMEOUT
         )
