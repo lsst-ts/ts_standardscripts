@@ -20,8 +20,29 @@
 
 __all__ = ["PrepareForVent"]
 
+import asyncio
+import yaml
+import dataclasses
+
 from lsst.ts import salobj
-from lsst.ts.observatory.control.auxtel.atcs import ATCS
+from lsst.ts import utils
+from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+from astroplan import Observer
+
+
+@dataclasses.dataclass
+class VentConstraints:
+    sun_elevation_max = 55.0
+    sun_elevation_min = 5.0
+    sun_azimuth_min = 0.0
+    sun_azimuth_max = 180.0
+
+    def __repr__(self) -> str:
+        return (
+            "VentConstraints:: \n\n"
+            f"Sun elevation between {self.sun_elevation_max} and {self.sun_elevation_min} degrees.\n"
+            f"Sun azimuth larger than {self.sun_azimuth_max} or lower than {self.sun_elevation_min}."
+        )
 
 
 class PrepareForVent(salobj.BaseScript):
@@ -33,22 +54,148 @@ class PrepareForVent(salobj.BaseScript):
         Index of Script SAL component.
     """
 
-    def __init__(self, index):
+    def __init__(self, index, remotes=True):
         super().__init__(index=index, descr="Prepare for vent.")
 
-        self.atcs = ATCS(self.domain, log=self.log)
+        self.track_sun_sleep_time = 60.0
+
+        self.vent_constraints = VentConstraints()
+
+        self.atcs = ATCS(
+            domain=self.domain,
+            log=self.log,
+            intended_usage=None if remotes else ATCSUsages.DryTest,
+        )
 
     @classmethod
     def get_schema(cls):
-        # This script does not require any configuration
-        return None
+        schema_yaml = """
+            $schema: http://json-schema.org/draft-07/schema#
+            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/prepare_for/vent.yaml
+            title: PrepareForVent v1
+            description: Configuration for Prepare for vent.
+            type: object
+            properties:
+                end_at_sun_elevation:
+                    description: >-
+                        Stop venting when sun reaches this altitude.
+                    type: number
+                    default: 0.0
+            additionalProperties: false
+        """
+        return yaml.safe_load(schema_yaml)
 
     async def configure(self, config):
-        # This script does not require any configuration
-        pass
+        self.config = config
 
     def set_metadata(self, metadata):
-        metadata.duration = 600.0
+        metadata.duration = self.estimate_duration()
 
     async def run(self):
+        sun_az, sun_el = self.get_sun_azel()
+
+        self.assert_vent_feasibility(sun_az, sun_el)
+
+        await self.checkpoint("Preparing...")
+
+        await self.prepare_for_vent()
+
+        self.log.info(f"Venting until sun reaches {self.config.end_at_sun_elevation}.")
+
+        while sun_el > self.config.end_at_sun_elevation:
+            await self.checkpoint(
+                f"Sun @ {sun_el:.2f} deg [limit={self.config.end_at_sun_elevation}]. "
+            )
+            self.log.debug(f"Waiting {self.track_sun_sleep_time}...")
+            await asyncio.sleep(self.track_sun_sleep_time)
+
+            (
+                tel_vent_azimuth,
+                dome_vent_azimuth,
+            ) = self.atcs.get_telescope_and_dome_vent_azimuth()
+
+            self.log.debug(
+                f"Repositioning the telescope and dome: {tel_vent_azimuth=}, {dome_vent_azimuth}."
+            )
+
+            await self.reposition_telescope_and_dome(
+                tel_vent_azimuth, dome_vent_azimuth
+            )
+            _, sun_el = self.get_sun_azel()
+
+    async def reposition_telescope_and_dome(self, tel_vent_azimuth, dome_vent_azimuth):
+
+        try:
+            await self.atcs.point_azel(
+                target_name="Vent Position",
+                az=tel_vent_azimuth,
+                el=self.atcs.tel_vent_el,
+                rot_tel=self.atcs.tel_park_rot,
+                wait_dome=False,
+            )
+            await self.atcs.stop_tracking()
+
+            await self.atcs.slew_dome_to(dome_vent_azimuth)
+        except Exception:
+            self.log.exception(
+                "Error repositioning the telescope and/or done. Continuing..."
+            )
+
+    async def prepare_for_vent(self):
         await self.atcs.prepare_for_vent()
+
+    def get_sun_azel(self):
+        """Get sun azel from ATCS.
+
+        Returns
+        -------
+        `tuple`[`float`, `float`]
+            Current azimuth and elevation of the sun.
+        """
+        return self.atcs.get_sun_azel()
+
+    def assert_vent_feasibility(self, sun_az, sun_el):
+        """Check that it is ok to vent, raise an exception if not.
+
+        Parameters
+        ----------
+        sun_az : `float`
+            Sun azimuth in degrees.
+        sun_el : `float`
+            Sun elevation, in degrees.
+
+        Raises
+        ------
+        RuntimeError
+            If not in the vent band.
+        """
+        if (
+            self.vent_constraints.sun_azimuth_min
+            < sun_az
+            < self.vent_constraints.sun_azimuth_max
+            or sun_el > self.vent_constraints.sun_elevation_max
+            or sun_el < self.vent_constraints.sun_elevation_min
+        ):
+            raise RuntimeError(
+                f"Vent constraints not met. Sun currently @ {sun_az=:.2f},{sun_el=:.2f}. "
+                f"Constraints are {self.vent_constraints!r}."
+            )
+
+    def estimate_duration(self):
+        """Estimate the script duration.
+
+        Returns
+        -------
+        `float`
+            Estimated duration (in seconds).
+        """
+
+        observer = Observer(
+            location=self.atcs.location, name="Rubin", timezone="Chile/Continental"
+        )
+
+        time_sunset = observer.sun_set_time(
+            utils.astropy_time_from_tai_unix(utils.current_tai()), which="next"
+        )
+
+        return time_sunset.unix_tai - utils.current_tai()
