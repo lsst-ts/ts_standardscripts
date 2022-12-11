@@ -68,7 +68,7 @@ class ATPneumaticsCheckout(salobj.BaseScript):
             descr="Execute daytime checkout of AT Pneumatics.",
         )
 
-        atcs_usage = ATCSUsages.All if add_remotes else ATCSUsages.DryTest
+        atcs_usage = None if add_remotes else ATCSUsages.DryTest
 
         # Instantiate atcs. We need to do this after the call to
         # super().__init__() above. We can also pass in the script domain and
