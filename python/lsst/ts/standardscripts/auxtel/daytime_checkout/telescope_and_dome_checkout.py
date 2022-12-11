@@ -20,7 +20,10 @@
 
 __all__ = ["TelescopeAndDomeCheckout"]
 
+import asyncio
+
 from lsst.ts import salobj
+from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 from lsst.ts.observatory.control.utils.enums import RotType
 
@@ -168,3 +171,20 @@ class TelescopeAndDomeCheckout(salobj.BaseScript):
         script.
         """
         await self.atcs.assert_all_enabled()
+
+    async def cleanup(self):
+
+        if self.state.state != ScriptState.ENDING:
+            try:
+                await self.atcs.stop_tracking()
+            except asyncio.TimeoutError:
+                self.log.exception(
+                    "Stop tracking command timed out during cleanup procedure."
+                )
+            except Exception:
+                self.log.exception("Unexpected exception in stop_tracking.")
+
+            try:
+                await self.atcs.disable_ataos_corrections()
+            except Exception:
+                self.log.exception("Unexpected exception disabling ataos corrections.")
