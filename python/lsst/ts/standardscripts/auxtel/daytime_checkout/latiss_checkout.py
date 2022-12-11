@@ -64,9 +64,7 @@ class LatissCheckout(salobj.BaseScript):
             descr="Execute daytime checkout of LATISS.",
         )
 
-        latiss_usage = (
-            LATISSUsages.TakeImageFull if add_remotes else LATISSUsages.DryTest
-        )
+        latiss_usage = None if add_remotes else LATISSUsages.DryTest
 
         # Instantiate latiss. We need to do this after the call to
         # super().__init__() above. We can also pass in the script domain and
