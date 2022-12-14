@@ -48,7 +48,7 @@ class TestStartup(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "prepare_for_onsky.py"
+        script_path = scripts_dir / "auxtel" / "prepare_for" / "onsky.py"
         await self.check_executable(script_path)
 
 
