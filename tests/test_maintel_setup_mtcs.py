@@ -21,10 +21,10 @@
 import random
 import unittest.mock
 
-from lsst.ts import salobj
-from lsst.ts import utils
 from lsst.ts.idl.enums import Script
-from lsst.ts.standardscripts import get_scripts_dir, BaseScriptTestCase
+
+from lsst.ts import salobj, utils
+from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
 from lsst.ts.standardscripts.maintel import SetupMTCS
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix

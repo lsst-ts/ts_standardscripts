@@ -20,8 +20,9 @@
 
 __all__ = ["StandbyMTCS"]
 
-from ..standby_group import StandbyGroup
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+
+from ..standby_group import StandbyGroup
 
 
 class StandbyMTCS(StandbyGroup):

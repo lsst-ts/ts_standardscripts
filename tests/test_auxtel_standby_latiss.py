@@ -22,10 +22,10 @@ import logging
 import random
 import unittest
 
-from lsst.ts import salobj
-from lsst.ts import standardscripts
-from lsst.ts.standardscripts.auxtel import StandbyLATISS
 from lsst.ts.observatory.control.mock import LATISSMock
+
+from lsst.ts import salobj, standardscripts
+from lsst.ts.standardscripts.auxtel import StandbyLATISS
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 

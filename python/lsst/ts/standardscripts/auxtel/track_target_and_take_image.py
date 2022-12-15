@@ -20,14 +20,14 @@
 
 __all__ = ["TrackTargetAndTakeImage"]
 
-import yaml
 import asyncio
+
+import yaml
+from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
+from lsst.ts.observatory.control.utils import RotType
 
 from ..base_track_target_and_take_image import BaseTrackTargetAndTakeImage
 from ..utils import format_as_list
-
-from lsst.ts.observatory.control.utils import RotType
-from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages, LATISS, LATISSUsages
 
 
 class TrackTargetAndTakeImage(BaseTrackTargetAndTakeImage):

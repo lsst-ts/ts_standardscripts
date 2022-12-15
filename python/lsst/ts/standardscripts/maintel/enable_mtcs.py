@@ -21,9 +21,9 @@
 __all__ = ["EnableMTCS"]
 
 import yaml
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 from ..enable_group import EnableGroup
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 
 class EnableMTCS(EnableGroup):

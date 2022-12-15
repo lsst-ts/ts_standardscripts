@@ -20,8 +20,9 @@
 
 __all__ = ["Stop"]
 
-from lsst.ts import salobj
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+
+from lsst.ts import salobj
 
 
 class Stop(salobj.BaseScript):

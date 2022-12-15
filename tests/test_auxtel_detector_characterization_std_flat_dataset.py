@@ -18,16 +18,15 @@
 #
 # You should have received a copy of the GNU General Public License
 
-import shlex
-import random
-import astropy
 import asyncio
 import logging
+import random
+import shlex
 import unittest
 
-from lsst.ts import salobj
-from lsst.ts import utils
-from lsst.ts import standardscripts
+import astropy
+
+from lsst.ts import salobj, standardscripts, utils
 from lsst.ts.standardscripts.auxtel.detector_characterization import ATGetStdFlatDataset
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix

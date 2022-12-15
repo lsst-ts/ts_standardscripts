@@ -21,13 +21,13 @@
 __all__ = ["PrepareForVent"]
 
 import asyncio
-import yaml
 import dataclasses
 
-from lsst.ts import salobj
-from lsst.ts import utils
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+import yaml
 from astroplan import Observer
+from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+
+from lsst.ts import salobj, utils
 
 
 @dataclasses.dataclass

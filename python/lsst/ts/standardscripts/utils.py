@@ -20,8 +20,9 @@
 
 __all__ = ["get_scripts_dir", "get_topic_time_utc"]
 
-import pathlib
 import collections.abc
+import pathlib
+
 from lsst.ts.utils import astropy_time_from_tai_unix
 
 

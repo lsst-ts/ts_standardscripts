@@ -22,8 +22,10 @@ __all__ = ["LatissCheckout"]
 
 import asyncio
 
-from lsst.ts import salobj
 from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
+
+from lsst.ts import salobj
+
 from ...utils import get_topic_time_utc
 
 STD_TIMEOUT = 10  # seconds

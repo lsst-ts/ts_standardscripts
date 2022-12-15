@@ -21,9 +21,9 @@
 __all__ = ["EnableComCam"]
 
 import yaml
+from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
 
 from ..enable_group import EnableGroup
-from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
 
 
 class EnableComCam(EnableGroup):

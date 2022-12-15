@@ -18,5 +18,5 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .mock_scheduler import *
 from .base_scheduler_test_case import *
+from .mock_scheduler import *

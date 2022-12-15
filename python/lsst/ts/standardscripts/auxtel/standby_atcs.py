@@ -20,8 +20,9 @@
 
 __all__ = ["StandbyATCS"]
 
-from ..standby_group import StandbyGroup
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+
+from ..standby_group import StandbyGroup
 
 
 class StandbyATCS(StandbyGroup):

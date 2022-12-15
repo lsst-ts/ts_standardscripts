@@ -18,16 +18,16 @@
 #
 # You should have received a copy of the GNU General Public License
 
+import asyncio
+import contextlib
+import time
+import types
 import unittest
 
-from lsst.ts.standardscripts import BaseScriptTestCase
-from lsst.ts.standardscripts import get_scripts_dir
-from lsst.ts.standardscripts.auxtel.daytime_checkout import SlewAndTakeImageCheckout
-import contextlib
-import types
-import asyncio
-import time
 import pytest
+
+from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
+from lsst.ts.standardscripts.auxtel.daytime_checkout import SlewAndTakeImageCheckout
 
 
 class TestSlewAndTakeImageCheckout(

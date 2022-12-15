@@ -20,8 +20,9 @@
 
 __all__ = ["TrackTarget"]
 
-from ..base_track_target import BaseTrackTarget
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+
+from ..base_track_target import BaseTrackTarget
 
 
 class TrackTarget(BaseTrackTarget):

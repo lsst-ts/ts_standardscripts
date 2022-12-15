@@ -22,6 +22,7 @@
 import asyncio
 
 from lsst.ts.idl.enums.Scheduler import SalIndex
+
 from lsst.ts.standardscripts.scheduler.enable import Enable
 
 

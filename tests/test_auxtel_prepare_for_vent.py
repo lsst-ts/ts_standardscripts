@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 
 import unittest
-from unittest.mock import patch, Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
 
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForVent

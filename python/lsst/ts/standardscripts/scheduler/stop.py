@@ -20,12 +20,13 @@
 
 __all__ = ["Stop"]
 
-import yaml
 import types
 import typing
 
-from lsst.ts import salobj
+import yaml
 from lsst.ts.idl.enums.Scheduler import SalIndex
+
+from lsst.ts import salobj
 
 
 class Stop(salobj.BaseScript):

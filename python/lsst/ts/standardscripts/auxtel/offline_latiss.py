@@ -20,8 +20,9 @@
 
 __all__ = ["OfflineLATISS"]
 
-from ..offline_group import OfflineGroup
 from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
+
+from ..offline_group import OfflineGroup
 
 
 class OfflineLATISS(OfflineGroup):

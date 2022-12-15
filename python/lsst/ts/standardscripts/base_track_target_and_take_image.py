@@ -21,11 +21,12 @@
 __all__ = ["BaseTrackTargetAndTakeImage"]
 
 import abc
-import yaml
 import asyncio
 
-from lsst.ts import salobj
+import yaml
 from lsst.ts.idl.enums.Script import ScriptState
+
+from lsst.ts import salobj
 
 
 class BaseTrackTargetAndTakeImage(salobj.BaseScript):

@@ -20,8 +20,9 @@
 
 __all__ = ["OfflineMTCS"]
 
-from ..offline_group import OfflineGroup
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+
+from ..offline_group import OfflineGroup
 
 
 class OfflineMTCS(OfflineGroup):
