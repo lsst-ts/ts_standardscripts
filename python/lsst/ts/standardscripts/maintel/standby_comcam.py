@@ -20,8 +20,9 @@
 
 __all__ = ["StandbyComCam"]
 
-from ..standby_group import StandbyGroup
 from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
+
+from ..standby_group import StandbyGroup
 
 
 class StandbyComCam(StandbyGroup):

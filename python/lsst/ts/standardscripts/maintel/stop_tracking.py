@@ -20,8 +20,9 @@
 
 __all__ = ["StopTracking"]
 
-from ..base_stop_tracking import BaseStopTracking
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+
+from ..base_stop_tracking import BaseStopTracking
 
 
 class StopTracking(BaseStopTracking):

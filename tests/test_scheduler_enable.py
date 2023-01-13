@@ -22,10 +22,10 @@ import logging
 import unittest
 
 import pytest
+from lsst.ts.idl.enums.Scheduler import SalIndex
+from lsst.ts.idl.enums.Script import ScriptState
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.idl.enums.Scheduler import SalIndex
 from lsst.ts.standardscripts import get_scripts_dir
 from lsst.ts.standardscripts.scheduler.enable import Enable
 from lsst.ts.standardscripts.scheduler.testutils import BaseSchedulerTestCase

@@ -23,8 +23,7 @@ import unittest
 
 import pytest
 
-from lsst.ts import salobj
-from lsst.ts import standardscripts
+from lsst.ts import salobj, standardscripts
 from lsst.ts.standardscripts.maintel import TakeImageComCam
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix

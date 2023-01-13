@@ -16,3 +16,4 @@ pytest_session.txt
 
 # Editors
 .vscode
+*.egg-info/

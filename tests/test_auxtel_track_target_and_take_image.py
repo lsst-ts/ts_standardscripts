@@ -19,18 +19,17 @@
 # You should have received a copy of the GNU General Public License
 
 import asyncio
+import contextlib
 import copy
-import random
 import logging
+import random
 import types
 import unittest
-import contextlib
 
 import pytest
-
-from lsst.ts import salobj
 from lsst.ts.observatory.control.utils import RotType
-from lsst.ts import standardscripts
+
+from lsst.ts import salobj, standardscripts
 from lsst.ts.standardscripts.auxtel import TrackTargetAndTakeImage
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix

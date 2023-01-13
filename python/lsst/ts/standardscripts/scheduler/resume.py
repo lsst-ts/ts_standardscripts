@@ -23,8 +23,9 @@ __all__ = ["Resume"]
 import types
 import typing
 
-from lsst.ts import salobj
 from lsst.ts.idl.enums.Scheduler import SalIndex
+
+from lsst.ts import salobj
 
 
 class Resume(salobj.BaseScript):

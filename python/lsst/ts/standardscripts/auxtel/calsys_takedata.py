@@ -22,11 +22,11 @@ __all__ = ["CalSysTakeData"]
 
 import asyncio
 import collections
-import yaml
 
 import numpy as np
-
+import yaml
 from lsst.ts.idl.enums import ATMonochromator
+
 from lsst.ts import salobj
 
 

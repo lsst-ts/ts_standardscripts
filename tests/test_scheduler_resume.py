@@ -18,9 +18,9 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from lsst.ts import salobj
 from lsst.ts.idl.enums.Scheduler import SalIndex
 
+from lsst.ts import salobj
 from lsst.ts.standardscripts import get_scripts_dir
 from lsst.ts.standardscripts.scheduler.resume import Resume
 from lsst.ts.standardscripts.scheduler.testutils import BaseSchedulerTestCase

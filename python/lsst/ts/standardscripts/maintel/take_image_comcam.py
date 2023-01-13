@@ -21,9 +21,9 @@
 __all__ = ["TakeImageComCam"]
 
 import yaml
+from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
 
 from ..base_take_image import BaseTakeImage
-from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
 
 
 class TakeImageComCam(BaseTakeImage):

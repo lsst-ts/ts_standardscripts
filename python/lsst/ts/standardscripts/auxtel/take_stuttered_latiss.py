@@ -21,9 +21,9 @@
 __all__ = ["TakeStutteredLatiss"]
 
 import yaml
+from lsst.ts.observatory.control.auxtel import LATISS, LATISSUsages
 
 from ..base_take_stuttered import BaseTakeStuttered
-from lsst.ts.observatory.control.auxtel import LATISS, LATISSUsages
 
 
 class TakeStutteredLatiss(BaseTakeStuttered):

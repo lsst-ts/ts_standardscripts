@@ -22,9 +22,10 @@ import logging
 import random
 import unittest
 
-from lsst.ts import standardscripts
-from lsst.ts.standardscripts.auxtel import PrepareForFlat
 from lsst.ts.observatory.control.mock import ATCSMock
+
+from lsst.ts import standardscripts
+from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForFlat
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -50,7 +51,7 @@ class TestPrepareForFlat(
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "prepare_for_flat.py"
+        script_path = scripts_dir / "auxtel" / "prepare_for" / "flat.py"
         await self.check_executable(script_path)
 
 
