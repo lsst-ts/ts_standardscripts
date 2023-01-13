@@ -22,10 +22,13 @@ __all__ = ["SlewAndTakeImageCheckout"]
 
 import asyncio
 
-from lsst.ts import salobj
+from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
 from lsst.ts.observatory.control.utils.enums import RotType
+
+from lsst.ts import salobj
+
 from ...utils import get_topic_time_utc
 
 STD_TIMEOUT = 10  # seconds
@@ -71,11 +74,9 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
             descr="Execute daytime checkout of AT and LATISS.",
         )
 
-        latiss_usage = (
-            LATISSUsages.TakeImageFull if add_remotes else LATISSUsages.DryTest
-        )
+        latiss_usage = None if add_remotes else LATISSUsages.DryTest
 
-        atcs_usage = ATCSUsages.All if add_remotes else ATCSUsages.DryTest
+        atcs_usage = None if add_remotes else ATCSUsages.DryTest
 
         # Instantiate latiss. We need to do this after the call to
         # super().__init__() above. We can also pass in the script domain and
@@ -133,7 +134,7 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
         # Take an Engineering test frame and verify ingestion at OODS
         await self.checkpoint("Slew and take image 1/2")
 
-        await self.latiss.rem.atoods.evt_imageInOODS.flush()
+        self.latiss.rem.atoods.evt_imageInOODS.flush()
         await self.latiss.take_engtest(2, filter=0, grating=0)
         try:
             ingest_event = await self.latiss.rem.atoods.evt_imageInOODS.next(
@@ -174,7 +175,7 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
         )
 
         # Take an Engineering test frame and verify ingestion at OODS
-        await self.latiss.rem.atoods.evt_imageInOODS.flush()
+        self.latiss.rem.atoods.evt_imageInOODS.flush()
         await self.latiss.take_engtest(2, filter=1, grating=1)
         try:
             ingest_event = await self.latiss.rem.atoods.evt_imageInOODS.next(
@@ -226,3 +227,20 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
             self.atcs.assert_all_enabled(),
             self.latiss.assert_all_enabled(),
         )
+
+    async def cleanup(self):
+
+        if self.state.state != ScriptState.ENDING:
+            try:
+                await self.atcs.stop_tracking()
+            except asyncio.TimeoutError:
+                self.log.exception(
+                    "Stop tracking command timed out during cleanup procedure."
+                )
+            except Exception:
+                self.log.exception("Unexpected exception in stop_tracking.")
+
+            try:
+                await self.atcs.disable_ataos_corrections()
+            except Exception:
+                self.log.exception("Unexpected exception disabling ataos corrections.")

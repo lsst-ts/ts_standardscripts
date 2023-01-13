@@ -21,14 +21,14 @@
 __all__ = ["BaseTrackTarget"]
 
 import abc
-import enum
-import yaml
 import asyncio
+import enum
+
+import yaml
+from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts.observatory.control.utils import RotType
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Script import ScriptState
-
-from lsst.ts.observatory.control.utils import RotType
 
 
 class SlewType(enum.IntEnum):

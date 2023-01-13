@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# This file is part of ts_externalscripts
+# This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -21,6 +21,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.daytime_checkout import ATPnuematicsCheckout
+from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForOnSky
 
-asyncio.run(ATPnuematicsCheckout.amain())
+asyncio.run(PrepareForOnSky.amain())

@@ -18,13 +18,13 @@
 #
 # You should have received a copy of the GNU General Public License
 
+import asyncio
+import contextlib
+import types
 import unittest
 
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
 from lsst.ts.standardscripts.auxtel.daytime_checkout import TelescopeAndDomeCheckout
-import contextlib
-import types
-import asyncio
 
 
 class TestTelescopeAndDomeCheckout(

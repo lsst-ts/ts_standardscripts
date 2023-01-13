@@ -20,8 +20,9 @@
 
 __all__ = ["StandbyLATISS"]
 
-from ..standby_group import StandbyGroup
 from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
+
+from ..standby_group import StandbyGroup
 
 
 class StandbyLATISS(StandbyGroup):

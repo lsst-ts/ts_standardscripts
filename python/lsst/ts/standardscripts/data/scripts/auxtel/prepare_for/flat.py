@@ -21,6 +21,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import PrepareForFlat
+from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForFlat
 
 asyncio.run(PrepareForFlat.amain())

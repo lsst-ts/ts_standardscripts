@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .atpnuematics_checkout import *
+from .atpneumatics_checkout import *
 from .latiss_checkout import *
-from .telescope_and_dome_checkout import *
 from .slew_and_take_image_checkout import *
+from .telescope_and_dome_checkout import *

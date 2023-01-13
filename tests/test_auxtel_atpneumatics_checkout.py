@@ -18,18 +18,19 @@
 #
 # You should have received a copy of the GNU General Public License
 
+import asyncio
+import contextlib
+import time
+import types
 import unittest
 
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.auxtel.daytime_checkout import ATPnuematicsCheckout
-import contextlib
 import pytest
-import types
-import asyncio
-import time
+
+from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
+from lsst.ts.standardscripts.auxtel.daytime_checkout import ATPneumaticsCheckout
 
 
-class TestATPnuematicsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
+class TestATPneumaticsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         self.tel_mainAirSourcePressure = 400000
         self.tel_m1AirPressure = 400000
@@ -39,7 +40,7 @@ class TestATPnuematicsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestC
         return super().setUp()
 
     async def basic_make_script(self, index):
-        self.script = ATPnuematicsCheckout(index=index, add_remotes=False)
+        self.script = ATPneumaticsCheckout(index=index, add_remotes=False)
         return [
             self.script,
         ]
@@ -47,31 +48,31 @@ class TestATPnuematicsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestC
     async def test_executable(self):
         scripts_dir = get_scripts_dir()
         script_path = (
-            scripts_dir / "auxtel" / "daytime_checkout" / "atpnuematics_checkout.py"
+            scripts_dir / "auxtel" / "daytime_checkout" / "atpneumatics_checkout.py"
         )
         print(script_path)
         await self.check_executable(script_path)
 
-    async def get_tel_mainAirSourcePressure(self, flush, timeout):
+    async def get_tel_main_air_source_pressure(self, flush, timeout):
         if flush:
             await asyncio.sleep(timeout / 2.0)
         return types.SimpleNamespace(
             pressure=self.tel_mainAirSourcePressure,
         )
 
-    async def get_tel_m1AirSourcePressure(self, timeout):
+    async def get_tel_m1_air_source_pressure(self, timeout):
         return types.SimpleNamespace(
             pressure=self.tel_m1AirPressure,
         )
 
-    async def get_cmd_enableCorrection(self, m1, hexapod, atspectrograph):
+    async def get_cmd_enable_correction(self, m1, hexapod, atspectrograph, timeout):
         return types.SimpleNamespace(
             statusCode=self.ataos_correction_status,
             result=self.ataos_correction_result,
             private_sndStamp=self.cmd_time,
         )
 
-    async def get_cmd_disableCorrection(self, m1, hexapod, atspectrograph):
+    async def get_cmd_disable_correction(self, m1, hexapod, atspectrograph, timeout):
         return types.SimpleNamespace(
             statusCode=self.ataos_correction_status,
             result=self.ataos_correction_result,
@@ -87,18 +88,18 @@ class TestATPnuematicsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestC
         self.script.atcs.close_m1_vent = unittest.mock.AsyncMock()
 
         self.script.atcs.rem = types.SimpleNamespace(
-            atpnuematics=unittest.mock.AsyncMock(), ataos=unittest.mock.AsyncMock()
+            atpneumatics=unittest.mock.AsyncMock(), ataos=unittest.mock.AsyncMock()
         )
-        self.script.atcs.rem.atpnuematics.configure_mock(
+        self.script.atcs.rem.atpneumatics.configure_mock(
             **{
-                "tel_mainAirSourcePressure.next.side_effect": self.get_tel_mainAirSourcePressure,
-                "tel_m1AirPressure.aget.side_effect": self.get_tel_m1AirSourcePressure,
+                "tel_mainAirSourcePressure.next.side_effect": self.get_tel_main_air_source_pressure,
+                "tel_m1AirPressure.aget.side_effect": self.get_tel_m1_air_source_pressure,
             }
         )
         self.script.atcs.rem.ataos.configure_mock(
             **{
-                "cmd_enableCorrection.set_start.side_effect": self.get_cmd_enableCorrection,
-                "cmd_disableCorrection.set_start.side_effect": self.get_cmd_disableCorrection,
+                "cmd_enableCorrection.set_start.side_effect": self.get_cmd_enable_correction,
+                "cmd_disableCorrection.set_start.side_effect": self.get_cmd_disable_correction,
             }
         )
 

@@ -10,6 +10,10 @@ v1.16.0
 -------
 
 * Add daytime_checkout SAL scripts, executables, and tests
+* Move all "prepare_for" scripts to a submodule in auxtel.
+* Add new ``prepare_for/vent.py``.
+* Update pre-commit configuration.
+* Run ``isort`` in the entire package.
 
 v1.15.5
 -------

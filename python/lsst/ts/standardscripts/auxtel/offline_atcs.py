@@ -20,8 +20,9 @@
 
 __all__ = ["OfflineATCS"]
 
-from ..offline_group import OfflineGroup
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+
+from ..offline_group import OfflineGroup
 
 
 class OfflineATCS(OfflineGroup):

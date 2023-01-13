@@ -1,4 +1,5 @@
-# This file is part of ts_standardscripts
+#!/usr/bin/env python
+# This file is part of ts_externalscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -18,5 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .base_scheduler_test_case import *
-from .mock_scheduler import *
+import asyncio
+
+from lsst.ts.standardscripts.auxtel.daytime_checkout import ATPneumaticsCheckout
+
+asyncio.run(ATPneumaticsCheckout.amain())

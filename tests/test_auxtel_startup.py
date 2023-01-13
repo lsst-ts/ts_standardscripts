@@ -22,9 +22,10 @@ import logging
 import random
 import unittest
 
+from lsst.ts.observatory.control.mock import ATCSMock
+
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel import PrepareForOnSky
-from lsst.ts.observatory.control.mock import ATCSMock
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -48,7 +49,7 @@ class TestStartup(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "prepare_for_onsky.py"
+        script_path = scripts_dir / "auxtel" / "prepare_for" / "onsky.py"
         await self.check_executable(script_path)
 
 

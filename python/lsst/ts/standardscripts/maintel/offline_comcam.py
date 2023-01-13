@@ -20,8 +20,9 @@
 
 __all__ = ["OfflineComCam"]
 
-from ..offline_group import OfflineGroup
 from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
+
+from ..offline_group import OfflineGroup
 
 
 class OfflineComCam(OfflineGroup):

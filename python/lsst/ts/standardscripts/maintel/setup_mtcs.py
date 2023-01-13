@@ -20,11 +20,11 @@
 
 __all__ = ["SetupMTCS"]
 
-import yaml
 import pandas as pd
+import yaml
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 from lsst.ts import salobj
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 
 class SetupMTCS(salobj.BaseScript):

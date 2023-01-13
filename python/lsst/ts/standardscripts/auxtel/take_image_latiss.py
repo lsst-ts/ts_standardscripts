@@ -21,9 +21,9 @@
 __all__ = ["TakeImageLatiss"]
 
 import yaml
+from lsst.ts.observatory.control.auxtel import LATISS, LATISSUsages
 
 from ..base_take_image import BaseTakeImage
-from lsst.ts.observatory.control.auxtel import LATISS, LATISSUsages
 
 
 class TakeImageLatiss(BaseTakeImage):

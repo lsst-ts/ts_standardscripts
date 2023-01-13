@@ -19,19 +19,18 @@
 # You should have received a copy of the GNU General Public License
 
 import asyncio
-import copy
-import types
-import numpy
-import random
-import logging
-import unittest
 import contextlib
+import copy
+import logging
+import random
+import types
+import unittest
 
+import numpy
 import pytest
-
-from lsst.ts import salobj
 from lsst.ts.observatory.control.utils import RotType
-from lsst.ts import standardscripts
+
+from lsst.ts import salobj, standardscripts
 from lsst.ts.standardscripts.maintel.track_target_and_take_image_comcam import (
     TrackTargetAndTakeImageComCam,
 )

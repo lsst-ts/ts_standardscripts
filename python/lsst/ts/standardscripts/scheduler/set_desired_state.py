@@ -20,12 +20,13 @@
 
 __all__ = ["SetDesiredState"]
 
+import asyncio
 import types
 import typing
-import asyncio
+
+from lsst.ts.idl.enums.Scheduler import SalIndex
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Scheduler import SalIndex
 
 
 class SetDesiredState(salobj.BaseScript):

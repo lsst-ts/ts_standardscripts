@@ -20,8 +20,9 @@
 
 __all__ = ["TrackTarget"]
 
-from ..base_track_target import BaseTrackTarget
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+
+from ..base_track_target import BaseTrackTarget
 
 
 class TrackTarget(BaseTrackTarget):

@@ -18,5 +18,6 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .base_scheduler_test_case import *
-from .mock_scheduler import *
+from .flats import *
+from .onsky import *
+from .vent import *

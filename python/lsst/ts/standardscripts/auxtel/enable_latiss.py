@@ -21,9 +21,9 @@
 __all__ = ["EnableLATISS"]
 
 import yaml
+from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
 
 from ..enable_group import EnableGroup
-from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
 
 
 class EnableLATISS(EnableGroup):

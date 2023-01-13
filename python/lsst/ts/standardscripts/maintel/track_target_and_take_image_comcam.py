@@ -22,11 +22,11 @@ __all__ = ["TrackTargetAndTakeImageComCam"]
 
 import asyncio
 
-from ..base_track_target_and_take_image import BaseTrackTargetAndTakeImage
-
-from lsst.ts.observatory.control.utils import RotType
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+from lsst.ts.observatory.control.utils import RotType
+
+from ..base_track_target_and_take_image import BaseTrackTargetAndTakeImage
 
 
 class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):

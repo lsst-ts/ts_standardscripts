@@ -21,9 +21,9 @@
 __all__ = ["EnableATTCS"]
 
 import yaml
+from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 
 from ..enable_group import EnableGroup
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 
 
 class EnableATTCS(EnableGroup):

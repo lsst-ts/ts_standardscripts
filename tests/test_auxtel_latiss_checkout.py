@@ -18,15 +18,16 @@
 #
 # You should have received a copy of the GNU General Public License
 
+import asyncio
+import contextlib
+import time
+import types
 import unittest
+
+import pytest
 
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
 from lsst.ts.standardscripts.auxtel.daytime_checkout import LatissCheckout
-import contextlib
-import pytest
-import types
-import asyncio
-import time
 
 
 class TestLatissCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
