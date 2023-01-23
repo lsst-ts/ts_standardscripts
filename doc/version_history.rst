@@ -6,6 +6,11 @@
 Version History
 ===============
 
+v1.16.1
+-------
+
+* Fix conda recipe by adding astroplan dependency and not running pytest.
+
 v1.16.0
 -------
 
@@ -18,14 +23,14 @@ v1.16.0
 v1.15.5
 -------
 
-* Update maintel/setup_mtcs.py 
+* Update maintel/setup_mtcs.py
   * Now put the mount and the rotator into disabled state so they can share telemetry.
   * Do the homing of the mount
 
 v1.15.4
 -------
 
-* Add maintel/track_target_and_take_image_comcam.py with new ``TrackTargetAndTakeImageGenCam``. 
+* Add maintel/track_target_and_take_image_comcam.py with new ``TrackTargetAndTakeImageGenCam``.
 * Add unit tests for ``TrackTargetAndTakeImageGenCam``
 
 v1.15.3
@@ -145,7 +150,7 @@ v1.11.0
 * Add scheduler submodule with base scripts for operating the Scheduler.
   These are generic implementations that can be used for both the AT and MT schedulers.
 * Update setup.cfg to specify async_mode for pytest.
-    
+
 v1.10.1
 -------
 
