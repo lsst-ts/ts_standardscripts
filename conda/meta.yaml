@@ -13,6 +13,7 @@ build:
 test:
   requires:
     - astroquery
+    - astroplan
     - ts-conda-build =0.3
     - ts-idl {{ idl_version }}
     - ts-salobj {{ salobj_version }}
@@ -22,8 +23,8 @@ test:
     - tests
     - setup.cfg
     - pyproject.toml
-  commands:
-    - pytest
+  imports:
+    - lsst.ts.standardscripts
 
 requirements:
   host:
@@ -35,11 +36,16 @@ requirements:
     - python {{ python }}
     - setuptools_scm
     - setuptools
-    - ts-conda-build =0.3    
+    - ts-conda-build =0.3
+    - astroquery
+    - astroplan
+    - ts-observatory-control
   run:
     - python {{ python }}
     - setuptools
     - setuptools_scm
     - ts-idl
     - ts-salobj
+    - astroquery
+    - astroplan
     - ts-observatory-control
