@@ -22,8 +22,6 @@ import logging
 import random
 import unittest
 
-from lsst.ts.observatory.control.utils import RotType
-
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.auxtel import TrackTarget
 
@@ -112,6 +110,19 @@ class TestATTrackTarget(
     def assert_slew_radec(self):
 
         self.script.tcs.slew_icrs.assert_awaited_once()
+        self.script.tcs.slew_icrs.assert_awaited_with(
+            ra=self.script.config.slew_icrs["ra"],
+            dec=self.script.config.slew_icrs["dec"],
+            rot=self.script.config.rot_value,
+            rot_type=self.script.config.rot_type,
+            target_name=getattr(self.script.config, "target_name", "slew_icrs"),
+            dra=self.script.config.differential_tracking["dra"],
+            ddec=self.script.config.differential_tracking["ddec"],
+            offset_x=self.script.config.offset["x"],
+            offset_y=self.script.config.offset["y"],
+            az_wrap_strategy=self.script.config.az_wrap_strategy,
+            time_on_target=self.script.config.track_for,
+        )
         self.script.tcs.slew_object.assert_not_awaited()
         self.script.tcs.stop_tracking.assert_not_awaited()
 
@@ -119,10 +130,14 @@ class TestATTrackTarget(
         self.script.tcs.slew_object.assert_awaited_once()
         self.script.tcs.slew_object.assert_awaited_with(
             name="eta Car",
-            rot=0.0,
-            rot_type=RotType.SkyAuto,
-            offset_x=0.0,
-            offset_y=0.0,
+            rot=self.script.config.rot_value,
+            rot_type=self.script.config.rot_type,
+            dra=self.script.config.differential_tracking["dra"],
+            ddec=self.script.config.differential_tracking["ddec"],
+            offset_x=self.script.config.offset["x"],
+            offset_y=self.script.config.offset["y"],
+            az_wrap_strategy=self.script.config.az_wrap_strategy,
+            time_on_target=self.script.config.track_for,
         )
         self.script.tcs.slew_icrs.assert_not_awaited()
         self.script.tcs.stop_tracking.assert_not_awaited()
@@ -132,6 +147,9 @@ class TestATTrackTarget(
         self.script.tcs.find_target.assert_awaited_once()
         self.script.tcs.find_target.assert_awaited_with(**find_target_config)
         self.assert_slew_target_name()
+
+    def assert_config(self, config, config_validated):
+        pass
 
 
 if __name__ == "__main__":
