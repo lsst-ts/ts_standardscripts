@@ -23,6 +23,7 @@ import random
 import unittest
 
 import pytest
+from lsst.ts.idl.enums.MTPtg import WrapStrategy
 from lsst.ts.observatory.control import RotType
 
 from lsst.ts import salobj, standardscripts
@@ -120,6 +121,16 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             assert not self.script.tcs.check.mtdometrajectory
             assert not self.script.tcs.check.mthexapod_1
 
+        # Configure passing az_wrap_strategy
+        for az_wrap_strategy in WrapStrategy:
+            with self.subTest(f"az_wrap_strategy={az_wrap_strategy.name}"):
+                async with self.make_script():
+                    await self.configure_script(
+                        slew_icrs=dict(ra=1.0, dec=-10.0),
+                        az_wrap_strategy=az_wrap_strategy.name,
+                    )
+                    assert self.script.config.az_wrap_strategy == az_wrap_strategy
+
     async def test_run_slew_target_name(self):
 
         async with self.make_script():
@@ -198,6 +209,19 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
     def assert_slew_radec(self):
 
         self.script.tcs.slew_icrs.assert_awaited_once()
+        self.script.tcs.slew_icrs.assert_awaited_with(
+            ra=self.script.config.slew_icrs["ra"],
+            dec=self.script.config.slew_icrs["dec"],
+            rot=self.script.config.rot_value,
+            rot_type=self.script.config.rot_type,
+            target_name=getattr(self.script.config, "target_name", "slew_icrs"),
+            dra=self.script.config.differential_tracking["dra"],
+            ddec=self.script.config.differential_tracking["ddec"],
+            offset_x=self.script.config.offset["x"],
+            offset_y=self.script.config.offset["y"],
+            az_wrap_strategy=self.script.config.az_wrap_strategy,
+            time_on_target=self.script.config.track_for,
+        )
         self.script.tcs.slew_object.assert_not_awaited()
         self.script.tcs.stop_tracking.assert_not_awaited()
 
@@ -207,8 +231,12 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             name="eta Car",
             rot=0.0,
             rot_type=RotType.SkyAuto,
+            dra=0.0,
+            ddec=0.0,
             offset_x=0.0,
             offset_y=0.0,
+            az_wrap_strategy=self.script.tcs.WrapStrategy.OPTIMIZE,
+            time_on_target=0.0,
         )
         self.script.tcs.slew_icrs.assert_not_awaited()
         self.script.tcs.stop_tracking.assert_not_awaited()
