@@ -142,6 +142,19 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
                     type: number
                     description: Offset the field in the y-axis (arcsec).
                     default: 0
+              differential_tracking:
+                description: Differential tracking rates.
+                type: object
+                additionalProperties: false
+                properties:
+                  dra:
+                    description: Differential tracking rate in RA (sec/sec).
+                    type: number
+                    default: 0.0
+                  ddec:
+                    description: Differential tracking rate in Declination (arcsec/sec).
+                    type: number
+                    default: 0.0
               rot_value:
                 description: >-
                   Rotator position value. Actual meaning depends on rot_type.
@@ -189,6 +202,20 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
                     `track_for` is larger than zero.
                 type: boolean
                 default: False
+              az_wrap_strategy:
+                description: >-
+                  Azimuth wrapping strategy. Options are:
+                    MAXTIMEONTARGET: Maximize the tracking time on the target.
+
+                    NOUNWRAP: Do not attempt to unwrap. If target is unreachable
+                    without unwrapping, command will be rejected.
+
+                    OPTIMIZE: Use `track_for` to determine if there is
+                    enough time left without unwrapping and only unwrap if
+                    needed.
+                type: string
+                enum: ["MAXTIMEONTARGET", "NOUNWRAP", "OPTIMIZE"]
+                default: OPTIMIZE
               ignore:
                 description: >-
                     CSCs from the group to ignore in status check. Name must
@@ -232,6 +259,9 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
         self.log.debug(f"Slew type: {self.slew_type!r}.")
 
         self.config.rot_type = getattr(RotType, self.config.rot_type)
+        self.config.az_wrap_strategy = getattr(
+            self.tcs.WrapStrategy, self.config.az_wrap_strategy
+        )
 
         if hasattr(self.config, "ignore"):
             for comp in self.config.ignore:
@@ -261,6 +291,8 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         offset_x = self.config.offset["x"]
         offset_y = self.config.offset["y"]
+        dra = self.config.differential_tracking["dra"]
+        ddec = self.config.differential_tracking["ddec"]
 
         if self.slew_type == SlewType.ICRS:
             ra = self.config.slew_icrs["ra"]
@@ -279,8 +311,12 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
                 rot=self.config.rot_value,
                 rot_type=self.config.rot_type,
                 target_name=target_name,
+                dra=dra,
+                ddec=ddec,
                 offset_x=offset_x,
                 offset_y=offset_y,
+                az_wrap_strategy=self.config.az_wrap_strategy,
+                time_on_target=self.config.track_for,
             )
         elif self.slew_type == SlewType.AZEL:
             az = self.config.find_target["az"]
@@ -299,8 +335,12 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
                 name=target_name,
                 rot=self.config.rot_value,
                 rot_type=self.config.rot_type,
+                dra=dra,
+                ddec=ddec,
                 offset_x=offset_x,
                 offset_y=offset_y,
+                az_wrap_strategy=self.config.az_wrap_strategy,
+                time_on_target=self.config.track_for,
             )
         else:
             self.log.info(
@@ -312,8 +352,12 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
                 name=target_name,
                 rot=self.config.rot_value,
                 rot_type=self.config.rot_type,
+                dra=dra,
+                ddec=ddec,
                 offset_x=offset_x,
                 offset_y=offset_y,
+                az_wrap_strategy=self.config.az_wrap_strategy,
+                time_on_target=self.config.track_for,
             )
 
         if self.config.track_for > 0.0:
