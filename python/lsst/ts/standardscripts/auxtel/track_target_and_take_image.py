@@ -57,6 +57,10 @@ class TrackTargetAndTakeImage(BaseTrackTargetAndTakeImage):
         self.atcs = ATCS(self.domain, intended_usage=atcs_usage, log=self.log)
         self.latiss = LATISS(self.domain, intended_usage=latiss_usage, log=self.log)
 
+    @property
+    def tcs(self):
+        return self.atcs
+
     @classmethod
     def get_schema(cls):
 
