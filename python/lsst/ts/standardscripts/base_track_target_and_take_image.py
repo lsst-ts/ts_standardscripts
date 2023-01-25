@@ -23,8 +23,15 @@ __all__ = ["BaseTrackTargetAndTakeImage"]
 import abc
 import asyncio
 
+import astropy.units
 import yaml
-from lsst.ts.idl.enums.Script import ScriptState
+from astropy.coordinates import ICRS, Angle
+from lsst.ts.idl.enums.Script import (
+    MetadataCoordSys,
+    MetadataDome,
+    MetadataRotSys,
+    ScriptState,
+)
 
 from lsst.ts import salobj
 
@@ -164,7 +171,20 @@ required:
         ----------
         metadata : `Script_logevent_metadata`
         """
-        metadata.duration = sum(self.config.exp_times) + self.config.estimated_slew_time
+        metadata.duration = self.get_estimated_time_on_target()
+        metadata.coordinateSystem = MetadataCoordSys.ICRS
+        radec_icrs = ICRS(
+            Angle(self.config.ra, unit=astropy.units.hourangle),
+            Angle(self.config.dec, unit=astropy.units.deg),
+        )
+        metadata.position = [radec_icrs.ra.deg, radec_icrs.dec.deg]
+        metadata.rotationSystem = MetadataRotSys.SKY
+        metadata.cameraAngle = self.config.rot_sky
+        metadata.filters = ",".join(self.config.band_filter)
+        metadata.dome = MetadataDome.OPEN
+        metadata.nimages = self.config.num_exp
+        metadata.survey = self.config.program
+        metadata.totalCheckpoints = 3 if self.config.camera_playlist is None else 4
 
     def get_estimated_time_on_target(self):
         """Get the estimated time on target.
