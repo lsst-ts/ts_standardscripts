@@ -108,7 +108,6 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
         )
 
         schema_dict["required"].append("camera_index")
-        schema_dict["required"].remove("band_filter")
 
         return schema_dict
 
