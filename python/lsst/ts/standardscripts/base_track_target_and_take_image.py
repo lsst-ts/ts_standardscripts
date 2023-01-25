@@ -101,6 +101,20 @@ properties:
     type: number
     description: An estimative of how much a slew will take.
     default: 0
+  az_wrap_strategy:
+    description: >-
+      Azimuth wrapping strategy. Options are:
+        MAXTIMEONTARGET: Maximize the tracking time on the target.
+
+        NOUNWRAP: Do not attempt to unwrap. If target is unreachable
+        without unwrapping, command will be rejected.
+
+        OPTIMIZE: Use `track_for` to determine if there is
+        enough time left without unwrapping and only unwrap if
+        needed.
+    type: string
+    enum: ["MAXTIMEONTARGET", "NOUNWRAP", "OPTIMIZE"]
+    default: OPTIMIZE
   num_exp:
     type: integer
     description: Number of exposures.
@@ -163,6 +177,9 @@ required:
 
         self.log.debug(f"Configured with {config}.")
         self.config = config
+        self.config.az_wrap_strategy = getattr(
+            self.tcs.WrapStrategy, self.config.az_wrap_strategy
+        )
 
     def set_metadata(self, metadata):
         """Compute estimated duration.
