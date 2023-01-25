@@ -61,6 +61,10 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
         self.mtcs = MTCS(self.domain, intended_usage=mtcs_usage, log=self.log)
         self.comcam = ComCam(self.domain, intended_usage=comcam_usage, log=self.log)
 
+    @property
+    def tcs(self):
+        return self.mtcs
+
     @classmethod
     def get_schema(cls):
 
