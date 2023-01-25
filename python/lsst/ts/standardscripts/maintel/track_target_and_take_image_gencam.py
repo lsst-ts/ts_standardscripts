@@ -62,6 +62,10 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
         self.mtcs = MTCS(self.domain, intended_usage=self.mtcs_usage, log=self.log)
         self.gencam = None
 
+    @property
+    def tcs(self):
+        return self.mtcs
+
     async def load_playlist(self):
         """Load playlist."""
         raise NotImplementedError()
