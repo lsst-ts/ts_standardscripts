@@ -123,6 +123,8 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
             rot=self.config.rot_sky,
             rot_type=RotType.Sky,
             target_name=self.config.name,
+            az_wrap_strategy=self.config.az_wrap_strategy,
+            time_on_target=self.get_estimated_time_on_target(),
         )
 
     async def take_data(self):
