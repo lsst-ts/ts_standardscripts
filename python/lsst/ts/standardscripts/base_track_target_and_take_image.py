@@ -206,6 +206,11 @@ required:
             "done"
         )
 
+    @property
+    @abc.abstractmethod
+    def tcs(self):
+        raise NotImplementedError()
+
     @abc.abstractstaticmethod
     async def load_playlist(self):
         """Load playlist."""
