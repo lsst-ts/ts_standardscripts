@@ -166,6 +166,16 @@ required:
         """
         metadata.duration = sum(self.config.exp_times) + self.config.estimated_slew_time
 
+    def get_estimated_time_on_target(self):
+        """Get the estimated time on target.
+
+        Returns
+        -------
+        float
+            Estimated time on targets (in sec).
+        """
+        return sum(self.config.exp_times) + self.config.estimated_slew_time
+
     async def run(self):
 
         self.run_started = True
