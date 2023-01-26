@@ -102,6 +102,8 @@ class TestAuxTelTrackTargetAndTakeImage(
                 rot=configuration_full["rot_sky"],
                 rot_type=RotType.Sky,
                 target_name=configuration_full["name"],
+                az_wrap_strategy=self.script.config.az_wrap_strategy,
+                time_on_target=self.script.get_estimated_time_on_target(),
             )
             self.script.latiss.setup_atspec.assert_awaited_once_with(
                 grating=configuration_full["grating"],
@@ -143,6 +145,8 @@ class TestAuxTelTrackTargetAndTakeImage(
                 rot=configuration_std_visit["rot_sky"],
                 rot_type=RotType.Sky,
                 target_name=configuration_std_visit["name"],
+                az_wrap_strategy=self.script.config.az_wrap_strategy,
+                time_on_target=self.script.get_estimated_time_on_target(),
             )
             self.script.latiss.setup_atspec.assert_awaited_once_with(
                 grating=configuration_std_visit["grating"],
@@ -183,6 +187,8 @@ class TestAuxTelTrackTargetAndTakeImage(
                 rot=configuration_full["rot_sky"],
                 rot_type=RotType.Sky,
                 target_name=configuration_full["name"],
+                az_wrap_strategy=self.script.config.az_wrap_strategy,
+                time_on_target=self.script.get_estimated_time_on_target(),
             )
             self.script.latiss.setup_atspec.assert_awaited_once_with(
                 grating=configuration_full["grating"][0],
@@ -229,6 +235,8 @@ class TestAuxTelTrackTargetAndTakeImage(
                 rot=configuration_full["rot_sky"],
                 rot_type=RotType.Sky,
                 target_name=configuration_full["name"],
+                az_wrap_strategy=self.script.config.az_wrap_strategy,
+                time_on_target=self.script.get_estimated_time_on_target(),
             )
             self.script.latiss.setup_atspec.assert_awaited_once_with(
                 grating=configuration_full["grating"],
@@ -258,14 +266,9 @@ class TestAuxTelTrackTargetAndTakeImage(
                     rot=configuration_full["rot_sky"],
                     rot_type=RotType.Sky,
                     target_name=configuration_full["name"],
-                ),
-                unittest.mock.call(
-                    ra=configuration_full["ra"],
-                    dec=configuration_full["dec"],
-                    rot=180.0 + configuration_full["rot_sky"],
-                    rot_type=RotType.Sky,
-                    target_name=configuration_full["name"],
-                ),
+                    az_wrap_strategy=self.script.config.az_wrap_strategy,
+                    time_on_target=self.script.get_estimated_time_on_target(),
+                )
             ]
 
             self.script.atcs.slew_icrs.assert_has_awaits(slew_icrs_expected_calls)
@@ -298,6 +301,8 @@ class TestAuxTelTrackTargetAndTakeImage(
                 rot=configuration_full["rot_sky"],
                 rot_type=RotType.Sky,
                 target_name=configuration_full["name"],
+                az_wrap_strategy=self.script.config.az_wrap_strategy,
+                time_on_target=self.script.get_estimated_time_on_target(),
             )
             self.script.latiss.setup_atspec.assert_awaited_once_with(
                 grating=configuration_full["grating"],
