@@ -92,6 +92,7 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
             reason="Unit testing",
             program="UTEST",
             camera_index=random.randint(1, 10),
+            band_filter="",
         )
 
         await self.configure_script(**configuration_full)
@@ -105,11 +106,9 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
 
     async def handle_slew_icrs(
         self,
-        ra,
-        dec,
         rot,
         rot_type,
-        target_name,
+        **kwargs,
     ):
         self._handle_slew_calls += 1
         if (
@@ -187,6 +186,7 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
                 "num_exp",
                 "exp_times",
                 "camera_index",
+                "band_filter",
             }
 
             for required_field in required_fields:
@@ -225,6 +225,8 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
                         rot=configuration_full["rot_sky"],
                         rot_type=RotType.Sky,
                         target_name=configuration_full["name"],
+                        az_wrap_strategy=self.script.config.az_wrap_strategy,
+                        time_on_target=self.script.get_estimated_time_on_target(),
                     ),
                 ]
 

@@ -113,6 +113,8 @@ class TestMainTelTrackTargetAndTakeImageComCam(
                 rot=configuration_full["rot_sky"],
                 rot_type=RotType.Sky,
                 target_name=configuration_full["name"],
+                az_wrap_strategy=self.script.config.az_wrap_strategy,
+                time_on_target=self.script.get_estimated_time_on_target(),
             )
 
             comcam_take_object_calls = [
@@ -152,6 +154,8 @@ class TestMainTelTrackTargetAndTakeImageComCam(
                     rot=self.script.angle_filter_change,
                     rot_type=RotType.Physical,
                     target_name=f"{configuration_full['name']} - filter change",
+                    az_wrap_strategy=self.script.config.az_wrap_strategy,
+                    time_on_target=self.script.get_estimated_time_on_target(),
                 ),
                 unittest.mock.call(
                     ra=configuration_full["ra"],
@@ -159,6 +163,8 @@ class TestMainTelTrackTargetAndTakeImageComCam(
                     rot=configuration_full["rot_sky"],
                     rot_type=RotType.Sky,
                     target_name=configuration_full["name"],
+                    az_wrap_strategy=self.script.config.az_wrap_strategy,
+                    time_on_target=self.script.get_estimated_time_on_target(),
                 ),
             ]
 
@@ -194,6 +200,8 @@ class TestMainTelTrackTargetAndTakeImageComCam(
                 rot=self.script.angle_filter_change,
                 rot_type=RotType.Physical,
                 target_name=f"{configuration_full['name']} - filter change",
+                az_wrap_strategy=self.script.config.az_wrap_strategy,
+                time_on_target=self.script.get_estimated_time_on_target(),
             )
             self.script.comcam.setup_filter.assert_awaited_once_with(
                 filter=configuration_full["band_filter"],
@@ -224,6 +232,8 @@ class TestMainTelTrackTargetAndTakeImageComCam(
                     rot=self.script.angle_filter_change,
                     rot_type=RotType.Physical,
                     target_name=f"{configuration_full['name']} - filter change",
+                    az_wrap_strategy=self.script.config.az_wrap_strategy,
+                    time_on_target=self.script.get_estimated_time_on_target(),
                 )
             ]
 
@@ -254,6 +264,8 @@ class TestMainTelTrackTargetAndTakeImageComCam(
                     rot=self.script.angle_filter_change,
                     rot_type=RotType.Physical,
                     target_name=f"{configuration_full['name']} - filter change",
+                    az_wrap_strategy=self.script.config.az_wrap_strategy,
+                    time_on_target=self.script.get_estimated_time_on_target(),
                 ),
                 unittest.mock.call(
                     ra=configuration_full["ra"],
@@ -261,6 +273,8 @@ class TestMainTelTrackTargetAndTakeImageComCam(
                     rot=configuration_full["rot_sky"],
                     rot_type=RotType.Sky,
                     target_name=configuration_full["name"],
+                    az_wrap_strategy=self.script.config.az_wrap_strategy,
+                    time_on_target=self.script.get_estimated_time_on_target(),
                 ),
             ]
 
@@ -297,6 +311,8 @@ class TestMainTelTrackTargetAndTakeImageComCam(
                     rot=self.script.angle_filter_change,
                     rot_type=RotType.Physical,
                     target_name=f"{configuration_full['name']} - filter change",
+                    az_wrap_strategy=self.script.config.az_wrap_strategy,
+                    time_on_target=self.script.get_estimated_time_on_target(),
                 ),
                 unittest.mock.call(
                     ra=configuration_full["ra"],
@@ -304,6 +320,8 @@ class TestMainTelTrackTargetAndTakeImageComCam(
                     rot=configuration_full["rot_sky"],
                     rot_type=RotType.Sky,
                     target_name=configuration_full["name"],
+                    az_wrap_strategy=self.script.config.az_wrap_strategy,
+                    time_on_target=self.script.get_estimated_time_on_target(),
                 ),
             ]
 
@@ -421,14 +439,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
             await asyncio.sleep(timeout / 2.0)
         return types.SimpleNamespace(actualPosition=self.rotator_position)
 
-    async def handle_slew_icrs(
-        self,
-        ra,
-        dec,
-        rot,
-        rot_type,
-        target_name,
-    ):
+    async def handle_slew_icrs(self, rot, rot_type, **kwargs):
         self._handle_slew_calls += 1
         if (
             self._fail_handle_slew_after > 0

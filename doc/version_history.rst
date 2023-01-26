@@ -6,6 +6,59 @@
 Version History
 ===============
 
+v1.17.0
+-------
+
+* In ``maintel/track_target_and_take_image_gencam.py``:
+
+  * Update ``get_schema`` method to stop deleting ``band_filter`` from the required configuration attributes.
+
+    Previously we thought it would be ok to remove this attribute from the configuration since the generic cameras, which this script is designed to work with, don't necessarily have a filter wheel or instrument configuration.
+    But this oversight doesn't take into account the fact that this Script is designed to work with the Scheduler and, for this type of Script, we can not remove any of the basic set of required parameters.
+    Adding new parameters is ok though.
+
+    If calling this script from the script queue one can simply pass in an empty string for ``band_filter``.
+    But, keep in mind this one in particular is designed to work with the Scheduler.
+
+  * Update ``track_target_and_setup_instrument`` to pass in ``az_wrap_strategy`` to slew_icrs.
+
+  * Implement new ``tcs`` abstract property introduced in ``BaseTrackTargetAndTakeImage``.
+
+* In ``maintel/track_target_and_take_image_comcam.py``:
+
+  * Update ``track_target_and_setup_instrument`` and ``_handle_slew_and_change_filter`` to pass in ``az_wrap_strategy``.
+
+  * Implement new ``tcs`` abstract property introduced in ``BaseTrackTargetAndTakeImage``.
+
+* In ``auxtel/track_target_and_take_image.py``, update ``track_target_and_setup_instrument`` to pass ``az_wrap_strategy`` to ``atcs.slew_icrs``.
+
+* In ``base_track_target_and_take_image.py``:
+
+  * Add ``az_wrap_strategy`` to the script configuration.
+
+    This allows users to specify the azimuth wrap strategy the TCS should use when slewing to a target.
+    The parameter is exposed as an enumeration with all the available options.
+    Users select an option by adding one of the available strings.
+    When configuring the Script, the ``configure`` method will convert the string into the appropriate enumeration, calling in the ``tcs`` property to return the ``WrapStrategy`` enumeration.
+
+  * Update ``set_metadata`` to use ``get_estimated_time_on_target`` as the script estimated duration and also to fill up all the relevant metadata information.
+
+    This update will make sure the ``nextVisit`` event published by this script has all the relevant information needed by prompt processing.
+
+  * Add new method ``get_estimated_time_on_target`` that returns the estimated time on target, based on the script configuration.
+
+    Having this method allows the Script to uniformly estimate its duration in different execution stages.
+
+  * Add new ``tcs`` abstract property to ``BaseTrackTargetAndTakeImage``, which should return the instance of the tcs class on the script.
+
+  This change goes in the direction of supporting higher level abstraction that require calling the TCS class from within the base class.
+
+* In ``base_track_target``, add support for azimuth wrap strategy and differential tracking.
+
+  * Include configuration parameters to allow users to specify values for azimuth wrap strategy and differential tracking.
+
+  * Pass those values to ``slew_icrs`` and ``slew_object`` when running the script.
+
 v1.16.1
 -------
 

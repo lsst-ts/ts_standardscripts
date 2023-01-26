@@ -23,8 +23,15 @@ __all__ = ["BaseTrackTargetAndTakeImage"]
 import abc
 import asyncio
 
+import astropy.units
 import yaml
-from lsst.ts.idl.enums.Script import ScriptState
+from astropy.coordinates import ICRS, Angle
+from lsst.ts.idl.enums.Script import (
+    MetadataCoordSys,
+    MetadataDome,
+    MetadataRotSys,
+    ScriptState,
+)
 
 from lsst.ts import salobj
 
@@ -94,6 +101,20 @@ properties:
     type: number
     description: An estimative of how much a slew will take.
     default: 0
+  az_wrap_strategy:
+    description: >-
+      Azimuth wrapping strategy. Options are:
+        MAXTIMEONTARGET: Maximize the tracking time on the target.
+
+        NOUNWRAP: Do not attempt to unwrap. If target is unreachable
+        without unwrapping, command will be rejected.
+
+        OPTIMIZE: Use `track_for` to determine if there is
+        enough time left without unwrapping and only unwrap if
+        needed.
+    type: string
+    enum: ["MAXTIMEONTARGET", "NOUNWRAP", "OPTIMIZE"]
+    default: OPTIMIZE
   num_exp:
     type: integer
     description: Number of exposures.
@@ -156,6 +177,9 @@ required:
 
         self.log.debug(f"Configured with {config}.")
         self.config = config
+        self.config.az_wrap_strategy = getattr(
+            self.tcs.WrapStrategy, self.config.az_wrap_strategy
+        )
 
     def set_metadata(self, metadata):
         """Compute estimated duration.
@@ -164,7 +188,30 @@ required:
         ----------
         metadata : `Script_logevent_metadata`
         """
-        metadata.duration = sum(self.config.exp_times) + self.config.estimated_slew_time
+        metadata.duration = self.get_estimated_time_on_target()
+        metadata.coordinateSystem = MetadataCoordSys.ICRS
+        radec_icrs = ICRS(
+            Angle(self.config.ra, unit=astropy.units.hourangle),
+            Angle(self.config.dec, unit=astropy.units.deg),
+        )
+        metadata.position = [radec_icrs.ra.deg, radec_icrs.dec.deg]
+        metadata.rotationSystem = MetadataRotSys.SKY
+        metadata.cameraAngle = self.config.rot_sky
+        metadata.filters = ",".join(self.config.band_filter)
+        metadata.dome = MetadataDome.OPEN
+        metadata.nimages = self.config.num_exp
+        metadata.survey = self.config.program
+        metadata.totalCheckpoints = 3 if self.config.camera_playlist is None else 4
+
+    def get_estimated_time_on_target(self):
+        """Get the estimated time on target.
+
+        Returns
+        -------
+        float
+            Estimated time on targets (in sec).
+        """
+        return sum(self.config.exp_times) + self.config.estimated_slew_time
 
     async def run(self):
 
@@ -205,6 +252,11 @@ required:
             f"rot={self.config.rot_sky:0.2f}]::"
             "done"
         )
+
+    @property
+    @abc.abstractmethod
+    def tcs(self):
+        raise NotImplementedError()
 
     @abc.abstractstaticmethod
     async def load_playlist(self):
