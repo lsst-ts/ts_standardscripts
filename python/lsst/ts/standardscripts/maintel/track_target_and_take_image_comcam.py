@@ -61,6 +61,10 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
         self.mtcs = MTCS(self.domain, intended_usage=mtcs_usage, log=self.log)
         self.comcam = ComCam(self.domain, intended_usage=comcam_usage, log=self.log)
 
+    @property
+    def tcs(self):
+        return self.mtcs
+
     @classmethod
     def get_schema(cls):
 
@@ -113,6 +117,8 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
             rot=self.config.rot_sky,
             rot_type=RotType.Sky,
             target_name=self.config.name,
+            az_wrap_strategy=self.config.az_wrap_strategy,
+            time_on_target=self.get_estimated_time_on_target(),
         )
 
     async def _handle_slew_and_change_filter(self):
@@ -130,6 +136,8 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
                     rot=self.angle_filter_change,
                     rot_type=RotType.Physical,
                     target_name=f"{self.config.name} - filter change",
+                    az_wrap_strategy=self.config.az_wrap_strategy,
+                    time_on_target=self.get_estimated_time_on_target(),
                 )
             ),
             asyncio.create_task(self._wait_rotator_reach_filter_change_angle()),

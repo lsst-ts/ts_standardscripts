@@ -62,6 +62,10 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
         self.mtcs = MTCS(self.domain, intended_usage=self.mtcs_usage, log=self.log)
         self.gencam = None
 
+    @property
+    def tcs(self):
+        return self.mtcs
+
     async def load_playlist(self):
         """Load playlist."""
         raise NotImplementedError()
@@ -104,7 +108,6 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
         )
 
         schema_dict["required"].append("camera_index")
-        schema_dict["required"].remove("band_filter")
 
         return schema_dict
 
@@ -119,6 +122,8 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
             rot=self.config.rot_sky,
             rot_type=RotType.Sky,
             target_name=self.config.name,
+            az_wrap_strategy=self.config.az_wrap_strategy,
+            time_on_target=self.get_estimated_time_on_target(),
         )
 
     async def take_data(self):
