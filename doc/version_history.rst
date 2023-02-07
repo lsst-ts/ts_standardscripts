@@ -6,6 +6,11 @@
 Version History
 ===============
 
+v1.18.0
+-------
+
+* Add new ``system_wide_shutdown`` script to help shutdown the entire system.
+
 v1.17.0
 -------
 
