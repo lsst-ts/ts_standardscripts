@@ -10,6 +10,7 @@ v1.18.0
 -------
 
 * Add new ``system_wide_shutdown`` script to help shutdown the entire system.
+* In ``auxtel/daytime_checkout/`` update script metadata.duration values.
 
 v1.17.0
 -------

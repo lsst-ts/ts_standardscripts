@@ -87,7 +87,7 @@ class LatissCheckout(salobj.BaseScript):
     def set_metadata(self, metadata):
         """Set estimated duration of the script."""
 
-        metadata.duration = 5.0 * 60  # Approximate 5min to completion.
+        metadata.duration = 20
 
     async def run(self):
 

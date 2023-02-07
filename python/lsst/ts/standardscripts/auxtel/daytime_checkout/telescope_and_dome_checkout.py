@@ -90,9 +90,7 @@ class TelescopeAndDomeCheckout(salobj.BaseScript):
     def set_metadata(self, metadata):
         """Set estimated duration of the script."""
 
-        metadata.duration = (
-            10.0 * 60
-        )  # Approximate 10min to completion, should depend on what used
+        metadata.duration = 220
 
     async def run(self):
 
