@@ -19,7 +19,7 @@ pipeline {
         docker {
             alwaysPull true
             image 'lsstts/develop-env:develop'
-            args "-u root --entrypoint=''"
+            args "--entrypoint=''"
         }
     }
     environment {
@@ -113,11 +113,6 @@ pipeline {
     }
     post {
         always {
-            // Change ownership of the workspace to Jenkins for clean up.
-            withEnv(["HOME=${env.WORKSPACE}"]) {
-                sh 'chown -R 1003:1003 ${HOME}/'
-            }
-
             // The path of xml needed by JUnit is relative to the workspace.
             junit 'jenkinsReport/*.xml'
 

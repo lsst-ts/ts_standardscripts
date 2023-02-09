@@ -98,7 +98,7 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
     def set_metadata(self, metadata):
         """Set estimated duration of the script."""
 
-        metadata.duration = 10.0 * 60  # Approximate 5min to completion.
+        metadata.duration = 410
 
     async def run(self):
 
