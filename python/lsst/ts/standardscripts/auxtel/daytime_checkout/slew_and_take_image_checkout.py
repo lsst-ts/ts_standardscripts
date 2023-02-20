@@ -23,6 +23,7 @@ __all__ = ["SlewAndTakeImageCheckout"]
 import asyncio
 
 from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts.idl.enums.ATMCS import M3State
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
 from lsst.ts.observatory.control.utils.enums import RotType
@@ -101,6 +102,16 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
 
     async def run(self):
         await self.assert_feasibility()
+
+        # Check that m3 is in position and Port 2 is selected.
+        m3_state = await self.atcs.rem.atmcs.evt_m3State.aget()
+        if m3_state.state == M3State.NASMYTH2:
+            self.log.info(f"M3 is ready in position at port -- {M3State.NASMYTH2}")
+        else:
+            raise RuntimeError(
+                f"M3 is NOT in position for observations with LATISS. M3_state is {m3_state.state} "
+                f"and must be {M3State.NASMYTH2}. Check that M3 is in correct position and is not moving."
+            )
 
         # Ensure mirrors and vents are closed for safer operations
         await self.atcs.close_m1_cover()
