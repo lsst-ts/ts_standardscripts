@@ -55,9 +55,7 @@ class TestStandbyComCam(
             await self.run_script()
 
             for comp in self.script.group.components_attr:
-
                 if getattr(self.script.group.check, comp):
-
                     current_state = salobj.State(
                         getattr(
                             self.comcam_mock.controllers, comp

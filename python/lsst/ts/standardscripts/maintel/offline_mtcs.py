@@ -42,7 +42,6 @@ class OfflineMTCS(OfflineGroup):
     """
 
     def __init__(self, index):
-
         super().__init__(index=index, descr="Put all MTCS components in offline state.")
 
         self._mtcs = MTCS(

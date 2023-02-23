@@ -111,7 +111,6 @@ class TestSlewAndTakeImageCheckout(
 
     async def test_run_script_without_failures(self):
         async with self.make_script(), self.setup_mocks():
-
             await self.configure_script()
 
             await self.run_script()
@@ -131,7 +130,6 @@ class TestSlewAndTakeImageCheckout(
 
     async def test_run_script_with_ingest_failure(self):
         async with self.make_script(), self.setup_mocks():
-
             await self.configure_script()
 
             self.script.latiss.rem.atoods.configure_mock(

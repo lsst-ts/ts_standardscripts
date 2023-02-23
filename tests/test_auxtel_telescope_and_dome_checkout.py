@@ -81,7 +81,6 @@ class TestTelescopeAndDomeCheckout(
 
     async def test_run_script_without_failures(self):
         async with self.make_script(), self.setup_mocks():
-
             await self.configure_script()
 
             await self.run_script()

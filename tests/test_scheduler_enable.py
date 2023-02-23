@@ -69,7 +69,6 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.STANDBY, publish_initial_state=True
         ):
-
             await self.configure_script(config="invalid_test_config.yaml")
 
             with self.assertRaises(AssertionError):
@@ -92,7 +91,6 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.STANDBY, publish_initial_state=True
         ):
-
             await self.configure_script(config="invalid_test_config.yaml")
 
             with self.assertRaises(AssertionError):
@@ -115,7 +113,6 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.STANDBY, publish_initial_state=True
         ):
-
             await self.configure_script(config="valid_test_config.yaml")
             await self.run_script()
 
@@ -136,7 +133,6 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.STANDBY, publish_initial_state=False
         ):
-
             await self.configure_script(config="valid_test_config.yaml")
             await self.run_script()
 
@@ -157,7 +153,6 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.DISABLED, publish_initial_state=True
         ):
-
             await self.configure_script(config="valid_test_config.yaml")
             await self.run_script()
 
@@ -178,7 +173,6 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.DISABLED, publish_initial_state=False
         ):
-
             await self.configure_script(config="valid_test_config.yaml")
             await self.run_script()
 
@@ -199,7 +193,6 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-
             await self.configure_script(config="valid_test_config.yaml")
             await self.run_script()
 
@@ -220,7 +213,6 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-
             await self.configure_script(config="valid_test_config.yaml")
             await self.run_script()
 
@@ -241,7 +233,6 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.FAULT, publish_initial_state=True
         ):
-
             await self.configure_script(config="valid_test_config.yaml")
             await self.run_script()
 
@@ -262,7 +253,6 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.FAULT, publish_initial_state=False
         ):
-
             await self.configure_script(config="valid_test_config.yaml")
             await self.run_script()
 

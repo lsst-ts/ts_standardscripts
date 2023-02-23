@@ -42,7 +42,6 @@ class OfflineComCam(OfflineGroup):
     """
 
     def __init__(self, index):
-
         super().__init__(
             index=index, descr="Put all ComCam components in offline state."
         )

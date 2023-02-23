@@ -284,7 +284,6 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
         metadata.duration = 10.0 + self.config.track_for
 
     async def run(self):
-
         target_name = getattr(self.config, "target_name", "slew_icrs")
 
         self.tracking_started = True
@@ -370,7 +369,6 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
                 self.log.info("Tracking completed.")
 
     async def cleanup(self):
-
         if self.state.state != ScriptState.ENDING:
             # abnormal termination
             if self.tracking_started:

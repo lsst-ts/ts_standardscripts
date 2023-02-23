@@ -42,7 +42,6 @@ class StandbyMTCS(StandbyGroup):
     """
 
     def __init__(self, index):
-
         super().__init__(index=index, descr="Put all MTCS components in standby state.")
 
         self._mtcs = MTCS(

@@ -111,7 +111,6 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
         async with salobj.Domain() as domain, salobj.Remote(
             domain=domain, name="Script", index=index
         ) as remote:
-
             initial_path = os.environ["PATH"]
             process = None
             try:

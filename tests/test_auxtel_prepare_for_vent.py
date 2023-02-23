@@ -34,7 +34,6 @@ class TestPrepareForOnSky(
         return (self.script,)
 
     async def test_config(self):
-
         async with self.make_script():
             config = dict()
             await self.configure_script(**config)

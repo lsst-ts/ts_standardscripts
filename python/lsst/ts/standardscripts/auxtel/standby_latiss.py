@@ -42,7 +42,6 @@ class StandbyLATISS(StandbyGroup):
     """
 
     def __init__(self, index):
-
         super().__init__(
             index=index, descr="Put all LATISS components in standby state."
         )

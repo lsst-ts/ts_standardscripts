@@ -67,7 +67,6 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
 
     @classmethod
     def get_schema(cls):
-
         schema_dict = cls.get_base_schema()
         schema_dict[
             "$id"

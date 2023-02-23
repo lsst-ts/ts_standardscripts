@@ -90,7 +90,6 @@ class TestATGetStdFlatDataset(
         await self.end_readout_tasks[-1]
 
     async def end_readout(self):
-
         await asyncio.sleep(self.script.read_out_time)
 
         date_id = astropy.time.Time.now().tai.isot.split("T")[0].replace("-", "")

@@ -96,9 +96,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
                     await self.configure_script(**bad_configuration)
 
     async def test_run_already_in_filter(self):
-
         async with self.make_script(), self.setup_mocks():
-
             self.script.mtcs.check_tracking.side_effect = (
                 self.check_tracking_forever_side_effect
             )
@@ -133,9 +131,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
             self.script.mtcs.stop_tracking.assert_not_awaited()
 
     async def test_run_with_filter_change(self):
-
         async with self.make_script(), self.setup_mocks():
-
             self.current_filter = "g"
             self.rotator_position = -15.0
 
@@ -186,9 +182,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
             self.script.mtcs.stop_tracking.assert_not_awaited()
 
     async def test_run_fail_setup_filter(self):
-
         async with self.make_script(), self.setup_mocks():
-
             configuration_full = await self.configure_script_full(band_filter="z")
 
             with pytest.raises(AssertionError):
@@ -213,9 +207,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
             self.script.mtcs.stop_tracking.assert_awaited_once()
 
     async def test_run_fail_slew_during_rotator_wait(self):
-
         async with self.make_script(), self.setup_mocks():
-
             self.script.mtcs.slew_icrs.side_effect = RuntimeError("Slew failed")
 
             self.rotator_position = -15.0
@@ -246,9 +238,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
             self.script.mtcs.stop_tracking.assert_awaited_once()
 
     async def test_run_fail_slew_after_filter_change(self):
-
         async with self.make_script(), self.setup_mocks():
-
             self._fail_handle_slew_after = 1
             self.rotator_position = -15.0
 
@@ -290,9 +280,7 @@ class TestMainTelTrackTargetAndTakeImageComCam(
             self.script.mtcs.stop_tracking.assert_awaited_once()
 
     async def test_run_fail_check_tracking(self):
-
         async with self.make_script(), self.setup_mocks():
-
             self.script.mtcs.check_tracking.side_effect = (
                 self.check_tracking_fail_after_1s_side_effect
             )
@@ -403,7 +391,6 @@ class TestMainTelTrackTargetAndTakeImageComCam(
         await future
 
     async def check_tracking_fail_after_1s_side_effect(self):
-
         self.log.debug("Wait 1 second and raise runtime error.")
         await asyncio.sleep(1.0)
         raise RuntimeError("Check tracking failed.")
@@ -415,7 +402,6 @@ class TestMainTelTrackTargetAndTakeImageComCam(
         reason,
         program,
     ):
-
         self.log.debug(
             f"exptime: {exptime}s, group_id: {group_id}, reason: {reason}, program: {program}"
         )

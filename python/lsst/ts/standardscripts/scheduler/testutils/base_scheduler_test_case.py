@@ -55,7 +55,6 @@ class BaseSchedulerTestCase(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
         expected_script_state: ScriptState,
         expected_csc_state: salobj.State,
     ) -> None:
-
         for command in expected_commands:
             with self.subTest(
                 f"successfull command execution {command}", command=command
@@ -80,7 +79,6 @@ class BaseSchedulerTestCase(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
         assert self.controller.evt_summaryState.data.summaryState == expected_csc_state
 
     def assert_loaded_snapshots(self, snapshots: typing.List[str]) -> None:
-
         assert len(self.controller.snapshots) == len(snapshots)
         for snapshot in snapshots:
             assert snapshot in self.controller.snapshots

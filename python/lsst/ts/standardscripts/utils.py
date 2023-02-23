@@ -72,7 +72,6 @@ def format_as_list(value, recurrences):
     # Check to see if the input data is iterable (not a scalar)
     # Strings are iterable, so check if it's a string as well
     if isinstance(value, collections.abc.Iterable) and not isinstance(value, str):
-
         # Verify that the array is the correct number of recurrences
         # if specified as a list then it should already have the
         # correct number of instances.

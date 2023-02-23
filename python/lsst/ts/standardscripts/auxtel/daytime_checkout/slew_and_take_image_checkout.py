@@ -68,7 +68,6 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
     """
 
     def __init__(self, index=1, add_remotes: bool = True):
-
         super().__init__(
             index=index,
             descr="Execute daytime checkout of AT and LATISS.",
@@ -101,7 +100,6 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
         metadata.duration = 410
 
     async def run(self):
-
         await self.assert_feasibility()
 
         # Ensure mirrors and vents are closed for safer operations
@@ -229,7 +227,6 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
         )
 
     async def cleanup(self):
-
         if self.state.state != ScriptState.ENDING:
             try:
                 await self.atcs.stop_tracking()

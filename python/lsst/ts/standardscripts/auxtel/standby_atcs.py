@@ -42,7 +42,6 @@ class StandbyATCS(StandbyGroup):
     """
 
     def __init__(self, index):
-
         super().__init__(index=index, descr="Put all ATCS components in standby state.")
 
         self._atcs = ATCS(

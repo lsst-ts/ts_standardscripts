@@ -65,7 +65,6 @@ class TelescopeAndDomeCheckout(salobj.BaseScript):
     """
 
     def __init__(self, index=1, add_remotes: bool = True):
-
         super().__init__(
             index=index,
             descr="Execute daytime checkout of AT Telescope and Dome.",
@@ -93,7 +92,6 @@ class TelescopeAndDomeCheckout(salobj.BaseScript):
         metadata.duration = 220
 
     async def run(self):
-
         await self.assert_feasibility()
 
         # Disable dome following for initial test
@@ -172,7 +170,6 @@ class TelescopeAndDomeCheckout(salobj.BaseScript):
         await self.atcs.assert_all_enabled()
 
     async def cleanup(self):
-
         if self.state.state != ScriptState.ENDING:
             try:
                 await self.atcs.stop_tracking()

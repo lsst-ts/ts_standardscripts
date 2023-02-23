@@ -53,7 +53,6 @@ class EnableLATISS(EnableGroup):
     """
 
     def __init__(self, index):
-
         super().__init__(index=index, descr="Enable LATISS.")
 
         self.config = None

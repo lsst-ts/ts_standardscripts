@@ -59,7 +59,6 @@ class TestAuxTelTrackTargetAndTakeImage(
 
     async def test_configure(self):
         async with self.make_script():
-
             configuration_full = await self.configure_script_full()
 
             for key in configuration_full:
@@ -85,9 +84,7 @@ class TestAuxTelTrackTargetAndTakeImage(
                     await self.configure_script(**bad_configuration)
 
     async def test_run(self):
-
         async with self.make_script(), self.setup_mocks():
-
             self.script.atcs.check_tracking.side_effect = (
                 self.check_tracking_forever_side_effect
             )
@@ -128,9 +125,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             self.script.atcs.stop_tracking.assert_not_awaited()
 
     async def test_run_standard_visit(self):
-
         async with self.make_script(), self.setup_mocks():
-
             self.script.atcs.check_tracking.side_effect = (
                 self.check_tracking_forever_side_effect
             )
@@ -168,9 +163,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             self.script.atcs.stop_tracking.assert_not_awaited()
 
     async def test_run_multiple_filters(self):
-
         async with self.make_script(), self.setup_mocks():
-
             self.script.atcs.check_tracking.side_effect = (
                 self.check_tracking_forever_side_effect
             )
@@ -217,9 +210,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             self.script.atcs.stop_tracking.assert_not_awaited()
 
     async def test_run_fail_setup_atspec(self):
-
         async with self.make_script(), self.setup_mocks():
-
             self.script.latiss.setup_atspec.side_effect = RuntimeError(
                 "Setup atspec failed"
             )
@@ -249,9 +240,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             self.script.atcs.stop_tracking.assert_awaited_once()
 
     async def test_run_fail_slew(self):
-
         async with self.make_script(), self.setup_mocks():
-
             self.script.atcs.slew_icrs.side_effect = RuntimeError("Slew failed")
 
             configuration_full = await self.configure_script_full()
@@ -283,9 +272,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             self.script.atcs.stop_tracking.assert_awaited_once()
 
     async def test_run_fail_check_tracking(self):
-
         async with self.make_script(), self.setup_mocks():
-
             self.script.atcs.check_tracking.side_effect = (
                 self.check_tracking_fail_after_1s_side_effect
             )
@@ -326,9 +313,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             self.script.atcs.stop_tracking.assert_awaited_once()
 
     async def test_run_fail_assert_feasibility(self):
-
         async with self.make_script(), self.setup_mocks():
-
             self._ataos_evt_correction_enabled.hexapod = False
 
             await self.configure_script_full()
@@ -444,7 +429,6 @@ class TestAuxTelTrackTargetAndTakeImage(
         await future
 
     async def check_tracking_fail_after_1s_side_effect(self):
-
         self.log.debug("Wait 1 second and raise runtime error.")
         await asyncio.sleep(1.0)
         raise RuntimeError("Check tracking failed.")
@@ -460,7 +444,6 @@ class TestAuxTelTrackTargetAndTakeImage(
         reason=None,
         program=None,
     ):
-
         self.log.debug(
             f"exptime: {exptime}s, "
             f"n: {n}, "
