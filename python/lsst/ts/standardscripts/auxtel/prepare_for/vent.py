@@ -124,7 +124,6 @@ class PrepareForVent(salobj.BaseScript):
             _, sun_el = self.get_sun_azel()
 
     async def reposition_telescope_and_dome(self, tel_vent_azimuth, dome_vent_azimuth):
-
         try:
             await self.atcs.point_azel(
                 target_name="Vent Position",

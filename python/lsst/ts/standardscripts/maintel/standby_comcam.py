@@ -42,7 +42,6 @@ class StandbyComCam(StandbyGroup):
     """
 
     def __init__(self, index):
-
         super().__init__(
             index=index, descr="Put all ComCam components in standby state."
         )

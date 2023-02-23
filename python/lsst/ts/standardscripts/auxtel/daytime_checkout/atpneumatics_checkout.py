@@ -65,7 +65,6 @@ class ATPneumaticsCheckout(salobj.BaseScript):
     """
 
     def __init__(self, index=1, add_remotes: bool = True):
-
         super().__init__(
             index=index,
             descr="Execute daytime checkout of AT Pneumatics.",
@@ -95,7 +94,6 @@ class ATPneumaticsCheckout(salobj.BaseScript):
         metadata.duration = 70
 
     async def run(self):
-
         await self.assert_feasibility()
 
         await self.checkpoint("Opening pneumatics valves")
@@ -160,7 +158,6 @@ class ATPneumaticsCheckout(salobj.BaseScript):
         await self.atcs.assert_all_enabled()
 
     async def cleanup(self):
-
         if self.state.state != ScriptState.ENDING:
             try:
                 await self.atcs.stop_tracking()

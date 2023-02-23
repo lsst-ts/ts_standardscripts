@@ -284,7 +284,6 @@ class SetupMTCS(salobj.BaseScript):
 
         # We actually want CCW following
         if self.config.ccw_following:
-
             # If as expected
             if ccw_following.enabled:
                 self.log.info(

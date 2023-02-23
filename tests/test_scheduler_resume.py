@@ -35,11 +35,9 @@ class TestSchedulerBaseResume(BaseSchedulerTestCase):
         return [self.script]
 
     async def test_run(self) -> None:
-
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-
             await self.configure_script()
             await self.run_script()
 

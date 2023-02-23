@@ -63,7 +63,6 @@ class TrackTargetAndTakeImage(BaseTrackTargetAndTakeImage):
 
     @classmethod
     def get_schema(cls):
-
         schema_yaml = """
 $schema: http://json-schema.org/draft-07/schema#
 $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/track_target_and_take_image.py

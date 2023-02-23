@@ -113,7 +113,6 @@ class TestRunCommand(
         """Run test with Test component."""
 
         async with self.make_script():
-
             # Provide parameter for the command
             await self.configure_script(
                 component="Test:1",

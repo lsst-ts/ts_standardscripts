@@ -78,10 +78,8 @@ class TestSetupMTCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
         await self.check_executable(script_path)
 
     async def test_run(self):
-
         # Start the test itself
         async with self.make_script():
-
             # Configure the script
             await self.configure_script()
             assert self.script.state.state == Script.ScriptState.CONFIGURED

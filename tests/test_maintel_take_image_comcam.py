@@ -33,13 +33,11 @@ class TestTakeImageComCam(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
     async def basic_make_script(self, index):
-
         self.script = TakeImageComCam(index=index)
 
         return (self.script,)
 
     async def test_configure(self):
-
         async with self.make_script():
             exp_times = 1.1
             image_type = "OBJECT"
@@ -98,9 +96,7 @@ class TestTakeImageComCam(
                 )
 
     async def test_take_images(self):
-
         async with self.make_script():
-
             self.script.camera.take_imgtype = unittest.mock.AsyncMock()
             self.script.camera.setup_instrument = unittest.mock.AsyncMock()
 
@@ -120,7 +116,6 @@ class TestTakeImageComCam(
             self.script.camera.setup_instrument.assert_awaited_with(filter=1)
 
     async def test_executable(self):
-
         scripts_dir = standardscripts.get_scripts_dir()
         script_path = scripts_dir / "maintel" / "take_image_comcam.py"
         await self.check_executable(script_path)

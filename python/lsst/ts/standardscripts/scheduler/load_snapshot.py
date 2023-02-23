@@ -131,7 +131,6 @@ additionalProperties: false
         metadata.duration = self.timeout_start
 
     async def run(self) -> None:
-
         await self.checkpoint("Loading snapshot")
         await self.scheduler_remote.cmd_load.set_start(
             uri=self.snapshot_uri, timeout=self.timeout_start

@@ -57,7 +57,6 @@ class ATGetStdFlatDataset(salobj.BaseScript):
     """
 
     def __init__(self, index):
-
         super().__init__(
             index=index, descr="Take Flat field sensor characterization data."
         )

@@ -86,5 +86,4 @@ class Resume(salobj.BaseScript):
         metadata.duration = self.timeout_start
 
     async def run(self) -> None:
-
         await self.scheduler_remote.cmd_resume.set_start(timeout=self.timeout_start)

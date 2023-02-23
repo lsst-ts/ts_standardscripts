@@ -107,7 +107,6 @@ class TestATPneumaticsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestC
 
     async def test_run_script_without_failures(self):
         async with self.make_script(), self.setup_mocks():
-
             await self.configure_script()
 
             await self.run_script()
@@ -118,7 +117,6 @@ class TestATPneumaticsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestC
 
     async def test_run_script_with_low_pressure(self):
         async with self.make_script(), self.setup_mocks():
-
             await self.configure_script()
 
             self.tel_mainAirSourcePressure = 1

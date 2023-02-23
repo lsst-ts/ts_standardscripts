@@ -35,7 +35,6 @@ class StopTracking(BaseStopTracking):
     """
 
     def __init__(self, index):
-
         super().__init__(index=index, descr="ATCS stop tracking.")
 
         self._atcs = ATCS(self.domain, intended_usage=ATCSUsages.Slew, log=self.log)

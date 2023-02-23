@@ -41,7 +41,6 @@ class TestATCamTakeImage(
 
     async def test_configure_good_minimum(self):
         async with self.make_script():
-
             config = await self.configure_script(
                 exp_time=1.0,
             )
@@ -59,7 +58,6 @@ class TestATCamTakeImage(
 
     async def test_configure_good_all(self):
         async with self.make_script():
-
             config = await self.configure_script(
                 exp_time=1.1,
                 n_images=2,

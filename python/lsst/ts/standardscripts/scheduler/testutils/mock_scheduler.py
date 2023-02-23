@@ -99,7 +99,6 @@ class MockScheduler(salobj.Controller):
         )
 
     async def do_start(self, data):
-
         if data.configurationOverride not in self.valid_configuration_overrides:
             raise salobj.base.ExpectedError(
                 f"Config file {data.configurationOverride} does not exist."
@@ -129,7 +128,6 @@ class MockScheduler(salobj.Controller):
         self.running = False
 
     async def _do_change_state(self, cmd_name, allowed_current_states, new_state):
-
         current_state = self.evt_summaryState.data.summaryState
         if current_state not in allowed_current_states:
             raise salobj.base.ExpectedError(

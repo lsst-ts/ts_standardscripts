@@ -42,7 +42,6 @@ class OfflineATCS(OfflineGroup):
     """
 
     def __init__(self, index):
-
         super().__init__(index=index, descr="Put all ATCS components in offline state.")
 
         self._atcs = ATCS(

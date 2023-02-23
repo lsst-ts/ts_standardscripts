@@ -38,7 +38,6 @@ class OfflineGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
     """
 
     def __init__(self, index, descr):
-
         super().__init__(index=index, descr=descr)
 
         self.config = None
@@ -99,7 +98,6 @@ class OfflineGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
         metadata.duration = 60.0
 
     async def run(self):
-
         if hasattr(self.config, "ignore"):
             for comp in self.config.ignore:
                 if comp not in self.components():
