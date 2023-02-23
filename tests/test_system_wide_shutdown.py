@@ -52,11 +52,9 @@ class TestSystemWideShutdown(
         return (self.script, *self.mock_test)
 
     async def test_shutdown(self):
-
         self.make_test_cscs = True
 
         async with self.make_script():
-
             components_running = dict(
                 Test=[i + 1 for i in range(self.ntest)],
             )
@@ -69,11 +67,9 @@ class TestSystemWideShutdown(
                 assert mock_test.summary_state == salobj.State.OFFLINE
 
     async def test_discover(self):
-
         self.make_test_cscs = True
 
         async with self.make_script():
-
             components_alive = await self.script.discover_components()
 
             assert "Test" in components_alive
@@ -81,11 +77,9 @@ class TestSystemWideShutdown(
             assert len(components_alive) == 0
 
     async def test_find_running_instances(self):
-
         self.make_test_cscs = True
 
         async with self.make_script():
-
             component, component_indices = await self.script.find_running_instances(
                 "Test"
             )
@@ -94,9 +88,7 @@ class TestSystemWideShutdown(
             assert component_indices == [i + 1 for i in range(self.ntest)]
 
     async def test_find_running_instances_not_running(self):
-
         async with self.make_script():
-
             component, component_indices = await self.script.find_running_instances(
                 "Test"
             )
@@ -105,7 +97,6 @@ class TestSystemWideShutdown(
             assert component_indices == []
 
     async def test_configure(self):
-
         configs_good = [
             dict(
                 user="Tester",
@@ -152,7 +143,6 @@ class TestSystemWideShutdown(
         self.make_test_cscs = True
 
         async with self.make_script():
-
             await self.configure_script(user="Tester", reason="Unit test.")
 
             await self.run_script()

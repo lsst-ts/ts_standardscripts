@@ -35,7 +35,6 @@ class StopTracking(BaseStopTracking):
     """
 
     def __init__(self, index):
-
         super().__init__(index=index, descr="MTCS stop tracking.")
 
         self._mtcs = MTCS(self.domain, intended_usage=MTCSUsages.Slew, log=self.log)

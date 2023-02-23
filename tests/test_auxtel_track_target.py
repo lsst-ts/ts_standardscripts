@@ -46,9 +46,7 @@ class TestATTrackTarget(
         return (self.script,)
 
     async def test_run_slew_target_name(self):
-
         async with self.make_script():
-
             self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
             self.script.tcs.slew_object = unittest.mock.AsyncMock()
             self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
@@ -61,9 +59,7 @@ class TestATTrackTarget(
             self.assert_slew_target_name()
 
     async def test_run_slew_radec(self):
-
         async with self.make_script():
-
             self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
             self.script.tcs.slew_object = unittest.mock.AsyncMock()
             self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
@@ -82,7 +78,6 @@ class TestATTrackTarget(
 
     async def test_run_slew_azel(self):
         async with self.make_script():
-
             self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
             self.script.tcs.slew_object = unittest.mock.AsyncMock()
             self.script.tcs.find_target = unittest.mock.AsyncMock(
@@ -108,7 +103,6 @@ class TestATTrackTarget(
         await self.check_executable(script_path)
 
     def assert_slew_radec(self):
-
         self.script.tcs.slew_icrs.assert_awaited_once()
         self.script.tcs.slew_icrs.assert_awaited_with(
             ra=self.script.config.slew_icrs["ra"],
@@ -143,7 +137,6 @@ class TestATTrackTarget(
         self.script.tcs.stop_tracking.assert_not_awaited()
 
     def assert_slew_azel(self, find_target_config):
-
         self.script.tcs.find_target.assert_awaited_once()
         self.script.tcs.find_target.assert_awaited_with(**find_target_config)
         self.assert_slew_target_name()

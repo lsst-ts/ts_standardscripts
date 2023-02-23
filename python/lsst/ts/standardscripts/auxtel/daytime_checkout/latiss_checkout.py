@@ -60,7 +60,6 @@ class LatissCheckout(salobj.BaseScript):
     """
 
     def __init__(self, index=1, add_remotes: bool = True):
-
         super().__init__(
             index=index,
             descr="Execute daytime checkout of LATISS.",
@@ -90,7 +89,6 @@ class LatissCheckout(salobj.BaseScript):
         metadata.duration = 20
 
     async def run(self):
-
         await self.assert_feasibility()
 
         # Bias Verification, start with checkpoint for observer

@@ -110,7 +110,6 @@ additionalProperties: false
         metadata.duration = 60.0
 
     async def run(self) -> None:
-
         components_running = await self.discover_components()
 
         self.log.info(

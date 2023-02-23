@@ -132,9 +132,7 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
                     assert self.script.config.az_wrap_strategy == az_wrap_strategy
 
     async def test_run_slew_target_name(self):
-
         async with self.make_script():
-
             self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
             self.script.tcs.slew_object = unittest.mock.AsyncMock()
             self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
@@ -148,7 +146,6 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
 
     async def test_run_slew_azel(self):
         async with self.make_script():
-
             self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
             self.script.tcs.slew_object = unittest.mock.AsyncMock()
             self.script.tcs.find_target = unittest.mock.AsyncMock(
@@ -169,9 +166,7 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             self.assert_slew_azel(find_target_config=config["find_target"])
 
     async def test_run_slew_radec(self):
-
         async with self.make_script():
-
             self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
             self.script.tcs.slew_object = unittest.mock.AsyncMock()
             self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
@@ -184,9 +179,7 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             self.assert_slew_radec()
 
     async def test_run_slew_fails(self):
-
         async with self.make_script():
-
             self.script.tcs.slew_icrs = unittest.mock.AsyncMock(
                 side_effect=RuntimeError
             )
@@ -207,7 +200,6 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
         await self.check_executable(script_path)
 
     def assert_slew_radec(self):
-
         self.script.tcs.slew_icrs.assert_awaited_once()
         self.script.tcs.slew_icrs.assert_awaited_with(
             ra=self.script.config.slew_icrs["ra"],
@@ -242,7 +234,6 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
         self.script.tcs.stop_tracking.assert_not_awaited()
 
     def assert_slew_azel(self, find_target_config):
-
         self.script.tcs.find_target.assert_awaited_once()
         self.script.tcs.find_target.assert_awaited_with(**find_target_config)
         self.assert_slew_target_name()

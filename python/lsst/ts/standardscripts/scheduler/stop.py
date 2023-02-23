@@ -103,7 +103,6 @@ additionalProperties: false
         metadata.duration = self.timeout_start
 
     async def run(self) -> None:
-
         await self.checkpoint("Stopping scheduler")
         await self.scheduler_remote.cmd_stop.set_start(
             abort=self.stop, timeout=self.timeout_start

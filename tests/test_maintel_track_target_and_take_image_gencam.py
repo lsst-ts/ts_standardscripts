@@ -163,7 +163,6 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
         reason,
         program,
     ):
-
         self.log.debug(
             f"exptime: {exptime}s, group_id: {group_id}, reason: {reason}, program: {program}"
         )
@@ -171,7 +170,6 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
 
     async def test_configure(self):
         async with self.make_script():
-
             configuration_full = await self.configure_script_full()
 
             for key in configuration_full:
@@ -201,14 +199,11 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
         await self.check_executable(script_path)
 
     async def test_run_fail_check_tracking(self):
-
         async with self.make_script():
-
             # New GemCam is stanciated during configuration
             configuration_full = await self.configure_script_full()
 
             async with self.setup_mocks():
-
                 self.script.mtcs.check_tracking.side_effect = (
                     self.check_tracking_fail_after_1s_side_effect
                 )

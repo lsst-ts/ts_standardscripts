@@ -66,7 +66,6 @@ class TestEnableMTCS(
 
     async def test_ignore_feature(self):
         async with self.make_script():
-
             ignore = ["mtdome", "mtdometrajectory"]
 
             await self.configure_script(ignore=ignore)
@@ -74,9 +73,7 @@ class TestEnableMTCS(
             await self.run_script()
 
             for comp in self.script.group.components_attr:
-
                 if getattr(self.script.group.check, comp):
-
                     current_state = salobj.State(
                         getattr(
                             self.mtcs_mock.controllers, comp

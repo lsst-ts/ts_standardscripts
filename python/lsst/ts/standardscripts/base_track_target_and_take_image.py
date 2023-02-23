@@ -214,7 +214,6 @@ required:
         return sum(self.config.exp_times) + self.config.estimated_slew_time
 
     async def run(self):
-
         self.run_started = True
 
         await self.assert_feasibility()
@@ -289,7 +288,6 @@ required:
         raise RuntimeError()
 
     async def cleanup(self):
-
         if self.state.state != ScriptState.ENDING:
             # abnormal termination
             if self.run_started or self.tracking_started:

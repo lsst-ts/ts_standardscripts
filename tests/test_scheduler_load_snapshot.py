@@ -36,33 +36,27 @@ class TestSchedulerBaseLoadSnapshot(BaseSchedulerTestCase):
         return [self.script]
 
     async def test_valid_uri(self) -> None:
-
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-
             await self.configure_script(snapshot=self.controller.valid_snapshot)
             await self.run_script()
 
             self.assert_loaded_snapshots(snapshots=[self.controller.valid_snapshot])
 
     async def test_latest(self) -> None:
-
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-
             await self.configure_script(snapshot="latest")
             await self.run_script()
 
             self.assert_loaded_snapshots(snapshots=[self.controller.valid_snapshot])
 
     async def test_invalid_uri(self) -> None:
-
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-
             await self.configure_script(snapshot="invalid")
 
             with self.assertRaises(AssertionError):
@@ -71,11 +65,9 @@ class TestSchedulerBaseLoadSnapshot(BaseSchedulerTestCase):
             self.assert_loaded_snapshots(snapshots=[])
 
     async def test_fail_config_latest_not_published(self) -> None:
-
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=False
         ):
-
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(snapshot="latest")
 

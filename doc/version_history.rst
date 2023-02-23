@@ -6,6 +6,11 @@
 Version History
 ===============
 
+v1.19.0
+-------
+
+* Update pre-commit to use black 23, isort 5.12 and check-yaml 4.4.
+
 v1.18.0
 -------
 

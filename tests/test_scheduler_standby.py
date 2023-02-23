@@ -44,7 +44,6 @@ class TestSchedulerBaseStandBy(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.STANDBY, publish_initial_state=True
         ):
-
             await self.configure_script()
             await self.run_script()
 
@@ -65,7 +64,6 @@ class TestSchedulerBaseStandBy(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.STANDBY, publish_initial_state=False
         ):
-
             await self.configure_script()
             await self.run_script()
 
@@ -86,7 +84,6 @@ class TestSchedulerBaseStandBy(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.DISABLED, publish_initial_state=True
         ):
-
             await self.configure_script()
             await self.run_script()
 
@@ -107,7 +104,6 @@ class TestSchedulerBaseStandBy(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.DISABLED, publish_initial_state=False
         ):
-
             await self.configure_script()
             await self.run_script()
 
@@ -128,7 +124,6 @@ class TestSchedulerBaseStandBy(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-
             await self.configure_script()
             await self.run_script()
 
@@ -149,7 +144,6 @@ class TestSchedulerBaseStandBy(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-
             await self.configure_script()
             await self.run_script()
 
@@ -170,7 +164,6 @@ class TestSchedulerBaseStandBy(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.FAULT, publish_initial_state=True
         ):
-
             await self.configure_script()
             await self.run_script()
 
@@ -191,7 +184,6 @@ class TestSchedulerBaseStandBy(BaseSchedulerTestCase):
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.FAULT, publish_initial_state=False
         ):
-
             await self.configure_script()
             await self.run_script()
 

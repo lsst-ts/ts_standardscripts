@@ -35,11 +35,9 @@ class TestSchedulerBaseStop(BaseSchedulerTestCase):
         return [self.script]
 
     async def test_no_stop_default(self) -> None:
-
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-
             await self.configure_script()
             await self.run_script()
 
@@ -47,11 +45,9 @@ class TestSchedulerBaseStop(BaseSchedulerTestCase):
             assert not self.controller.abort_observations[0]
 
     async def test_no_stop_explicit(self) -> None:
-
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-
             await self.configure_script(stop=False)
             await self.run_script()
 
@@ -59,11 +55,9 @@ class TestSchedulerBaseStop(BaseSchedulerTestCase):
             assert not self.controller.abort_observations[0]
 
     async def test_stop(self) -> None:
-
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-
             await self.configure_script(stop=True)
             await self.run_script()
 
