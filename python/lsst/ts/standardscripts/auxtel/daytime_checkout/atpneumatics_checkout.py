@@ -79,6 +79,8 @@ class ATPneumaticsCheckout(salobj.BaseScript):
         self.atcs = ATCS(domain=self.domain, intended_usage=atcs_usage, log=self.log)
         self.main_air_pressure_min_threshold = 275790
         self.main_air_pressure_max_threshold = 413000
+        self.ataos_enabled_delay = 10
+        self.ataos_disabled_delay = 15
 
     @classmethod
     def get_schema(cls):
@@ -91,7 +93,7 @@ class ATPneumaticsCheckout(salobj.BaseScript):
     def set_metadata(self, metadata):
         """Set estimated duration of the script."""
 
-        metadata.duration = 70
+        metadata.duration = 95
 
     async def run(self):
         await self.assert_feasibility()
@@ -124,6 +126,9 @@ class ATPneumaticsCheckout(salobj.BaseScript):
 
         await self.atcs.enable_ataos_corrections()
 
+        # Sleep to allow M1 to arrive at commanded pressure
+        await asyncio.sleep(self.ataos_enabled_delay)
+
         m1_pressure = await self.atcs.rem.atpneumatics.tel_m1AirPressure.aget(timeout=5)
         self.log.info(
             f"M1 Air pressure with enabled ATAOS corrections is {m1_pressure.pressure:0.0f} Pascals"
@@ -133,6 +138,9 @@ class ATPneumaticsCheckout(salobj.BaseScript):
 
         # Turn off ATAOS correction(s)
         await self.atcs.disable_ataos_corrections()
+
+        # Sleep to allow M1 to settle down to hard points
+        await asyncio.sleep(self.ataos_disabled_delay)
 
         m1_pressure = await self.atcs.rem.atpneumatics.tel_m1AirPressure.aget(
             timeout=STD_TIMEOUT
