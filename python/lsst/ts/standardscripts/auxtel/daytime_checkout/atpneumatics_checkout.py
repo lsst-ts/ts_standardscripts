@@ -79,8 +79,10 @@ class ATPneumaticsCheckout(salobj.BaseScript):
         self.atcs = ATCS(domain=self.domain, intended_usage=atcs_usage, log=self.log)
         self.main_air_pressure_min_threshold = 275790
         self.main_air_pressure_max_threshold = 413000
-        self.ataos_enabled_delay = 10
-        self.ataos_disabled_delay = 15
+        self.delay_ataos_enabled = 10
+        self.delay_ataos_disabled = 15
+        self.pressure_tolerance_relative = 0.03
+        self.pressure_ataos_enabled_floor = 30000
 
     @classmethod
     def get_schema(cls):
@@ -137,12 +139,36 @@ class ATPneumaticsCheckout(salobj.BaseScript):
         await self.atcs.enable_ataos_corrections()
 
         # Sleep to allow M1 to arrive at commanded pressure
-        await asyncio.sleep(self.ataos_enabled_delay)
+        await asyncio.sleep(self.delay_ataos_enabled)
 
-        m1_pressure = await self.atcs.rem.atpneumatics.tel_m1AirPressure.aget(timeout=5)
-        self.log.info(
-            f"M1 Air pressure with enabled ATAOS corrections is {m1_pressure.pressure:0.0f} Pascals"
+        m1_commanded_pressure = (
+            await self.atcs.rem.ataos.evt_m1CorrectionCompleted.aget(
+                timeout=STD_TIMEOUT
+            )
         )
+
+        m1_pressure = await self.atcs.rem.atpneumatics.tel_m1AirPressure.aget(
+            timeout=STD_TIMEOUT
+        )
+
+        # Check that M1 pressure arrived to ATAOS commanded pressure within
+        # tolerance
+        if (
+            m1_commanded_pressure.pressure * (1.0 - self.pressure_tolerance_relative)
+            < m1_pressure.pressure
+            < m1_commanded_pressure.pressure * (1.0 + self.pressure_tolerance_relative)
+        ):
+            self.log.info(
+                f"M1 Air pressure with enabled ATOAS corrections is {m1_pressure.pressure:0.0f} Pascals."
+            )
+        else:
+            raise RuntimeError(
+                "M1 air pressure failed to arrive at desired value of"
+                f"({m1_commanded_pressure:0.0f}+/-"
+                f"{self.pressure_tolerance_relative*m1_commanded_pressure:0.0f})"
+                f"within specified time limit of {self.delay_ataos_enabled}s. Recorded M1 air pressure is "
+                f"{m1_pressure.pressure:0.0f} Pascals."
+            )
 
         await self.checkpoint("Turning off ATAOS corrections")
 
@@ -150,14 +176,23 @@ class ATPneumaticsCheckout(salobj.BaseScript):
         await self.atcs.disable_ataos_corrections()
 
         # Sleep to allow M1 to settle down to hard points
-        await asyncio.sleep(self.ataos_disabled_delay)
+        await asyncio.sleep(self.delay_ataos_disabled)
 
         m1_pressure = await self.atcs.rem.atpneumatics.tel_m1AirPressure.aget(
             timeout=STD_TIMEOUT
         )
-        self.log.info(
-            f"M1 air pressure when lowered back on hardpoints is {m1_pressure.pressure:0.0f} Pascals"
-        )
+
+        # Check that M1 pressure below floor with ATAOS corrections disabled.
+        if m1_pressure.pressure < self.pressure_ataos_enabled_floor:
+            self.log.info(
+                f"M1 air pressure after ATAOS corrections disabled is {m1_pressure.pressure:0.0f} Pascals"
+            )
+        else:
+            raise RuntimeError(
+                f"M1 Air pressure {self.delay_ataos_disabled}s after ATAOS corrections disabled is "
+                f"{m1_pressure.pressure:0.0f} Pascals, which is above acceptable limit of "
+                f"{self.pressure_ataos_enabled_floor:0.0f} Pascals."
+            )
 
         await self.checkpoint("Exercising Mirror Covers and Vents")
 
