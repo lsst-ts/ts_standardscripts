@@ -6,6 +6,15 @@
 Version History
 ===============
 
+v1.19.1
+-------
+
+* In ``auxtel/daytime_checkout/atpneumatics_checkout.py``: 
+  * add slew to park position to ensure telescope is in safe range for ATAOS operation.
+  * add sleep to allow mirror to arrive at commanded pressure before logging value.
+  * add check that M1 arrives at pressure commanded by ATAOS after enable/disable. 
+  * update unit test ``tests/test_auxtel_atpneumatics_checkout.py`` 
+
 v1.19.0
 -------
 
