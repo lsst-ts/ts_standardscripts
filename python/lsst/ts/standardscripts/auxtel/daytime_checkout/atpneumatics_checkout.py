@@ -98,6 +98,16 @@ class ATPneumaticsCheckout(salobj.BaseScript):
     async def run(self):
         await self.assert_feasibility()
 
+        await self.checkpoint("Slewing Telescope to park position")
+
+        # Move Telescope to park position
+        await self.atcs.point_azel(
+            target_name="Park position",
+            az=self.atcs.tel_park_az,
+            el=self.atcs.tel_park_el,
+            rot_tel=self.atcs.tel_park_rot,
+        )
+
         await self.checkpoint("Opening pneumatics valves")
 
         await self.atcs.open_valves()
