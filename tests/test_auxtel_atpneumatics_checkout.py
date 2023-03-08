@@ -33,7 +33,9 @@ from lsst.ts.standardscripts.auxtel.daytime_checkout import ATPneumaticsCheckout
 class TestATPneumaticsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         self.tel_mainAirSourcePressure = 400000
-        self.tel_m1AirPressure = 400000
+        self.tel_m1AirPressure_enabled = 100005
+        self.tel_m1AirPressure_commanded = 100000
+        self.tel_m1AirPressure_disabled = 0
         self.cmd_time = time.time()
         self.ataos_correction_status = True
         self.ataos_correction_result = "enabled"
@@ -60,24 +62,28 @@ class TestATPneumaticsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestC
             pressure=self.tel_mainAirSourcePressure,
         )
 
-    async def get_tel_m1_air_source_pressure(self, timeout):
+    async def get_m1_correction_completed_pressure(self, timeout):
         return types.SimpleNamespace(
-            pressure=self.tel_m1AirPressure,
+            pressure=self.tel_m1AirPressure_commanded,
         )
 
-    async def get_cmd_enable_correction(self, m1, hexapod, atspectrograph, timeout):
-        return types.SimpleNamespace(
-            statusCode=self.ataos_correction_status,
-            result=self.ataos_correction_result,
-            private_sndStamp=self.cmd_time,
-        )
+    async def cmd_enable_corrections(self):
+        asyncio.create_task(self.raise_mirror())
 
-    async def get_cmd_disable_correction(self, m1, hexapod, atspectrograph, timeout):
-        return types.SimpleNamespace(
-            statusCode=self.ataos_correction_status,
-            result=self.ataos_correction_result,
-            private_sndStamp=self.cmd_time,
-        )
+    async def cmd_disable_corrections(self):
+        asyncio.create_task(self.lower_mirror())
+
+    async def raise_mirror(self):
+        self._m1_pressure = self.tel_m1AirPressure_enabled
+        await asyncio.sleep(0.5)
+
+    async def lower_mirror(self):
+        self._m1_pressure = self.tel_m1AirPressure_disabled
+        await asyncio.sleep(0.5)
+
+    async def get_tel_m1_air_pressure(self, timeout):
+        await asyncio.sleep(0.1)
+        return types.SimpleNamespace(pressure=self._m1_pressure)
 
     @contextlib.asynccontextmanager
     async def setup_mocks(self):
@@ -86,6 +92,15 @@ class TestATPneumaticsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestC
         self.script.atcs.close_m1_cover = unittest.mock.AsyncMock()
         self.script.atcs.open_m1_vent = unittest.mock.AsyncMock()
         self.script.atcs.close_m1_vent = unittest.mock.AsyncMock()
+        self.script.atcs.point_azel = unittest.mock.AsyncMock()
+        self.script.atcs.stop_tracking = unittest.mock.AsyncMock()
+
+        self.script.atcs.enable_ataos_corrections = unittest.mock.AsyncMock(
+            side_effect=self.cmd_enable_corrections
+        )
+        self.script.atcs.disable_ataos_corrections = unittest.mock.AsyncMock(
+            side_effect=self.cmd_disable_corrections
+        )
 
         self.script.atcs.rem = types.SimpleNamespace(
             atpneumatics=unittest.mock.AsyncMock(), ataos=unittest.mock.AsyncMock()
@@ -93,13 +108,12 @@ class TestATPneumaticsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestC
         self.script.atcs.rem.atpneumatics.configure_mock(
             **{
                 "tel_mainAirSourcePressure.next.side_effect": self.get_tel_main_air_source_pressure,
-                "tel_m1AirPressure.aget.side_effect": self.get_tel_m1_air_source_pressure,
+                "tel_m1AirPressure.aget.side_effect": self.get_tel_m1_air_pressure,
             }
         )
         self.script.atcs.rem.ataos.configure_mock(
             **{
-                "cmd_enableCorrection.set_start.side_effect": self.get_cmd_enable_correction,
-                "cmd_disableCorrection.set_start.side_effect": self.get_cmd_disable_correction,
+                "evt_m1CorrectionCompleted.aget.side_effect": self.get_m1_correction_completed_pressure,
             }
         )
 
