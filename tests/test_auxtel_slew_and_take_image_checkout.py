@@ -26,6 +26,7 @@ import unittest
 
 import pytest
 
+from lsst.ts.idl.enums.ATMCS import M3State
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
 from lsst.ts.standardscripts.auxtel.daytime_checkout import SlewAndTakeImageCheckout
 
@@ -42,6 +43,7 @@ class TestSlewAndTakeImageCheckout(
         self.ataos_correction_status = True
         self.ataos_correction_result = "enabled"
         self.cmd_time = time.time()
+        self.m3_state_latiss_port = M3State.NASMYTH2
         return super().setUp()
 
     async def basic_make_script(self, index):
@@ -69,6 +71,9 @@ class TestSlewAndTakeImageCheckout(
             private_sndStamp=self.cmd_time,
         )
 
+    async def get_evt_m3State(self):
+        return types.SimpleNamespace(state=self.m3_state_latiss_port)
+
     @contextlib.asynccontextmanager
     async def setup_mocks(self):
         self.script.atcs.disable_dome_following = unittest.mock.AsyncMock()
@@ -89,10 +94,17 @@ class TestSlewAndTakeImageCheckout(
         self.script.latiss.rem.atoods.configure_mock(
             **{"evt_imageInOODS.next.side_effect": self.get_atoods_ingest_event}
         )
-        self.script.atcs.rem = types.SimpleNamespace(ataos=unittest.mock.AsyncMock())
+        self.script.atcs.rem = types.SimpleNamespace(
+            ataos=unittest.mock.AsyncMock(), atmcs=unittest.mock.AsyncMock()
+        )
         self.script.atcs.rem.ataos.configure_mock(
             **{
                 "cmd_enableCorrection.set_start.side_effect": self.get_cmd_enableCorrection,
+            }
+        )
+        self.script.atcs.rem.atmcs.configure_mock(
+            **{
+                "evt_m3State.aget.side_effect": self.get_evt_m3State,
             }
         )
 

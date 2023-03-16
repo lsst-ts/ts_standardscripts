@@ -6,6 +6,13 @@
 Version History
 ===============
 
+v1.19.2
+-------
+
+* In ``auxtel/daytime_checkout/slew_and_take_image_checkout.py``:
+  * add check that M3 is in position for observations with LATISS
+  * update unit test ``tests/test_auxtel_slew_and_take_image_checkout.py``
+
 v1.19.1
 -------
 
