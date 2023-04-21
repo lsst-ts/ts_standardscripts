@@ -6,6 +6,11 @@
 Version History
 ===============
 
+v1.20.0
+-------
+
+* Add new ``auxtel/latiss_take_sequence.py`` script, unit tests, and executables
+
 v1.19.2
 -------
 
