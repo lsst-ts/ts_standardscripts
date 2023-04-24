@@ -10,6 +10,7 @@ v1.20.0
 -------
 
 * Add new ``auxtel/latiss_take_sequence.py`` script, unit tests, and executables
+* Add new ``maintel/m1m3/raise_m1m3.py`` to raise MainTel M1M3 mirror. 
 
 v1.19.2
 -------
