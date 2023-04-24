@@ -19,3 +19,4 @@
 # You should have received a copy of the GNU General Public License
 
 from .set_up import *
+from .shut_down import *
