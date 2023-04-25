@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
@@ -18,5 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .set_up import *
-from .shut_down import *
+import asyncio
+
+from lsst.ts.standardscripts.maintel.laser_tracker import ShutDown
+
+asyncio.run(ShutDown.amain())
