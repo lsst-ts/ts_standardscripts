@@ -17,22 +17,33 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .calsys_takedata import *
-from .enable_atcs import *
-from .enable_latiss import *
-from .latiss_take_sequence import *
-from .offline_atcs import *
-from .offline_latiss import *
-from .offset_atcs import *
-from .prepare_for.flats import *
-from .prepare_for.onsky import *
-from .shutdown import *
-from .standby_atcs import *
-from .standby_latiss import *
-from .stop import *
-from .stop_tracking import *
-from .take_image_latiss import *
-from .take_stuttered_latiss import *
-from .track_target import *
-from .track_target_and_take_image import *
+__all__ = ["OffsetATCS"]
+
+from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages
+from ..base_offset_tcs import BaseOffsetTCS
+
+
+class OffsetATCS(BaseOffsetTCS):
+    """Perform an ATCS offset.
+
+    Parameters
+    ----------
+    index : `int`
+        Index of Script SAL component.
+    """
+
+    def __init__(self, index, add_remotes: bool = True):
+        super().__init__(
+            index=index,
+            descr="Perform an ATCS offset",
+        )
+
+        atcs_usage = None if add_remotes else ATCSUsages.DryTest
+
+        self.atcs = ATCS(domain=self.domain, intended_usage=atcs_usage, log=self.log)
+
+    @property
+    def tcs(self):
+        return self.atcs
