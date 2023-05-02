@@ -18,5 +18,6 @@
 #
 # You should have received a copy of the GNU General Public License
 
+from .align import *
 from .set_up import *
 from .shut_down import *
