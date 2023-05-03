@@ -9,7 +9,11 @@ Version History
 v1.20.0
 -------
 
-* Add new ``auxtel/latiss_take_sequence.py`` script, unit tests, and executables
+* Add new ``base_offset_tcs.py`` script to offset generic tcs class. 
+* Add new ``auxtel/offset_atcs.py`` script to offset the ATCS. 
+* Add new ``maintel/offset_,tcs.py`` script to offset the MTCS. 
+
+* Add new ``auxtel/latiss_take_sequence.py`` script, unit tests, and executables.
 * Add new ``maintel/m1m3/raise_m1m3.py`` to raise MainTel M1M3 mirror. 
 * Add new ``laser_tracker/set_up.py`` script to set up and turn on the laser tracker.
 * Add new ``laser_tracker/shut_down.py`` script to switch off the laser tracker.
