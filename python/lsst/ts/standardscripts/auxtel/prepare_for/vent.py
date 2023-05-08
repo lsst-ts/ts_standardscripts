@@ -98,7 +98,7 @@ class PrepareForVent(salobj.BaseScript):
 
         await self.checkpoint("Preparing...")
 
-        await self.prepare_for_vent()
+        await self.prepare_for_vent(partially_open_dome=True)
 
         self.log.info(f"Venting until sun reaches {self.config.end_at_sun_elevation}.")
 

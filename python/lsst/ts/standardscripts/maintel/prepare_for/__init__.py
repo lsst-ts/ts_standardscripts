@@ -20,5 +20,3 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from .align import *
-from .set_up import *
-from .shut_down import *
