@@ -18,6 +18,7 @@ v1.20.0
 * Add new ``laser_tracker/set_up.py`` script to set up and turn on the laser tracker.
 * Add new ``laser_tracker/shut_down.py`` script to switch off the laser tracker.
 * Add new ``laser_tracker/align.py`` script to align mtcs with laser tracker.
+* Add new ``maintel/prepare_for/align.py`` script to prepare for align mtcs with laser tracker.
 
 v1.19.2
 -------
