@@ -183,7 +183,12 @@ class Align(salobj.BaseScript):
 
             if any(corrections):
                 self.log.info(
-                    f"[{n_iter+1:02d}:{self.max_iter:02d}]: Applying corrections: {corrections}"
+                    f"[{n_iter+1:02d}:{self.max_iter:02d}]: Applying corrections: "
+                    f"dX={corrections[0]}, "
+                    f"dY={corrections[1]}, "
+                    f"dZ={corrections[2]}, "
+                    f"dRX={corrections[3]}, "
+                    f"dRY={corrections[4]}."
                 )
                 await align_func(*-corrections)
 

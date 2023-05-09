@@ -47,14 +47,14 @@ class TestAlign(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTest
         self.script.laser_tracker.rem.lasertracker_1 = unittest.mock.AsyncMock()
         self.script.laser_tracker.rem.lasertracker_1.configure_mock(
             **{
-                "evt_offsetsPublish.next.side_effect": self.get_offsets,
+                "evt_offsetsPublish.next": self.get_offsets,
                 "evt_laserStatus.aget": self.get_laser_status,
                 "evt_summaryState.aget": self.get_summary_state,
                 "evt_summaryState.next": self.get_summary_state,
             }
         )
 
-        self.state_0 = [1, 1, 1, 1, 1, 1]
+        self.state_0 = [1, 1, 1, 1, 1]
         self.laser_status = types.SimpleNamespace(status=LaserStatus.ON)
         return (self.script,)
 
@@ -65,9 +65,11 @@ class TestAlign(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTest
         await asyncio.sleep(0.5)
         return self.laser_status
 
-    async def apply_offsets(self, corrections, *args, **kwags):
+    async def apply_offsets(self, *args, **kwags):
         await asyncio.sleep(0.5)
-        self.state_0 += corrections
+        self.state_0 = [
+            self.state_0[idx] + correction for idx, correction in enumerate(args)
+        ]
 
     async def get_offsets(self, *args, **kwags):
         # return corrections to be non zero the first time this is called
@@ -124,7 +126,7 @@ class TestAlign(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTest
             # Run the script
             await self.run_script()
 
-            assert all(self.state_0 == [0, 0, 0, 0, 0, 0])
+            assert self.state_0 == [0, 0, 0, 0, 0]
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
