@@ -6,6 +6,27 @@
 Version History
 ===============
 
+v1.20.0
+-------
+
+* Add new ``base_offset_tcs.py`` script to offset generic tcs class. 
+* Add new ``auxtel/offset_atcs.py`` script to offset the ATCS. 
+* Add new ``maintel/offset_,tcs.py`` script to offset the MTCS. 
+
+* Add new ``auxtel/latiss_take_sequence.py`` script, unit tests, and executables.
+* Add new ``maintel/m1m3/raise_m1m3.py`` to raise MainTel M1M3 mirror. 
+* Add new ``laser_tracker/set_up.py`` script to set up and turn on the laser tracker.
+* Add new ``laser_tracker/shut_down.py`` script to switch off the laser tracker.
+* Add new ``laser_tracker/align.py`` script to align mtcs with laser tracker.
+* Add new ``maintel/prepare_for/align.py`` script to prepare for align mtcs with laser tracker.
+
+v1.19.2
+-------
+
+* In ``auxtel/daytime_checkout/slew_and_take_image_checkout.py``:
+  * add check that M3 is in position for observations with LATISS
+  * update unit test ``tests/test_auxtel_slew_and_take_image_checkout.py``
+
 v1.19.1
 -------
 

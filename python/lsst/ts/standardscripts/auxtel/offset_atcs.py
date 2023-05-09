@@ -17,17 +17,33 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .enable_comcam import *
-from .enable_mtcs import *
-from .offline_comcam import *
-from .offline_mtcs import *
-from .offset_mtcs import *
-from .setup_mtcs import *
-from .standby_comcam import *
-from .standby_mtcs import *
-from .stop import *
-from .take_image_comcam import *
-from .track_target import *
-from .track_target_and_take_image_comcam import *
-from .track_target_and_take_image_gencam import *
+__all__ = ["OffsetATCS"]
+
+from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages
+from ..base_offset_tcs import BaseOffsetTCS
+
+
+class OffsetATCS(BaseOffsetTCS):
+    """Perform an ATCS offset.
+
+    Parameters
+    ----------
+    index : `int`
+        Index of Script SAL component.
+    """
+
+    def __init__(self, index, add_remotes: bool = True):
+        super().__init__(
+            index=index,
+            descr="Perform an ATCS offset",
+        )
+
+        atcs_usage = None if add_remotes else ATCSUsages.DryTest
+
+        self.atcs = ATCS(domain=self.domain, intended_usage=atcs_usage, log=self.log)
+
+    @property
+    def tcs(self):
+        return self.atcs
