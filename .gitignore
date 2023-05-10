@@ -17,3 +17,7 @@ pytest_session.txt
 # Editors
 .vscode
 *.egg-info/
+.pre-commit-config.yaml
+.flake8
+.isort.cfg
+.mypy.ini
