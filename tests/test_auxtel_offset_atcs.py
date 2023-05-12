@@ -18,15 +18,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import unittest
 import logging
+import unittest
+
 import pytest
-
-from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.standardscripts.auxtel import OffsetATCS
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-
 from lsst.ts import salobj
+from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
+from lsst.ts.standardscripts.auxtel import OffsetATCS
 
 
 class TestOffsetATCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
@@ -113,7 +112,7 @@ class TestOffsetATCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             self.script.atcs.offset_azel = unittest.mock.AsyncMock()
 
-            await self.script.run()
+            await self.run_script()
 
             self.script.atcs.offset_azel.assert_awaited_once_with(
                 az=10, el=-10, absorb=False, relative=False
@@ -127,7 +126,7 @@ class TestOffsetATCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             self.script.atcs.offset_radec = unittest.mock.AsyncMock()
 
-            await self.script.run()
+            await self.run_script()
 
             self.script.atcs.offset_radec.assert_awaited_once_with(
                 ra=1,
@@ -144,7 +143,7 @@ class TestOffsetATCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             self.script.atcs.offset_xy = unittest.mock.AsyncMock()
 
-            await self.script.run()
+            await self.run_script()
 
             self.script.atcs.offset_xy.assert_awaited_once_with(
                 x=10,
@@ -161,7 +160,7 @@ class TestOffsetATCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             self.script.atcs.offset_rot = unittest.mock.AsyncMock()
 
-            await self.script.run()
+            await self.run_script()
 
             self.script.atcs.offset_rot.assert_awaited_once_with(rot=10)
 
@@ -175,7 +174,7 @@ class TestOffsetATCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             self.script.atcs.reset_offsets = unittest.mock.AsyncMock()
 
-            await self.script.run()
+            await self.run_script()
 
             self.script.atcs.reset_offsets.assert_awaited_once_with(
                 absorbed=True,

@@ -103,9 +103,23 @@ class BaseOffsetTCS(salobj.BaseScript, metaclass=abc.ABCMeta):
                 description: Offset rotator angle.
                 properties:
                     rot:
-                        description: Offset rotataor (degrees).
+                        description: Offset rotator (degrees).
                         type: number
                 required: ["rot"]
+              offset_pa:
+                type: object
+                description: >-
+                    Offset the telescope based on a position angle and radius
+                    to the current target position.
+                properties:
+                    angle:
+                        description: Offset position angle, clockwise from North (degrees).
+                        type: number
+                    radius:
+                        description: Radial offset relative to target position (arcsec).
+                        type: number
+                required: ["angle", "radius"]
+                additionalProperties: false
               reset_offsets:
                 type: object
                 description: Reset offsets
@@ -150,6 +164,7 @@ class BaseOffsetTCS(salobj.BaseScript, metaclass=abc.ABCMeta):
         self.offset_radec = getattr(config, "offset_radec", None)
         self.offset_xy = getattr(config, "offset_xy", None)
         self.offset_rot = getattr(config, "offset_rot", None)
+        self.offset_pa = getattr(config, "offset_pa", None)
         self.reset_offsets = getattr(config, "reset_offsets", None)
 
         self.relative = config.relative
@@ -169,6 +184,7 @@ class BaseOffsetTCS(salobj.BaseScript, metaclass=abc.ABCMeta):
         await self.assert_feasibility()
 
         if self.offset_azel is not None:
+            await self.checkpoint(f"Offset azel: {self.offset_azel}")
             await self.tcs.offset_azel(
                 az=self.offset_azel["az"],
                 el=self.offset_azel["el"],
@@ -177,6 +193,7 @@ class BaseOffsetTCS(salobj.BaseScript, metaclass=abc.ABCMeta):
             )
 
         if self.offset_radec is not None:
+            await self.checkpoint(f"Offset radec: {self.offset_radec}")
             await self.tcs.offset_radec(
                 ra=self.offset_radec["ra"],
                 dec=self.offset_radec["dec"],
@@ -185,6 +202,7 @@ class BaseOffsetTCS(salobj.BaseScript, metaclass=abc.ABCMeta):
             )
 
         if self.offset_xy is not None:
+            await self.checkpoint(f"Offset xy: {self.offset_xy}")
             await self.tcs.offset_xy(
                 x=self.offset_xy["x"],
                 y=self.offset_xy["y"],
@@ -193,11 +211,17 @@ class BaseOffsetTCS(salobj.BaseScript, metaclass=abc.ABCMeta):
             )
 
         if self.offset_rot is not None:
+            await self.checkpoint(f"Offset rot: {self.offset_rot}")
             await self.tcs.offset_rot(
                 rot=self.offset_rot["rot"],
             )
 
+        if self.offset_pa is not None:
+            await self.checkpoint(f"Offset pa: {self.offset_pa}")
+            await self.tcs.offset_pa(**self.offset_pa)
+
         if self.reset_offsets is not None:
+            await self.checkpoint(f"Reset offsets: {self.reset_offsets}")
             await self.tcs.reset_offsets(
                 absorbed=self.reset_offsets["reset_absorbed"],
                 non_absorbed=self.reset_offsets["reset_non_absorbed"],

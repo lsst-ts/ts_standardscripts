@@ -22,15 +22,14 @@
 __all__ = ["LatissTakeSequence"]
 
 import asyncio
-
 import collections
 
 import yaml
-from lsst.ts import salobj
-from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
-from lsst.ts.standardscripts.utils import format_as_list
-
 from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
+
+from lsst.ts import salobj
+from lsst.ts.standardscripts.utils import format_as_list
 
 STD_TIMEOUT = 20  # seconds
 
@@ -63,10 +62,13 @@ class LatissTakeSequence(salobj.BaseScript):
 
         atcs_usage = None if add_remotes else ATCSUsages.DryTest
 
-        self.latiss = LATISS(
-            domain=self.domain, intended_usage=latiss_usage, log=self.log
-        )
         self.atcs = ATCS(domain=self.domain, intended_usage=atcs_usage, log=self.log)
+        self.latiss = LATISS(
+            domain=self.domain,
+            intended_usage=latiss_usage,
+            log=self.log,
+            tcs_ready_to_take_data=self.atcs.ready_to_take_data,
+        )
 
         self.run_started = False
 
