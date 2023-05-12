@@ -6,6 +6,17 @@
 Version History
 ===============
 
+v1.20.1
+-------
+
+* In ``prepare_for/vent``, fix passing ``partially_open_dome``.
+* Update ``auxtel/latiss_take_sequence.py`` to configure synchronization between ``ATCS`` and ``LATISS``.
+* Update ts-pre-commit configuration.
+* In ``base_offset_tcs.py``:
+
+  * Add new option to execute ``offset_pa``.
+  * Add checkpoints for each action.
+
 v1.20.0
 -------
 

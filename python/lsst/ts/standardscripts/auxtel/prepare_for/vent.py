@@ -25,9 +25,8 @@ import dataclasses
 
 import yaml
 from astroplan import Observer
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
-
 from lsst.ts import salobj, utils
+from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 
 
 @dataclasses.dataclass
@@ -98,7 +97,7 @@ class PrepareForVent(salobj.BaseScript):
 
         await self.checkpoint("Preparing...")
 
-        await self.prepare_for_vent(partially_open_dome=True)
+        await self.prepare_for_vent()
 
         self.log.info(f"Venting until sun reaches {self.config.end_at_sun_elevation}.")
 
@@ -141,7 +140,7 @@ class PrepareForVent(salobj.BaseScript):
             )
 
     async def prepare_for_vent(self):
-        await self.atcs.prepare_for_vent()
+        await self.atcs.prepare_for_vent(partially_open_dome=True)
 
     def get_sun_azel(self):
         """Get sun azel from ATCS.
