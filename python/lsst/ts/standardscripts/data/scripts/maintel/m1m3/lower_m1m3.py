@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
@@ -18,5 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 
-from .raise_m1m3 import *
-from .lower_m1m3 import *
+import asyncio
+
+from lsst.ts.standardscripts.maintel.m1m3 import LowerM1M3
+
+asyncio.run(LowerM1M3.amain())
