@@ -7,7 +7,7 @@ Version History
 ===============
 
 v1.21.0
-_______
+-------
 
 * Add new ``maintel/m1m3/lower_m1m3.py`` sal script and associated files. 
 
