@@ -11,6 +11,7 @@ v1.21.0
 
 * Add new ``maintel/m1m3/lower_m1m3.py`` sal script and associated files. 
 * Add new ``auxtel/offset_ataos.py`` script to offset the ATAOS.
+* Add new ``maintel/m1m3/check_hardpoint.py`` script to check hardpoints.
 
 v1.20.1
 -------
@@ -19,7 +20,6 @@ v1.20.1
 * Update ``auxtel/latiss_take_sequence.py`` to configure synchronization between ``ATCS`` and ``LATISS``.
 * Update ts-pre-commit configuration.
 * In ``base_offset_tcs.py``:
-
   * Add new option to execute ``offset_pa``.
   * Add checkpoints for each action.
 
