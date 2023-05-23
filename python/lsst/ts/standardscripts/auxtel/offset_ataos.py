@@ -129,6 +129,9 @@ class OffsetATAOS(salobj.BaseScript):
 
         self.reset_offsets = getattr(config, "reset_offsets", None)
 
+        if self.reset_offsets == "all":
+            self.reset_offsets = ["z", "x", "y", "u", "v", "m1"]
+
         self.offset_telescope = config.offset_telescope
 
         self.offsets = dict(
