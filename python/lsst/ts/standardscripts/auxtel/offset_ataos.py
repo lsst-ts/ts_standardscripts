@@ -22,9 +22,8 @@
 __all__ = ["OffsetATAOS"]
 
 import yaml
-from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages
-
 from lsst.ts import salobj
+from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages
 
 
 class OffsetATAOS(salobj.BaseScript):
@@ -130,6 +129,9 @@ class OffsetATAOS(salobj.BaseScript):
 
         self.reset_offsets = getattr(config, "reset_offsets", None)
 
+        if self.reset_offsets == "all":
+            self.reset_offsets = ["z", "x", "y", "u", "v", "m1"]
+
         self.offset_telescope = config.offset_telescope
 
         self.offsets = dict(
@@ -175,7 +177,9 @@ class OffsetATAOS(salobj.BaseScript):
             await self.checkpoint("Clearing ATAOS offsets...")
             for axis in self.reset_offsets:
                 self.log.info(f"Clearing offsets in axes: {axis}")
-                await self.atcs.rem.ataos.cmd_resetOffset.set_start(axis)
+                await self.atcs.rem.ataos.cmd_resetOffset.set_start(
+                    axis=axis, timeout=self.atcs.long_timeout
+                )
 
         else:
             await self.checkpoint("Applying ATAOS offsets...")

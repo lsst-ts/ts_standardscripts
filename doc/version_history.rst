@@ -13,6 +13,9 @@ v1.21.0
 * Add new ``auxtel/offset_ataos.py`` script to offset the ATAOS.
 * Add new ``maintel/m1m3/check_hardpoint.py`` script to check hardpoints.
 * Add missing comment line in all script files. 
+* In ``auxtel/offset_ataos.py``, fix bug in call to resetOffset and change handling for reset all configuration.
+* Update unit test for ``auxtel/offset_ataos.py``
+* In ``auxtel/daytime_checkout/atpneumatics_checkout.py``, update detailed description. 
 
 v1.20.1
 -------
