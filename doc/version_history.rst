@@ -9,6 +9,7 @@ Version History
 v1.21.0
 -------
 
+* Add new ``maintel/m1m3/check_actuators.py`` script to run the actuators bump test.
 * Add new ``maintel/m1m3/lower_m1m3.py`` sal script and associated files. 
 * Add new ``auxtel/offset_ataos.py`` script to offset the ATAOS.
 * Add new ``maintel/m1m3/check_hardpoint.py`` script to check hardpoints.
