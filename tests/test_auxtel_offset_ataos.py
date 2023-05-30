@@ -138,10 +138,10 @@ class TestOffsetATAOS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             await self.configure_script(**config)
 
-            resetOffset_calls = [
-                unittest.mock.call("x"),
-                unittest.mock.call("y"),
-                unittest.mock.call("z"),
+            reset_offset_calls = [
+                unittest.mock.call(axis="x", timeout=self.script.atcs.long_timeout),
+                unittest.mock.call(axis="y", timeout=self.script.atcs.long_timeout),
+                unittest.mock.call(axis="z", timeout=self.script.atcs.long_timeout),
             ]
 
             await self.run_script()
@@ -149,7 +149,30 @@ class TestOffsetATAOS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             self.script.atcs.offset_aos_lut.assert_not_awaited()
 
             self.script.atcs.rem.ataos.cmd_resetOffset.set_start.assert_has_awaits(
-                resetOffset_calls
+                reset_offset_calls
+            )
+
+    async def test_offset_ataos_reset_all_offset(self):
+        async with self.make_script(), self.setup_mocks():
+            config = dict(reset_offsets="all")
+
+            await self.configure_script(**config)
+
+            reset_offset_calls = [
+                unittest.mock.call(axis="z", timeout=self.script.atcs.long_timeout),
+                unittest.mock.call(axis="x", timeout=self.script.atcs.long_timeout),
+                unittest.mock.call(axis="y", timeout=self.script.atcs.long_timeout),
+                unittest.mock.call(axis="u", timeout=self.script.atcs.long_timeout),
+                unittest.mock.call(axis="v", timeout=self.script.atcs.long_timeout),
+                unittest.mock.call(axis="m1", timeout=self.script.atcs.long_timeout),
+            ]
+
+            await self.run_script()
+
+            self.script.atcs.offset_aos_lut.assert_not_awaited()
+
+            self.script.atcs.rem.ataos.cmd_resetOffset.set_start.assert_has_awaits(
+                reset_offset_calls
             )
 
 
