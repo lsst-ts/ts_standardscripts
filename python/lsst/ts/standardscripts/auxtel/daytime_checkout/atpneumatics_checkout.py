@@ -17,6 +17,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ["ATPneumaticsCheckout"]
 
@@ -57,11 +58,11 @@ class ATPneumaticsCheckout(salobj.BaseScript):
     **Details**
 
     This script performs a daytime checkout of the Auxiliary Telescope
-    Pneumatics system. It will first turn on the valves and check that the line
-    pressure is sufficient for operations. Then, it will turn on/off the ATAOS
-    corrections before lowering the mirror back down onto its hardpoints.
-    Finally the mirror cover and vents are opened and closed. No telescope
-    movement is performed.
+    Pneumatics system. It will first slew the Telescope to the park position.
+    Next, it will turn on the valves and check that the line pressure is
+    sufficient for operations. Then, it will turn on/off the ATAOS corrections
+    before lowering the mirror back down onto its hardpoints. Finally the
+    mirror cover and vents are opened and closed.
     """
 
     def __init__(self, index=1, add_remotes: bool = True):

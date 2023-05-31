@@ -17,6 +17,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from .calsys_takedata import *
 from .enable_atcs import *
@@ -24,6 +25,7 @@ from .enable_latiss import *
 from .latiss_take_sequence import *
 from .offline_atcs import *
 from .offline_latiss import *
+from .offset_ataos import *
 from .offset_atcs import *
 from .prepare_for.flats import *
 from .prepare_for.onsky import *
