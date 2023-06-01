@@ -75,4 +75,4 @@ class HomeBothAxesMTMount(salobj.BaseScript):
         end_time = time.time()
         elapsed_time = end_time - start_time
         
-        self.log.info(f"Homing both axes took {self.elapsed_time:.2f} seconds")
+        self.log.info(f"Homing both axes took {elapsed_time:.2f} seconds")
