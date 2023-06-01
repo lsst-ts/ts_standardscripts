@@ -63,7 +63,7 @@ class HomeBothAxesMTMount(salobj.BaseScript):
 
     async def configure(self, config):
         # This script does not require any configuration.
-        pass
+        self.config = config
 
     def set_metadata(self, metadata):
         metadata.duration = 60 * 3
