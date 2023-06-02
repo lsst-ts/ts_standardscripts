@@ -39,8 +39,7 @@ from lsst.ts.cRIOpy.M1M3FATable import (
 
 class CheckActuators(BaseScript):
     """Perform a M1M3 bump test on either a selection of individual
-    actuators or on all actuators. Both cylinders will be tested for
-    dual actuators.
+    actuators or on all actuators.
 
     Parameters
     ----------
@@ -49,6 +48,10 @@ class CheckActuators(BaseScript):
 
     Notes
     -----
+
+    In case of dual actuators both cylinders will be tested consecutively.
+    The Script will fail if M1M3 mirror is raised.
+
     **Checkpoints**
 
     - "Running bump test on FA ID: {id}.": Check individual actuator.
@@ -77,7 +80,8 @@ class CheckActuators(BaseScript):
 
     async def assert_feasibility(self):
         """Verify that the system is in a feasible state before
-        running bump test.
+        running bump test. Note that M1M3 mirror should be in lowered
+        position.
         """
 
         for comp in self.mtcs.components_attr:
@@ -85,17 +89,20 @@ class CheckActuators(BaseScript):
                 self.log.debug(f"Ignoring component {comp}.")
                 setattr(self.mtcs.check, comp, False)
 
-        # Check all enabled, liveliness and the m1m3 detailed state
+        # Check all enabled and liveliness
         await asyncio.gather(
             self.mtcs.assert_all_enabled(),
             self.mtcs.assert_liveliness(),
-            self.mtcs.assert_m1m3_detailed_state(
-                {
-                    DetailedState.PARKED,
-                    DetailedState.PARKEDENGINEERING,
-                }
-            ),
         )
+        # Check if m1m3 detailed state is either PARKED or PARKEDENGINEERING
+        expected_states = {DetailedState.PARKED, DetailedState.PARKEDENGINEERING}
+        try:
+            await self.mtcs.assert_m1m3_detailed_state(expected_states)
+        except AssertionError:
+            raise RuntimeError(
+                "Please park M1M3 before proceeding with the bump test. This can be done "
+                "by lowering the mirror or enabling the M1M3 CSC."
+            )
 
     @classmethod
     def get_schema(cls):
@@ -220,10 +227,9 @@ class CheckActuators(BaseScript):
 
             # Getting test status
             (
-                fa_id,
                 primary_status,
                 secondary_status,
-            ) = await self.mtcs.get_m1m3_bump_test_status()
+            ) = await self.mtcs.get_m1m3_bump_test_status(actuator_id=actuator_id)
 
             secondary_status_text = (
                 f"Secondary FA (Index {secondary_index}): "
@@ -233,7 +239,7 @@ class CheckActuators(BaseScript):
             )
             self.log.info(
                 f"Bump test done for {i + 1} of {len(self.actuators_to_test)}. "
-                f"FA ID {fa_id}. Primary FA (Index {primary_index}): "
+                f"FA ID {actuator_id}. Primary FA (Index {primary_index}): "
                 f"{primary_status.name.upper()}. "
                 f"{secondary_status_text}"
             )
@@ -247,11 +253,11 @@ class CheckActuators(BaseScript):
                     failed_secondary.append((actuator_id, secondary_index))
 
         end_time = time.monotonic()
-        elapsed_time = (end_time - start_time) / 60.0
+        elapsed_time = end_time - start_time
 
         # Final checkpoint
         await self.checkpoint(
-            f"M1M3 bump test completed. It took {elapsed_time:.2f} minutes"
+            f"M1M3 bump test completed. It took {elapsed_time:.2f} seconds."
         )
 
         # Final message with bump test results/status

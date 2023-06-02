@@ -9,6 +9,7 @@ Version History
 v1.22.0
 -------
 
+* Update the ``maintel/m1m3/check_actuators.py`` script with improved logging and detailed state assertions.
 * Add new ``maintel/home_both_axes.py`` script to home both MTMount axes. 
 
 
