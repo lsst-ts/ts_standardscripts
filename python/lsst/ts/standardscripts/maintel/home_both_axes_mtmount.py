@@ -69,7 +69,7 @@ class HomeBothAxesMTMount(salobj.BaseScript):
         metadata.duration = 60 * 3
 
     async def run(self):
-        # await self.checkpoint("Homing Both Axes")
+        await self.checkpoint("Homing Both Axes")
         start_time = time.time()
         await self.mtcs.rem.mtmount.cmd_homeBothAxes.set_start()
         end_time = time.time()
