@@ -38,7 +38,7 @@ class TestHomeBothAxesMTMount(
             await self.configure_script()
 
             await self.run_script()
-            
+
             self.script.mtcs.rem.mtmount.cmd_homeBothAxes.assert_awaited_once()
 
     async def test_executable(self):
