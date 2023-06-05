@@ -21,17 +21,32 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.maintel import HomeBothAxesMTMount
+from lsst.ts.standardscripts.maintel import HomeBothAxes
 
 
-class TestHomeBothAxesMTMount(
+class TestHomeBothAxes(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
     async def basic_make_script(self, index):
-        self.script = HomeBothAxesMTMount(index=index, add_remotes=False)
-        self.script.mtcs.raise_m1m3 = unittest.mock.AsyncMock()
+        self.script = HomeBothAxes(index=index, add_remotes=False)
+
+        # self.script.mtcs.rem.mtmount = unittest.mock.AsyncMock()
+        # self.script.mtcs.rem.mtmount.cmd_homeBothAxes.set =
+        # unittest.mock.AsyncMock(
+        #     wraps=self.mtmount_cmd_homeBothAxes
+        # )
 
         return (self.script,)
+
+    # async def mtmount_cmd_homeBothAxes(self):
+    #     """Publishes event from mtmount confirming
+    #     both Az and EL axes are homed"""
+    #     await self.mtcs.rem.mtmount.evt_azimuthHomed.
+    #       set_write(force_output=True)
+
+    #     await self.mtcs.rem.mtmount.evt_elevationHomed.
+    #           set_write(force_output=True)
+    #     return
 
     async def test_run(self):
         async with self.make_script():
@@ -39,11 +54,13 @@ class TestHomeBothAxesMTMount(
 
             await self.run_script()
 
-            self.script.mtcs.rem.mtmount.cmd_homeBothAxes.assert_awaited_once()
+            self.script.mtcs.rem.mtmount.cmd_homeBothAxes.set.assert_awaited_once_with(
+                timeout=self.script.home_both_axes_timeout
+            )
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "home_both_axes_mtmount.py"
+        script_path = scripts_dir / "maintel" / "home_both_axes.py"
         print(script_path)
         await self.check_executable(script_path)
 

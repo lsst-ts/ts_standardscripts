@@ -21,6 +21,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import HomeBothAxesMTMount
+from lsst.ts.standardscripts.maintel import HomeBothAxes
 
-asyncio.run(HomeBothAxesMTMount.amain())
+asyncio.run(HomeBothAxes.amain())

@@ -32,4 +32,4 @@ from .take_image_comcam import *
 from .track_target import *
 from .track_target_and_take_image_comcam import *
 from .track_target_and_take_image_gencam import *
-from .home_both_axes_mtmount import *
+from .home_both_axes import *
