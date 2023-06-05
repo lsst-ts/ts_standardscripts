@@ -31,23 +31,9 @@ class TestHomeBothAxes(
     async def basic_make_script(self, index):
         self.script = HomeBothAxes(index=index, add_remotes=False)
 
-        # self.script.mtcs.rem.mtmount = unittest.mock.AsyncMock()
-        # self.script.mtcs.rem.mtmount.cmd_homeBothAxes.set =
-        # unittest.mock.AsyncMock(
-        #     wraps=self.mtmount_cmd_homeBothAxes
-        # )
+        self.script.mtcs.rem.mtmount = unittest.mock.AsyncMock()
 
         return (self.script,)
-
-    # async def mtmount_cmd_homeBothAxes(self):
-    #     """Publishes event from mtmount confirming
-    #     both Az and EL axes are homed"""
-    #     await self.mtcs.rem.mtmount.evt_azimuthHomed.
-    #       set_write(force_output=True)
-
-    #     await self.mtcs.rem.mtmount.evt_elevationHomed.
-    #           set_write(force_output=True)
-    #     return
 
     async def test_run(self):
         async with self.make_script():

@@ -17,7 +17,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.``
 
 __all__ = ["HomeBothAxes"]
 
@@ -26,10 +26,6 @@ import time
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 from lsst.ts import salobj
-
-
-home_both_axes_timeout = 300.0  # timeout to home both MTMount axes.
-
 
 class HomeBothAxes(salobj.BaseScript):
     """Home azimuth and elevation axes of the MTMount.
@@ -62,6 +58,8 @@ class HomeBothAxes(salobj.BaseScript):
 
         self.mtcs = MTCS(domain = self.domain, intended_usage=mtcs_usage, log=self.log)
 
+        self.home_both_axes_timeout = 300.0  # timeout to home both MTMount axes.
+
     @classmethod
     def get_schema(cls):
         return None
@@ -72,12 +70,12 @@ class HomeBothAxes(salobj.BaseScript):
         pass
 
     def set_metadata(self, metadata):
-        metadata.duration = home_both_axes_timeout
+        metadata.duration = self.home_both_axes_timeout
 
     async def run(self):
         await self.checkpoint("Homing Both Axes")
         start_time = time.time()
-        await self.mtcs.rem.mtmount.cmd_homeBothAxes.set(timeout=home_both_axes_timeout)
+        await self.mtcs.rem.mtmount.cmd_homeBothAxes.set(timeout=self.home_both_axes_timeout)
         end_time = time.time()
         elapsed_time = end_time - start_time
 
