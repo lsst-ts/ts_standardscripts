@@ -27,6 +27,7 @@ from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 from lsst.ts import salobj
 
+
 class HomeBothAxes(salobj.BaseScript):
     """Home azimuth and elevation axes of the MTMount.
     Must call this after powering on the main axis and
@@ -56,7 +57,7 @@ class HomeBothAxes(salobj.BaseScript):
 
         mtcs_usage = None if add_remotes else MTCSUsages.DryTest
 
-        self.mtcs = MTCS(domain = self.domain, intended_usage=mtcs_usage, log=self.log)
+        self.mtcs = MTCS(domain=self.domain, intended_usage=mtcs_usage, log=self.log)
 
         self.home_both_axes_timeout = 300.0  # timeout to home both MTMount axes.
 
@@ -66,7 +67,6 @@ class HomeBothAxes(salobj.BaseScript):
 
     async def configure(self, config):
         # This script does not require any configuration.
-        # self.config = config
         pass
 
     def set_metadata(self, metadata):
@@ -75,7 +75,9 @@ class HomeBothAxes(salobj.BaseScript):
     async def run(self):
         await self.checkpoint("Homing Both Axes")
         start_time = time.time()
-        await self.mtcs.rem.mtmount.cmd_homeBothAxes.set(timeout=self.home_both_axes_timeout)
+        await self.mtcs.rem.mtmount.cmd_homeBothAxes.set(
+            timeout=self.home_both_axes_timeout
+        )
         end_time = time.time()
         elapsed_time = end_time - start_time
 
