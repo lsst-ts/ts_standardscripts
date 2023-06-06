@@ -73,8 +73,8 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     # Create a side effect function for mock_bump_test_status method from mcts
     # object. This function will be called when mock_bump_test_status method is
     # called
-    async def mock_get_m1m3_bump_test_status(self):
-        self.m1m3_bump_test_status = 101, BumpTest.PASSED, BumpTest.PASSED
+    async def mock_get_m1m3_bump_test_status(self, actuator_id):
+        self.m1m3_bump_test_status = BumpTest.PASSED, BumpTest.PASSED
         return self.m1m3_bump_test_status
 
     async def test_configure_all(self):
