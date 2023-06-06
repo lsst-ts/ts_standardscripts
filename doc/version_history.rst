@@ -6,6 +6,12 @@
 Version History
 ===============
 
+v1.22.0
+-------
+
+* Add new ``maintel/home_both_axes.py`` script to home both MTMount axes. 
+
+
 v1.21.0
 -------
 
