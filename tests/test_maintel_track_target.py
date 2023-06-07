@@ -24,10 +24,9 @@ import random
 import unittest
 
 import pytest
+from lsst.ts import salobj, standardscripts, utils
 from lsst.ts.idl.enums.MTPtg import WrapStrategy
 from lsst.ts.observatory.control import RotType
-
-from lsst.ts import salobj, standardscripts
 from lsst.ts.standardscripts.maintel import TrackTarget
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -90,10 +89,32 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
                 )
 
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             # Script can be configured with target name only
             await self.configure_script(target_name="eta Car")
+            assert self.script.program is None
+            assert self.script.reason is None
+            assert self.script.checkpoint_message is None
 
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
+            self.script.get_obs_id = unittest.mock.AsyncMock(
+                side_effect=["202306060001"]
+            )
+            await self.configure_script(
+                target_name="eta Car",
+                program="BLOCK-123",
+                reason="SITCOM-321",
+            )
+
+            assert self.script.program == "BLOCK-123"
+            assert self.script.reason == "SITCOM-321"
+            assert (
+                self.script.checkpoint_message
+                == "TrackTarget BLOCK-123 202306060001 SITCOM-321"
+            )
             # Script can be configured with ra, dec only
             await self.configure_script(slew_icrs=dict(ra=1.0, dec=-10.0))
 
