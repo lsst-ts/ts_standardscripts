@@ -19,11 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["get_scripts_dir", "get_topic_time_utc"]
+__all__ = ["get_scripts_dir", "get_topic_time_utc", "format_as_list", "format_grid"]
 
 import collections.abc
 import pathlib
 
+import numpy as np
 from lsst.ts.utils import astropy_time_from_tai_unix
 
 
@@ -94,6 +95,53 @@ def format_as_list(value, recurrences):
     value_as_list = [value] * recurrences
 
     return value_as_list
+
+
+def format_grid(
+    axis1: float | list[float], axis2: float | list[float]
+) -> tuple[list[float], list[float]]:
+    """Format two input values into lists with the same lengths.
+
+    If both values are scalars, the return value will be a pair of lists with
+    a single value.
+
+    If one of the inputs is a scalar and the other is a list, the return value
+    is a list with the scalar value with the same length as the list and the
+    list itself.
+
+    If both are lists with the same dimension, the return value is the same as
+    the input. However, if the lists have different dimensions an exception is
+    raised.
+
+    Parameters
+    ----------
+    axis1 : `float` or `list`[`float`]
+        Input value for the first axis.
+    axis2 : `float` or `list`[`float`]
+        Input value for the second axis.
+
+    Returns
+    -------
+    `tuple`[`list`[`float`], `list`[`float`]]]
+        Pair of lists with the same length.
+
+    Raises
+    ------
+    RuntimeError
+        If both inputs are lists of different lengths.
+    """
+    if np.isscalar(axis1) and np.isscalar(axis2):
+        return [axis1], [axis2]
+    elif np.isscalar(axis1):
+        return format_as_list(axis1, len(axis2)), axis2
+    elif np.isscalar(axis2):
+        return axis1, format_as_list(axis2, len(axis1))
+    else:
+        if len(axis1) != len(axis2):
+            raise RuntimeError(
+                f"Array sizes must be the same. Got {len(axis1)} and {len(axis2)}."
+            )
+        return axis1, axis2
 
 
 def get_topic_time_utc(topic):
