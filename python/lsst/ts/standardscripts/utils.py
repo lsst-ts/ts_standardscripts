@@ -42,7 +42,7 @@ def get_scripts_dir():
 def format_as_list(value, recurrences):
     """
     Reformat single instance of the attribute `value` as a list with
-    a specified number of reccurances.
+    a specified number of recurrences .
 
     Configurations often allow a single value for an attribute to be passed
     that needs to be replicated as a list. This occurs when the (YAML) type
