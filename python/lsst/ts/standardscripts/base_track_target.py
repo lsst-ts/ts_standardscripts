@@ -71,6 +71,10 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
     def tcs(self):
         raise NotImplementedError()
 
+    async def configure_tcs(self):
+        if self.tcs is not None:
+            await self.tcs.start_task
+
     @classmethod
     def get_schema(cls):
         schema_yaml = """
@@ -267,6 +271,8 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
             self.slew_type = SlewType.AZEL
 
         self.log.debug(f"Slew type: {self.slew_type!r}.")
+
+        await self.configure_tcs()
 
         self.config.rot_type = getattr(RotType, self.config.rot_type)
         self.config.az_wrap_strategy = getattr(
