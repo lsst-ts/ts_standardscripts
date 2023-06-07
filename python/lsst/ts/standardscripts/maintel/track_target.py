@@ -46,8 +46,13 @@ class TrackTarget(BaseTrackTarget):
         super().__init__(
             index=index, descr="Slew and track a target with the main telescope."
         )
-        self._mtcs = MTCS(self.domain, intended_usage=MTCSUsages.Slew, log=self.log)
+        self._mtcs = None
 
     @property
     def tcs(self):
         return self._mtcs
+
+    async def configure_tcs(self):
+        if self._mtcs is None:
+            self._mtcs = MTCS(self.domain, intended_usage=MTCSUsages.Slew, log=self.log)
+        await super().configure_tcs()
