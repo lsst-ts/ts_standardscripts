@@ -24,10 +24,9 @@ import random
 import unittest
 
 import pytest
+from lsst.ts import salobj, standardscripts, utils
 from lsst.ts.idl.enums.MTPtg import WrapStrategy
 from lsst.ts.observatory.control import RotType
-
-from lsst.ts import salobj, standardscripts
 from lsst.ts.standardscripts.maintel import TrackTarget
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -41,44 +40,67 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
 
         return (self.script,)
 
-    async def test_configure(self):
+    async def test_configure_fail_no_defaults(self):
         """Test different configuration scenarios."""
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             # Test no default configuration. User must provide something.
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script()
 
+    async def test_configure_fail_ra_no_dec(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             # If RA is given Dec must be given too.
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(slew_icrs=dict(ra=10.0))
 
+    async def test_configure_fail_dec_no_ra(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             # If Dec is given ra must be given too.
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(slew_icrs=dict(dec=-10.0))
 
+    async def test_configure_fail_invalid_ra_min(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             # Invalid RA
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(slew_icrs=dict(ra=-0.1, dec=0.0))
 
+    async def test_configure_fail_invalid_ra_max(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             # Invalid RA
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(slew_icrs=dict(ra=24.1, dec=0.0))
 
+    async def test_configure_fail_invalid_dec_min(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             # Invalid Dec
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(slew_icrs=dict(ra=1.0, dec=-90.1))
 
+    async def test_configure_fail_invalid_dec_max(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             # Invalid Dec
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(slew_icrs=dict(ra=1.0, dec=90.1))
 
+    async def test_configure_fail_invalid_rot_type(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             # Invalid rot_type
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(
@@ -89,30 +111,71 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
                     rot_type="invalid",
                 )
 
+    async def test_configure_with_target_name(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             # Script can be configured with target name only
             await self.configure_script(target_name="eta Car")
+            assert self.script.program is None
+            assert self.script.reason is None
+            assert self.script.checkpoint_message is None
 
+    async def test_configure_with_target_name_program_reason(self):
+        """Testing a valid configuration: with program and reason"""
+
+        # Try configure with a list of valid actuators ids
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
+            self.script.get_obs_id = unittest.mock.AsyncMock(
+                side_effect=["202306060001"]
+            )
+            await self.configure_script(
+                target_name="eta Car",
+                program="BLOCK-123",
+                reason="SITCOM-321",
+            )
+
+            assert self.script.program == "BLOCK-123"
+            assert self.script.reason == "SITCOM-321"
+            assert (
+                self.script.checkpoint_message
+                == "TrackTarget BLOCK-123 202306060001 SITCOM-321"
+            )
+
+    async def test_configure_with_ra_dec(self):
+        async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             # Script can be configured with ra, dec only
             await self.configure_script(slew_icrs=dict(ra=1.0, dec=-10.0))
 
+    async def test_configure_with_azel(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
+
             # Script can be configured with az/el
             await self.configure_script(
                 find_target=dict(az=1.0, el=80.0, mag_limit=8.0)
             )
 
+    async def test_configure_rot_strategies(self):
         # Configure passing rotator angle and all rotator strategies
         for rot_type in RotType:
             with self.subTest(f"rot_type={rot_type.name}", rot_type=rot_type.name):
                 async with self.make_script():
+                    self.script._mtcs = unittest.mock.AsyncMock()
+                    self.script._mtcs.start_task = utils.make_done_future()
+
                     await self.configure_script(
                         slew_icrs=dict(ra=1.0, dec=-10.0),
                         rot_value=10,
                         rot_type=rot_type.name,
                     )
 
+    async def test_configure_with_ignore(self):
         async with self.make_script():
             # Test ignore feature.
             await self.configure_script(
@@ -122,6 +185,7 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             assert not self.script.tcs.check.mtdometrajectory
             assert not self.script.tcs.check.mthexapod_1
 
+    async def test_configure_with_az_wrap_strategy(self):
         # Configure passing az_wrap_strategy
         for az_wrap_strategy in WrapStrategy:
             with self.subTest(f"az_wrap_strategy={az_wrap_strategy.name}"):
@@ -134,6 +198,8 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
 
     async def test_run_slew_target_name(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
             self.script.tcs.slew_object = unittest.mock.AsyncMock()
             self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
@@ -147,6 +213,8 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
 
     async def test_run_slew_azel(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
             self.script.tcs.slew_object = unittest.mock.AsyncMock()
             self.script.tcs.find_target = unittest.mock.AsyncMock(
@@ -168,6 +236,8 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
 
     async def test_run_slew_radec(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
             self.script.tcs.slew_object = unittest.mock.AsyncMock()
             self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
@@ -181,6 +251,8 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
 
     async def test_run_slew_fails(self):
         async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
             self.script.tcs.slew_icrs = unittest.mock.AsyncMock(
                 side_effect=RuntimeError
             )

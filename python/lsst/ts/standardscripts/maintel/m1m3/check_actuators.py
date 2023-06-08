@@ -22,22 +22,19 @@
 __all__ = ["CheckActuators"]
 
 
-import time
-import yaml
 import asyncio
+import time
 
-from lsst.ts.salobj import BaseScript
-from lsst.ts.idl.enums.Script import ScriptState
+import yaml
+from lsst.ts.cRIOpy.M1M3FATable import FATABLE, FATABLE_ID
 from lsst.ts.idl.enums.MTM1M3 import BumpTest, DetailedState
+from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
-from lsst.ts.cRIOpy.M1M3FATable import (
-    FATABLE,
-    FATABLE_ID,
-)
+from ...base_block_script import BaseBlockScript
 
 
-class CheckActuators(BaseScript):
+class CheckActuators(BaseBlockScript):
     """Perform a M1M3 bump test on either a selection of individual
     actuators or on all actuators.
 
@@ -135,7 +132,16 @@ class CheckActuators(BaseScript):
                 default: "all"
         additionalProperties: false
         """
-        return yaml.safe_load(schema_yaml)
+        schema_dict = yaml.safe_load(schema_yaml)
+
+        base_schema_dict = super().get_schema()
+
+        for properties in base_schema_dict["properties"]:
+            schema_dict["properties"][properties] = base_schema_dict["properties"][
+                properties
+            ]
+
+        return schema_dict
 
     async def configure(self, config):
         """Configure the script.
@@ -150,6 +156,7 @@ class CheckActuators(BaseScript):
         self.actuators_to_test = (
             self.m1m3_actuator_ids if config.actuators == "all" else config.actuators
         )
+        await super().configure(config=config)
 
     def set_metadata(self, metadata):
         """Set metadata."""
@@ -175,7 +182,7 @@ class CheckActuators(BaseScript):
 
         return actuator_id in self.m1m3_secondary_actuator_ids
 
-    async def run(self):
+    async def run_block(self):
         await self.assert_feasibility()
         start_time = time.monotonic()
 
