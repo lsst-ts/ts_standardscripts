@@ -37,6 +37,7 @@ class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
     async def make_dry_script(self):
         async with self.make_script():
             self.script.mtcs = unittest.mock.AsyncMock()
+            self.script.mtcs.components_attr = ["mtm1m3"]
             yield
 
     async def test_config_fail_az_no_el(self) -> None:
@@ -119,6 +120,15 @@ class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
             assert self.script.program is None
             assert self.script.reason is None
             assert self.script.checkpoint_message is None
+
+    async def test_config_ignore(self) -> None:
+        async with self.make_dry_script():
+            az = 0.0
+            el = 80.0
+
+            await self.configure_script(az=az, el=el, ignore=["mtm1m3", "no_comp"])
+            assert self.script.mtcs.check.mtm1m3 is False
+            self.script.mtcs.check.no_comp.assert_not_called()
 
     async def test_config_az_el_arrays(self) -> None:
         async with self.make_dry_script():
