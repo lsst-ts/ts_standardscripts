@@ -131,6 +131,8 @@ class MoveP2P(BaseBlockScript):
 
         self.pause_for = config.pause_for
 
+        await self.configure_tcs()
+
         await super().configure(config=config)
 
     async def set_metadata(self, metadata: type_hints.BaseMsgType) -> None:
