@@ -100,11 +100,14 @@ class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
         async with self.make_dry_script():
             az = 0.0
             el = 80.0
+            self.script.configure_tcs = unittest.mock.AsyncMock()
+
             await self.configure_script(
                 az=az,
                 el=el,
             )
 
+            self.script.configure_tcs.assert_awaited_once()
             assert "azel" in self.script.grid
             assert "az" in self.script.grid["azel"]
             assert "el" in self.script.grid["azel"]
