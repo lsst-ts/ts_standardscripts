@@ -152,7 +152,7 @@ class MoveP2P(BaseBlockScript):
 
         await super().configure(config=config)
 
-    async def set_metadata(self, metadata: type_hints.BaseMsgType) -> None:
+    def set_metadata(self, metadata: type_hints.BaseMsgType) -> None:
         """Set script metadata."""
         metadata.duration = self.slew_time_average_guess + self.pause_for * (
             len(self.grid.get("azel", dict(az=[]))["az"])
