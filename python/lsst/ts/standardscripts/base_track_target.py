@@ -96,14 +96,18 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 properties:
                   ra:
                     description: ICRS right ascension (hour).
-                    type: number
-                    minimum: 0
-                    maximum: 24
+                    anyOf:
+                      - type: number
+                        minimum: 0
+                        maximum: 24
+                      - type: string
                   dec:
                     description: ICRS declination (deg).
-                    type: number
-                    minimum: -90
-                    maximum: 90
+                    anyOf:
+                      - type: number
+                        minimum: -90
+                        maximum: 90
+                      - type: string
               find_target:
                 type: object
                 additionalProperties: false
