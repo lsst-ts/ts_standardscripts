@@ -17,7 +17,10 @@ v1.22.0
 
 * Convert ``base_track_target.py`` and all ``maintel/m1m3`` scripts to block scripts.
 
-* In ``base_track_target.py``, add a new ``configure_tcs`` method that, by default, awaits for the ``tcs.start_task``.
+* In ``base_track_target.py``:
+  
+  * Add a new ``configure_tcs`` method that, by default, awaits for the ``tcs.start_task``.
+  * Add support for configuring with sexagesimal strings coordinates.
 
 * In ``maintel/track_target``, overwrites the new ``configure_tcs`` method from the base class to postpone creation of the ``tcs`` class until configuration stage.
   This will allow the script to startup and become alive more quickly, and will also prevent spending time loading ``MTCS`` for scripts that are misconfigured.

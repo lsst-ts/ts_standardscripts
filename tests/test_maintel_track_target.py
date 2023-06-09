@@ -151,6 +151,15 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             # Script can be configured with ra, dec only
             await self.configure_script(slew_icrs=dict(ra=1.0, dec=-10.0))
 
+    async def test_configure_with_ra_dec_sexagesimal(self):
+        async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
+            # Script can be configured with ra, dec only
+            await self.configure_script(
+                slew_icrs=dict(ra="+0:00:00", dec="-10:00:00.0")
+            )
+
     async def test_configure_with_azel(self):
         async with self.make_script():
             self.script._mtcs = unittest.mock.AsyncMock()

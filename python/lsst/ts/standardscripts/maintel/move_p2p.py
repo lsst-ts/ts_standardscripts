@@ -99,6 +99,13 @@ class MoveP2P(BaseBlockScript):
                     between positions (in seconds).
                 type: number
                 default: 0.0
+            ignore:
+                description: >-
+                    CSCs from the group to ignore in status check. Name must
+                    match those in self.group.components, e.g.; hexapod_1.
+                type: array
+                items:
+                    type: string
         oneOf:
             - required:
                 - az
@@ -131,9 +138,21 @@ class MoveP2P(BaseBlockScript):
 
         self.pause_for = config.pause_for
 
+        await self.configure_tcs()
+
+        for comp in getattr(config, "ignore", []):
+            if comp not in self.mtcs.components_attr:
+                self.log.warning(
+                    f"Component {comp} not in CSC Group. "
+                    f"Must be one of {self.mtcs.components_attr}. Ignoring."
+                )
+            else:
+                self.log.debug(f"Ignoring component {comp}.")
+                setattr(self.mtcs.check, comp, False)
+
         await super().configure(config=config)
 
-    async def set_metadata(self, metadata: type_hints.BaseMsgType) -> None:
+    def set_metadata(self, metadata: type_hints.BaseMsgType) -> None:
         """Set script metadata."""
         metadata.duration = self.slew_time_average_guess + self.pause_for * (
             len(self.grid.get("azel", dict(az=[]))["az"])
@@ -151,10 +170,12 @@ class MoveP2P(BaseBlockScript):
                 await self.checkpoint(
                     f"{self.checkpoint_message}: azel grid {az}/{el} {i+1}/{grid_size}"
                 )
+                self.log.info(f"Moving telescope to {az=},{el=}.")
                 await self.mtcs.move_p2p_azel(
                     az=az,
                     el=el,
                 )
+                self.log.info(f"Pausing for {self.pause_for}s.")
                 await asyncio.sleep(self.pause_for)
 
         if "radec" in self.grid:
@@ -165,8 +186,10 @@ class MoveP2P(BaseBlockScript):
                 await self.checkpoint(
                     f"{self.checkpoint_message}: radec grid {ra}/{dec} {i+1}/{grid_size}"
                 )
+                self.log.info(f"Moving telescope to {ra=},{dec=}.")
                 await self.mtcs.move_p2p_radec(
                     ra=ra,
                     dec=dec,
                 )
+                self.log.info(f"Pausing for {self.pause_for}s.")
                 await asyncio.sleep(self.pause_for)
