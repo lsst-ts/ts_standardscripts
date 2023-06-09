@@ -25,9 +25,7 @@ import unittest
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums.MTM1M3 import BumpTest, DetailedState
-
-from lsst.ts.standardscripts import get_scripts_dir
-from lsst.ts.standardscripts import BaseScriptTestCase
+from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
 from lsst.ts.standardscripts.maintel.m1m3 import CheckActuators
 
 
@@ -73,8 +71,8 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     # Create a side effect function for mock_bump_test_status method from mcts
     # object. This function will be called when mock_bump_test_status method is
     # called
-    async def mock_get_m1m3_bump_test_status(self):
-        self.m1m3_bump_test_status = 101, BumpTest.PASSED, BumpTest.PASSED
+    async def mock_get_m1m3_bump_test_status(self, actuator_id):
+        self.m1m3_bump_test_status = BumpTest.PASSED, BumpTest.PASSED
         return self.m1m3_bump_test_status
 
     async def test_configure_all(self):
@@ -87,9 +85,12 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             await self.configure_script(actuators=actuators)
 
             assert self.script.actuators_to_test == self.script.m1m3_actuator_ids
+            assert self.script.program is None
+            assert self.script.reason is None
+            assert self.script.checkpoint_message is None
 
     async def test_configure_valid_ids(self):
-        """Testing a valid configuation: valid actuators ids"""
+        """Testing a valid configuration: valid actuators ids"""
 
         # Try configure with a list of valid actuators ids
         async with self.make_script():
@@ -100,6 +101,9 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             )
 
             assert self.script.actuators_to_test == actuators
+            assert self.script.program is None
+            assert self.script.reason is None
+            assert self.script.checkpoint_message is None
 
     async def test_configure_bad(self):
         """Testing an invalid configuration: bad actuators ids"""
@@ -119,6 +123,26 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
                     await self.configure_script(
                         actuators=actuators_bad_ids,
                     )
+
+    async def test_configure_with_program_reason(self):
+        """Testing a valid configuration: with program and reason"""
+
+        # Try configure with a list of valid actuators ids
+        async with self.make_script():
+            self.script.get_obs_id = unittest.mock.AsyncMock(
+                side_effect=["202306060001"]
+            )
+            await self.configure_script(
+                program="BLOCK-123",
+                reason="SITCOM-321",
+            )
+
+            assert self.script.program == "BLOCK-123"
+            assert self.script.reason == "SITCOM-321"
+            assert (
+                self.script.checkpoint_message
+                == "CheckActuators BLOCK-123 202306060001 SITCOM-321"
+            )
 
     async def test_run(self):
         # Run the script

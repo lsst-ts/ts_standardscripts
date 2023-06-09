@@ -29,7 +29,7 @@ import yaml
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.utils import RotType
 
-from lsst.ts import salobj
+from .base_block_script import BaseBlockScript
 
 
 class SlewType(enum.IntEnum):
@@ -38,7 +38,7 @@ class SlewType(enum.IntEnum):
     AZEL = enum.auto()
 
 
-class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
+class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
     """Base track target script.
 
     This script implements the basic configuration and run procedures for
@@ -71,6 +71,10 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
     def tcs(self):
         raise NotImplementedError()
 
+    async def configure_tcs(self):
+        if self.tcs is not None:
+            await self.tcs.start_task
+
     @classmethod
     def get_schema(cls):
         schema_yaml = """
@@ -92,14 +96,18 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
                 properties:
                   ra:
                     description: ICRS right ascension (hour).
-                    type: number
-                    minimum: 0
-                    maximum: 24
+                    anyOf:
+                      - type: number
+                        minimum: 0
+                        maximum: 24
+                      - type: string
                   dec:
                     description: ICRS declination (deg).
-                    type: number
-                    minimum: -90
-                    maximum: 90
+                    anyOf:
+                      - type: number
+                        minimum: -90
+                        maximum: 90
+                      - type: string
               find_target:
                 type: object
                 additionalProperties: false
@@ -239,7 +247,16 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
                 - slew_icrs
             additionalProperties: false
         """
-        return yaml.safe_load(schema_yaml)
+        schema_dict = yaml.safe_load(schema_yaml)
+
+        base_schema_dict = super().get_schema()
+
+        for properties in base_schema_dict["properties"]:
+            schema_dict["properties"][properties] = base_schema_dict["properties"][
+                properties
+            ]
+
+        return schema_dict
 
     async def configure(self, config):
         """Configure the script.
@@ -259,6 +276,8 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         self.log.debug(f"Slew type: {self.slew_type!r}.")
 
+        await self.configure_tcs()
+
         self.config.rot_type = getattr(RotType, self.config.rot_type)
         self.config.az_wrap_strategy = getattr(
             self.tcs.WrapStrategy, self.config.az_wrap_strategy
@@ -275,6 +294,8 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
                     self.log.debug(f"Ignoring component {comp}.")
                     setattr(self.tcs.check, comp, False)
 
+        await super().configure(config=config)
+
     def set_metadata(self, metadata):
         """Compute estimated duration.
 
@@ -284,7 +305,7 @@ class BaseTrackTarget(salobj.BaseScript, metaclass=abc.ABCMeta):
         """
         metadata.duration = 10.0 + self.config.track_for
 
-    async def run(self):
+    async def run_block(self):
         target_name = getattr(self.config, "target_name", "slew_icrs")
 
         self.tracking_started = True

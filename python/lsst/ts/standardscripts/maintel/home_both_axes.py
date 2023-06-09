@@ -17,19 +17,21 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.``
 
-__all__ = ["RaiseM1M3"]
+__all__ = ["HomeBothAxes"]
 
 import time
 
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
-from ...base_block_script import BaseBlockScript
+from lsst.ts import salobj
 
 
-class RaiseM1M3(BaseBlockScript):
-    """Raise M1M3 mirror.
+class HomeBothAxes(salobj.BaseScript):
+    """Home azimuth and elevation axes of the MTMount.
+    Must call this after powering on the main axis and
+    BEFORE you move them.
 
     Parameters
     ----------
@@ -40,11 +42,12 @@ class RaiseM1M3(BaseBlockScript):
     -----
     **Checkpoints**
 
-    - "Raising M1M3": Before commanding the M1M3 mirror to raise.
+    - "Homing Both Axes": Before commanding both axes to be homed.
 
     **Details**
 
-    This script raises the M1M3 mirror of the Simonyi Main Telescope.
+    This script homes both aximuth and elevation axes of
+    the Simonyi Main Telescope mount.
 
 
     """
@@ -54,15 +57,28 @@ class RaiseM1M3(BaseBlockScript):
 
         mtcs_usage = None if add_remotes else MTCSUsages.DryTest
 
-        self.mtcs = MTCS(self.domain, intended_usage=mtcs_usage, log=self.log)
+        self.mtcs = MTCS(domain=self.domain, intended_usage=mtcs_usage, log=self.log)
+
+        self.home_both_axes_timeout = 300.0  # timeout to home both MTMount axes.
+
+    @classmethod
+    def get_schema(cls):
+        return None
+
+    async def configure(self, config):
+        # This script does not require any configuration.
+        pass
 
     def set_metadata(self, metadata):
-        metadata.duration = 180.0
+        metadata.duration = self.home_both_axes_timeout
 
-    async def run_block(self):
-        await self.checkpoint("Raising M1M3")
+    async def run(self):
+        await self.checkpoint("Homing Both Axes")
         start_time = time.time()
-        await self.mtcs.raise_m1m3()
+        await self.mtcs.rem.mtmount.cmd_homeBothAxes.set(
+            timeout=self.home_both_axes_timeout
+        )
         end_time = time.time()
         elapsed_time = end_time - start_time
-        self.log.info(f"M1M3 Raise took {elapsed_time:.2f} seconds")
+
+        self.log.info(f"Homing both axes took {elapsed_time:.2f} seconds")

@@ -21,6 +21,8 @@
 
 from .enable_comcam import *
 from .enable_mtcs import *
+from .home_both_axes import *
+from .move_p2p import *
 from .offline_comcam import *
 from .offline_mtcs import *
 from .offset_mtcs import *

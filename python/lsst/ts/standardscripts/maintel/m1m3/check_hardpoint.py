@@ -27,10 +27,10 @@ import yaml
 from lsst.ts.idl.enums.MTM1M3 import DetailedState
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
-from lsst.ts import salobj
+from ...base_block_script import BaseBlockScript
 
 
-class CheckHardpoint(salobj.BaseScript):
+class CheckHardpoint(BaseBlockScript):
     """Check M1M3 Individual hardpoint breakaway.
 
     Parameters
@@ -93,17 +93,28 @@ class CheckHardpoint(salobj.BaseScript):
                 default: "all"
         additionalProperties: false
         """
-        return yaml.safe_load(schema_yaml)
+        schema_dict = yaml.safe_load(schema_yaml)
+
+        base_schema_dict = super().get_schema()
+
+        for properties in base_schema_dict["properties"]:
+            schema_dict["properties"][properties] = base_schema_dict["properties"][
+                properties
+            ]
+
+        return schema_dict
 
     async def configure(self, config):
         self.hardpoints = (
             range(1, 7) if config.hardpoints == "all" else config.hardpoints
         )
 
+        await super().configure(config=config)
+
     def set_metadata(self, metadata):
         metadata.duration = self.timeout_check * 2 + self.timeout_std
 
-    async def run(self):
+    async def run_block(self):
         # Check that the MTCS is in the right state
         await asyncio.gather(
             self.mtcs.assert_all_enabled(),

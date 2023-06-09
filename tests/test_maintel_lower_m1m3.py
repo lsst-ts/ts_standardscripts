@@ -40,6 +40,29 @@ class TestLowerM1M3(
 
             await self.run_script()
             self.script.mtcs.lower_m1m3.assert_awaited_once()
+            assert self.script.program is None
+            assert self.script.reason is None
+            assert self.script.checkpoint_message is None
+
+    async def test_configure_with_program_reason(self):
+        """Testing a valid configuration: with program and reason"""
+
+        # Try configure with a list of valid actuators ids
+        async with self.make_script():
+            self.script.get_obs_id = unittest.mock.AsyncMock(
+                side_effect=["202306060001"]
+            )
+            await self.configure_script(
+                program="BLOCK-123",
+                reason="SITCOM-321",
+            )
+
+            assert self.script.program == "BLOCK-123"
+            assert self.script.reason == "SITCOM-321"
+            assert (
+                self.script.checkpoint_message
+                == "LowerM1M3 BLOCK-123 202306060001 SITCOM-321"
+            )
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()

@@ -25,10 +25,10 @@ import time
 
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
-from lsst.ts import salobj
+from ...base_block_script import BaseBlockScript
 
 
-class LowerM1M3(salobj.BaseScript):
+class LowerM1M3(BaseBlockScript):
     """Lower M1M3 mirror.
 
     Parameters
@@ -56,18 +56,10 @@ class LowerM1M3(salobj.BaseScript):
 
         self.mtcs = MTCS(self.domain, intended_usage=mtcs_usage, log=self.log)
 
-    @classmethod
-    def get_schema(cls):
-        return None
-
-    async def configure(self, config):
-        # This script does not require any configuration.
-        pass
-
     def set_metadata(self, metadata):
         metadata.duration = 180.0
 
-    async def run(self):
+    async def run_block(self):
         await self.checkpoint("Lowering M1M3")
         start_time = time.time()
         await self.mtcs.lower_m1m3()

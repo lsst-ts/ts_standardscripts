@@ -6,6 +6,32 @@
 Version History
 ===============
 
+v1.22.0
+-------
+
+* Update the ``maintel/m1m3/check_actuators.py`` script with improved logging and detailed state assertions.
+
+* Add new ``maintel/home_both_axes.py`` script to home both MTMount axes. 
+
+* Add new ``base_block_script.py``, which defines a base class for developing scripts to be executed as part of observing blocks.
+
+* Convert ``base_track_target.py`` and all ``maintel/m1m3`` scripts to block scripts.
+
+* In ``base_track_target.py``:
+  
+  * Add a new ``configure_tcs`` method that, by default, awaits for the ``tcs.start_task``.
+  * Add support for configuring with sexagesimal strings coordinates.
+
+* In ``maintel/track_target``, overwrites the new ``configure_tcs`` method from the base class to postpone creation of the ``tcs`` class until configuration stage.
+  This will allow the script to startup and become alive more quickly, and will also prevent spending time loading ``MTCS`` for scripts that are misconfigured.
+
+* In ``utils.py``:
+
+  * Fix typo in ``format_as_list`` docstring.
+  * Add new ``format_grid`` utility method.
+
+* Add new ``MoveP2P`` maintel script.
+
 v1.21.0
 -------
 
