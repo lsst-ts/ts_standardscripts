@@ -19,13 +19,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["get_scripts_dir", "get_topic_time_utc", "format_as_list", "format_grid"]
+__all__ = [
+    "get_scripts_dir",
+    "get_s3_bucket",
+    "get_topic_time_utc",
+    "format_as_list",
+    "format_grid",
+]
 
 import collections.abc
+import os
 import pathlib
 
 import numpy as np
+from lsst.ts import salobj
 from lsst.ts.utils import astropy_time_from_tai_unix
+
+S3_INSTANCES = dict(
+    tucson="tuc",
+    base="ls",
+    summit="cp",
+)
 
 
 def get_scripts_dir():
@@ -38,6 +52,29 @@ def get_scripts_dir():
 
     """
     return pathlib.Path(__file__).resolve().parent / "data" / "scripts"
+
+
+def get_s3_bucket() -> salobj.AsyncS3Bucket:
+    """Generate an s3 bucket object.
+
+    The method will try to determine the s3 instance from the LSST_SITE
+    environment variable. If it can't it will use "mock" as the instance
+    value and will also mock the s3 bucket. This is useful for unit testing.
+    """
+
+    site = os.environ.get("LSST_SITE")
+    do_mock = site not in S3_INSTANCES
+    s3instance = S3_INSTANCES.get(site, "mock")
+
+    s3bucket_name = salobj.AsyncS3Bucket.make_bucket_name(
+        s3instance=s3instance,
+    )
+
+    return salobj.AsyncS3Bucket(
+        name=s3bucket_name,
+        domock=do_mock,
+        create=do_mock,
+    )
 
 
 def format_as_list(value, recurrences):
