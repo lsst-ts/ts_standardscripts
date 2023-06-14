@@ -6,6 +6,15 @@
 Version History
 ===============
 
+v1.23.0
+-------
+
+* In ``base_block_script.py``, expand ``BaseBlockScript`` functionality to support generating JIRA test case artifacts from scripts.
+
+* Update ``MoveP2P`` script to add test step annotations.
+
+* In ``utils.py``, add ``get_s3_bucket`` to generate a ``salobj.AsyncS3Bucket`` based on the running environment.
+
 v1.22.0
 -------
 

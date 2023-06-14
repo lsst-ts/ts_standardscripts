@@ -171,10 +171,11 @@ class MoveP2P(BaseBlockScript):
                     f"{self.checkpoint_message}: azel grid {az}/{el} {i+1}/{grid_size}"
                 )
                 self.log.info(f"Moving telescope to {az=},{el=}.")
-                await self.mtcs.move_p2p_azel(
-                    az=az,
-                    el=el,
-                )
+                async with self.test_case_step():
+                    await self.mtcs.move_p2p_azel(
+                        az=az,
+                        el=el,
+                    )
                 self.log.info(f"Pausing for {self.pause_for}s.")
                 await asyncio.sleep(self.pause_for)
 
@@ -187,9 +188,10 @@ class MoveP2P(BaseBlockScript):
                     f"{self.checkpoint_message}: radec grid {ra}/{dec} {i+1}/{grid_size}"
                 )
                 self.log.info(f"Moving telescope to {ra=},{dec=}.")
-                await self.mtcs.move_p2p_radec(
-                    ra=ra,
-                    dec=dec,
-                )
+                async with self.test_case_step():
+                    await self.mtcs.move_p2p_radec(
+                        ra=ra,
+                        dec=dec,
+                    )
                 self.log.info(f"Pausing for {self.pause_for}s.")
                 await asyncio.sleep(self.pause_for)
