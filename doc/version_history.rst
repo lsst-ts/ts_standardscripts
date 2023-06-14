@@ -10,6 +10,15 @@ v1.23.1
 -------
 
 * ``Jenkinsfile``: use the new shared library.
+* In ``base_block_script.py``, update address of the camera image server at the summit.
+* In ``pyproject.toml``, stop using pytest-black and pytest-flake8 plugins for unit tests.
+* In ``base_track_target.py``, add ``slew_timeout`` configuration parameter.
+* In ``maintel/move_p2p.py``:
+  
+  * Stop motion if script fails or is stopped.
+  * Add ``move_timeout`` configuration parameter to allow users to control how long the move command can take, for long slews with reduced speed.
+
+* In ``maintel/home_both_axes.py``, call start instead of set.
 
 v1.23.0
 -------
