@@ -24,7 +24,6 @@ __all__ = ["SetSummaryState"]
 import asyncio
 
 import yaml
-
 from lsst.ts import salobj
 
 

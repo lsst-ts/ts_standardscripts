@@ -21,9 +21,8 @@
 
 __all__ = ["Stop"]
 
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-
 from lsst.ts import salobj
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 
 class Stop(salobj.BaseScript):

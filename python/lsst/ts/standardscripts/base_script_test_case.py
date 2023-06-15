@@ -32,9 +32,8 @@ import types
 
 import astropy.time
 import yaml
-from lsst.ts.idl.enums import Script
-
 from lsst.ts import salobj, utils
+from lsst.ts.idl.enums import Script
 
 MAKE_TIMEOUT = 90  # Default time for make_script (seconds)
 

@@ -22,9 +22,8 @@
 import random
 import unittest
 
-from lsst.ts.observatory.control.mock import LATISSMock
-
 from lsst.ts import salobj, standardscripts
+from lsst.ts.observatory.control.mock import LATISSMock
 from lsst.ts.standardscripts.auxtel import TakeStutteredLatiss
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix

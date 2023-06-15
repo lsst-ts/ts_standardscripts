@@ -22,7 +22,6 @@
 __all__ = ["RunCommand"]
 
 import yaml
-
 from lsst.ts import salobj
 
 

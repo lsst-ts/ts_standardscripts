@@ -26,11 +26,10 @@ import unittest
 
 import numpy as np
 import pytest
-from lsst.ts.idl.enums import ATMonochromator, Script
-from numpy.testing import assert_array_almost_equal, assert_array_equal
-
 from lsst.ts import salobj, standardscripts
+from lsst.ts.idl.enums import ATMonochromator, Script
 from lsst.ts.standardscripts.auxtel import CalSysTakeData
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 

@@ -26,7 +26,6 @@ import shlex
 import unittest
 
 import astropy
-
 from lsst.ts import salobj, standardscripts, utils
 from lsst.ts.standardscripts.auxtel.detector_characterization import ATGetStdFlatDataset
 

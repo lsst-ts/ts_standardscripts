@@ -23,7 +23,6 @@ import random
 import unittest
 
 import pytest
-
 from lsst.ts import salobj, standardscripts
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix

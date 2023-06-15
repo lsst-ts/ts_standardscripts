@@ -21,9 +21,8 @@
 
 __all__ = ["Shutdown"]
 
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
-
 from lsst.ts import salobj
+from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 
 
 class Shutdown(salobj.BaseScript):

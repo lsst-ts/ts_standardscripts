@@ -25,10 +25,9 @@ import asyncio
 import collections
 
 import yaml
+from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
-
-from lsst.ts import salobj
 from lsst.ts.standardscripts.utils import format_as_list
 
 STD_TIMEOUT = 20  # seconds

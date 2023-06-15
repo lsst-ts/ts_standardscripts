@@ -23,9 +23,8 @@ import logging
 import random
 import unittest
 
-from lsst.ts.observatory.control.mock import ATCSMock
-
 from lsst.ts import standardscripts
+from lsst.ts.observatory.control.mock import ATCSMock
 from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForOnSky
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix

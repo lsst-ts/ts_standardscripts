@@ -23,9 +23,8 @@ __all__ = ["HomeBothAxes"]
 
 import time
 
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-
 from lsst.ts import salobj
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 
 class HomeBothAxes(salobj.BaseScript):

@@ -25,7 +25,6 @@ import random
 import unittest
 
 import pytest
-
 from lsst.ts import salobj, standardscripts
 from lsst.ts.standardscripts.auxtel import TakeImageLatiss
 
