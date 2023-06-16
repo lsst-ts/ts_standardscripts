@@ -42,6 +42,7 @@ class MoveP2P(BaseBlockScript):
         self.pause_for = 0.0
         # A guess to average slew time.
         self.slew_time_average_guess = 15.0
+        self.move_timeout = 120.0
 
     async def configure_tcs(self) -> None:
         """Handle creating MTCS object and waiting for remote to start."""
@@ -106,6 +107,10 @@ class MoveP2P(BaseBlockScript):
                 type: array
                 items:
                     type: string
+            move_timeout:
+                description: Timeout for move command.
+                type: number
+                default: 120.0
         oneOf:
             - required:
                 - az
@@ -137,6 +142,7 @@ class MoveP2P(BaseBlockScript):
             self.grid["radec"] = dict(ra=ra, dec=dec)
 
         self.pause_for = config.pause_for
+        self.move_timeout = config.move_timeout
 
         await self.configure_tcs()
 
@@ -175,6 +181,7 @@ class MoveP2P(BaseBlockScript):
                     await self.mtcs.move_p2p_azel(
                         az=az,
                         el=el,
+                        timeout=self.move_timeout,
                     )
                 self.log.info(f"Pausing for {self.pause_for}s.")
                 await asyncio.sleep(self.pause_for)
@@ -192,6 +199,7 @@ class MoveP2P(BaseBlockScript):
                     await self.mtcs.move_p2p_radec(
                         ra=ra,
                         dec=dec,
+                        timeout=self.move_timeout,
                     )
                 self.log.info(f"Pausing for {self.pause_for}s.")
                 await asyncio.sleep(self.pause_for)
