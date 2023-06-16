@@ -66,6 +66,9 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
         # slew_icrs or slew_object
         self.slew_type = SlewType.OBJECT
 
+        # Timeout for slewing (in seconds).
+        self.slew_timeout = 240.0
+
     @property
     @abc.abstractmethod
     def tcs(self):
@@ -225,6 +228,10 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 type: string
                 enum: ["MAXTIMEONTARGET", "NOUNWRAP", "OPTIMIZE"]
                 default: OPTIMIZE
+              slew_timeout:
+                description: Timeout for slew procedure (in seconds).
+                type: number
+                default: 240.0
               ignore:
                 description: >-
                     CSCs from the group to ignore in status check. Name must
@@ -338,6 +345,7 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 offset_y=offset_y,
                 az_wrap_strategy=self.config.az_wrap_strategy,
                 time_on_target=self.config.track_for,
+                slew_timeout=self.slew_timeout,
             )
         elif self.slew_type == SlewType.AZEL:
             az = self.config.find_target["az"]
@@ -362,6 +370,7 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 offset_y=offset_y,
                 az_wrap_strategy=self.config.az_wrap_strategy,
                 time_on_target=self.config.track_for,
+                slew_timeout=self.slew_timeout,
             )
         else:
             self.log.info(
@@ -379,6 +388,7 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 offset_y=offset_y,
                 az_wrap_strategy=self.config.az_wrap_strategy,
                 time_on_target=self.config.track_for,
+                slew_timeout=self.slew_timeout,
             )
 
         if self.config.track_for > 0.0:
