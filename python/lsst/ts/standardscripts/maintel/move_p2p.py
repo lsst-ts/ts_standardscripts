@@ -22,6 +22,7 @@
 import asyncio
 
 import yaml
+from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.maintel import MTCS
 from lsst.ts.salobj import type_hints
 
@@ -203,3 +204,18 @@ class MoveP2P(BaseBlockScript):
                     )
                 self.log.info(f"Pausing for {self.pause_for}s.")
                 await asyncio.sleep(self.pause_for)
+
+    async def cleanup(self):
+        if self.state.state != ScriptState.ENDING:
+            # abnormal termination
+            self.log.warning(
+                f"Terminating with state={self.state.state}: stop telescope."
+            )
+            try:
+                await self.mtcs.rem.mtmount.cmd_stop.start(
+                    timeout=self.mtcs.long_timeout
+                )
+            except asyncio.TimeoutError:
+                self.log.exception("Stop command timed out during cleanup procedure.")
+            except Exception:
+                self.log.exception("Unexpected exception while stopping telescope.")
