@@ -22,9 +22,8 @@
 __all__ = ["PrepareForAlign"]
 
 import yaml
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-
 from lsst.ts import salobj
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 
 class PrepareForAlign(salobj.BaseScript):

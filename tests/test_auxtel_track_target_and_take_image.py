@@ -28,9 +28,8 @@ import types
 import unittest
 
 import pytest
-from lsst.ts.observatory.control.utils import RotType
-
 from lsst.ts import salobj, standardscripts
+from lsst.ts.observatory.control.utils import RotType
 from lsst.ts.standardscripts.auxtel import TrackTargetAndTakeImage
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix

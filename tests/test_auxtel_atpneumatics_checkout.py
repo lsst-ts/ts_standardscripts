@@ -26,7 +26,6 @@ import types
 import unittest
 
 import pytest
-
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
 from lsst.ts.standardscripts.auxtel.daytime_checkout import ATPneumaticsCheckout
 

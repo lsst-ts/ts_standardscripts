@@ -19,9 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from lsst.ts.idl.enums.Scheduler import SalIndex
-
 from lsst.ts import salobj
+from lsst.ts.idl.enums.Scheduler import SalIndex
 from lsst.ts.standardscripts import get_scripts_dir
 from lsst.ts.standardscripts.scheduler.stop import Stop
 from lsst.ts.standardscripts.scheduler.testutils import BaseSchedulerTestCase

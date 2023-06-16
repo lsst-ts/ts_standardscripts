@@ -22,6 +22,7 @@
 __all__ = ["OffsetMTCS"]
 
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+
 from ..base_offset_tcs import BaseOffsetTCS
 
 

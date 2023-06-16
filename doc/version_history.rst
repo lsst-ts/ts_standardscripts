@@ -6,6 +6,11 @@
 Version History
 ===============
 
+v1.23.1
+-------
+
+* ``Jenkinsfile``: use the new shared library.
+
 v1.23.0
 -------
 

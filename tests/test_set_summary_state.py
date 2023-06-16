@@ -25,9 +25,8 @@ import random
 import unittest
 
 import pytest
-from lsst.ts.idl.enums.Script import ScriptState
-
 from lsst.ts import salobj, standardscripts
+from lsst.ts.idl.enums.Script import ScriptState
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 

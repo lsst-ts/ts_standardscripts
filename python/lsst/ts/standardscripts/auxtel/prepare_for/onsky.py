@@ -22,9 +22,8 @@
 __all__ = ["PrepareForOnSky"]
 
 import yaml
-from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
-
 from lsst.ts import salobj
+from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
 
 
 class PrepareForOnSky(salobj.BaseScript):

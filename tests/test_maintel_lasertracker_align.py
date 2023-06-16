@@ -24,10 +24,9 @@ import random
 import types
 import unittest
 
+from lsst.ts import standardscripts
 from lsst.ts.idl.enums.LaserTracker import LaserStatus
 from lsst.ts.salobj import State
-
-from lsst.ts import standardscripts
 from lsst.ts.standardscripts.maintel.laser_tracker import Align, AlignComponent
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix

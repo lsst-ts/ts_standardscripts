@@ -24,7 +24,6 @@ import random
 import unittest
 
 import pytest
-
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.maintel import Stop
 

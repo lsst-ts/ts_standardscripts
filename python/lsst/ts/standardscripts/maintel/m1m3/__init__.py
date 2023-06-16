@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .check_hardpoint import *
-from .raise_m1m3 import *
-from .lower_m1m3 import *
 from .check_actuators import *
+from .check_hardpoint import *
+from .lower_m1m3 import *
+from .raise_m1m3 import *

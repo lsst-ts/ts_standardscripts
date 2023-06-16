@@ -22,9 +22,8 @@
 import random
 import unittest.mock
 
-from lsst.ts.idl.enums import Script
-
 from lsst.ts import salobj, utils
+from lsst.ts.idl.enums import Script
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
 from lsst.ts.standardscripts.maintel import SetupMTCS
 

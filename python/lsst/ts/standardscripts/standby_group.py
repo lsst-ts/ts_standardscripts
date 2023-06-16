@@ -24,7 +24,6 @@ __all__ = ["StandbyGroup"]
 import abc
 
 import yaml
-
 from lsst.ts import salobj
 
 
