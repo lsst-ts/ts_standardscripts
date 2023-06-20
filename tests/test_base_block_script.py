@@ -329,6 +329,7 @@ class TestBaseBlockScript(
 
             ra = [0.0, 10.0, 20.0]
             dec = [80.0, 70.0, 60.0]
+            timeout = 100.0
             program = "BLOCK-123"
             reason = "SITCOM-321"
 
@@ -337,12 +338,14 @@ class TestBaseBlockScript(
                 dec=dec,
                 program=program,
                 reason=reason,
+                move_timeout=timeout,
             )
 
             await self.run_script()
 
             expected_calls = [
-                unittest.mock.call(ra=_ra, dec=_dec) for _ra, _dec in zip(ra, dec)
+                unittest.mock.call(ra=_ra, dec=_dec, timeout=timeout)
+                for _ra, _dec in zip(ra, dec)
             ]
             self.script.mtcs.move_p2p_radec.assert_has_awaits(expected_calls)
 
@@ -358,6 +361,7 @@ class TestBaseBlockScript(
             dec = [80.0, 70.0, 60.0]
             program = "BLOCK-123"
             reason = "SITCOM-321"
+            timeout = 100.0
             test_case = dict(
                 name="LVV-T2190", execution="LVV-E2390", version="1.0", project="SITCOM"
             )
@@ -368,12 +372,14 @@ class TestBaseBlockScript(
                 program=program,
                 reason=reason,
                 test_case=test_case,
+                move_timeout=timeout,
             )
 
             await self.run_script()
 
             expected_calls = [
-                unittest.mock.call(ra=_ra, dec=_dec) for _ra, _dec in zip(ra, dec)
+                unittest.mock.call(ra=_ra, dec=_dec, timeout=timeout)
+                for _ra, _dec in zip(ra, dec)
             ]
             self.script.mtcs.move_p2p_radec.assert_has_awaits(expected_calls)
 
@@ -411,6 +417,7 @@ class TestBaseBlockScript(
             dec = [80.0, 70.0, 60.0]
             program = "BLOCK-123"
             reason = "SITCOM-321"
+            timeout = 1200.0
             test_case = dict(
                 name="LVV-T2190", execution="LVV-E2390", version="1.0", project="SITCOM"
             )
@@ -421,13 +428,15 @@ class TestBaseBlockScript(
                 program=program,
                 reason=reason,
                 test_case=test_case,
+                move_timeout=timeout,
             )
 
             with pytest.raises(AssertionError):
                 await self.run_script()
 
             expected_calls = [
-                unittest.mock.call(ra=_ra, dec=_dec) for _ra, _dec in zip(ra, dec)
+                unittest.mock.call(ra=_ra, dec=_dec, timeout=timeout)
+                for _ra, _dec in zip(ra, dec)
             ]
             expected_calls.pop(-1)
             self.script.mtcs.move_p2p_radec.assert_has_awaits(expected_calls)
