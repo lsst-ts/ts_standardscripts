@@ -295,6 +295,7 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             offset_y=self.script.config.offset["y"],
             az_wrap_strategy=self.script.config.az_wrap_strategy,
             time_on_target=self.script.config.track_for,
+            slew_timeout=240.0,
         )
         self.script.tcs.slew_object.assert_not_awaited()
         self.script.tcs.stop_tracking.assert_not_awaited()
@@ -311,6 +312,7 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             offset_y=0.0,
             az_wrap_strategy=self.script.tcs.WrapStrategy.OPTIMIZE,
             time_on_target=0.0,
+            slew_timeout=240.0,
         )
         self.script.tcs.slew_icrs.assert_not_awaited()
         self.script.tcs.stop_tracking.assert_not_awaited()

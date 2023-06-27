@@ -37,7 +37,7 @@ from .utils import get_s3_bucket
 IMAGE_SERVER_URL = dict(
     tucson="http://comcam-mcm.tu.lsst.org",
     base="http://lsstcam-mcm.ls.lsst.org",
-    summit="http://139.229.170.11",
+    summit="http://ccs.lsst.org",
 )
 
 
