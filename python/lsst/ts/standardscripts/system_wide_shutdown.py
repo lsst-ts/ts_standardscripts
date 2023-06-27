@@ -27,9 +27,8 @@ import types
 import typing
 
 import yaml
-from lsst.ts.idl import get_idl_dir
-
 from lsst.ts import salobj
+from lsst.ts.idl import get_idl_dir
 
 
 class SystemWideShutdown(salobj.BaseScript):

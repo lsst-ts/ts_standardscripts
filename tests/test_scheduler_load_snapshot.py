@@ -20,9 +20,8 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-from lsst.ts.idl.enums.Scheduler import SalIndex
-
 from lsst.ts import salobj
+from lsst.ts.idl.enums.Scheduler import SalIndex
 from lsst.ts.standardscripts import get_scripts_dir
 from lsst.ts.standardscripts.scheduler.load_snapshot import LoadSnapshot
 from lsst.ts.standardscripts.scheduler.testutils import BaseSchedulerTestCase

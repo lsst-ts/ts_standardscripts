@@ -25,9 +25,8 @@ import types
 import typing
 
 import yaml
-from lsst.ts.idl.enums.Scheduler import SalIndex
-
 from lsst.ts import salobj
+from lsst.ts.idl.enums.Scheduler import SalIndex
 
 
 class LoadSnapshot(salobj.BaseScript):

@@ -20,14 +20,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import contextlib
+import logging
 import types
 import unittest
-import logging
 
 import pytest
 from lsst.ts import salobj
-from lsst.ts.standardscripts.auxtel import LatissTakeSequence
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
+from lsst.ts.standardscripts.auxtel import LatissTakeSequence
 
 
 class TestLatissTakeSequence(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):

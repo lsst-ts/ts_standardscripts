@@ -41,7 +41,7 @@ class TestHomeBothAxes(
 
             await self.run_script()
 
-            self.script.mtcs.rem.mtmount.cmd_homeBothAxes.set.assert_awaited_once_with(
+            self.script.mtcs.rem.mtmount.cmd_homeBothAxes.start.assert_awaited_once_with(
                 timeout=self.script.home_both_axes_timeout
             )
 

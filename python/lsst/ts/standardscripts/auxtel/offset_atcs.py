@@ -22,6 +22,7 @@
 __all__ = ["OffsetATCS"]
 
 from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages
+
 from ..base_offset_tcs import BaseOffsetTCS
 
 

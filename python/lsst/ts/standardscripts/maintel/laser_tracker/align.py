@@ -25,12 +25,11 @@ import enum
 
 import numpy as np
 import yaml
+from lsst.ts import salobj
 from lsst.ts.idl.enums.LaserTracker import LaserStatus
 from lsst.ts.observatory.control import RemoteGroup
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.observatory.control.remote_group import Usages
-
-from lsst.ts import salobj
 
 
 # TODO (DM-38880) - Subsitute by class in idl.enum when available

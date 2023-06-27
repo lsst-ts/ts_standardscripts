@@ -18,16 +18,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import unittest
 import contextlib
 import logging
+import unittest
+
 import pytest
-
-from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.standardscripts.auxtel import OffsetATAOS
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-
 from lsst.ts import salobj
+from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
+from lsst.ts.standardscripts.auxtel import OffsetATAOS
 
 
 class TestOffsetATAOS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):

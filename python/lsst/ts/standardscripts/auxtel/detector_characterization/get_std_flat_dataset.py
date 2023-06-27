@@ -23,9 +23,8 @@ __all__ = ["ATGetStdFlatDataset"]
 
 import numpy as np
 import yaml
-from lsst.ts.observatory.control.auxtel import LATISS, LATISSUsages
-
 from lsst.ts import salobj
+from lsst.ts.observatory.control.auxtel import LATISS, LATISSUsages
 
 
 class ATGetStdFlatDataset(salobj.BaseScript):

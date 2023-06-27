@@ -23,9 +23,8 @@ __all__ = ["HomeBothAxes"]
 
 import time
 
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-
 from lsst.ts import salobj
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 
 class HomeBothAxes(salobj.BaseScript):
@@ -75,7 +74,7 @@ class HomeBothAxes(salobj.BaseScript):
     async def run(self):
         await self.checkpoint("Homing Both Axes")
         start_time = time.time()
-        await self.mtcs.rem.mtmount.cmd_homeBothAxes.set(
+        await self.mtcs.rem.mtmount.cmd_homeBothAxes.start(
             timeout=self.home_both_axes_timeout
         )
         end_time = time.time()

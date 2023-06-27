@@ -27,14 +27,13 @@ import asyncio
 import astropy.units
 import yaml
 from astropy.coordinates import ICRS, Angle
+from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import (
     MetadataCoordSys,
     MetadataDome,
     MetadataRotSys,
     ScriptState,
 )
-
-from lsst.ts import salobj
 
 
 class BaseTrackTargetAndTakeImage(salobj.BaseScript):

@@ -307,6 +307,7 @@ class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
 
             az = [0.0, 10.0, 20.0]
             el = [80.0, 70.0, 60.0]
+            timeout = 321.0
             program = "BLOCK-123"
             reason = "SITCOM-321"
 
@@ -315,12 +316,14 @@ class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
                 el=el,
                 program=program,
                 reason=reason,
+                move_timeout=timeout,
             )
 
             await self.run_script()
 
             expected_calls = [
-                unittest.mock.call(az=_az, el=_el) for _az, _el in zip(az, el)
+                unittest.mock.call(az=_az, el=_el, timeout=timeout)
+                for _az, _el in zip(az, el)
             ]
             self.script.mtcs.move_p2p_azel.assert_has_awaits(expected_calls)
 
@@ -334,18 +337,21 @@ class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
             dec = [80.0, 70.0, 60.0]
             program = "BLOCK-123"
             reason = "SITCOM-321"
+            timeout = 321.0
 
             await self.configure_script(
                 ra=ra,
                 dec=dec,
                 program=program,
                 reason=reason,
+                move_timeout=timeout,
             )
 
             await self.run_script()
 
             expected_calls = [
-                unittest.mock.call(ra=_ra, dec=_dec) for _ra, _dec in zip(ra, dec)
+                unittest.mock.call(ra=_ra, dec=_dec, timeout=timeout)
+                for _ra, _dec in zip(ra, dec)
             ]
             self.script.mtcs.move_p2p_radec.assert_has_awaits(expected_calls)
 
