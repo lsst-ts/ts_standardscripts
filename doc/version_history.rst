@@ -6,6 +6,12 @@
 Version History
 ===============
 
+v1.24.0
+-------
+
+* Patch ``base_block_script.py`` to add ``test_case`` attribute.
+* Add new ``maintel/m1m3/enable_m1m3_balance_system.py`` and ``maintel/m1m3/disable_m1m3_balance_system.py`` sal scripts and associated files.
+
 v1.23.1
 -------
 

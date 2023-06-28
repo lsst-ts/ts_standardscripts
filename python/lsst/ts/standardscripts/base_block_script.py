@@ -56,6 +56,8 @@ class BaseBlockScript(salobj.BaseScript, metaclass=abc.ABCMeta):
         self.obs_id = None
         self.checkpoint_message = None
 
+        self.test_case = None
+
         # Index generator.
         self.step_counter = None
 

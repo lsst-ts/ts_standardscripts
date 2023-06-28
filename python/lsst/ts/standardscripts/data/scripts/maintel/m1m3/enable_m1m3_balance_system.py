@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
@@ -19,9 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .check_actuators import *
-from .check_hardpoint import *
-from .disable_m1m3_balance_system import *
-from .enable_m1m3_balance_system import *
-from .lower_m1m3 import *
-from .raise_m1m3 import *
+import asyncio
+
+from lsst.ts.standardscripts.maintel.m1m3 import EnableM1M3BalanceSystem
+
+asyncio.run(EnableM1M3BalanceSystem.amain())
