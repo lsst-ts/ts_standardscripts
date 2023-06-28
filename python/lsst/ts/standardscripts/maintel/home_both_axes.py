@@ -72,6 +72,9 @@ class HomeBothAxes(salobj.BaseScript):
         metadata.duration = self.home_both_axes_timeout
 
     async def run(self):
+        await self.checkpoint("Disable M1M3 balance system.")
+        await self.mtcs.disable_m1m3_balance_system()
+
         await self.checkpoint("Homing Both Axes")
         start_time = time.time()
         await self.mtcs.rem.mtmount.cmd_homeBothAxes.start(
