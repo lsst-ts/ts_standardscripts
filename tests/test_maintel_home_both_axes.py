@@ -32,6 +32,8 @@ class TestHomeBothAxes(
         self.script = HomeBothAxes(index=index, add_remotes=False)
 
         self.script.mtcs.rem.mtmount = unittest.mock.AsyncMock()
+        self.script.mtcs.lower_m1m3 = unittest.mock.AsyncMock()
+        self.script.mtcs.disable_m1m3_balance_system = unittest.mock.AsyncMock()
 
         return (self.script,)
 
@@ -41,6 +43,7 @@ class TestHomeBothAxes(
 
             await self.run_script()
 
+            self.script.mtcs.disable_m1m3_balance_system.assert_awaited_once()
             self.script.mtcs.rem.mtmount.cmd_homeBothAxes.start.assert_awaited_once_with(
                 timeout=self.script.home_both_axes_timeout
             )
