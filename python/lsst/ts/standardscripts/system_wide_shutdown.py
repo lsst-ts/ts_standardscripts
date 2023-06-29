@@ -270,10 +270,14 @@ additionalProperties: false
         """
 
         for index in indices:
+            self.log.info(f"Shutdown {component}:{index}.")
             async with salobj.Remote(
                 self.domain, component, index=index, include=["summaryState"]
             ) as remote:
                 try:
                     await salobj.set_summary_state(remote, salobj.State.OFFLINE)
                 except Exception as e:
+                    self.log.debug(f"Failed to shutdown {component}:{index}::{e}")
                     self.failed[f"{component}:{index}"] = f"{e}"
+                else:
+                    self.log.debug(f"{component}:{index} offline.")
