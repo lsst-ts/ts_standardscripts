@@ -21,6 +21,7 @@
 
 __all__ = ["Align", "AlignComponent"]
 
+import asyncio
 import enum
 
 import numpy as np
@@ -72,6 +73,7 @@ class Align(salobj.BaseScript):
 
         self.timeout_align = 120
         self.timeout_std = 60
+        self.timeout_short = 5
 
         self.max_iter = 10
         self.tolerance_linear = 1.0e-7  # meter
@@ -204,14 +206,19 @@ class Align(salobj.BaseScript):
 
     async def check_laser_status_ok(self):
         """Check that laser status is ON."""
-        laser_status = await self.laser_tracker.rem.lasertracker_1.evt_laserStatus.aget(
-            timeout=self.timeout_std,
-        )
-
-        if laser_status.status != LaserStatus.ON:
-            raise RuntimeError(
-                f"Laser status is {LaserStatus(laser_status.status)!r}, expected {LaserStatus.ON!r}."
+        try:
+            laser_status = (
+                await self.laser_tracker.rem.lasertracker_1.evt_laserStatus.aget(
+                    timeout=self.timeout_short,
+                )
             )
+
+            if laser_status.status != LaserStatus.ON:
+                raise RuntimeError(
+                    f"Laser status is {LaserStatus(laser_status.status)!r}, expected {LaserStatus.ON!r}."
+                )
+        except asyncio.TimeoutError:
+            self.log.warning("Cannot determine Laser Tracker state, continuing.")
 
     async def run(self):
         """Run the script."""
