@@ -35,8 +35,8 @@ from lsst.ts.observatory.control.remote_group import Usages
 
 # TODO (DM-38880) - Subsitute by class in idl.enum when available
 class AlignComponent(enum.IntEnum):
-    M2 = enum.auto()
-    Camera = enum.auto()
+    M2 = 1
+    Camera = 3
 
 
 class Align(salobj.BaseScript):
