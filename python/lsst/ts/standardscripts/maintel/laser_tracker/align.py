@@ -167,6 +167,9 @@ class Align(salobj.BaseScript):
                 target=self.target,
                 timeout=self.timeout_align,
             )
+            if self.tolerance_linear == 0.0 and self.tolerance_angular == 0.0:
+                self.log.info("Tolerances are zero, skipping alignment.")
+                return
 
             try:
                 offset = (
