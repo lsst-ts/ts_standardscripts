@@ -167,11 +167,20 @@ class Align(salobj.BaseScript):
                 target=self.target,
                 timeout=self.timeout_align,
             )
-            offset = (
-                await self.laser_tracker.rem.lasertracker_1.evt_offsetsPublish.next(
-                    flush=False, timeout=self.timeout_std
+
+            try:
+                offset = (
+                    await self.laser_tracker.rem.lasertracker_1.evt_offsetsPublish.next(
+                        flush=False, timeout=self.timeout_short
+                    )
                 )
-            )
+            except asyncio.TimeoutError:
+                self.log.warning("Cannot get new offset, using last data published.")
+                offset = (
+                    await self.laser_tracker.rem.lasertracker_1.evt_offsetsPublish.aget(
+                        timeout=self.timeout_short
+                    )
+                )
 
             corrections = np.array(
                 [
