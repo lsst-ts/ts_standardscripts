@@ -19,18 +19,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import asyncio
 import logging
 import random
-import unittest
 import types
-import asyncio
+import unittest
 
-from lsst.ts import salobj, utils
-
-from lsst.ts import standardscripts
-from lsst.ts.standardscripts.auxtel.calibrations import PowerOffATCalSys
+from lsst.ts import salobj, standardscripts, utils
 from lsst.ts.idl.enums import ATWhiteLight
-
+from lsst.ts.standardscripts.auxtel.calibrations import PowerOffATCalSys
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
