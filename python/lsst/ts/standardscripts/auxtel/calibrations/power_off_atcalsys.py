@@ -22,7 +22,6 @@
 __all__ = ["PowerOffATCalSys"]
 
 import asyncio
-import time as time
 
 from lsst.ts.idl.enums import ATWhiteLight
 
@@ -50,7 +49,7 @@ class PowerOffATCalSys(salobj.BaseScript):
         self.white_light_source = None
 
         # White lamp config
-        self.timeout_lamp_cool_down = 60 * 15
+        self.timeout_lamp_cool_down = 60 * 16
         self.cmd_timeout = 30
 
     @classmethod
@@ -71,47 +70,58 @@ class PowerOffATCalSys(salobj.BaseScript):
         await self.assert_components_enabled()
 
         await self.checkpoint("Turning lamp off")
-        await self.white_light_source.cmd_turnLampOff.set_start(
-            timeout=self.timeout_lamp_cool_down
-        )
+        await self.switch_lamp_off()
 
         await self.checkpoint("Closing the shutter")
-        await self.white_light_source.cmd_closeShutter.start()
+        await self.white_light_source.cmd_closeShutter.start(
+            timeout=self.timeout_close_shutter
+        )
 
         await self.checkpoint("Waiting for lamp to cool down")
         await self.wait_for_lamp_to_cool_down()
 
         await self.checkpoint("Stopping chiller")
-        await self.white_light_source.cmd_stopChiller.set_start(
-            timeout=self.cmd_timeout
+        await self.white_light_source.cmd_stopChiller.start(timeout=self.cmd_timeout)
+
+    async def switch_lamp_off(self):
+        await self.white_light_source.evt_lampState.flush()
+
+        await self.white_light_source.cmd_turnLampOff.start(
+            timeout=self.timeout_lamp_cool_down
         )
 
     async def wait_for_lamp_to_cool_down(self):
-        self.white_light_source.evt_lampState.flush()
-        start_time_lamp_warm_up = time.time()
-        while time.time() - start_time_lamp_warm_up < self.timeout_lamp_warm_up:
-            lamp_state = await self.white_light_source.evt_lampState.next(
-                flush=False, timeout=self.timeout_lamp_warm_up
-            )
-            if lamp_state.basicState == ATWhiteLight.LampBasicState.WARMUP:
-                warmup_time_left = (
-                    lamp_state.warmupEndTime - lamp_state.private_sndStamp
-                )
-                self.log.info(f"Time Left for lamp warmup: {warmup_time_left} min.")
-                await asyncio.sleep(self.track_lamp_warmup)
+        lamp_state = await self.white_light_source.evt_lampState.aget(
+            timeout=self.timeout_lamp_cool_down
+        )
+        self.log.info(
+            f"Lamp state: {ATWhiteLight.LampBasicState(lamp_state.basicState)!r}."
+        )
 
-            elif lamp_state.basicState == ATWhiteLight.LampBasicState.ON:
-                self.log.info(
-                    f"White Light Lamp is on after a warm up of {time.time() - start_time_lamp_warm_up} s"
+        # Now enters the loop with the stop condition being
+        # that the lamp is OFF
+
+        while lamp_state.basicState != ATWhiteLight.LampBasicState.OFF:
+            try:
+                lamp_state = await self.white_light_source.evt_lampState.next(
+                    flush=False, timeout=self.timeout_lamp_cool_down
                 )
-        else:
-            raise TimeoutError(
-                f"White Light Lamp failed to turn on after {self.timeout_lamp_warm_up} s"
-            )
+                cool_down_wait_time = (
+                    lamp_state.cooldownEndTime - lamp_state.private_sndStamp
+                )
+                self.log.info(
+                    f"Lamp state: {ATWhiteLight.LampBasicState(lamp_state.basicState)!r}."
+                    f"Need to wait {cool_down_wait_time/60} min"
+                )
+                asyncio.sleep(60)
+            except asyncio.TimeoutError:
+                raise RuntimeError(
+                    f"White Light Lamp failed to turn off after {self.timeout_lamp_warm_up} s."
+                )
 
     async def assert_components_enabled(self):
-        """Check if ATWhiteLight and ATMonochromator are ENABLED"""
-        for comp in [self.white_light_source, self.monochromator]:
+        """Check if ATWhiteLight is ENABLED"""
+        for comp in [self.white_light_source]:
             summary_state = await comp.evt_summaryState.aget()
             if salobj.State(summary_state.summaryState) != salobj.State(
                 salobj.State.ENABLED
