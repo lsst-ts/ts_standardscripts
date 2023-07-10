@@ -9,6 +9,7 @@ Version History
 v1.25.0
 -------
 
+* Add new ``auxtel/calibrations/power_off_atcalsys.py`` script, unit test and executable to turn off the ATCalSys white light. 
 * Add new ``auxtel/calibrations/power_on_atcalsys.py`` script, unit test and executable to turn on and set up the ATCalSys (ATWhiteLight and ATMonochromator) to take flats. 
 
 v1.24.2
