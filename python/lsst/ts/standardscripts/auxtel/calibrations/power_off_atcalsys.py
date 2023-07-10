@@ -52,6 +52,9 @@ class PowerOffATCalSys(salobj.BaseScript):
         self.timeout_lamp_cool_down = 60 * 16
         self.cmd_timeout = 30
 
+        # Shutter
+        self.timeout_close_shutter = 60 * 2
+
     @classmethod
     def get_schema(cls):
         return None

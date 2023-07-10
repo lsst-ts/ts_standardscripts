@@ -116,13 +116,13 @@ class TestPowerOffATCalSys(
             self.script.wait_for_lamp_to_cool_down.assert_awaited_once()
 
             # Shutter
-            self.script.white_light_source.cmd_openShutter.start.assert_awaited_with(
+            self.script.white_light_source.cmd_closeShutter.start.assert_awaited_with(
                 timeout=self.script.timeout_close_shutter,
             )
 
             # Chiller
             self.script.white_light_source.cmd_stopChiller.start.assert_awaited_once_with(
-                timeout=self.script.script.cmd_timeout
+                timeout=self.script.cmd_timeout
             )
 
             # Check status
