@@ -24,17 +24,15 @@ __all__ = ["PowerOffATCalSys"]
 import asyncio
 import time as time
 
-import yaml
-
 from lsst.ts.idl.enums import ATWhiteLight
 
 from lsst.ts import salobj
 
 
-class PowerOffATCalsys(salobj.BaseScript):
+class PowerOffATCalSys(salobj.BaseScript):
     """Powers on the ATCalSys dome flat illuminator
-    turning white lamp off, closing the shutter and 
-    stopping the chiller. 
+    turning white lamp off, closing the shutter and
+    stopping the chiller.
 
     Parameters
     ----------
@@ -74,7 +72,7 @@ class PowerOffATCalsys(salobj.BaseScript):
 
         await self.checkpoint("Turning lamp off")
         await self.white_light_source.cmd_turnLampOff.set_start(
-            timeout = self.timeout_lamp_cool_down
+            timeout=self.timeout_lamp_cool_down
         )
 
         await self.checkpoint("Closing the shutter")
@@ -85,8 +83,8 @@ class PowerOffATCalsys(salobj.BaseScript):
 
         await self.checkpoint("Stopping chiller")
         await self.white_light_source.cmd_stopChiller.set_start(
-            timeout=self.cmd_timeout)
-
+            timeout=self.cmd_timeout
+        )
 
     async def wait_for_lamp_to_cool_down(self):
         self.white_light_source.evt_lampState.flush()
