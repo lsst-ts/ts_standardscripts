@@ -21,6 +21,7 @@
 
 __all__ = ["Align", "AlignComponent"]
 
+import asyncio
 import enum
 
 import numpy as np
@@ -34,8 +35,8 @@ from lsst.ts.observatory.control.remote_group import Usages
 
 # TODO (DM-38880) - Subsitute by class in idl.enum when available
 class AlignComponent(enum.IntEnum):
-    M2 = enum.auto()
-    Camera = enum.auto()
+    M2 = 1
+    Camera = 3
 
 
 class Align(salobj.BaseScript):
@@ -72,6 +73,7 @@ class Align(salobj.BaseScript):
 
         self.timeout_align = 120
         self.timeout_std = 60
+        self.timeout_short = 5
 
         self.max_iter = 10
         self.tolerance_linear = 1.0e-7  # meter
@@ -165,11 +167,23 @@ class Align(salobj.BaseScript):
                 target=self.target,
                 timeout=self.timeout_align,
             )
-            offset = (
-                await self.laser_tracker.rem.lasertracker_1.evt_offsetsPublish.next(
-                    flush=False, timeout=self.timeout_std
+            if self.tolerance_linear == 0.0 and self.tolerance_angular == 0.0:
+                self.log.info("Tolerances are zero, skipping alignment.")
+                return
+
+            try:
+                offset = (
+                    await self.laser_tracker.rem.lasertracker_1.evt_offsetsPublish.next(
+                        flush=False, timeout=self.timeout_short
+                    )
                 )
-            )
+            except asyncio.TimeoutError:
+                self.log.warning("Cannot get new offset, using last data published.")
+                offset = (
+                    await self.laser_tracker.rem.lasertracker_1.evt_offsetsPublish.aget(
+                        timeout=self.timeout_short
+                    )
+                )
 
             corrections = np.array(
                 [
@@ -204,14 +218,19 @@ class Align(salobj.BaseScript):
 
     async def check_laser_status_ok(self):
         """Check that laser status is ON."""
-        laser_status = await self.laser_tracker.rem.lasertracker_1.evt_laserStatus.aget(
-            timeout=self.timeout_std,
-        )
-
-        if laser_status.status != LaserStatus.ON:
-            raise RuntimeError(
-                f"Laser status is {LaserStatus(laser_status.status)!r}, expected {LaserStatus.ON!r}."
+        try:
+            laser_status = (
+                await self.laser_tracker.rem.lasertracker_1.evt_laserStatus.aget(
+                    timeout=self.timeout_short,
+                )
             )
+
+            if laser_status.status != LaserStatus.ON:
+                raise RuntimeError(
+                    f"Laser status is {LaserStatus(laser_status.status)!r}, expected {LaserStatus.ON!r}."
+                )
+        except asyncio.TimeoutError:
+            self.log.warning("Cannot determine Laser Tracker state, continuing.")
 
     async def run(self):
         """Run the script."""
