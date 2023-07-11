@@ -6,6 +6,23 @@
 Version History
 ===============
 
+v1.24.1
+-------
+
+* In ``maintel/laser_tracker/align.py``:
+
+  * Skip alignment if tolerances are zero.
+  * Get last ``offsetPublished`` if new event is not available.
+  * Fix enum values.
+  * Skip error if laserTracker status is not available.
+
+* In ``system_wide_shutdown.py``, add more logging information.
+* Update ``tests/test_maintel_home_both_axes.py`` to check that force balance was disabled before homing.
+* In ``maintel/home_both_axes.py``, update execution to switch off force balance before homing.
+
+* Update Jenkinsfile to add ts_cRIOpy as an extra package.
+* In ``maintel/m1m3/check_actuators.py``, update to use latest version of ts_cRIOpy package.
+
 v1.24.0
 -------
 

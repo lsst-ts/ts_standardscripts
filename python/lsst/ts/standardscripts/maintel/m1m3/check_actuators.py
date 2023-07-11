@@ -26,7 +26,7 @@ import asyncio
 import time
 
 import yaml
-from lsst.ts.cRIOpy.M1M3FATable import FATABLE, FATABLE_ID
+from lsst.ts.criopy.M1M3FATable import FATABLE
 from lsst.ts.idl.enums.MTM1M3 import BumpTest, DetailedState
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
@@ -103,7 +103,7 @@ class CheckActuators(BaseBlockScript):
 
     @classmethod
     def get_schema(cls):
-        m1m3_actuator_ids_str = ",".join([str(fa[FATABLE_ID]) for fa in FATABLE])
+        m1m3_actuator_ids_str = ",".join([str(fa.actuator_id) for fa in FATABLE])
 
         url = "https://github.com/lsst-ts/"
         path = (
