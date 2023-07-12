@@ -6,6 +6,11 @@
 Version History
 ===============
 
+v1.24.2
+-------
+
+Update ``check_actuators.py`` to give the ability to ignore actuators in a bump test.
+
 v1.24.1
 -------
 
