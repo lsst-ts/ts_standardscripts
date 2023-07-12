@@ -130,6 +130,13 @@ class CheckActuators(BaseBlockScript):
                   - type: string
                     enum: ["all"]
                 default: "all"
+            ignore_actuators:
+                description: Actuators to ignore during the bump test.
+                type: array
+                items:
+                    type: number
+                    enum: [{m1m3_actuator_ids_str}]
+                default: []
         additionalProperties: false
         """
         schema_dict = yaml.safe_load(schema_yaml)
@@ -156,6 +163,13 @@ class CheckActuators(BaseBlockScript):
         self.actuators_to_test = (
             self.m1m3_actuator_ids if config.actuators == "all" else config.actuators
         )
+        if config.ignore_actuators:
+            self.actuators_to_test = [
+                actuator_id
+                for actuator_id in self.actuators_to_test
+                if actuator_id not in config.ignore_actuators
+            ]
+
         await super().configure(config=config)
 
     def set_metadata(self, metadata):
