@@ -6,6 +6,11 @@
 Version History
 ===============
 
+v1.25.1
+-------
+
+* In ``auxtel/daytime_checkout/latiss_checkout.py`` script and unit test, add check to linear stage position. 
+
 v1.25.0
 -------
 
