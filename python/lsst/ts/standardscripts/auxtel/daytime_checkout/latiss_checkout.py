@@ -47,6 +47,9 @@ class LatissCheckout(salobj.BaseScript):
     -----
     **Checkpoints**
 
+    - "Checking LATISS Setup": Will check gratings+filters installed and then
+    check that the grating linear stage position is correct. If it is not, will
+    try to move grating linear stage to its nominal position.
     - "Bias Frame Verification": Before taking bias frame.
     - "Engineering Frame Verification": Before taking engineering frame. Final
     checkpoint in script.
@@ -75,6 +78,8 @@ class LatissCheckout(salobj.BaseScript):
             domain=self.domain, intended_usage=latiss_usage, log=self.log
         )
 
+        self.linear_stage_nominal_position = 67.0
+
     @classmethod
     def get_schema(cls):
         return None
@@ -90,6 +95,26 @@ class LatissCheckout(salobj.BaseScript):
 
     async def run(self):
         await self.assert_feasibility()
+
+        # LATISS setup checkout
+        await self.checkpoint("Checking LATISS Setup")
+        instrument_setup = await self.latiss.get_setup()
+        # Check that linear stage is at nominal position, if not move it.
+        if instrument_setup[2] == self.linear_stage_nominal_position:
+            self.log.info("Grating stage is at correct, nominal position.")
+        else:
+            self.log.info(
+                f"Grating stage is at {instrument_setup[2]}mm and should be at"
+                f"{self.linear_stage_nominal_position}mm. Moving to nominal position."
+            )
+            await self.latiss.setup_instrument(
+                linear_stage=self.linear_stage_nominal_position
+            )
+
+        available_setup = await self.latiss.get_available_instrument_setup()
+        self.log.info(
+            f"The available filters are {available_setup[0]} and gratings are {available_setup[1]} "
+        )
 
         # Bias Verification, start with checkpoint for observer
         await self.checkpoint("Bias Frame Verification")
@@ -115,11 +140,6 @@ class LatissCheckout(salobj.BaseScript):
 
         # Engineering test frame verification
         await self.checkpoint("Engineering Frame Verification")
-
-        available_setup = await self.latiss.get_available_instrument_setup()
-        self.log.info(
-            f"The available filters are {available_setup[0]} and gratings are {available_setup[1]} "
-        )
 
         self.latiss.rem.atoods.evt_imageInOODS.flush()
         await self.latiss.take_engtest(2, filter=0, grating=0)

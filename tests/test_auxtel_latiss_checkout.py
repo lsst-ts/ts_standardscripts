@@ -36,7 +36,7 @@ class TestLatissCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
         self.ingest_time = time.time()
         self.obsid = "test_obs"
         self.available_instrument_setup = ["filter_list", "grating_list"]
-        self.latiss_setup = ["test_filter", "test_grating"]
+        self.latiss_setup = ["test_filter", "test_grating", 67.0]
         return super().setUp()
 
     async def basic_make_script(self, index):
@@ -69,6 +69,7 @@ class TestLatissCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     async def setup_mocks(self):
         self.script.latiss.take_bias = unittest.mock.AsyncMock()
         self.script.latiss.take_engtest = unittest.mock.AsyncMock()
+        self.script.latiss.setup_instrument = unittest.mock.AsyncMock()
 
         self.script.latiss.rem = types.SimpleNamespace(atoods=unittest.mock.AsyncMock())
         self.script.latiss.rem.atoods.configure_mock(
@@ -91,6 +92,7 @@ class TestLatissCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             await self.run_script()
 
+            self.script.latiss.setup_instrument.assert_not_awaited()
             self.script.latiss.take_bias.assert_awaited_once()
             self.script.latiss.take_engtest.assert_awaited_once()
 
@@ -107,6 +109,20 @@ class TestLatissCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             self.script.latiss.take_bias.assert_awaited_once()
             self.script.latiss.take_engtest.assert_not_awaited()
+
+    async def test_run_script_with_linear_stage_out_of_position(self):
+        async with self.make_script(), self.setup_mocks():
+            await self.configure_script()
+
+            self.latiss_setup = ["test_filter", "test_grating", 0.0]
+
+            await self.run_script()
+
+            self.script.latiss.setup_instrument.assert_awaited_once_with(
+                linear_stage=self.script.linear_stage_nominal_position
+            )
+            self.script.latiss.take_bias.assert_awaited_once()
+            self.script.latiss.take_engtest.assert_awaited_once()
 
 
 if __name__ == "__main__":
