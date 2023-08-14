@@ -47,6 +47,7 @@ class TestPowerOnATCalSys(
         self.shutter_status = types.SimpleNamespace(
             shutterState=ATWhiteLight.ShutterState.CLOSED
         )
+
         self.grating_status = types.SimpleNamespace(
             gratingtype=ATMonochromator.Grating.BLUE
         )
@@ -131,6 +132,7 @@ class TestPowerOnATCalSys(
         self.lamp_state.basicState = ATWhiteLight.LampBasicState.ON
 
     # Monochromator
+
     async def mock_get_monochromator_summary_state(self, **kwargs):
         return types.SimpleNamespace(summaryState=salobj.State.ENABLED)
 
@@ -153,20 +155,25 @@ class TestPowerOnATCalSys(
             chiller_temperature = 15
             grating_type = 0
             entrance_slit_width = 5
+            use_atmonochromator = True
 
             await self.configure_script(
                 chiller_temperature=chiller_temperature,
                 grating_type=grating_type,
                 entrance_slit_width=entrance_slit_width,
+                use_atmonochromator=use_atmonochromator,
             )
 
             assert self.script.chiller_temperature == chiller_temperature
             assert self.script.grating_type == grating_type
             assert self.script.entrance_slit_width == entrance_slit_width
+            assert self.script.use_atmonochromator == use_atmonochromator
 
-    async def test_run_without_without_failures(self):
+    async def test_run_with_atmonochromator_without_failures(self):
         async with self.make_script():
             await self.configure_script()
+
+            self.script.use_atmonochromator = True
 
             await self.run_script()
 
@@ -233,6 +240,47 @@ class TestPowerOnATCalSys(
             assert self.lamp_state.basicState == ATWhiteLight.LampBasicState.ON
             assert self.shutter_status.shutterState == ATWhiteLight.ShutterState.OPEN
             assert self.grating_status.gratingState == ATMonochromator.Grating.MIRROR
+
+    async def test_run_without_atmonochromator_without_failures(self):
+        async with self.make_script():
+            await self.configure_script()
+
+            self.script.use_atmonochromator = False
+
+            await self.run_script()
+
+            # Chiller
+            self.script.white_light_source.cmd_setChillerTemperature.set_start.assert_awaited_once_with(
+                temperature=self.script.chiller_temperature,
+                timeout=self.script.cmd_timeout,
+            )
+
+            self.script.white_light_source.cmd_startChiller.start.assert_awaited_once_with(
+                timeout=self.script.timeout_chiller_cool_down
+            )
+
+            self.script.wait_for_chiller_temp_within_tolerance.assert_awaited_once()
+
+            # Shutter
+            self.script.white_light_source.cmd_openShutter.start.assert_awaited_with(
+                timeout=self.script.timeout_open_shutter,
+            )
+
+            # White lamp
+            self.script.white_light_source.cmd_turnLampOn.set_start.assert_awaited_with(
+                power=self.script.whitelight_power,
+                timeout=self.script.timeout_lamp_warm_up,
+            )
+
+            self.script.wait_for_lamp_to_warm_up.assert_awaited_once()
+
+            # Summary State
+            self.script.white_light_source.evt_summaryState.aget.assert_awaited_once_with()
+
+            # Assert states are OK
+            assert self.chiller_status.chillerState == "READY"
+            assert self.lamp_state.basicState == ATWhiteLight.LampBasicState.ON
+            assert self.shutter_status.shutterState == ATWhiteLight.ShutterState.OPEN
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
