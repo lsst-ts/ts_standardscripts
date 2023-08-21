@@ -110,6 +110,13 @@ class PowerOnATCalSys(salobj.BaseScript):
                 minimum: 0
                 default: 7
 
+              use_atmonochromator:
+                description: Is the monochromator available and can be configured?
+                    If False, the monochromator will be left as it is.
+                    If True, the monochromator will be configured for white light.
+                type: boolean
+                default: false
+
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -130,6 +137,7 @@ class PowerOnATCalSys(salobj.BaseScript):
         self.grating_type = config.grating_type
         self.entrance_slit_width = config.entrance_slit_width
         self.exit_slit_width = config.exit_slit_width
+        self.use_atmonochromator = config.use_atmonochromator
 
         if self.white_light_source is None:
             self.white_light_source = salobj.Remote(
@@ -178,8 +186,9 @@ class PowerOnATCalSys(salobj.BaseScript):
         await self.checkpoint("Waiting for lamp to warm up")
         await self.wait_for_lamp_to_warm_up()
 
-        await self.checkpoint("Configuring ATMonochromator")
-        await self.configure_atmonochromator()
+        if self.use_atmonochromator:
+            await self.checkpoint("Configuring ATMonochromator")
+            await self.configure_atmonochromator()
 
     async def start_chiller(self):
         """Starts chiller to run at self.chiller_temperature"""
@@ -217,8 +226,8 @@ class PowerOnATCalSys(salobj.BaseScript):
             ):
                 chill_time = time.time() - start_chill_time
                 self.log.info(
-                    f"Chiller reached target temperature, {tel_chiller_temp:0.1f} deg"
-                    f"within tolerance in {chill_time:0.1f} s."
+                    f"Chiller reached target temperature, {tel_chiller_temp:0.1f} deg "
+                    f"within tolerance, in {chill_time:0.1f} s."
                 )
                 break
         else:
@@ -316,7 +325,12 @@ class PowerOnATCalSys(salobj.BaseScript):
         ------
         RunTimeError:
             If either component is not ENABLED"""
-        for comp in [self.white_light_source, self.monochromator]:
+
+        comps = [self.white_light_source]
+        if self.use_atmonochromator:
+            comps = [self.white_light_source, self.monochromator]
+
+        for comp in comps:
             summary_state = await comp.evt_summaryState.aget()
             if salobj.State(summary_state.summaryState) != salobj.State(
                 salobj.State.ENABLED
