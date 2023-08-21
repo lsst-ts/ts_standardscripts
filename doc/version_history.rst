@@ -6,6 +6,12 @@
 Version History
 ===============
 
+v1.25.2
+-------
+
+* In ``auxtel/calibrations/power_on_atcalsys.py``, add boolean config to use ATMonochromator, update unit test, and edit log message outputs.
+
+
 v1.25.1
 -------
 

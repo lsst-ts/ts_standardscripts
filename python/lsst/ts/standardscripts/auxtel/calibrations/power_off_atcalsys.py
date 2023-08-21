@@ -125,16 +125,13 @@ class PowerOffATCalSys(salobj.BaseScript):
                 lamp_state = await self.white_light_source.evt_lampState.next(
                     flush=False, timeout=self.timeout_lamp_cool_down
                 )
-                cool_down_wait_time = (
-                    lamp_state.cooldownEndTime - lamp_state.private_sndStamp
-                )
+
                 self.log.info(
                     f"Lamp state: {ATWhiteLight.LampBasicState(lamp_state.basicState)!r}. "
-                    f"Waiting {cool_down_wait_time/60:0.1f} min"
                 )
             except asyncio.TimeoutError:
                 raise RuntimeError(
-                    f"White Light Lamp failed to turn off after {self.timeout_lamp_warm_up} s."
+                    f"White Light Lamp failed to turn off after {self.timeout_lamp_cool_down} s."
                 )
 
     async def assert_components_enabled(self):
