@@ -153,13 +153,17 @@ class BaseTakeStuttered(salobj.BaseScript, metaclass=abc.ABCMeta):
             await self.atcs.rem.ataos.cmd_disableCorrection.set_start(hexapod=True)
             await atcs.rem.ataos.cmd_enableCorrection.set_start(hexapod=True, moveWhileExposing=True)
 
+        if self.config.change_focus:
+            checkpoint=self.offset_hexapod
+        else:
+            checkpoint=None
+
         await self.camera.take_stuttered(
             exptime=self.config.exp_time,
             n_shift=self.config.n_shift,
             row_shift=self.config.row_shift,
             n=self.config.n_images,
-            change_focus=self.config.change_focus
-            checkpoint=self.offset_hexapod
+            checkpoint=checkpoint,
             reason=reason,
             program=program,
             group_id=self.group_id,
