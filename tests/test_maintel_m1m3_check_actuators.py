@@ -22,11 +22,21 @@
 import asyncio
 import types
 import unittest
+import warnings
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.MTM1M3 import BumpTest, DetailedState
+from lsst.ts.idl.enums.MTM1M3 import BumpTest
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
 from lsst.ts.standardscripts.maintel.m1m3 import CheckActuators
+
+try:
+    from lsst.ts.idl.enums.MTM1M3 import DetailedState
+except ImportError:
+    warnings.warn(
+        "Could not import MTM1M3 fron lsst.ts.idl; importing from lsst.ts.xml",
+        UserWarning,
+    )
+    from lsst.ts.xml.enums.MTM1M3 import DetailedStates as DetailedState
 
 
 class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):

@@ -24,14 +24,24 @@ __all__ = ["CheckActuators"]
 
 import asyncio
 import time
+import warnings
 
 import yaml
 from lsst.ts.criopy.M1M3FATable import FATABLE
-from lsst.ts.idl.enums.MTM1M3 import BumpTest, DetailedState
+from lsst.ts.idl.enums.MTM1M3 import BumpTest
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 from ...base_block_script import BaseBlockScript
+
+try:
+    from lsst.ts.idl.enums.MTM1M3 import DetailedState
+except ImportError:
+    warnings.warn(
+        "Could not import MTM1M3 fron lsst.ts.idl; importing from lsst.ts.xml",
+        UserWarning,
+    )
+    from lsst.ts.xml.enums.MTM1M3 import DetailedStates as DetailedState
 
 
 class CheckActuators(BaseBlockScript):

@@ -6,6 +6,12 @@
 Version History
 ===============
 
+v1.25.3
+-------
+
+* In ``maintel/m1m3``, fix lsst.ts.xml imports for DetailedStates.
+
+
 v1.25.2
 -------
 
@@ -15,13 +21,13 @@ v1.25.2
 v1.25.1
 -------
 
-* In ``auxtel/daytime_checkout/latiss_checkout.py`` script and unit test, add check to linear stage position. 
+* In ``auxtel/daytime_checkout/latiss_checkout.py`` script and unit test, add check to linear stage position.
 
 v1.25.0
 -------
 
-* Add new ``auxtel/calibrations/power_off_atcalsys.py`` script, unit test and executable to turn off the ATCalSys white light. 
-* Add new ``auxtel/calibrations/power_on_atcalsys.py`` script, unit test and executable to turn on and set up the ATCalSys (ATWhiteLight and ATMonochromator) to take flats. 
+* Add new ``auxtel/calibrations/power_off_atcalsys.py`` script, unit test and executable to turn off the ATCalSys white light.
+* Add new ``auxtel/calibrations/power_on_atcalsys.py`` script, unit test and executable to turn on and set up the ATCalSys (ATWhiteLight and ATMonochromator) to take flats.
 
 v1.24.2
 -------
@@ -59,7 +65,7 @@ v1.23.1
 * In ``pyproject.toml``, stop using pytest-black and pytest-flake8 plugins for unit tests.
 * In ``base_track_target.py``, add ``slew_timeout`` configuration parameter.
 * In ``maintel/move_p2p.py``:
-  
+
   * Stop motion if script fails or is stopped.
   * Add ``move_timeout`` configuration parameter to allow users to control how long the move command can take, for long slews with reduced speed.
 
@@ -79,14 +85,14 @@ v1.22.0
 
 * Update the ``maintel/m1m3/check_actuators.py`` script with improved logging and detailed state assertions.
 
-* Add new ``maintel/home_both_axes.py`` script to home both MTMount axes. 
+* Add new ``maintel/home_both_axes.py`` script to home both MTMount axes.
 
 * Add new ``base_block_script.py``, which defines a base class for developing scripts to be executed as part of observing blocks.
 
 * Convert ``base_track_target.py`` and all ``maintel/m1m3`` scripts to block scripts.
 
 * In ``base_track_target.py``:
-  
+
   * Add a new ``configure_tcs`` method that, by default, awaits for the ``tcs.start_task``.
   * Add support for configuring with sexagesimal strings coordinates.
 
@@ -104,13 +110,13 @@ v1.21.0
 -------
 
 * Add new ``maintel/m1m3/check_actuators.py`` script to run the actuators bump test.
-* Add new ``maintel/m1m3/lower_m1m3.py`` sal script and associated files. 
+* Add new ``maintel/m1m3/lower_m1m3.py`` sal script and associated files.
 * Add new ``auxtel/offset_ataos.py`` script to offset the ATAOS.
 * Add new ``maintel/m1m3/check_hardpoint.py`` script to check hardpoints.
-* Add missing comment line in all script files. 
+* Add missing comment line in all script files.
 * In ``auxtel/offset_ataos.py``, fix bug in call to resetOffset and change handling for reset all configuration.
 * Update unit test for ``auxtel/offset_ataos.py``
-* In ``auxtel/daytime_checkout/atpneumatics_checkout.py``, update detailed description. 
+* In ``auxtel/daytime_checkout/atpneumatics_checkout.py``, update detailed description.
 
 v1.20.1
 -------
@@ -125,12 +131,12 @@ v1.20.1
 v1.20.0
 -------
 
-* Add new ``base_offset_tcs.py`` script to offset generic tcs class. 
-* Add new ``auxtel/offset_atcs.py`` script to offset the ATCS. 
-* Add new ``maintel/offset_,tcs.py`` script to offset the MTCS. 
+* Add new ``base_offset_tcs.py`` script to offset generic tcs class.
+* Add new ``auxtel/offset_atcs.py`` script to offset the ATCS.
+* Add new ``maintel/offset_,tcs.py`` script to offset the MTCS.
 
 * Add new ``auxtel/latiss_take_sequence.py`` script, unit tests, and executables.
-* Add new ``maintel/m1m3/raise_m1m3.py`` to raise MainTel M1M3 mirror. 
+* Add new ``maintel/m1m3/raise_m1m3.py`` to raise MainTel M1M3 mirror.
 * Add new ``laser_tracker/set_up.py`` script to set up and turn on the laser tracker.
 * Add new ``laser_tracker/shut_down.py`` script to switch off the laser tracker.
 * Add new ``laser_tracker/align.py`` script to align mtcs with laser tracker.
@@ -146,11 +152,11 @@ v1.19.2
 v1.19.1
 -------
 
-* In ``auxtel/daytime_checkout/atpneumatics_checkout.py``: 
+* In ``auxtel/daytime_checkout/atpneumatics_checkout.py``:
   * add slew to park position to ensure telescope is in safe range for ATAOS operation.
   * add sleep to allow mirror to arrive at commanded pressure before logging value.
-  * add check that M1 arrives at pressure commanded by ATAOS after enable/disable. 
-  * update unit test ``tests/test_auxtel_atpneumatics_checkout.py`` 
+  * add check that M1 arrives at pressure commanded by ATAOS after enable/disable.
+  * update unit test ``tests/test_auxtel_atpneumatics_checkout.py``
 
 v1.19.0
 -------

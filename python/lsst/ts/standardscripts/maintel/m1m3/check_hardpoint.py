@@ -22,12 +22,21 @@
 __all__ = ["CheckHardpoint"]
 
 import asyncio
+import warnings
 
 import yaml
-from lsst.ts.idl.enums.MTM1M3 import DetailedState
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 from ...base_block_script import BaseBlockScript
+
+try:
+    from lsst.ts.idl.enums.MTM1M3 import DetailedState
+except ImportError:
+    warnings.warn(
+        "Could not import MTM1M3 fron lsst.ts.idl; importing from lsst.ts.xml",
+        UserWarning,
+    )
+    from lsst.ts.xml.enums.MTM1M3 import DetailedStates as DetailedState
 
 
 class CheckHardpoint(BaseBlockScript):
