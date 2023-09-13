@@ -6,6 +6,12 @@
 Version History
 ===============
 
+v1.25.4
+-------
+
+* In ``maintel/m1m3``, fix typo in import warning.
+
+
 v1.25.3
 -------
 

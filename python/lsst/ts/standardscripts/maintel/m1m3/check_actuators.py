@@ -38,7 +38,7 @@ try:
     from lsst.ts.idl.enums.MTM1M3 import DetailedState
 except ImportError:
     warnings.warn(
-        "Could not import MTM1M3 fron lsst.ts.idl; importing from lsst.ts.xml",
+        "Could not import MTM1M3 from lsst.ts.idl; importing from lsst.ts.xml",
         UserWarning,
     )
     from lsst.ts.xml.enums.MTM1M3 import DetailedStates as DetailedState
