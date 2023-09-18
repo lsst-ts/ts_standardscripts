@@ -225,6 +225,9 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
             rot_tel=self.atcs.tel_park_rot,
         )
 
+        # Stop tracking after point_azel
+        await self.atcs.stop_tracking()
+
         # Slew Dome to park position
         await self.atcs.slew_dome_to(az=self.atcs.dome_park_az)
 

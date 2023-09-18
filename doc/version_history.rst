@@ -6,6 +6,12 @@
 Version History
 ===============
 
+v1.25.5
+-------
+
+* In ``auxtel/calibrations/power_off_atcalsys``, add temporary work-around to missing ACK from faulty shutter limit switch.
+* In ``auxtel/daytime_checkout/slew_and_take_image_checkout``, add ``stop_tracking`` after ``point_azel``.
+
 v1.25.4
 -------
 
