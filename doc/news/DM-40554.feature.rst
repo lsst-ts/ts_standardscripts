@@ -1,0 +1,2 @@
+Introduce the ``maintel/m2/check_actuators.py`` script.
+This new addition allows users to run M2 bump tests.
