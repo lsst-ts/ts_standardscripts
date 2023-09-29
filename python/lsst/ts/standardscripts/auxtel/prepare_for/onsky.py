@@ -75,14 +75,22 @@ class PrepareForOnSky(salobj.BaseScript):
         # This script does not require any configuration
         if hasattr(config, "ignore"):
             for comp in config.ignore:
-                if comp not in self.attcs.components_attr:
+                if (
+                    comp not in self.attcs.components_attr
+                    and comp not in self.latiss.components_attr
+                ):
                     self.log.warning(
                         f"Component {comp} not in CSC Group. "
-                        f"Must be one of {self.attcs.components_attr}. Ignoring."
+                        f"Must be one of {self.attcs.components_attr} or "
+                        f"{self.latiss.components_attr}"
+                        "Ignoring."
                     )
-                else:
-                    self.log.debug(f"Ignoring component {comp}.")
+                elif comp in self.attcs.components_attr:
+                    self.log.debug(f"Ignoring component {comp} from ATCS.")
                     setattr(self.attcs.check, comp, False)
+                else:
+                    self.log.debug(f"Ignoring component {comp} from LATISS.")
+                    setattr(self.latiss.check, comp, False)
 
     def set_metadata(self, metadata):
         metadata.duration = 600.0
