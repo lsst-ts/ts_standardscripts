@@ -6,48 +6,50 @@
 Version History
 ===============
 
+.. towncrier release notes start
+
 v1.25.5
--------
+=======
 
 * In ``auxtel/calibrations/power_off_atcalsys``, add temporary work-around to missing ACK from faulty shutter limit switch.
 * In ``auxtel/daytime_checkout/slew_and_take_image_checkout``, add ``stop_tracking`` after ``point_azel``.
 
 v1.25.4
--------
+=======
 
 * In ``maintel/m1m3``, fix typo in import warning.
 
 
 v1.25.3
--------
+=======
 
 * In ``maintel/m1m3``, fix lsst.ts.xml imports for DetailedStates.
 
 
 v1.25.2
--------
+=======
 
 * In ``auxtel/calibrations/power_on_atcalsys.py``, add boolean config to use ATMonochromator, update unit test, and edit log message outputs.
 
 
 v1.25.1
--------
+=======
 
 * In ``auxtel/daytime_checkout/latiss_checkout.py`` script and unit test, add check to linear stage position.
 
 v1.25.0
--------
+=======
 
 * Add new ``auxtel/calibrations/power_off_atcalsys.py`` script, unit test and executable to turn off the ATCalSys white light.
 * Add new ``auxtel/calibrations/power_on_atcalsys.py`` script, unit test and executable to turn on and set up the ATCalSys (ATWhiteLight and ATMonochromator) to take flats.
 
 v1.24.2
--------
+=======
 
 Update ``check_actuators.py`` to give the ability to ignore actuators in a bump test.
 
 v1.24.1
--------
+=======
 
 * In ``maintel/laser_tracker/align.py``:
 
@@ -64,13 +66,13 @@ v1.24.1
 * In ``maintel/m1m3/check_actuators.py``, update to use latest version of ts_cRIOpy package.
 
 v1.24.0
--------
+=======
 
 * Patch ``base_block_script.py`` to add ``test_case`` attribute.
 * Add new ``maintel/m1m3/enable_m1m3_balance_system.py`` and ``maintel/m1m3/disable_m1m3_balance_system.py`` sal scripts and associated files.
 
 v1.23.1
--------
+=======
 
 * ``Jenkinsfile``: use the new shared library.
 * In ``base_block_script.py``, update address of the camera image server at the summit.
@@ -84,7 +86,7 @@ v1.23.1
 * In ``maintel/home_both_axes.py``, call start instead of set.
 
 v1.23.0
--------
+=======
 
 * In ``base_block_script.py``, expand ``BaseBlockScript`` functionality to support generating JIRA test case artifacts from scripts.
 
@@ -93,7 +95,7 @@ v1.23.0
 * In ``utils.py``, add ``get_s3_bucket`` to generate a ``salobj.AsyncS3Bucket`` based on the running environment.
 
 v1.22.0
--------
+=======
 
 * Update the ``maintel/m1m3/check_actuators.py`` script with improved logging and detailed state assertions.
 
@@ -119,7 +121,7 @@ v1.22.0
 * Add new ``MoveP2P`` maintel script.
 
 v1.21.0
--------
+=======
 
 * Add new ``maintel/m1m3/check_actuators.py`` script to run the actuators bump test.
 * Add new ``maintel/m1m3/lower_m1m3.py`` sal script and associated files.
@@ -131,7 +133,7 @@ v1.21.0
 * In ``auxtel/daytime_checkout/atpneumatics_checkout.py``, update detailed description.
 
 v1.20.1
--------
+=======
 
 * In ``prepare_for/vent``, fix passing ``partially_open_dome``.
 * Update ``auxtel/latiss_take_sequence.py`` to configure synchronization between ``ATCS`` and ``LATISS``.
@@ -141,7 +143,7 @@ v1.20.1
   * Add checkpoints for each action.
 
 v1.20.0
--------
+=======
 
 * Add new ``base_offset_tcs.py`` script to offset generic tcs class.
 * Add new ``auxtel/offset_atcs.py`` script to offset the ATCS.
@@ -155,14 +157,14 @@ v1.20.0
 * Add new ``maintel/prepare_for/align.py`` script to prepare for align mtcs with laser tracker.
 
 v1.19.2
--------
+=======
 
 * In ``auxtel/daytime_checkout/slew_and_take_image_checkout.py``:
   * add check that M3 is in position for observations with LATISS
   * update unit test ``tests/test_auxtel_slew_and_take_image_checkout.py``
 
 v1.19.1
--------
+=======
 
 * In ``auxtel/daytime_checkout/atpneumatics_checkout.py``:
   * add slew to park position to ensure telescope is in safe range for ATAOS operation.
@@ -171,18 +173,18 @@ v1.19.1
   * update unit test ``tests/test_auxtel_atpneumatics_checkout.py``
 
 v1.19.0
--------
+=======
 
 * Update pre-commit to use black 23, isort 5.12 and check-yaml 4.4.
 
 v1.18.0
--------
+=======
 
 * Add new ``system_wide_shutdown`` script to help shutdown the entire system.
 * In ``auxtel/daytime_checkout/`` update script metadata.duration values.
 
 v1.17.0
--------
+=======
 
 * In ``maintel/track_target_and_take_image_gencam.py``:
 
@@ -235,12 +237,12 @@ v1.17.0
   * Pass those values to ``slew_icrs`` and ``slew_object`` when running the script.
 
 v1.16.1
--------
+=======
 
 * Fix conda recipe by adding astroplan dependency and not running pytest.
 
 v1.16.0
--------
+=======
 
 * Add daytime_checkout SAL scripts, executables, and tests
 * Move all "prepare_for" scripts to a submodule in auxtel.
@@ -249,26 +251,26 @@ v1.16.0
 * Run ``isort`` in the entire package.
 
 v1.15.5
--------
+=======
 
 * Update maintel/setup_mtcs.py
   * Now put the mount and the rotator into disabled state so they can share telemetry.
   * Do the homing of the mount
 
 v1.15.4
--------
+=======
 
 * Add maintel/track_target_and_take_image_comcam.py with new ``TrackTargetAndTakeImageGenCam``.
 * Add unit tests for ``TrackTargetAndTakeImageGenCam``
 
 v1.15.3
--------
+=======
 
 * `BaseScriptTestCase` fix a potential unbound local variable error in ``check_executable``.
   This is only triggered if the process cannot be created or $PATH cannot be set, so it obscures some other problem.
 
 v1.15.2
--------
+=======
 
 * Update unit tests to be compatible with ts_salobj 7.2, while remaining backwards compatible.
 * Remove unused dependencies, including ts_atdome, ts_atdometrajectory and ts_atmcssimulator.
@@ -278,7 +280,7 @@ v1.15.2
   * Add a new configuration parameter "filter_suffix" to allow appending strings to the filter name.
 
 v1.15.1
--------
+=======
 
 * In python/lsst/ts/standardscripts/auxtel/track_target_and_take_image.py, implement new abstract method ``check_feasibility``.
 
@@ -287,7 +289,7 @@ v1.15.1
 * In python/lsst/ts/standardscripts/maintel/track_target_and_take_image_comcam.py, implement new abstract method ``assert_feasibility``.
 
 v1.15.0
--------
+=======
 
 * In ``BaseTrackTargetAndTakeImage``, add configuration parameter to allow specifying a camera playlist and, if specified, load it before running the script.
 
@@ -298,7 +300,7 @@ v1.15.0
 * In auxtel/track_target_and_take_image, implement ``load_playlist`` method.
 
 v1.14.3
--------
+=======
 
 * In ``maintel/SetupMTCS``
 
@@ -306,25 +308,25 @@ v1.14.3
   * fix ``mtcs.enable_compensation_mode`` argument.
 
 v1.14.2
--------
+=======
 
 * Create new script maintel/setup_mtcs.py with its associated class and unit tests.
 
 v1.14.1
--------
+=======
 
 * Update eups table to account for renaming of ts_ATMCSSimulator -> ts_atmcssimulator.
 * Update conda recipe to improve handling python versions.
 
 v1.14.0
--------
+=======
 
 * Update build files to use pyproject.toml
 * Update location of scripts directory
 * Move scripts to python/.../data/scripts
 
 v1.13.0
--------
+=======
 
 * In ``BaseTrackTarget``:
 
@@ -336,7 +338,7 @@ v1.13.0
 
 
 v1.12.1
--------
+=======
 
 * Wait for SalInfo instances to start before writing messages:
 
@@ -350,7 +352,7 @@ v1.12.1
 * update build files to use ``pyproject.toml``.
 
 v1.12.0
--------
+=======
 
 * Add ``BaseTakeStuttered`` script to take stuttered images.
 * In ``BaseTakeImage``, add option to take acquisition images.
@@ -359,7 +361,7 @@ v1.12.0
 * Update ``GetStdFlatDataset`` unit test to reduce script test time by reducing the exposure time for darks and using a smaller sequence of flat-fields.
 
 v1.11.0
--------
+=======
 
 * In ``auxtel/track_target_and_take_image`` implement taking data with n>1.
 * Fix ``tests/test_auxtel_detector_characterization_std_flat_dataset.py`` to take into account snaps.
@@ -380,12 +382,12 @@ v1.11.0
 * Update setup.cfg to specify async_mode for pytest.
 
 v1.10.1
--------
+=======
 
 * Make auxtel/prepare_for_onsky.py script not gather ATCS config and just assert enabled.
 
 v1.10.0
--------
+=======
 
 * Change archiver references to oods ones due to image creation process change (DMTN-143).
 
