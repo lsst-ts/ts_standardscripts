@@ -27,7 +27,12 @@ import time
 import warnings
 
 import yaml
-from lsst.ts.criopy.M1M3FATable import FATABLE
+
+try:
+    from lsst.ts.xml.tables.m1m3 import FATable
+except ImportError:
+    from lsst.ts.criopy.M1M3FATable import FATABLE as FATable
+
 from lsst.ts.idl.enums.MTM1M3 import BumpTest
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
@@ -113,7 +118,7 @@ class CheckActuators(BaseBlockScript):
 
     @classmethod
     def get_schema(cls):
-        m1m3_actuator_ids_str = ",".join([str(fa.actuator_id) for fa in FATABLE])
+        m1m3_actuator_ids_str = ",".join([str(fa.actuator_id) for fa in FATable])
 
         url = "https://github.com/lsst-ts/"
         path = (

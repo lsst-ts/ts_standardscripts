@@ -1,0 +1,3 @@
+Update the `lsst.ts.criopy`` imports in `m1m3/check_actuators.py`` to ensure compatibility with the latest criopy version. 
+The `ts.criopy.M1M3FATable` table is now living in the `ts.xml.tables.m1m3` module.
+
