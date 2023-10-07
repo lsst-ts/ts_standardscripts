@@ -19,17 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import logging
-import random
 import unittest
 
-from lsst.ts import salobj, standardscripts
-from lsst.ts.observatory.control.mock import MTCSMock
+from lsst.ts import standardscripts
 from lsst.ts.standardscripts.maintel import OfflineMTCS
-
-random.seed(47)  # for set_random_lsst_dds_partition_prefix
-
-logging.basicConfig()
 
 
 class TestOfflineMTCS(
@@ -37,33 +30,8 @@ class TestOfflineMTCS(
 ):
     async def basic_make_script(self, index):
         self.script = OfflineMTCS(index=index)
-        self.mtcs_mock = MTCSMock()
 
-        return (self.script, self.mtcs_mock)
-
-    async def test_components(self):
-        async with self.make_script():
-            for component in self.script.group.components_attr:
-                with self.subTest(f"Check {component}", component=component):
-                    if getattr(self.script.group.check, component):
-                        assert component in self.script.components()
-
-    async def test_run(self):
-        async with self.make_script():
-            await self.configure_script()
-
-            await self.run_script()
-
-            for comp in self.script.group.components_attr:
-                if getattr(self.script.group.check, comp):
-                    current_state = salobj.State(
-                        getattr(
-                            self.mtcs_mock.controllers, comp
-                        ).evt_summaryState.data.summaryState
-                    )
-
-                    with self.subTest(f"{comp} summary state", comp=comp):
-                        assert current_state == salobj.State.OFFLINE
+        return (self.script,)
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()

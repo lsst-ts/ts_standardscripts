@@ -99,7 +99,7 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
         script_path : `str`
             Full path to script.
         """
-        salobj.set_random_lsst_dds_partition_prefix()
+        salobj.set_test_topic_subname()
 
         index = self.next_index()
 
@@ -162,7 +162,11 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
 
     @contextlib.asynccontextmanager
     async def make_script(
-        self, log_level=logging.INFO, timeout=MAKE_TIMEOUT, verbose=False
+        self,
+        log_level=logging.INFO,
+        timeout=MAKE_TIMEOUT,
+        verbose=False,
+        randomize_topic_subname=False,
     ):
         """Create a Script.
 
@@ -180,8 +184,10 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
             and `self.close`.
         verbose : `bool`
             Log data? This can be helpful for setting ``timeout``.
+        randomize_topic_subname : `bool`
+            Randomize topic subname?
         """
-        salobj.set_random_lsst_dds_partition_prefix()
+        salobj.set_test_topic_subname(randomize=randomize_topic_subname)
 
         items_to_await = await self.wait_for(
             self.basic_make_script(index=self.next_index()),
