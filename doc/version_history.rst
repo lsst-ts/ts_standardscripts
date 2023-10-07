@@ -8,6 +8,29 @@ Version History
 
 .. towncrier release notes start
 
+v1.26.0 (2023-10-06)
+====================
+
+New Features
+------------
+
+- Add new maintel/offset_camera_hexapod.py script, unit test, and executable. (`DM-40852 <https://jira.lsstcorp.org/browse/DM-40852>`_)
+
+
+Documentation
+-------------
+
+- Integrate towncrier for release notes and change log management (`DM-40534 <https://jira.lsstcorp.org/browse/DM-40534>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Update the `lsst.ts.criopy`` imports in `m1m3/check_actuators.py`` to ensure compatibility with the latest criopy version. 
+  The `ts.criopy.M1M3FATable` table is now living in the `ts.xml.tables.m1m3` module. (`DM-40534 <https://jira.lsstcorp.org/browse/DM-40534>`_)
+- In ``auxtel/calibrations/power_off_atcalsys``, remove temporary work-around to missing ACK from faulty shutter limit switch. (`DM-40852 <https://jira.lsstcorp.org/browse/DM-40852>`_)
+
+
 v1.25.5
 =======
 

@@ -1,1 +1,0 @@
-Add new maintel/offset_camera_hexapod.py script, unit test, and executable.

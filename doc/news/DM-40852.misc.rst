@@ -1,1 +1,0 @@
-In ``auxtel/calibrations/power_off_atcalsys``, remove temporary work-around to missing ACK from faulty shutter limit switch.
