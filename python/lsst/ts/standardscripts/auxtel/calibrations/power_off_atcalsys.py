@@ -86,17 +86,9 @@ class PowerOffATCalSys(salobj.BaseScript):
         await self.switch_lamp_off()
 
         await self.checkpoint("Closing the shutter")
-        # TO-DO; this is a temporary workaround to capture a known hardware
-        # issue. This try/except block should be removed once the limit switch
-        # is replaced. See SITCOM-1033 for details.
-        try:
-            await self.white_light_source.cmd_closeShutter.start(
-                timeout=self.timeout_close_shutter
-            )
-        except salobj.base.AckError:
-            self.log.info(
-                "Close shutter cmd timed out. This is a known issue and can be safely ignored."
-            )
+        await self.white_light_source.cmd_closeShutter.start(
+            timeout=self.timeout_close_shutter
+        )
 
         await self.checkpoint("Waiting for lamp to cool down")
         await self.wait_for_lamp_to_cool_down()
