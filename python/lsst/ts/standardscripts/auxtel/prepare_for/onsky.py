@@ -47,10 +47,8 @@ class PrepareForOnSky(salobj.BaseScript):
 
         self.config = None
 
-        self.attcs = ATCS(self.domain, intended_usage=ATCSUsages.StartUp, log=self.log)
-        self.latiss = LATISS(
-            self.domain, intended_usage=LATISSUsages.StateTransition, log=self.log
-        )
+        self.attcs = None
+        self.latiss = None
 
     @classmethod
     def get_schema(cls):
@@ -73,6 +71,17 @@ class PrepareForOnSky(salobj.BaseScript):
 
     async def configure(self, config):
         # This script does not require any configuration
+
+        if self.attcs is None:
+            self.attcs = ATCS(
+                self.domain, intended_usage=ATCSUsages.StartUp, log=self.log
+            )
+
+        if self.latiss is None:
+            self.latiss = LATISS(
+                self.domain, intended_usage=LATISSUsages.StateTransition, log=self.log
+            )
+
         if hasattr(config, "ignore"):
             for comp in config.ignore:
                 if (
@@ -82,8 +91,7 @@ class PrepareForOnSky(salobj.BaseScript):
                     self.log.warning(
                         f"Component {comp} not in CSC Group. "
                         f"Must be one of {self.attcs.components_attr} or "
-                        f"{self.latiss.components_attr}"
-                        "Ignoring."
+                        f"{self.latiss.components_attr}. Ignoring."
                     )
                 elif comp in self.attcs.components_attr:
                     self.log.debug(f"Ignoring component {comp} from ATCS.")
