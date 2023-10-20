@@ -1,0 +1,1 @@
+* Add new ``maintel/mtrotator/move_rotator.py`` SAL Script.
