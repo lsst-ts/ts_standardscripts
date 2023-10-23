@@ -230,6 +230,9 @@ additionalProperties: false
         ) as remote:
             heartbeats: dict[int, int] = dict()
 
+            # Flush event to avoid old historical data.
+            remote.evt_heartbeat.flush()
+
             while all([value < min_heartbeat for value in heartbeats.values()]):
                 try:
                     hb = await remote.evt_heartbeat.next(
