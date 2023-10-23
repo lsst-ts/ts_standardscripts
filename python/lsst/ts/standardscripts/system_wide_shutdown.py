@@ -22,13 +22,11 @@
 __all__ = ["SystemWideShutdown"]
 
 import asyncio
-import re
 import types
 import typing
 
 import yaml
-from lsst.ts import salobj
-from lsst.ts.idl import get_idl_dir
+from lsst.ts import salobj, xml
 
 
 class SystemWideShutdown(salobj.BaseScript):
@@ -57,12 +55,13 @@ class SystemWideShutdown(salobj.BaseScript):
 
     def __init__(self, index: int) -> None:
         super().__init__(index=index, descr="Send all CSCs to OFFLINE.")
-        self.idl_file_pattern_match = re.compile(
-            r"(.*)sal_revCoded_(?P<component>.*).idl"
-        )
+
         self.failed: dict[str, str] = dict()
         self.components_to_ignore = ["Script", "ScriptQueue"]
         self.components_to_end_with = ["ScriptQueue"]
+
+        self._max_concurrency = 10
+        self._concurrent_capacity = asyncio.Semaphore(self._max_concurrency)
 
     @classmethod
     def get_schema(cls) -> None | dict[str, typing.Any]:
@@ -197,12 +196,8 @@ additionalProperties: false
         list[str]
             Name of all components in the system.
         """
-        idl_dir = get_idl_dir()
 
-        components: list[str] = [
-            self.idl_file_pattern_match.match(str(idl_file)).groupdict()["component"]
-            for idl_file in idl_dir.glob("*idl")
-        ]
+        components: list[str] = xml.subsystems.copy()
 
         for component in self.components_to_ignore:
             if component in components:
@@ -230,7 +225,7 @@ additionalProperties: false
 
         self.log.debug(f"Finding running instances of {component}")
 
-        async with salobj.Remote(
+        async with self._concurrent_capacity, salobj.Remote(
             self.domain, component, index=0, include=["heartbeat"], readonly=True
         ) as remote:
             heartbeats: dict[int, int] = dict()
