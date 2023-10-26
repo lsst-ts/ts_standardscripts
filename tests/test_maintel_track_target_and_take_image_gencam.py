@@ -43,7 +43,8 @@ logging.basicConfig()
 class TestMainTelTrackTargetAndTakeImageGenCam(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
-    """Test Main Telescope track target and take image with ComCam script.
+    """
+    Test Main Telescope track target and take image with GenCam script.
 
     Both AT and MT Slew scripts uses the same base script class. This unit
     test performs the basic checks on Script integrity. For a more detailed
@@ -52,7 +53,7 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.log = logging.getLogger("TestMainTelTrackTargetAndTakeImageComCam")
+        cls.log = logging.getLogger("TestMainTelTrackTargetAndTakeImageGenCam")
         return super().setUpClass()
 
     def setUp(self) -> None:
@@ -78,7 +79,18 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
         future = asyncio.Future()
         await future
 
-    async def configure_script_full(self):
+    async def configure_script_full(
+        self,
+        generic_camera: list | None = None,
+    ) -> None:
+        if generic_camera is None:
+            generic_camera = [
+                dict(
+                    index=random.randint(1, 10),
+                    exp_times=[random.randint(1, 10) for _ in range(2)],
+                ),
+            ]
+
         configuration_full = dict(
             targetid=10,
             ra="10:00:00",
@@ -87,15 +99,20 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
             name="unit_test_target",
             obs_time=7.0,
             estimated_slew_time=5.0,
+            # Instead of num_exp, the number of exposures is definve by the
+            #  number of elements in generic_camera.exp_times.
             num_exp=2,
-            exp_times=[2.0, 1.0],
+            # exp_times is ignored in this script.
+            #  Use generic_camera.exp_times instead.
+            exp_times=[0, 0],
             reason="Unit testing",
             program="UTEST",
-            camera_index=random.randint(1, 10),
+            generic_camera=generic_camera,
             band_filter="",
         )
 
         await self.configure_script(**configuration_full)
+        self.log.debug(f"Parsed configuration:\n {self.script.config}")
 
         return configuration_full
 
@@ -146,9 +163,11 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
         self.script.mtcs.rem = types.SimpleNamespace(
             mtrotator=unittest.mock.AsyncMock()
         )
-        self.script.gencam.take_object = unittest.mock.AsyncMock(
-            side_effect=self.take_object_side_effect
-        )
+
+        for cam in self.script.gencam:
+            cam.take_object = unittest.mock.AsyncMock(
+                side_effect=self.take_object_side_effect
+            )
 
         self.script.mtcs.rem.mtrotator.configure_mock(
             **{"tel_rotation.next.side_effect": self.get_rotator_position}
@@ -168,12 +187,27 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
         )
         await asyncio.sleep(exptime)
 
-    async def test_configure(self):
+    async def test_configure_single_camera(self):
+        """Test a successful configuration for a single camera"""
         async with self.make_script():
             configuration_full = await self.configure_script_full()
+            self.log.debug(configuration_full)
 
-            for key in configuration_full:
-                assert configuration_full[key] == getattr(self.script.config, key)
+            # Try/Except help identify which key is not matching
+            try:
+                for key in configuration_full:
+                    if key == "exp_times":
+                        continue
+                    assert configuration_full[key] == getattr(self.script.config, key)
+            except AssertionError as err:
+                raise AssertionError(
+                    f"Configuration for {key} does not match."
+                ) from err
+
+    async def test_configure_bad(self) -> None:
+        """Test a bad configuration for a single camera"""
+        async with self.make_script():
+            configuration_full = await self.configure_script_full()
 
             required_fields = {
                 "ra",
@@ -183,7 +217,7 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
                 "obs_time",
                 "num_exp",
                 "exp_times",
-                "camera_index",
+                "generic_camera",
                 "band_filter",
             }
 
@@ -193,9 +227,35 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
                 with pytest.raises(salobj.ExpectedError):
                     await self.configure_script(**bad_configuration)
 
+    async def test_configure_multiple_cameras(self) -> None:
+        """Test a successful configuration for multiple cameras"""
+        async with self.make_script():
+            configuration_full = await self.configure_script_full(
+                generic_camera=[
+                    dict(
+                        index=random.randint(1, 10),
+                        exp_times=[random.randint(1, 10) for _ in range(2)],
+                    )
+                    for _ in range(3)
+                ]
+            )
+
+            self.log.debug(configuration_full)
+
+            # Try/Except help identify which key is not matching
+            try:
+                for key in configuration_full:
+                    if key == "exp_times":
+                        continue
+                    assert configuration_full[key] == getattr(self.script.config, key)
+            except AssertionError as err:
+                raise AssertionError(
+                    f"Configuration for {key} does not match."
+                ) from err
+
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "track_target_and_take_image.py"
+        script_path = scripts_dir / "maintel" / "track_target_and_take_image_gencam.py"
         await self.check_executable(script_path)
 
     async def test_run_fail_check_tracking(self):
@@ -227,18 +287,17 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
 
                 self.script.mtcs.slew_icrs.assert_has_awaits(slew_icrs_expected_calls)
 
-                gencam_take_object_calls = [
-                    unittest.mock.call(
-                        exptime=configuration_full["exp_times"][0],
-                        group_id=self.script.group_id,
-                        reason=configuration_full["reason"],
-                        program=configuration_full["program"],
-                    )
-                ]
-
-                self.script.gencam.take_object.assert_has_awaits(
-                    gencam_take_object_calls
-                )
+                for i, cam in enumerate(self.script.gencam):
+                    gencam_dict = configuration_full["generic_camera"][i]
+                    gencam_take_object_calls = [
+                        unittest.mock.call(
+                            exptime=gencam_dict["exp_times"][0],
+                            group_id=self.script.group_id,
+                            reason=configuration_full["reason"],
+                            program=configuration_full["program"],
+                        )
+                    ]
+                    cam.take_object.assert_has_awaits(gencam_take_object_calls)
 
                 self.script.mtcs.check_tracking.assert_awaited_once()
 

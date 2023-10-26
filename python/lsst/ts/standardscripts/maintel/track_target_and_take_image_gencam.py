@@ -32,10 +32,24 @@ from ..base_track_target_and_take_image import BaseTrackTargetAndTakeImage
 
 
 class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
-    """Track target and take image script.
+    """Track target and take image script with one more Generic Cameras.
 
     This script implements a simple visit consistig of slewing to a target,
     start tracking and take image.
+
+    This class configuration is inherited from ``BaseTrackTargetAndTakeImage``.
+    The only applied changes are:
+
+    - The addition of the ``generic_camera`` configuration parameter.
+      This parameter is a list of objects with the following structure:
+        - ``index``: Index of the Generic Camera SAL component.
+        - ``exp_times``: Exposure times (seconds) for each camera.
+
+    - The ``exp_times`` and ``num_exp`` parameters are ignored by this script.
+      However, we keep them to keep compatibility with the Scheduler.
+      Instead, use the ``exp_times`` parameter in the ``generic_camera``.
+
+    See below for an example of configuration.
 
     Parameters
     ----------
@@ -44,6 +58,31 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
     add_remotes : `bool` (optional)
         Create remotes to control components (default: `True`)? If False, the
         script will not work for normal operations. Useful for unit testing.
+
+    Examples
+    --------
+    Here is an example of configuration for this script:
+
+    .. code-block:: yaml
+
+        targetid: MY_TARGET_ID
+        ra: "10:00:00"
+        dec: "-10:00:00"
+        rot_sky: 0.0
+        name: "config_example_target"
+        obs_time: 1.0
+        estimated_slew_time: 5.0
+        num_exp: 2
+        exp_times: [0]
+        reason: "Configuration Example"
+        program: "CFG_EXAMPLE"
+        generic_camera:
+            - index: 101
+              exp_times: [2.5, 2.5, 2.5]
+            - index: 102
+              exp_times: [5, 5]
+        band_filter: ""
+
     """
 
     def __init__(self, index, add_remotes: bool = True):
@@ -60,7 +99,12 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
             else (MTCSUsages.DryTest, Usages.DryTest)
         )
 
-        self.mtcs = MTCS(self.domain, intended_usage=self.mtcs_usage, log=self.log)
+        self.mtcs = MTCS(
+            domain=self.domain,
+            log=self.log,
+            intended_usage=self.mtcs_usage,
+        )
+
         self.gencam = None
 
     @property
@@ -78,18 +122,22 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
         await asyncio.gather(
             self.mtcs.assert_all_enabled(),
             self.mtcs.assert_liveliness(),
-            self.gencam.assert_all_enabled(),
-            self.gencam.assert_liveliness(),
+            *(gencam.assert_all_enabled() for gencam in self.gencam),
+            *(gencam.assert_liveliness() for gencam in self.gencam),
         )
 
     async def configure(self, config):
         await super().configure(config)
-        self.gencam = GenericCamera(
-            self.config.camera_index,
-            self.domain,
-            intended_usage=self.gencam_usage,
-            log=self.log,
-        )
+
+        self.gencam = [
+            GenericCamera(
+                gencam["index"],
+                domain=self.domain,
+                log=self.log,
+                intended_usage=self.gencam_usage,
+            )
+            for gencam in self.config.generic_camera
+        ]
 
     @classmethod
     def get_schema(cls):
@@ -100,14 +148,30 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
         schema_dict["title"] = "TrackTargetAndTakeImageGenCam v1"
         schema_dict["description"] = "Configuration for TrackTargetAndTakeImageGenCam."
 
-        schema_dict["camera_index"] = dict(
-            type="integer",
-            description="SAL Index for the Generic Camera.",
-            minimum=0,
-            maximum=2147483647,
+        schema_dict["properties"]["generic_camera"] = dict(
+            type="array",
+            description="Information associated with the Generic Cameras",
+            minItems=1,
+            index=dict(
+                type="integer",
+                description="Index of the Generic Camera SAL component.",
+            ),
+            exp_times=dict(
+                type="array",
+                description="Exposure times (seconds) for each camera.",
+                items=dict(
+                    type="number",
+                    minimum=0,
+                ),
+            ),
         )
 
-        schema_dict["required"].append("camera_index")
+        schema_dict["properties"]["exp_times"]["description"] = (
+            "Exposure times (seconds). Ignored by the Generic Cameras. "
+            "Kept only for code compatibility."
+        )
+
+        schema_dict["required"].append("generic_camera")
 
         return schema_dict
 
@@ -128,19 +192,25 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
 
     async def take_data(self):
         """Take data while making sure ATCS is tracking."""
-
         tasks = [
-            asyncio.create_task(self._take_data()),
-            asyncio.create_task(self.mtcs.check_tracking()),
+            asyncio.create_task(self._take_data(idx))
+            for idx, _ in enumerate(self.gencam)
         ]
-
+        tasks.append(asyncio.create_task(self.mtcs.check_tracking()))
         await self.mtcs.process_as_completed(tasks)
 
-    async def _take_data(self):
-        """Take data."""
+    async def _take_data(self, cam_arr_index):
+        """
+        Take data.
 
-        for exptime in self.config.exp_times:
-            await self.gencam.take_object(
+        Parameters
+        ----------
+        cam_arr_index : int
+            Camera array index. This is used to index the ``generic_camera``.
+        """
+
+        for exptime in self.config.generic_camera[cam_arr_index]["exp_times"]:
+            await self.gencam[cam_arr_index].take_object(
                 exptime=exptime,
                 group_id=self.group_id,
                 reason=self.config.reason,
