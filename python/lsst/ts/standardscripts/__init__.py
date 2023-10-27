@@ -20,6 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .base_block_script import *
+from .base_point_azel import *
 from .base_script_test_case import *
 from .run_command import *
 from .set_summary_state import *
