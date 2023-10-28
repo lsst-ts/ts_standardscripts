@@ -31,6 +31,7 @@ from .offline_comcam import *
 from .offline_mtcs import *
 from .offset_camera_hexapod import *
 from .offset_mtcs import *
+from .point_azel import *
 from .setup_mtcs import *
 from .standby_comcam import *
 from .standby_mtcs import *
