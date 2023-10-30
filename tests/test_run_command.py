@@ -33,8 +33,10 @@ class TestRunCommand(
 ):
     async def basic_make_script(self, index):
         self.script = standardscripts.RunCommand(index=index)
+        await self.script.start_task
         self.controller = salobj.Controller("Test", index=1)
         self.controller.cmd_setScalars.callback = self.set_scalars_callback
+        await self.controller.start_task
         return [self.script, self.controller]
 
     async def set_scalars_callback(self, data):
@@ -54,7 +56,7 @@ class TestRunCommand(
                     with pytest.raises(salobj.ExpectedError):
                         await self.configure_script(**bad_config)
 
-    async def test_configure_good(self):
+    async def test_configure_good_set_scalars(self):
         """Test the configure method with a valid configuration."""
         async with self.make_script():
             # Basic providing only component and command
@@ -66,6 +68,7 @@ class TestRunCommand(
             assert self.script.event is None
             assert not self.script.flush
 
+    async def test_configure_good_set_scalars_wait_event(self):
         async with self.make_script():
             # Provide event
             await self.configure_script(
@@ -78,6 +81,7 @@ class TestRunCommand(
             assert self.script.event == "scalars"
             assert self.script.flush
 
+    async def test_configure_good_set_scalars_wait_event_no_flush(self):
         async with self.make_script():
             # Provide event with flush = False
             await self.configure_script(
@@ -90,6 +94,7 @@ class TestRunCommand(
             assert self.script.event == "scalars"
             assert not self.script.flush
 
+    async def test_configure_good_set_scalars_with_parameters(self):
         async with self.make_script():
             # Provide parameter for the command
             await self.configure_script(
