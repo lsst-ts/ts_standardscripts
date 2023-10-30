@@ -130,7 +130,7 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
 
     async def test_run_csc_in_standby_no_historical_data(self):
         """Set one remote to two states, including overrides."""
-        async with self.make_script(), self.make_controller(
+        async with self.make_script(randomize_topic_subname=True), self.make_controller(
             initial_state=salobj.State.STANDBY, publish_initial_state=False
         ):
             await self.configure_script(config="valid_test_config.yaml")
@@ -170,7 +170,7 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
 
     async def test_run_csc_in_disabled_no_historical_data(self):
         """Set one remote to two states, including overrides."""
-        async with self.make_script(), self.make_controller(
+        async with self.make_script(randomize_topic_subname=True), self.make_controller(
             initial_state=salobj.State.DISABLED, publish_initial_state=False
         ):
             await self.configure_script(config="valid_test_config.yaml")
@@ -210,7 +210,7 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
 
     async def test_run_csc_in_enabled_no_historical_data(self):
         """Set one remote to two states, including overrides."""
-        async with self.make_script(), self.make_controller(
+        async with self.make_script(randomize_topic_subname=True), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
             await self.configure_script(config="valid_test_config.yaml")
@@ -250,7 +250,7 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
 
     async def test_run_csc_in_fault_no_historical_data(self):
         """Set one remote to two states, including overrides."""
-        async with self.make_script(), self.make_controller(
+        async with self.make_script(randomize_topic_subname=True), self.make_controller(
             initial_state=salobj.State.FAULT, publish_initial_state=False
         ):
             await self.configure_script(config="valid_test_config.yaml")

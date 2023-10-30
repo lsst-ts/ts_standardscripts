@@ -24,7 +24,7 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.observatory.control.mock import ATCSMock
+from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
 from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForOnSky
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -37,28 +37,40 @@ class TestPrepareForOnSky(
 ):
     async def basic_make_script(self, index):
         self.script = PrepareForOnSky(index=index)
-        self.atcs_mock = ATCSMock()
+        self.script.attcs = ATCS(
+            domain=self.script.domain,
+            log=self.script.log,
+            intended_usage=ATCSUsages.DryTest,
+        )
+        self.script.latiss = LATISS(
+            domain=self.script.domain,
+            log=self.script.log,
+            intended_usage=LATISSUsages.DryTest,
+        )
 
-        return (self.script, self.atcs_mock)
+        return (self.script,)
 
     async def test_configure(self):
         async with self.make_script():
             # works with no configuration
             await self.configure_script()
 
+    async def test_configure_ignore(self):
         async with self.make_script():
             await self.configure_script(ignore=["atpneumatics", "ataos"])
 
             assert not self.script.attcs.check.atpneumatics
             assert not self.script.attcs.check.ataos
 
+    async def test_configure_ignore_inexistent(self):
         async with self.make_script():
             with self.assertLogs(self.script.log, level=logging.WARNING) as script_logs:
                 await self.configure_script(ignore=["nonono"])
 
             expected_warning_msg = (
                 f"WARNING:Script:Component nonono not in CSC Group. "
-                f"Must be one of {self.script.attcs.components_attr}. Ignoring."
+                f"Must be one of {self.script.attcs.components_attr} or "
+                f"{self.script.latiss.components_attr}. Ignoring."
             )
 
             assert expected_warning_msg in script_logs.output
