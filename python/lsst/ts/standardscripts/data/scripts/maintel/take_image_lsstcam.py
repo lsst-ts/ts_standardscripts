@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
@@ -19,26 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .apply_dof import *
-from .base_close_loop import *
-from .close_loop_comcam import *
-from .close_loop_lsstcam import *
-from .enable_comcam import *
-from .enable_mtcs import *
-from .home_both_axes import *
-from .move_p2p import *
-from .offline_comcam import *
-from .offline_mtcs import *
-from .offset_camera_hexapod import *
-from .offset_mtcs import *
-from .point_azel import *
-from .setup_mtcs import *
-from .standby_comcam import *
-from .standby_mtcs import *
-from .stop import *
-from .stop_rotator import *
-from .take_image_comcam import *
-from .take_image_lsstcam import *
-from .track_target import *
-from .track_target_and_take_image_comcam import *
-from .track_target_and_take_image_gencam import *
+import asyncio
+
+from lsst.ts.standardscripts.maintel import TakeImageLSSTCam
+
+asyncio.run(TakeImageLSSTCam.amain())
