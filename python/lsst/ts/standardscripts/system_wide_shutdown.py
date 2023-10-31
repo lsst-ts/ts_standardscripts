@@ -236,13 +236,12 @@ additionalProperties: false
                         timeout=hb_timeout, flush=False
                     )
                     self.log.debug(f"Got {hb}")
-                    if hasattr(hb, "salIndex"):
-                        if hb.salIndex not in heartbeats:
-                            heartbeats[hb.salIndex] = 1
-                        else:
-                            heartbeats[hb.salIndex] += 1
+                    sal_index = hb.salIndex if hasattr(hb, "salIndex") else 0
+
+                    if sal_index not in heartbeats:
+                        heartbeats[sal_index] = 1
                     else:
-                        return component, [0]
+                        heartbeats[sal_index] += 1
                 except asyncio.TimeoutError:
                     self.log.debug(
                         f"No heartbeat from {component} in the last {hb_timeout}s. "
