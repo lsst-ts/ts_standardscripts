@@ -47,10 +47,13 @@ class TestPrepareForOnSky(
             await self.configure_script()
 
         async with self.make_script():
-            await self.configure_script(ignore=["atpneumatics", "ataos"])
+            await self.configure_script(
+                ignore=["atpneumatics", "ataos", "atspectrograph"]
+            )
 
             assert not self.script.attcs.check.atpneumatics
             assert not self.script.attcs.check.ataos
+            assert not self.script.latiss.check.atspectrograph
 
         async with self.make_script():
             with self.assertLogs(self.script.log, level=logging.WARNING) as script_logs:
