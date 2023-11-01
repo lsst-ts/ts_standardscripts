@@ -65,7 +65,7 @@ class TestSchedulerBaseLoadSnapshot(BaseSchedulerTestCase):
             self.assert_loaded_snapshots(snapshots=[])
 
     async def test_fail_config_latest_not_published(self) -> None:
-        async with self.make_script(), self.make_controller(
+        async with self.make_script(randomize_topic_subname=True), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=False
         ):
             with pytest.raises(salobj.ExpectedError):

@@ -72,7 +72,9 @@ class TestSystemWideShutdown(
             components_alive = await self.script.discover_components()
 
             assert "Test" in components_alive
-            assert components_alive.pop("Test") == [i + 1 for i in range(self.ntest)]
+            assert set(components_alive.pop("Test")) == {
+                i + 1 for i in range(self.ntest)
+            }
             assert len(components_alive) == 0
 
     async def test_find_running_instances(self):
@@ -84,7 +86,7 @@ class TestSystemWideShutdown(
             )
 
             assert component == "Test"
-            assert component_indices == [i + 1 for i in range(self.ntest)]
+            assert set(component_indices) == {i + 1 for i in range(self.ntest)}
 
     async def test_find_running_instances_not_running(self):
         async with self.make_script():

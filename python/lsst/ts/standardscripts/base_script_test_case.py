@@ -99,7 +99,13 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
         script_path : `str`
             Full path to script.
         """
-        salobj.set_random_lsst_dds_partition_prefix()
+
+        # TODO (DM-41494): remove forward compatibility once salobj-kafka is
+        # released.
+        if hasattr(salobj, "set_test_topic_subname"):
+            salobj.set_test_topic_subname()
+        else:
+            salobj.set_random_lsst_dds_partition_prefix()
 
         index = self.next_index()
 
@@ -162,7 +168,11 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
 
     @contextlib.asynccontextmanager
     async def make_script(
-        self, log_level=logging.INFO, timeout=MAKE_TIMEOUT, verbose=False
+        self,
+        log_level=logging.INFO,
+        timeout=MAKE_TIMEOUT,
+        verbose=False,
+        randomize_topic_subname=False,
     ):
         """Create a Script.
 
@@ -180,8 +190,16 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
             and `self.close`.
         verbose : `bool`
             Log data? This can be helpful for setting ``timeout``.
+        randomize_topic_subname : `bool`
+            Randomize topic subname?
         """
-        salobj.set_random_lsst_dds_partition_prefix()
+
+        # TODO (DM-41494): remove forward compatibility once salobj-kafka is
+        # released.
+        if hasattr(salobj, "set_test_topic_subname"):
+            salobj.set_test_topic_subname(randomize=randomize_topic_subname)
+        else:
+            salobj.set_random_lsst_dds_partition_prefix()
 
         items_to_await = await self.wait_for(
             self.basic_make_script(index=self.next_index()),
