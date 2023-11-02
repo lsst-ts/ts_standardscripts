@@ -1,8 +1,0 @@
-Introduced the following scripts to position the respective telescope based on (az, el, rot_tel) coordinates:
-
-- `maintel/point_azel.py`: tailored for the Main Telescope.
-- `auxtel/point_azel.py`: designed for the Auxiliary Telescope.
-
-The specialized methods were built upon the generic module `base_point_azel.py`.
-
-

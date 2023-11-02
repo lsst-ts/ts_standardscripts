@@ -8,6 +8,55 @@ Version History
 
 .. towncrier release notes start
 
+v1.27.0 (2023-11-02)
+====================
+
+New Features
+------------
+
+- Update ``maintel/track_target_and_take_image_gencam_.py`` to allow taking images with multiple cameras. (`DM-38338 <https://jira.lsstcorp.org/browse/DM-38338>`_)
+- Add new maintel/take_image_lsstcam.py script, test and executable. (`DM-40208 <https://jira.lsstcorp.org/browse/DM-40208>`_)
+- Add new base_close_loop.py script, and executable. 
+  This script allows to run the closed loop, that is, taking images, processing them, and apply ts_ofc corrections.
+
+  Add new maintel/close_loop_comcam.py script, unit test, and executable.
+
+  Add new maintel/close_loop_lsstcam.py script, unit test, and executable. (`DM-40213 <https://jira.lsstcorp.org/browse/DM-40213>`_)
+- Add new maintel/apply_dof.py script, unit test, and executable. (`DM-40219 <https://jira.lsstcorp.org/browse/DM-40219>`_)
+- In ``auxtel/prepare_for/onsky``, allow users to ignore components from ``LATISS`` as well. (`DM-40580 <https://jira.lsstcorp.org/browse/DM-40580>`_)
+- Introduced the following scripts to position the respective telescope based on (az, el, rot_tel) coordinates:
+
+  - `maintel/point_azel.py`: tailored for the Main Telescope.
+  - `auxtel/point_azel.py`: designed for the Auxiliary Telescope.
+
+  The specialized methods were built upon the generic module `base_point_azel.py`. (`DM-40700 <https://jira.lsstcorp.org/browse/DM-40700>`_)
+- * Add new ``maintel/mtrotator/move_rotator.py`` SAL Script. (`DM-41081 <https://jira.lsstcorp.org/browse/DM-41081>`_)
+- Introduce the ``sleep.py`` script. This new addition allows users to sent a sleep command to the script queue for a desired duration. (`DM-41082 <https://jira.lsstcorp.org/browse/DM-41082>`_)
+- Add new maintel/stop_rotator.py script, executable, and unit test. (`DM-41083 <https://jira.lsstcorp.org/browse/DM-41083>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Update several unit tests to be compatible with the kafka version of salobj.
+  This should be a backward compatible change and should work with both DDS and kafka versions of salobj.
+
+  In ``base_script_test_case.py``, add compatibility with the kafka version of salobj.
+
+  In ``auxtel/prepare_for/onsky.py``, postpone creating ``ATMCS`` and ``LATISS`` classes to the configure method.
+  This is more inline with the most recent guidelines for script development and improve reliability for the kafka version of salobj.
+
+  Update ``.gitignore`` to ignore files from ruff and clang-format.
+
+  In ``tests/test_system_wide_shutdown.py``, make test resilient to changing order of the component index.
+
+  In ``system_wide_shutdown``:
+
+      - Update to get list of components from ts-xml and to limit the number of components it checks at a single time.
+
+      - Treat non-index component the same way indexed components are treated, e.g. wait for at least ``min_heartbeat`` heartbeat events before deming it alive. (`DM-40580 <https://jira.lsstcorp.org/browse/DM-40580>`_)
+
+
 v1.26.0 (2023-10-06)
 ====================
 

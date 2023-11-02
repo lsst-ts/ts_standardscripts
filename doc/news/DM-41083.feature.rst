@@ -1,1 +1,0 @@
-Add new maintel/stop_rotator.py script, executable, and unit test. 

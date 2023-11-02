@@ -1,1 +1,0 @@
-Update ``maintel/track_target_and_take_image_gencam_.py`` to allow taking images with multiple cameras.

@@ -1,1 +1,0 @@
-In ``auxtel/prepare_for/onsky``, allow users to ignore components from ``LATISS`` as well.
