@@ -1,4 +1,5 @@
-# This file is part of ts_standardscripts.
+#!/usr/bin/env python
+# This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -17,21 +18,10 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .base_block_script import *
-from .base_point_azel import *
-from .base_script_test_case import *
-from .run_command import *
-from .set_summary_state import *
-from .sleep import *
-from .system_wide_shutdown import *
-from .utils import *
+import asyncio
 
-try:
-    from .version import *
-except ImportError:
-    __version__ = "?"
-    __repo_version__ = "?"
-    __fingerprint__ = "? *"
-    __dependency_versions__ = {}
+from lsst.ts.standardscripts.maintel import TakeImageLSSTCam
+
+asyncio.run(TakeImageLSSTCam.amain())

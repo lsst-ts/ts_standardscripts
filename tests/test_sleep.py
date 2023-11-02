@@ -21,21 +21,38 @@
 
 import unittest
 
-from lsst.ts import standardscripts
-from lsst.ts.standardscripts.maintel import EnableMTCS
+from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
+from lsst.ts.standardscripts.sleep import Sleep
 
 
-class TestEnableMTCS(
-    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
-):
+class TestSleep(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     async def basic_make_script(self, index):
-        self.script = EnableMTCS(index=index)
-
+        self.script = Sleep(index=index)
         return (self.script,)
 
+    async def test_configure(self):
+        # Test that the sleep time is set correctly
+        async with self.make_script():
+            sleep_for = 5
+
+            await self.configure_script(sleep_for=sleep_for)
+
+            self.assertEqual(self.script.sleep_for, sleep_for)
+
+    async def test_run(self):
+        """
+        Test that the script sleeps for the correct amount of time.
+        """
+        async with self.make_script():
+            sleep_for = 5
+            await self.configure_script(sleep_for=sleep_for)
+
+            # Run the script
+            await self.run_script()
+
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "enable_mtcs.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "sleep.py"
         await self.check_executable(script_path)
 
 

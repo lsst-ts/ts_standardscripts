@@ -27,6 +27,7 @@ from .offline_atcs import *
 from .offline_latiss import *
 from .offset_ataos import *
 from .offset_atcs import *
+from .point_azel import *
 from .prepare_for.flats import *
 from .prepare_for.onsky import *
 from .shutdown import *

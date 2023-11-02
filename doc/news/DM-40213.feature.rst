@@ -1,0 +1,6 @@
+Add new base_close_loop.py script, and executable. 
+This script allows to run the closed loop, that is, taking images, processing them, and apply ts_ofc corrections.
+
+Add new maintel/close_loop_comcam.py script, unit test, and executable.
+
+Add new maintel/close_loop_lsstcam.py script, unit test, and executable.

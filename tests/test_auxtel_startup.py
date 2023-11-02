@@ -24,7 +24,7 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.observatory.control.mock import ATCSMock
+from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
 from lsst.ts.standardscripts.auxtel import PrepareForOnSky
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -35,9 +35,18 @@ logging.basicConfig()
 class TestStartup(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     async def basic_make_script(self, index):
         self.script = PrepareForOnSky(index=index)
-        self.atcs_mock = ATCSMock()
+        self.script.attcs = ATCS(
+            domain=self.script.domain,
+            log=self.script.log,
+            intended_usage=ATCSUsages.DryTest,
+        )
+        self.script.latiss = LATISS(
+            domain=self.script.domain,
+            log=self.script.log,
+            intended_usage=LATISSUsages.DryTest,
+        )
 
-        return (self.script, self.atcs_mock)
+        return (self.script,)
 
     async def test_run(self):
         async with self.make_script():
