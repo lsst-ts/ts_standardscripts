@@ -1,14 +1,14 @@
-import asyncio
 import yaml
 from lsst.ts.salobj import BaseScript
 from lsst.ts.observatory.control.auxtel.atcalsys import ATCalsys
 from lsst.ts.observatory.control.base_calsys import CalsysScriptIntention
 import astropy.units as un
 
-class PowerOnATCalSysNew(salobj.BaseScript):
-    """ Powers on AT calsys ready for calibrations """
 
-    def __init__(self, index, add_remotes: bool=True):
+class PowerOnATCalSysNew(BaseScript):
+    """Powers on AT calsys ready for calibrations"""
+
+    def __init__(self, index, add_remotes: bool = True):
         super().__init__(index=index, descr="Power On AT Calibration System")
         self._calsys = ATCalsys(CalsysScriptIntention.TURN_ON, log=self.log)
 
@@ -52,4 +52,3 @@ class PowerOnATCalSysNew(salobj.BaseScript):
         await self._calsys.enable()
         await self.checkpoint("all components enabled, beginning power up sequence")
         await self._calsys.power_sequence_run(self)
-
