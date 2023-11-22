@@ -1,8 +1,6 @@
-import yaml
 from lsst.ts.salobj import BaseScript
 from lsst.ts.observatory.control.auxtel.atcalsys import ATCalsys
 from lsst.ts.observatory.control.base_calsys import CalsysScriptIntention
-import astropy.units as un
 
 
 class PowerOffATCalSysNew(salobj.BaseScript):
@@ -19,7 +17,7 @@ class PowerOffATCalSysNew(salobj.BaseScript):
 
     def set_metadata(self, metadata):
         metadata.duration = self._calsys.script_time_estimate_s
-    
+
     async def run(self):
         await self._calsys.enable()
         await self.checkpoint("all components enabled, beginning power down sequence")
