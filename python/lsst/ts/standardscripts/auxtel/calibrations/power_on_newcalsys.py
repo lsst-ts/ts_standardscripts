@@ -8,7 +8,7 @@ import astropy.units as un
 class PowerOnATCalSysNew(BaseScript):
     """Powers on AT calsys ready for calibrations"""
 
-    def __init__(self, index, add_remotes: bool = True):
+    def __init__(self, index):
         super().__init__(index=index, descr="Power On AT Calibration System")
         self._calsys = ATCalsys(CalsysScriptIntention.TURN_ON, log=self.log)
 
