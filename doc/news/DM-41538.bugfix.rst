@@ -1,5 +1,0 @@
-In ``prepare_for/onsky``, make sure the start_task is awaited.
-
-In ``maintel/laser_tracker/align.py``, fix scalar units.
-
-In ``maintel/mtrotator/move_rotator``, fix call to ``mtcs.move_rotator``.

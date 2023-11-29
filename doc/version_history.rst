@@ -8,6 +8,29 @@ Version History
 
 .. towncrier release notes start
 
+v1.28.0 (2023-11-29)
+====================
+
+New Features
+------------
+
+- Introduce the ``maintel/m2/check_actuators.py`` script.
+  This new addition allows users to run M2 bump tests. (`DM-40554 <https://jira.lsstcorp.org/browse/DM-40554>`_)
+- Introduce the ``pause_queue.py`` script. This new addition allows users to sent an indefinte pause command to the script queue. (`DM-41094 <https://jira.lsstcorp.org/browse/DM-41094>`_)
+- Extended the `slew_to_planet` functionality of the `base_tcs` to `base_track_target`, enabling the tracking of planets of the Solar system for both Simonyi and Auxiliary telescopes. (`DM-41338 <https://jira.lsstcorp.org/browse/DM-41338>`_)
+- In ``latiss_take_sequence``, add optional config parameters for ra, dec, and rot_sky for script queue metadata. (`DM-41538 <https://jira.lsstcorp.org/browse/DM-41538>`_)
+
+
+Bug Fixes
+---------
+
+- In ``prepare_for/onsky``, make sure the start_task is awaited.
+
+  In ``maintel/laser_tracker/align.py``, fix scalar units.
+
+  In ``maintel/mtrotator/move_rotator``, fix call to ``mtcs.move_rotator``. (`DM-41538 <https://jira.lsstcorp.org/browse/DM-41538>`_)
+
+
 v1.27.0 (2023-11-02)
 ====================
 
