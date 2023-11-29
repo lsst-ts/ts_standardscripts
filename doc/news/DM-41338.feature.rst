@@ -1,0 +1,1 @@
+Extended the `slew_to_planet` functionality of the `base_tcs` to `base_track_target`, enabling the tracking of planets of the Solar system for both Simonyi and Auxiliary telescopes.

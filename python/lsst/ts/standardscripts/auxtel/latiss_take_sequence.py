@@ -24,11 +24,18 @@ __all__ = ["LatissTakeSequence"]
 import asyncio
 import collections
 
+import astropy.units
 import yaml
+from astropy.coordinates import ICRS, Angle
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
 from lsst.ts.standardscripts.utils import format_as_list
+from lsst.ts.xml.enums.Script import (
+    MetadataCoordSys,
+    MetadataDome,
+    MetadataRotSys,
+    ScriptState,
+)
 
 STD_TIMEOUT = 20  # seconds
 
@@ -127,6 +134,30 @@ class LatissTakeSequence(salobj.BaseScript):
                 description: Check that ATAOS corrections are enabled before taking sequence.
                 type: boolean
                 default: True
+
+              ra:
+                description: ICRS right ascension (hour). Note this is ONLY used for script queue metadata.
+                anyOf:
+                  - type: number
+                    minimum: 0
+                    maximum: 24
+                  - type: string
+
+              dec:
+                description: ICRS declination (deg). Note this is ONLY used for script queue metadata.
+                anyOf:
+                  - type: number
+                    minimum: -90
+                    maximum: 90
+                  - type: string
+
+              rot_sky:
+                description: >-
+                  The position angle in the Sky. 0 deg means that North is pointing up
+                  in the images. Note this is ONLY used for script queue metadata.
+                type: number
+
+
             required: ["program", "reason"]
         """
         return yaml.safe_load(schema_yaml)
@@ -160,18 +191,46 @@ class LatissTakeSequence(salobj.BaseScript):
 
         self.program = config.program
 
+        self.exposure_time_sequence = config.exposure_time_sequence
+
         self.do_check_ataos_corrections = config.do_check_ataos_corrections
+
+        self.ra = getattr(config, "ra", None)
+
+        self.dec = getattr(config, "dec", None)
+
+        self.rot_sky = getattr(config, "rot_sky", None)
 
     def set_metadata(self, metadata):
         metadata.duration = 0
-        filters, gratings, exptime_total = set(), set(), 0
+        filters_gratings, exptime_total = set(), 0
         for filt, exptime, grating in self.visit_configs:
+            if "empty" in filt:
+                filt = "empty"
+            if "empty" in grating:
+                grating = "empty"
             exptime_total += exptime
-            filters.add(filt)
-            gratings.add(grating)
+            filters_gratings.add(f"{filt}~{grating}")
             metadata.duration += 3  # time to reconfigure latiss
         metadata.duration += exptime_total
-        metadata.filter = f"{filters},{gratings}"
+        metadata.filters = ",".join(filters_gratings)
+        metadata.survey = self.program
+        if isinstance(self.exposure_time_sequence, float):
+            metadata.nimages = 1
+        else:
+            metadata.nimages = len(self.exposure_time_sequence)
+        metadata.coordinateSystem = MetadataCoordSys.ICRS
+        if (self.ra is not None) and (self.dec is not None):
+            radec_icrs = ICRS(
+                Angle(self.ra, unit=astropy.units.hourangle),
+                Angle(self.dec, unit=astropy.units.deg),
+            )
+            metadata.position = [radec_icrs.ra.deg, radec_icrs.dec.deg]
+        if self.rot_sky is not None:
+            metadata.rotationSystem = MetadataRotSys.SKY
+            metadata.cameraAngle = self.rot_sky
+        metadata.dome = MetadataDome.OPEN
+        metadata.instrument = "LATISS"
 
     async def take_sequence(self):
         """Take data while making sure ATCS is tracking."""

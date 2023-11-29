@@ -75,9 +75,9 @@ class TestAlign(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTest
         await asyncio.sleep(0.5)
         if any(self.state_0):
             offsets = types.SimpleNamespace(
-                dX=0.5e-6,
-                dY=0.5e-6,
-                dZ=0.5e-6,
+                dX=0.5e-3,
+                dY=0.5e-3,
+                dZ=0.5e-3,
                 dRX=0.5,
                 dRY=0.5,
             )
@@ -118,7 +118,6 @@ class TestAlign(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTest
             await self.configure_script(
                 max_iter=10,
                 target="M2",
-                tolerance_linear=1.0e-7,
                 tolerance_angular=5.0 / 3600.0,
             )
 

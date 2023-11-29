@@ -76,11 +76,13 @@ class PrepareForOnSky(salobj.BaseScript):
             self.attcs = ATCS(
                 self.domain, intended_usage=ATCSUsages.StartUp, log=self.log
             )
+            await self.attcs.start_task
 
         if self.latiss is None:
             self.latiss = LATISS(
                 self.domain, intended_usage=LATISSUsages.StateTransition, log=self.log
             )
+            await self.latiss.start_task
 
         if hasattr(config, "ignore"):
             for comp in config.ignore:

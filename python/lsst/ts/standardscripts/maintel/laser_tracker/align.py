@@ -100,9 +100,9 @@ class Align(salobj.BaseScript):
                 default: 10
                 minimum: 1
             tolerance_linear:
-                description: tolerance for rigid body degrees of freedom corrections (meters).
+                description: tolerance for rigid body degrees of freedom corrections (mm).
                 type: number
-                default: 1.0e-7
+                default: 0.0001
                 minimum: 0.0
             tolerance_angular:
                 description: tolerance for tip/tilt degrees of freedom corrections (deg).
@@ -187,9 +187,9 @@ class Align(salobj.BaseScript):
 
             corrections = np.array(
                 [
-                    offset.dX * 1e6 if abs(offset.dX) > self.tolerance_linear else 0.0,
-                    offset.dY * 1e6 if abs(offset.dY) > self.tolerance_linear else 0.0,
-                    offset.dZ * 1e6 if abs(offset.dZ) > self.tolerance_linear else 0.0,
+                    offset.dX * 1e3 if abs(offset.dX) > self.tolerance_linear else 0.0,
+                    offset.dY * 1e3 if abs(offset.dY) > self.tolerance_linear else 0.0,
+                    offset.dZ * 1e3 if abs(offset.dZ) > self.tolerance_linear else 0.0,
                     offset.dRX if abs(offset.dRX) > self.tolerance_angular else 0.0,
                     offset.dRY if abs(offset.dRX) > self.tolerance_angular else 0.0,
                 ]
