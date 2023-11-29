@@ -134,7 +134,7 @@ class MoveRotator(BaseBlockScript):
         """Run the script."""
         await self.checkpoint(f"Start moving rotator to {self.target_angle} degrees.")
         await self.mtcs.move_rotator(
-            angle=self.target_angle, wait_for_complete=self.wait_for_complete
+            position=self.target_angle, wait_for_in_position=self.wait_for_complete
         )
         await self.checkpoint(
             f"Move rotator returned. Wait for complete: {self.wait_for_complete}."

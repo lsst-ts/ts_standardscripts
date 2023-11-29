@@ -104,7 +104,7 @@ class TestMoveRotator(
             await self.run_script()
 
             self.script.mtcs.move_rotator.assert_called_once_with(
-                angle=target_angle, wait_for_complete=True
+                position=target_angle, wait_for_in_position=True
             )
 
     async def test_executable(self):
