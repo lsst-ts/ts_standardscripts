@@ -23,8 +23,9 @@ import logging
 import random
 import unittest
 
-from lsst.ts import standardscripts
+from lsst.ts import standardscripts, utils
 from lsst.ts.standardscripts.auxtel import TrackTarget
+from lsst.ts.xml.enums.MTPtg import Planets
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -45,6 +46,14 @@ class TestATTrackTarget(
         self.script = TrackTarget(index=index)
 
         return (self.script,)
+
+    async def test_configure_with_slew_planet(self):
+        async with self.make_script():
+            self.script._atcs = unittest.mock.AsyncMock()
+            self.script._atcs.start_task = utils.make_done_future()
+
+            # Script can be configured with slew_planet
+            await self.configure_script(slew_planet=dict(planet_name="PLUTO"))
 
     async def test_run_slew_target_name(self):
         async with self.make_script():
@@ -98,6 +107,23 @@ class TestATTrackTarget(
 
             self.assert_slew_azel(find_target_config=config["find_target"])
 
+    async def test_run_slew_planet(self):
+        async with self.make_script():
+            self.script.tcs.slew_to_planet = unittest.mock.AsyncMock()
+            self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
+
+            # Get planet name
+            planet_name = Planets["PLUTO"].name
+
+            # Check running with planet name
+            config = dict(slew_planet=dict(planet_name=planet_name))
+
+            await self.configure_script(**config)
+
+            await self.run_script()
+
+            self.assert_slew_planet(planet_name)
+
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
         script_path = scripts_dir / "auxtel" / "track_target.py"
@@ -143,6 +169,16 @@ class TestATTrackTarget(
         self.script.tcs.find_target.assert_awaited_once()
         self.script.tcs.find_target.assert_awaited_with(**find_target_config)
         self.assert_slew_target_name()
+
+    def assert_slew_planet(self, planet_name):
+        planet_enum = Planets[planet_name]
+        self.script.tcs.slew_to_planet.assert_awaited_once()
+        self.script.tcs.slew_to_planet.assert_awaited_with(
+            planet=planet_enum,
+            rot_sky=self.script.config.rot_value,
+            slew_timeout=self.script.config.slew_timeout,
+        )
+        self.script.tcs.stop_tracking.assert_not_awaited()
 
     def assert_config(self, config, config_validated):
         pass
