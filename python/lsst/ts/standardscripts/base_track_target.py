@@ -28,6 +28,7 @@ import enum
 import yaml
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.utils import RotType
+from lsst.ts.xml.enums.MTPtg import Planets
 
 from .base_block_script import BaseBlockScript
 
@@ -36,6 +37,7 @@ class SlewType(enum.IntEnum):
     OBJECT = enum.auto()
     ICRS = enum.auto()
     AZEL = enum.auto()
+    PLANET = enum.auto()
 
 
 class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
@@ -63,7 +65,7 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
         self.tracking_started = False
 
         # Flag to specify which type of slew will be performend:
-        # slew_icrs or slew_object
+        # slew_icrs, slew_object or slew_planet
         self.slew_type = SlewType.OBJECT
 
         # Timeout for slewing (in seconds).
@@ -80,7 +82,9 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
 
     @classmethod
     def get_schema(cls):
-        schema_yaml = """
+        planet_names = ", ".join([f'"{planet.name}"' for planet in Planets])
+
+        schema_yaml = f"""
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/base_slew.yaml
             title: BaseTrackTarget v1
@@ -111,6 +115,18 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                         minimum: -90
                         maximum: 90
                       - type: string
+              slew_planet:
+                type: object
+                description: >-
+                    Optional configuration section. Slew to a Solar system planet.
+                    If not specified it will be ignored. If specified, the rot_type
+                    propertie must be Sky.
+                additionalProperties: false
+                properties:
+                  planet_name:
+                    description: The name of a Solar system planet.
+                    type: string
+                    enum: [{planet_names}]
               find_target:
                 type: object
                 additionalProperties: false
@@ -243,6 +259,8 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
               properties:
                 slew_icrs:
                   const: null
+                slew_planet:
+                  const: null
             then:
               oneOf:
                 - required:
@@ -250,8 +268,11 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 - required:
                   - find_target
             else:
-              required:
-                - slew_icrs
+              oneOf:
+                - required:
+                  - slew_icrs
+                - required:
+                  - slew_planet
             additionalProperties: false
         """
         schema_dict = yaml.safe_load(schema_yaml)
@@ -278,6 +299,8 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
 
         if hasattr(self.config, "slew_icrs"):
             self.slew_type = SlewType.ICRS
+        elif hasattr(self.config, "slew_planet"):
+            self.slew_type = SlewType.PLANET
         elif hasattr(self.config, "find_target"):
             self.slew_type = SlewType.AZEL
 
@@ -286,6 +309,13 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
         await self.configure_tcs()
 
         self.config.rot_type = getattr(RotType, self.config.rot_type)
+
+        if self.slew_type == SlewType.PLANET and self.config.rot_type != RotType.Sky:
+            self.log.warning(
+                f"Slew_type={self.slew_type!r} only works for {RotType.Sky!r}, "
+                f"got {self.config.rot_type!r}. Ignoring."
+            )
+
         self.config.az_wrap_strategy = getattr(
             self.tcs.WrapStrategy, self.config.az_wrap_strategy
         )
@@ -347,6 +377,21 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 time_on_target=self.config.track_for,
                 slew_timeout=self.slew_timeout,
             )
+
+        elif self.slew_type == SlewType.PLANET:
+            planet_name = self.config.slew_planet["planet_name"]
+            planet_enum = Planets[planet_name]
+
+            self.log.info(
+                f"Slew and track planet_name={planet_name} rot_sky={self.config.rot_value}."
+            )
+
+            await self.tcs.slew_to_planet(
+                planet=planet_enum,
+                rot_sky=self.config.rot_value,
+                slew_timeout=self.slew_timeout,
+            )
+
         elif self.slew_type == SlewType.AZEL:
             az = self.config.find_target["az"]
             el = self.config.find_target["el"]
