@@ -28,6 +28,7 @@ from lsst.ts import salobj, standardscripts, utils
 from lsst.ts.idl.enums.MTPtg import WrapStrategy
 from lsst.ts.observatory.control import RotType
 from lsst.ts.standardscripts.maintel import TrackTarget
+from lsst.ts.xml.enums.MTPtg import Planets
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -144,6 +145,14 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
                 == "TrackTarget BLOCK-123 202306060001 SITCOM-321"
             )
 
+    async def test_configure_with_slew_planet(self):
+        async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
+
+            # Script can be configured with slew_planet
+            await self.configure_script(slew_planet=dict(planet_name="PLUTO"))
+
     async def test_configure_with_ra_dec(self):
         async with self.make_script():
             self.script._mtcs = unittest.mock.AsyncMock()
@@ -219,6 +228,25 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             await self.run_script()
 
             self.assert_slew_target_name()
+
+    async def test_run_slew_planet(self):
+        async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
+            self.script.tcs.slew_to_planet = unittest.mock.AsyncMock()
+            self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
+
+            # Get planet name
+            planet_name = Planets["PLUTO"].name
+
+            # Check running with planet name
+            config = dict(slew_planet=dict(planet_name=planet_name))
+
+            await self.configure_script(**config)
+
+            await self.run_script()
+
+            self.assert_slew_planet(planet_name)
 
     async def test_run_slew_azel(self):
         async with self.make_script():
@@ -326,6 +354,16 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
         self.script.tcs.slew_icrs.assert_awaited_once()
         self.script.tcs.slew_object.assert_not_awaited()
         self.script.tcs.stop_tracking.assert_awaited_once()
+
+    def assert_slew_planet(self, planet_name):
+        planet_enum = Planets[planet_name]
+        self.script.tcs.slew_to_planet.assert_awaited_once()
+        self.script.tcs.slew_to_planet.assert_awaited_with(
+            planet=planet_enum,
+            rot_sky=self.script.config.rot_value,
+            slew_timeout=self.script.config.slew_timeout,
+        )
+        self.script.tcs.stop_tracking.assert_not_awaited()
 
 
 if __name__ == "__main__":
