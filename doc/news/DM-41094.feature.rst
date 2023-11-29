@@ -1,1 +1,0 @@
-Introduce the ``pause_queue.py`` script. This new addition allows users to sent an indefinte pause command to the script queue.
