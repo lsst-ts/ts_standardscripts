@@ -37,6 +37,8 @@ from lsst.ts.observatory.control.remote_group import Usages
 class AlignComponent(enum.IntEnum):
     M2 = 1
     Camera = 3
+    TMA_CENTRAL = 4
+    TMA_UPPER = 5
 
 
 class Align(salobj.BaseScript):
@@ -52,7 +54,7 @@ class Align(salobj.BaseScript):
     **Checkpoints**
     - "Starting alignment procedure.": Starting alignment with laser tracker.
     - "M2 Hexapod aligned with laser tracker.": M2 aligned.
-    - "Camera Hexapod aligned with laser tracker.": M2 aligned.
+    - "Camera Hexapod aligned with laser tracker.": Camera aligned.
     """
 
     def __init__(self, index: int, add_remotes: bool = True):
