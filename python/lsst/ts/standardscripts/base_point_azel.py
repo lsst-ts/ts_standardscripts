@@ -138,6 +138,8 @@ class BasePointAzEl(BaseBlockScript, metaclass=abc.ABCMeta):
                     self.log.debug(f"Ignoring component {comp}.")
                     setattr(self.tcs.check, comp, False)
 
+        await self.configure_tcs()
+
         await super().configure(config=config)
 
     async def assert_feasibility(self) -> None:

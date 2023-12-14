@@ -36,6 +36,7 @@ except ImportError:
 from lsst.ts.idl.enums.MTM1M3 import BumpTest
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+from lsst.ts.utils import make_done_future
 
 from ...base_block_script import BaseBlockScript
 
@@ -230,6 +231,8 @@ class CheckActuators(BaseBlockScript):
 
         failed_actuators_id = []
         failed_primary, failed_secondary = [], []
+        timer_task = make_done_future()
+
         for i, actuator_id in enumerate(self.actuators_to_test):
             await self.mtcs.assert_all_enabled()
 
@@ -251,6 +254,10 @@ class CheckActuators(BaseBlockScript):
                 )
 
             try:
+                if not timer_task.done():
+                    self.log.debug("Waiting timer task before running bump test.")
+                    await timer_task
+                    self.log.debug("Timer task done. Running bump test.")
                 await self.mtcs.run_m1m3_actuator_bump_test(
                     actuator_id=actuator_id,
                     primary=True,
@@ -259,7 +266,11 @@ class CheckActuators(BaseBlockScript):
             # raise a RuntimeError if the bump test fails
             except RuntimeError:
                 failed_actuators_id.append(actuator_id)
-                self.log.exception(f"Failed to run bump test on FA ID {actuator_id}.")
+                self.log.exception(
+                    f"Failed to run bump test on FA ID {actuator_id}. "
+                    "Creating timer task to wait for M1M3 to be ready for next test."
+                )
+                timer_task = asyncio.create_task(asyncio.sleep(self.time_one_bump))
 
             # Getting test status
             (

@@ -43,6 +43,7 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             self.script.atcs.assert_all_enabled = unittest.mock.AsyncMock()
             self.script.atcs.point_azel = unittest.mock.AsyncMock()
             self.script.atcs.stop_tracking = unittest.mock.AsyncMock()
+            self.script.configure_tcs = unittest.mock.AsyncMock()
 
             yield
 
@@ -51,6 +52,8 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script()
 
+            self.script.configure_tcs.assert_not_called()
+
     async def test_config_fail_az_no_el(self) -> None:
         async with self.make_dry_script():
             with pytest.raises(
@@ -58,12 +61,15 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             ):
                 await self.configure_script(az=0.0)
 
+            self.script.configure_tcs.assert_not_called()
+
     async def test_config_fail_el_no_az(self) -> None:
         async with self.make_dry_script():
             with pytest.raises(
                 salobj.ExpectedError, match="'az' is a required property"
             ):
                 await self.configure_script(el=0.0)
+            self.script.configure_tcs.assert_not_called()
 
     async def test_configure_fail_invalid_el_min(self):
         az = 0.0
@@ -71,6 +77,7 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
         async with self.make_dry_script():
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(el=el, az=az)
+            self.script.configure_tcs.assert_not_called()
 
     async def test_configure_fail_invalid_el_max(self):
         az = 0.0
@@ -78,6 +85,7 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
         async with self.make_dry_script():
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(el=el, az=az)
+            self.script.configure_tcs.assert_not_called()
 
     async def test_config_ignore(self) -> None:
         async with self.make_dry_script():
@@ -88,6 +96,7 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             await self.configure_script(az=az, el=el, ignore=ignore)
             assert self.script.atcs.check.athexapod is False
             self.script.atcs.check.no_comp.assert_not_called()
+            self.script.configure_tcs.assert_awaited_once()
 
     async def test_configure_with_program_reason(self):
         """Testing a valid configuration: with program and reason"""
@@ -114,6 +123,7 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
                 self.script.checkpoint_message
                 == "PointAzEl BLOCK-123 202306060001 SITCOM-321"
             )
+            self.script.configure_tcs.assert_awaited_once()
 
     async def test_run_azel(self):
         async with self.make_dry_script():
@@ -142,6 +152,8 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             )
 
             await self.run_script()
+
+            self.script.configure_tcs.assert_awaited_once()
 
             self.script.atcs.point_azel.assert_awaited_once()
             self.script.atcs.point_azel.assert_called_with(
