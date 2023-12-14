@@ -8,6 +8,24 @@ Version History
 
 .. towncrier release notes start
 
+v1.29.0 (2023-12-14)
+====================
+
+New Features
+------------
+
+- Add new maintel/laser_tracker/measure.py script, unit test, and executable. (`DM-42122 <https://jira.lsstcorp.org/browse/DM-42122>`_)
+
+
+Bug Fixes
+---------
+
+- In ``maintel/m1m3/check_actuators``, add a timer task that will be set to wait for ``time_one_bump`` 
+  when a bump test fails.
+
+  In ``base_point_azel``, call ``configure_tcs`` in the ``configure`` method. (`DM-41870 <https://jira.lsstcorp.org/browse/DM-41870>`_)
+
+
 v1.28.0 (2023-11-29)
 ====================
 

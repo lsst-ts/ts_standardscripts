@@ -1,2 +1,0 @@
-Add new maintel/laser_tracker/measure.py script, unit test, and executable.
-

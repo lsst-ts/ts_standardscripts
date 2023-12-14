@@ -1,5 +1,0 @@
-In ``maintel/m1m3/check_actuators``, add a timer task that will be set to wait for ``time_one_bump`` 
-when a bump test fails.
-
-In ``base_point_azel``, call ``configure_tcs`` in the ``configure`` method.
-
