@@ -59,8 +59,8 @@ class Measure(salobj.BaseScript):
         )
 
         self.timeout_measure = 120
-        self.timeout_std = 60
-        self.timeout_short = 5
+        self.timeout_std = 130
+        self.timeout_short = 10
 
         self.target = None
 
