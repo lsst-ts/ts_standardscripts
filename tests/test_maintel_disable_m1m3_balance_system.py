@@ -22,6 +22,7 @@
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.standardscripts.maintel.m1m3 import DisableM1M3BalanceSystem
 
 
@@ -29,7 +30,12 @@ class TestDisableM1M3BalanceSystem(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
     async def basic_make_script(self, index):
-        self.script = DisableM1M3BalanceSystem(index=index, add_remotes=False)
+        self.script = DisableM1M3BalanceSystem(index=index)
+
+        self.script.mtcs = MTCS(
+            self.script.domain, intended_usage=MTCSUsages.DryTest, log=self.script.log
+        )
+
         self.script.mtcs.disable_m1m3_balance_system = unittest.mock.AsyncMock()
 
         return (self.script,)

@@ -26,6 +26,7 @@ import unittest
 
 from lsst.ts import standardscripts
 from lsst.ts.idl.enums.MTM1M3 import HardpointTest
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.standardscripts.maintel.m1m3 import CheckHardpoint
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -36,6 +37,11 @@ class TestCheckHardpoint(
 ):
     async def basic_make_script(self, index):
         self.script = CheckHardpoint(index=index, add_remotes=False)
+
+        self.script.mtcs = MTCS(
+            self.script.domain, intended_usage=MTCSUsages.DryTest, log=self.script.log
+        )
+
         self.script.mtcs.run_m1m3_hard_point_test = unittest.mock.AsyncMock(
             side_effect=self.mock_test_hardpoint
         )
