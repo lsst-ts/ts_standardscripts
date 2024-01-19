@@ -25,7 +25,7 @@ import asyncio
 import warnings
 
 import yaml
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+from lsst.ts.observatory.control.maintel.mtcs import MTCS
 
 from ...base_block_script import BaseBlockScript
 
@@ -59,15 +59,7 @@ class CheckHardpoint(BaseBlockScript):
     def __init__(self, index, add_remotes: bool = True):
         super().__init__(index=index, descr="Check M1M3 Hardpoint")
 
-        self.mtcs = MTCS(
-            domain=self.domain,
-            intended_usage=None if add_remotes else MTCSUsages.DryTest,
-            log=self.log,
-        )
-
-        for comp in self.mtcs.components_attr:
-            if comp != "mtm1m3":
-                setattr(self.mtcs.check, comp, False)
+        self.mtcs = None
 
         self.timeout_check = 60
         self.timeout_std = 60
@@ -117,6 +109,14 @@ class CheckHardpoint(BaseBlockScript):
         self.hardpoints = (
             range(1, 7) if config.hardpoints == "all" else config.hardpoints
         )
+
+        if self.mtcs is None:
+            self.mtcs = MTCS(self.domain, log=self.log)
+            await self.mtcs.start_task
+
+        for comp in self.mtcs.components_attr:
+            if comp != "mtm1m3":
+                setattr(self.mtcs.check, comp, False)
 
         await super().configure(config=config)
 
