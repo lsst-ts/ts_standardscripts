@@ -1,0 +1,5 @@
+Update all m1m3 scripts to only setup their instance of the ``MTCS`` class during the configuration stage.
+
+This also removes the ``add_remotes`` parameter from their initialization.
+Instantiation of the class is now done in the ``configure`` method.
+
