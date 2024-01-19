@@ -26,6 +26,7 @@ import warnings
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums.MTM1M3 import BumpTest
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
 from lsst.ts.standardscripts.maintel.m1m3 import CheckActuators
 
@@ -41,7 +42,12 @@ except ImportError:
 
 class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     async def basic_make_script(self, index):
-        self.script = CheckActuators(index=index, add_remotes=False)
+        self.script = CheckActuators(index=index)
+
+        self.script.mtcs = MTCS(
+            self.script.domain, intended_usage=MTCSUsages.DryTest, log=self.script.log
+        )
+        await self.script.configure_tcs()
         self.script.mtcs.run_m1m3_actuator_bump_test = unittest.mock.AsyncMock(
             side_effect=self.mock_test_bump
         )
