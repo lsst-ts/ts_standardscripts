@@ -23,7 +23,7 @@ __all__ = ["LowerM1M3"]
 
 import time
 
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+from lsst.ts.observatory.control.maintel.mtcs import MTCS
 
 from ...base_block_script import BaseBlockScript
 
@@ -49,12 +49,16 @@ class LowerM1M3(BaseBlockScript):
 
     """
 
-    def __init__(self, index, add_remotes: bool = True):
+    def __init__(self, index):
         super().__init__(index=index, descr="Lower M1M3")
 
-        mtcs_usage = None if add_remotes else MTCSUsages.DryTest
+        self.mtcs = None
 
-        self.mtcs = MTCS(self.domain, intended_usage=mtcs_usage, log=self.log)
+    async def configure(self, config):
+        if self.mtcs is None:
+            self.mtcs = MTCS(self.domain, log=self.log)
+            await self.mtcs.start_task
+        await super().configure(config=config)
 
     def set_metadata(self, metadata):
         metadata.duration = 180.0
