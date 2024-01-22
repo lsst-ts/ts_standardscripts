@@ -25,7 +25,7 @@ import asyncio
 
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+from lsst.ts.observatory.control.auxtel.atcs import ATCS
 
 STD_TIMEOUT = 5  # seconds
 
@@ -64,19 +64,14 @@ class ATPneumaticsCheckout(salobj.BaseScript):
     mirror cover and vents are opened and closed.
     """
 
-    def __init__(self, index=1, add_remotes: bool = True):
+    def __init__(self, index=1):
         super().__init__(
             index=index,
             descr="Execute daytime checkout of AT Pneumatics.",
         )
 
-        atcs_usage = None if add_remotes else ATCSUsages.DryTest
+        self.atcs = None
 
-        # Instantiate atcs. We need to do this after the call to
-        # super().__init__() above. We can also pass in the script domain and
-        # logger to both classes so log messages generated internally are
-        # published to the efd.
-        self.atcs = ATCS(domain=self.domain, intended_usage=atcs_usage, log=self.log)
         self.main_air_pressure_min_threshold = 275790
         self.main_air_pressure_max_threshold = 413000
         self.delay_ataos_enabled = 10
@@ -90,7 +85,8 @@ class ATPneumaticsCheckout(salobj.BaseScript):
 
     async def configure(self, config):
         # This script does not require any configuration
-        pass
+        if self.atcs is None:
+            self.atcs = ATCS(domain=self.domain, log=self.log)
 
     def set_metadata(self, metadata):
         """Set estimated duration of the script."""
