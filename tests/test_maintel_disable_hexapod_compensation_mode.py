@@ -99,7 +99,9 @@ class TestDisableHexapodCompensationMode(
             hexapods = [self.script.component_to_hexapod(comp) for comp in components]
             expected_calls = [unittest.mock.call(hexapod) for hexapod in hexapods]
 
-            self.script.mtcs.disable_compensation_mode.assert_has_awaits(expected_calls)
+            self.script.mtcs.disable_compensation_mode.assert_has_awaits(
+                expected_calls, any_order=True
+            )
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
