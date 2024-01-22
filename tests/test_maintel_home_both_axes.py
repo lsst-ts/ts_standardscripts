@@ -22,6 +22,7 @@
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.standardscripts.maintel import HomeBothAxes
 
 
@@ -29,8 +30,13 @@ class TestHomeBothAxes(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
     async def basic_make_script(self, index):
-        self.script = HomeBothAxes(index=index, add_remotes=False)
+        self.script = HomeBothAxes(index=index)
 
+        self.script.mtcs = MTCS(
+            domain=self.script.domain,
+            intended_usage=MTCSUsages.DryTest,
+            log=self.script.log,
+        )
         self.script.mtcs.rem.mtmount = unittest.mock.AsyncMock()
         self.script.mtcs.lower_m1m3 = unittest.mock.AsyncMock()
         self.script.mtcs.disable_m1m3_balance_system = unittest.mock.AsyncMock()
