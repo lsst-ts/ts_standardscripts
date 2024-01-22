@@ -24,7 +24,7 @@ __all__ = ["HomeBothAxes"]
 import time
 
 from lsst.ts import salobj
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+from lsst.ts.observatory.control.maintel.mtcs import MTCS
 
 
 class HomeBothAxes(salobj.BaseScript):
@@ -51,12 +51,8 @@ class HomeBothAxes(salobj.BaseScript):
 
     """
 
-    def __init__(self, index, add_remotes: bool = True):
+    def __init__(self, index):
         super().__init__(index=index, descr="Raise M1M3")
-
-        mtcs_usage = None if add_remotes else MTCSUsages.DryTest
-
-        self.mtcs = MTCS(domain=self.domain, intended_usage=mtcs_usage, log=self.log)
 
         self.home_both_axes_timeout = 300.0  # timeout to home both MTMount axes.
 
@@ -66,6 +62,9 @@ class HomeBothAxes(salobj.BaseScript):
 
     async def configure(self, config):
         # This script does not require any configuration.
+        if self.mtcs is None:
+            self.mtcs = MTCS(domain=self.domain, log=self.log)
+
         pass
 
     def set_metadata(self, metadata):
