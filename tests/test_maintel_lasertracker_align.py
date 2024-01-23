@@ -26,6 +26,8 @@ import unittest
 
 from lsst.ts import standardscripts
 from lsst.ts.idl.enums.LaserTracker import LaserStatus
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+from lsst.ts.observatory.control.remote_group import RemoteGroup, Usages
 from lsst.ts.salobj import State
 from lsst.ts.standardscripts.maintel.laser_tracker import Align, AlignComponent
 
@@ -34,7 +36,20 @@ random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
 class TestAlign(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     async def basic_make_script(self, index):
-        self.script = Align(index=index, add_remotes=False)
+        self.script = Align(index=index)
+        self.script.laser_tracker = RemoteGroup(
+            domain=self.script.domain,
+            components=["LaserTracker:1"],
+            intended_usage=Usages.DryTest,
+            log=self.script.log,
+        )
+
+        self.script.mtcs = MTCS(
+            domain=self.script.domain,
+            intended_usage=MTCSUsages.DryTest,
+            log=self.script.log,
+        )
+
         self.script.mtcs = unittest.mock.AsyncMock()
         self.script.mtcs.configure_mock(
             **{
