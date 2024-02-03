@@ -152,9 +152,11 @@ class BaseBlockScript(salobj.BaseScript, metaclass=abc.ABCMeta):
             message = (
                 "LSST_SITE environment variable not defined"
                 if site is None
-                else f"No image server url for {site=}."
-                if site not in IMAGE_SERVER_URL
-                else f"Ids are only generated for BLOCK programs, got {self.program}."
+                else (
+                    f"No image server url for {site=}."
+                    if site not in IMAGE_SERVER_URL
+                    else f"Ids are only generated for BLOCK programs, got {self.program}."
+                )
             )
             self.log.warning(f"Not generating obs id. {message}")
             return None
