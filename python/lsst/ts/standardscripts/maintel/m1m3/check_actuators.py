@@ -35,7 +35,7 @@ except ImportError:
 
 from lsst.ts.idl.enums.MTM1M3 import BumpTest
 from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+from lsst.ts.observatory.control.maintel.mtcs import MTCS
 from lsst.ts.utils import make_done_future
 
 from ...base_block_script import BaseBlockScript
@@ -72,24 +72,20 @@ class CheckActuators(BaseBlockScript):
 
     """
 
-    def __init__(self, index, add_remotes: bool = True):
+    def __init__(self, index):
         super().__init__(index=index, descr="Bump Test on M1M3 Actuators")
 
-        self.mtcs = MTCS(
-            domain=self.domain,
-            intended_usage=None if add_remotes else MTCSUsages.DryTest,
-            log=self.log,
-        )
+        self.mtcs = None
 
         # Average duration (seconds) of a bump test on a single actuator
         self.time_one_bump = 25
 
         # Getting list of actuator ids from mtcs
-        self.m1m3_actuator_ids = self.mtcs.get_m1m3_actuator_ids()
-        self.m1m3_secondary_actuator_ids = self.mtcs.get_m1m3_actuator_secondary_ids()
+        self.m1m3_actuator_ids = None
+        self.m1m3_secondary_actuator_ids = None
 
         # Actuators that will be effectively tested
-        self.actuators_to_test = self.m1m3_actuator_ids.copy()
+        self.actuators_to_test = None
 
     async def assert_feasibility(self):
         """Verify that the system is in a feasible state before
@@ -175,6 +171,8 @@ class CheckActuators(BaseBlockScript):
             Configuration
         """
 
+        await self.configure_tcs()
+
         # Getting actuators to be tested.
         self.actuators_to_test = (
             self.m1m3_actuator_ids if config.actuators == "all" else config.actuators
@@ -187,6 +185,17 @@ class CheckActuators(BaseBlockScript):
             ]
 
         await super().configure(config=config)
+
+    async def configure_tcs(self):
+        if self.mtcs is None:
+            self.mtcs = MTCS(self.domain, log=self.log)
+            await self.mtcs.start_task
+
+        # Getting list of actuator ids from mtcs
+        self.m1m3_actuator_ids = self.mtcs.get_m1m3_actuator_ids()
+        self.m1m3_secondary_actuator_ids = self.mtcs.get_m1m3_actuator_secondary_ids()
+
+        self.actuators_to_test = self.m1m3_actuator_ids.copy()
 
     def set_metadata(self, metadata):
         """Set metadata."""

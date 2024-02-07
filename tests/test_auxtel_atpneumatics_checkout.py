@@ -26,6 +26,7 @@ import types
 import unittest
 
 import pytest
+from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
 from lsst.ts.standardscripts.auxtel.daytime_checkout import ATPneumaticsCheckout
 
@@ -42,7 +43,7 @@ class TestATPneumaticsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestC
         return super().setUp()
 
     async def basic_make_script(self, index):
-        self.script = ATPneumaticsCheckout(index=index, add_remotes=False)
+        self.script = ATPneumaticsCheckout(index=index)
         return [
             self.script,
         ]
@@ -87,6 +88,11 @@ class TestATPneumaticsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestC
 
     @contextlib.asynccontextmanager
     async def setup_mocks(self):
+        self.script.atcs = ATCS(
+            domain=self.script.domain,
+            intended_usage=ATCSUsages.DryTest,
+            log=self.script.log,
+        )
         self.script.atcs.open_valves = unittest.mock.AsyncMock()
         self.script.atcs.open_m1_cover = unittest.mock.AsyncMock()
         self.script.atcs.close_m1_cover = unittest.mock.AsyncMock()
