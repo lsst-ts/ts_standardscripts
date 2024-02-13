@@ -22,6 +22,7 @@
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.standardscripts.maintel.m1m3 import LowerM1M3
 
 
@@ -29,7 +30,10 @@ class TestLowerM1M3(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
     async def basic_make_script(self, index):
-        self.script = LowerM1M3(index=index, add_remotes=False)
+        self.script = LowerM1M3(index=index)
+        self.script.mtcs = MTCS(
+            self.script.domain, intended_usage=MTCSUsages.DryTest, log=self.script.log
+        )
         self.script.mtcs.lower_m1m3 = unittest.mock.AsyncMock()
 
         return (self.script,)

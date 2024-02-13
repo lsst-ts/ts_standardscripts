@@ -167,9 +167,9 @@ class CheckActuators(BaseBlockScript):
         num_axial_actuator = NUM_ACTUATOR - NUM_TANGENT_LINK
         self.axial_actuator_ids = list(
             [
-                actuator_id
-                for actuator_id in np.arange(num_axial_actuator)
-                if actuator_id + 1 not in self.hardpoint_ids
+                actuator
+                for actuator in np.arange(num_axial_actuator)
+                if actuator + 1 not in self.hardpoint_ids
             ]
         )
 
@@ -179,24 +179,24 @@ class CheckActuators(BaseBlockScript):
             self.actuators_to_test = self.axial_actuator_ids
         else:
             # check that no actuators are hardpoints
-            for actuator_id in config.actuators:
-                if actuator_id + 1 in self.hardpoint_ids:
+            for actuator in config.actuators:
+                if actuator + 1 in self.hardpoint_ids:
                     raise ValueError(
-                        f"Cannot run bump test on actuator {actuator_id},"
+                        f"Cannot run bump test on actuator {actuator},"
                         "it is currently configured as a hardpoint"
                     )
-                elif actuator_id + 1 not in self.axial_actuator_ids:
+                elif actuator + 1 not in self.axial_actuator_ids:
                     raise ValueError(
-                        f"Cannot run bump test on actuator {actuator_id}, it is not a valid axial actuator."
+                        f"Cannot run bump test on actuator {actuator}, it is not a valid axial actuator."
                     )
 
             self.actuators_to_test = config.actuators
 
         if config.ignore_actuators:
             self.actuators_to_test = [
-                actuator_id
-                for actuator_id in self.actuators_to_test
-                if actuator_id not in config.ignore_actuators
+                actuator
+                for actuator in self.actuators_to_test
+                if actuator not in config.ignore_actuators
             ]
         if hasattr(config, "period"):
             self.period = config.period
@@ -214,25 +214,23 @@ class CheckActuators(BaseBlockScript):
         await self.assert_feasibility()
         start_time = time.monotonic()
 
-        self.failed_actuators_id = []
-        for actuator_id in self.actuators_to_test:
+        self.failed_actuator_ids = []
+        for actuator in self.actuators_to_test:
             await self.mtcs.assert_all_enabled()
 
             # Checkpoint
-            await self.checkpoint(
-                f"Running bump test on M2 Axial FA ID: {actuator_id} "
-            )
+            await self.checkpoint(f"Running bump test on M2 Axial FA ID: {actuator} ")
 
             try:
                 await self.mtcs.run_m2_actuator_bump_test(
-                    actuator_id=actuator_id,
+                    actuator=actuator,
                     period=self.period,
                     force=self.force,
                 )
             except (AckError, AckTimeoutError):
-                self.failed_actuators_id.append(actuator_id)
+                self.failed_actuator_ids.append(actuator)
                 self.log.exception(
-                    f"Failed to run bump test on AXIAL FA ID {actuator_id}."
+                    f"Failed to run bump test on AXIAL FA ID {actuator}."
                 )
 
         end_time = time.monotonic()
@@ -244,11 +242,11 @@ class CheckActuators(BaseBlockScript):
         )
 
         # Final message with bump test results/status
-        if not self.failed_actuators_id:
+        if not self.failed_actuator_ids:
             self.log.info("All actuators PASSED the bump test.")
         else:
             error_message = (
-                f"Actuators {self.failed_actuators_id} FAILED the bump test."
+                f"Actuators {self.failed_actuator_ids} FAILED the bump test."
             )
             self.log.error(error_message)
             raise RuntimeError(error_message)

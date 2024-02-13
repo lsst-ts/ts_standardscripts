@@ -23,7 +23,9 @@ from .apply_dof import *
 from .base_close_loop import *
 from .close_loop_comcam import *
 from .close_loop_lsstcam import *
+from .disable_hexapod_compensation_mode import *
 from .enable_comcam import *
+from .enable_hexapod_compensation_mode import *
 from .enable_mtcs import *
 from .home_both_axes import *
 from .move_p2p import *

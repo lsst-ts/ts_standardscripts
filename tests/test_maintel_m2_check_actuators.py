@@ -53,9 +53,9 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
         num_axial_actuator = NUM_ACTUATOR - NUM_TANGENT_LINK
         self.axial_actuator_ids = list(
             [
-                actuator_id
-                for actuator_id in np.arange(num_axial_actuator)
-                if actuator_id + 1 not in self.hardpoint_ids
+                actuator
+                for actuator in np.arange(num_axial_actuator)
+                if actuator + 1 not in self.hardpoint_ids
             ]
         )
         self.script.mtcs.rem.mtm2 = unittest.mock.AsyncMock()
@@ -63,11 +63,11 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
         return (self.script,)
 
     # Side effects
-    async def mock_test_bump(self, actuator_id, period, force):
+    async def mock_test_bump(self, actuator, period, force):
         await asyncio.sleep(0.5)
 
-    async def mock_test_bump_with_error(self, actuator_id, period, force):
-        if actuator_id == 10:
+    async def mock_test_bump_with_error(self, actuator, period, force):
+        if actuator == 10:
             raise salobj.base.AckError("Testing command Error", None)
         await asyncio.sleep(0.5)
 
@@ -167,7 +167,7 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             await self.script.do_run(run_data)
             await self.script.done_task
 
-            assert self.script.failed_actuators_id == list([10])
+            assert self.script.failed_actuator_ids == list([10])
         self.script.mtcs.run_m2_actuator_bump_test.side_effect = (
             run_m2_actuator_bump_test_side_effect
         )
@@ -190,11 +190,11 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             expected_calls = [
                 unittest.mock.call(
-                    actuator_id=actuator_id,
+                    actuator=actuator,
                     period=self.script.period,
                     force=self.script.force,
                 )
-                for actuator_id in self.axial_actuator_ids
+                for actuator in self.axial_actuator_ids
             ]
 
             self.script.mtcs.run_m2_actuator_bump_test.assert_has_calls(expected_calls)

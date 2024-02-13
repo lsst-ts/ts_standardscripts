@@ -21,10 +21,12 @@
 
 __all__ = ["HomeBothAxes"]
 
+import asyncio
 import time
 
+import yaml
 from lsst.ts import salobj
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+from lsst.ts.observatory.control.maintel.mtcs import MTCS
 
 
 class HomeBothAxes(salobj.BaseScript):
@@ -52,29 +54,50 @@ class HomeBothAxes(salobj.BaseScript):
     """
 
     def __init__(self, index, add_remotes: bool = True):
-        super().__init__(index=index, descr="Raise M1M3")
-
-        mtcs_usage = None if add_remotes else MTCSUsages.DryTest
-
-        self.mtcs = MTCS(domain=self.domain, intended_usage=mtcs_usage, log=self.log)
+        super().__init__(index=index, descr="Home both TMA axis.")
 
         self.home_both_axes_timeout = 300.0  # timeout to home both MTMount axes.
 
+        self.ignore_m1m3 = False
+        self.warn_wait = 10.0
+        self.mtcs = None
+
     @classmethod
     def get_schema(cls):
-        return None
+        schema_yaml = """
+            $schema: http://json-schema.org/draft-07/schema#
+            $id: https://github.com/lsst-ts/ts_standardscripts/maintel/enable_mtcs.yaml
+            title: HomeBothAxes v1
+            description: Configuration for HomeBothAxes.
+            type: object
+            properties:
+                ignore_m1m3:
+                    description: Ignore the m1m3 component?
+                    type: boolean
+                    default: false
+            additionalProperties: false
+        """
+        return yaml.safe_load(schema_yaml)
 
     async def configure(self, config):
-        # This script does not require any configuration.
-        pass
+        if self.mtcs is None:
+            self.mtcs = MTCS(domain=self.domain, log=self.log)
+            await self.mtcs.start_task
+        self.ignore_m1m3 = config.ignore_m1m3
 
     def set_metadata(self, metadata):
         metadata.duration = self.home_both_axes_timeout
 
     async def run(self):
-        await self.checkpoint("Disable M1M3 balance system.")
-        await self.mtcs.disable_m1m3_balance_system()
 
+        if not self.ignore_m1m3:
+            await self.checkpoint("Disable M1M3 balance system.")
+            await self.mtcs.disable_m1m3_balance_system()
+        else:
+            self.log.warning(
+                "Ignoring M1M3. Make sure m1m3 balance system is disabled!"
+            )
+            await asyncio.sleep(self.warn_wait)
         await self.checkpoint("Homing Both Axes")
         start_time = time.time()
         await self.mtcs.rem.mtmount.cmd_homeBothAxes.start(

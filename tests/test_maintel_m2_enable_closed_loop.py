@@ -19,58 +19,64 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import contextlib
 import unittest
 
-from lsst.ts import standardscripts
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-from lsst.ts.standardscripts.maintel.m1m3 import EnableM1M3BalanceSystem
+from lsst.ts import standardscripts, utils
+from lsst.ts.standardscripts.maintel.m2.enable_closed_loop import EnableM2ClosedLoop
 
 
-class TestEnableM1M3BalanceSystem(
+class TestEnableM2ClosedLoop(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
     async def basic_make_script(self, index):
-        self.script = EnableM1M3BalanceSystem(index=index)
-        self.script.mtcs = MTCS(
-            self.script.domain, intended_usage=MTCSUsages.DryTest, log=self.script.log
-        )
+        self.script = EnableM2ClosedLoop(index=index)
+        self.script.mtcs = unittest.mock.AsyncMock()
+        self.script.mtcs.start_task = utils.make_done_future()
+        self.script.mtcs.enable_m2_balance_system = unittest.mock.AsyncMock()
 
-        self.script.mtcs.enable_m1m3_balance_system = unittest.mock.AsyncMock()
         return (self.script,)
+
+    @contextlib.asynccontextmanager
+    async def make_dry_script(self):
+        async with self.make_script():
+            self.script.mtcs = unittest.mock.AsyncMock()
+            self.script.mtcs.enable_m2_balance_system = unittest.mock.AsyncMock()
+            yield
+
+    async def test_configure_with_program_reason(self):
+        async with self.make_dry_script():
+            self.script.get_obs_id = unittest.mock.AsyncMock(
+                side_effect=["202312190001"]
+            )
+            program = "BLOCK-123"
+            reason = "SITCOM-321"
+            await self.configure_script(
+                program=program,
+                reason=reason,
+            )
+
+            assert self.script.program == program
+            assert self.script.reason == reason
+            assert (
+                self.script.checkpoint_message
+                == "EnableM2ClosedLoop BLOCK-123 202312190001 SITCOM-321"
+            )
 
     async def test_run(self):
         async with self.make_script():
             await self.configure_script()
-
             await self.run_script()
-            self.script.mtcs.enable_m1m3_balance_system.assert_awaited_once()
+
+            self.script.mtcs.enable_m2_balance_system.assert_awaited_once()
+
             assert self.script.program is None
             assert self.script.reason is None
             assert self.script.checkpoint_message is None
 
-    async def test_configure_with_program_reason(self):
-        """Testing a valid configuration: with program and reason"""
-
-        # Try configure with a list of valid actuators ids
-        async with self.make_script():
-            self.script.get_obs_id = unittest.mock.AsyncMock(
-                side_effect=["202306060001"]
-            )
-            await self.configure_script(
-                program="BLOCK-123",
-                reason="SITCOM-321",
-            )
-
-            assert self.script.program == "BLOCK-123"
-            assert self.script.reason == "SITCOM-321"
-            assert (
-                self.script.checkpoint_message
-                == "EnableM1M3BalanceSystem BLOCK-123 202306060001 SITCOM-321"
-            )
-
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "m1m3" / "enable_m1m3_balance_system.py"
+        script_path = scripts_dir / "maintel" / "m2" / "enable_closed_loop.py"
         print(script_path)
         await self.check_executable(script_path)
 

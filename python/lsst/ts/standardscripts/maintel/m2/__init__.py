@@ -20,3 +20,5 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from .check_actuators import *
+from .disable_closed_loop import *
+from .enable_closed_loop import *

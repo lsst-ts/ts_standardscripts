@@ -1,0 +1,4 @@
+Update ``maintel/home_both_axes`` to add a configuration option to ignore the m1m3.
+
+Update ``auxtel/prepare_for/vent`` to not partially open the dome.
+

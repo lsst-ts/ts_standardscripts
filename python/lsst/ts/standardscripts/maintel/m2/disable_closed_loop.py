@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["EnableM1M3BalanceSystem"]
+__all__ = ["DisableM2ClosedLoop"]
 
 import time
 
@@ -28,8 +28,8 @@ from lsst.ts.observatory.control.maintel.mtcs import MTCS
 from ...base_block_script import BaseBlockScript
 
 
-class EnableM1M3BalanceSystem(BaseBlockScript):
-    """Enable M1M3 force balance system.
+class DisableM2ClosedLoop(BaseBlockScript):
+    """Disable M2 closed-loop.
 
     Parameters
     ----------
@@ -40,37 +40,35 @@ class EnableM1M3BalanceSystem(BaseBlockScript):
     -----
     **Checkpoints**
 
-    - "Enabling M1M3 force balance system": Before enabling M1M3 force balance
-    system.
+    - "Disabling M1M2 closed-loop": Before disabling M2 closed-loop.
 
     **Details**
 
-    This script enables the M1M3 force balance system of the Simonyi Main
-    Telescope.
-
-
+    This script disables M2 closed-loop for the Simonyi Survey Telescope.
     """
 
     def __init__(self, index):
-        super().__init__(index=index, descr="Enable M1M3 force balance system")
-
+        super().__init__(index=index, descr="Disable M2 closed-loop.")
         self.mtcs = None
 
-    async def configure(self, config):
+    async def configure_tcs(self) -> None:
         if self.mtcs is None:
-            self.mtcs = MTCS(self.domain, log=self.log)
+            self.log.debug("Creating MTCS.")
+            self.mtcs = MTCS(domain=self.domain, log=self.log)
             await self.mtcs.start_task
+        else:
+            self.log.debug("MTCS already defined, skipping.")
+
+    async def configure(self, config):
+        await self.configure_tcs()
         await super().configure(config=config)
 
     def set_metadata(self, metadata):
-        metadata.duration = 180.0
+        metadata.duration = 15.0
 
     async def run_block(self):
-        await self.checkpoint("Enabling M1M3 force balance system")
-        start_time = time.time()
-        await self.mtcs.enable_m1m3_balance_system()
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        self.log.info(
-            f"Enabling M1M3 force balance system took {elapsed_time:.2f} seconds"
-        )
+        await self.checkpoint("Disabling M2 closed-loop.")
+        start_time = time.monotonic()
+        await self.mtcs.disable_m2_balance_system()
+        elapsed_time = time.monotonic() - start_time
+        self.log.info(f"Disabling M2 closed-loop took {elapsed_time:.2f} seconds.")

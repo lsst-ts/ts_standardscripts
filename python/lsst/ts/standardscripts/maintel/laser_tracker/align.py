@@ -29,8 +29,7 @@ import yaml
 from lsst.ts import salobj
 from lsst.ts.idl.enums.LaserTracker import LaserStatus
 from lsst.ts.observatory.control import RemoteGroup
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-from lsst.ts.observatory.control.remote_group import Usages
+from lsst.ts.observatory.control.maintel.mtcs import MTCS
 
 
 # TODO (DM-38880) - Subsitute by class in idl.enum when available
@@ -57,21 +56,11 @@ class Align(salobj.BaseScript):
     - "Camera Hexapod aligned with laser tracker.": Camera aligned.
     """
 
-    def __init__(self, index: int, add_remotes: bool = True):
+    def __init__(self, index: int):
         super().__init__(index, descr="Align MTCS components with laser tracker.")
 
-        self.laser_tracker = RemoteGroup(
-            domain=self.domain,
-            components=["LaserTracker:1"],
-            intended_usage=None if add_remotes else Usages.DryTest,
-            log=self.log,
-        )
-
-        self.mtcs = MTCS(
-            domain=self.domain,
-            intended_usage=None if add_remotes else MTCSUsages.DryTest,
-            log=self.log,
-        )
+        self.laser_tracker = None
+        self.mtcs = None
 
         self.timeout_align = 120
         self.timeout_std = 60
@@ -125,6 +114,19 @@ class Align(salobj.BaseScript):
         return yaml.safe_load(schema_yaml)
 
     async def configure(self, config):
+        if self.laser_tracker is None:
+            self.laser_tracker = RemoteGroup(
+                domain=self.domain,
+                components=["LaserTracker:1"],
+                log=self.log,
+            )
+            await self.laser_tracker.start_task
+
+        if self.mtcs is None:
+            self.mtcs = MTCS(
+                domain=self.domain,
+                log=self.log,
+            )
         self.max_iter = config.max_iter
         self.target = getattr(AlignComponent, config.target)
         self.tolerance_linear = config.tolerance_linear
