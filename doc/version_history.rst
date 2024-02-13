@@ -8,6 +8,63 @@ Version History
 
 .. towncrier release notes start
 
+v1.30.0 (2024-02-13)
+====================
+
+New Features
+------------
+
+- Add new `mute_alarms` SAL Script. (`DM-41610 <https://jira.lsstcorp.org/browse/DM-41610>`_)
+- Introduce SAL scripts to enable/disable M2 closed-loop. (`DM-41611 <https://jira.lsstcorp.org/browse/DM-41611>`_)
+- Introduce SAL scripts to enable/disable hexapods compensation mode of the Simonyi Survey Telescope:
+  - ``enable_hexapods_compensation``: enable hexapods compensation mode.
+  - ``disable_hexapods_compensation``: disable hexapods compensation mode. (`DM-41799 <https://jira.lsstcorp.org/browse/DM-41799>`_)
+- Introduce a SAL Script to set the m1m3 slew controller flags. (`DM-42403 <https://jira.lsstcorp.org/browse/DM-42403>`_)
+- Update ``maintel/home_both_axes`` to add a configuration option to ignore the m1m3.
+
+  Update ``auxtel/prepare_for/vent`` to not partially open the dome. (`DM-42690 <https://jira.lsstcorp.org/browse/DM-42690>`_)
+
+
+Bug Fixes
+---------
+
+- `run_m2_actuator_bump_test` call updated to use `actuator` instead of `actuator_id` (`DM-42105 <https://jira.lsstcorp.org/browse/DM-42105>`_)
+- Increase `timeout_std`` to 130s for `laser_tracker/measure.py` script (`DM-42339 <https://jira.lsstcorp.org/browse/DM-42339>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Update all m1m3 scripts to only setup their instance of the ``MTCS`` class during the configuration stage.
+
+  This also removes the ``add_remotes`` parameter from their initialization.
+  Instantiation of the class is now done in the ``configure`` method.
+
+  Update ``tests/test_maintel_lasertracker_align.py`` unit tests to remove use of the ``add_remotes`` parameter and to create a dry test instance of ``MTCS`` during the initialization phase.
+
+  In ``maintel/laser_tracker/align.py``, update script to only create instance of ``MTCS`` and the ``RemoteGroup`` for the laser tracker in the configuration stage.
+  This also removes the need for the ``add_remotes`` parameter.
+
+  Update ``tests/test_maintel_disable_hexapod_compensation_mode.py`` to ignore order of calls in the assertion.
+
+  Update ``tests/test_auxtel_atpneumatics_checkout.py`` unit tests to remove use of the ``add_remotes`` parameter and to create a dry test instance of ``ATCS`` during the initialization phase.
+
+  Update ``tests/test_maintel_home_both_axes.py`` unit tests to remove use of the ``add_remotes`` parameter and to create a dry test instance of ``MTCS`` during the initialization phase.
+
+  In ``python/lsst/ts/standardscripts/maintel/home_both_axes.py``, update script to only create instance of ``MTCS`` in the configuration stage.
+  This also removes the need for the ``add_remotes`` parameter.
+
+  In ``auxtel/daytime_checkout/atpneumatics_checkout.py``, update Script to only create instance of ``ATCS`` during the configuration stage.
+  This also removes the need of the ``add_remotes`` parameter in the initialization.
+
+  Update unit tests for m1m3 scripts.
+  This basically removes the add_remotes parameter when instantiating the Scripts class and creates an instance of ``MTCS`` configured with ``DryRun`` for testing.
+
+  Update all m1m3 scripts to only setup their instance of the ``MTCS`` class during the configuration stage.
+  This also removes the ``add_remotes`` parameter from their initialization.
+  Instantiation of the class is now done in the ``configure`` method. (`DM-42517 <https://jira.lsstcorp.org/browse/DM-42517>`_)
+
+
 v1.29.0 (2023-12-14)
 ====================
 

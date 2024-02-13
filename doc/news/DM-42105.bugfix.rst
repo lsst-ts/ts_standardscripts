@@ -1,1 +1,0 @@
-`run_m2_actuator_bump_test` call updated to use `actuator` instead of `actuator_id`
