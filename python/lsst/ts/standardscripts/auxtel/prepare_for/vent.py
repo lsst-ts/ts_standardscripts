@@ -141,7 +141,7 @@ class PrepareForVent(salobj.BaseScript):
             )
 
     async def prepare_for_vent(self):
-        await self.atcs.prepare_for_vent(partially_open_dome=True)
+        await self.atcs.prepare_for_vent(partially_open_dome=False)
 
     def get_sun_azel(self):
         """Get sun azel from ATCS.
