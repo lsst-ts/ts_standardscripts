@@ -1,1 +1,0 @@
-Introduce SAL scripts to enable/disable M2 closed-loop.

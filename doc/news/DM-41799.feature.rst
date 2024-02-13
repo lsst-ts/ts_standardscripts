@@ -1,3 +1,0 @@
-Introduce SAL scripts to enable/disable hexapods compensation mode of the Simonyi Survey Telescope:
-- ``enable_hexapods_compensation``: enable hexapods compensation mode.
-- ``disable_hexapods_compensation``: disable hexapods compensation mode.
