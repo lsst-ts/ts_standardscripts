@@ -1,0 +1,1 @@
+- Add a new ``maintel/take_image_anycam.py`` script to take data with any of the Simonyi cameras concurrently.
