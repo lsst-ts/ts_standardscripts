@@ -39,10 +39,38 @@ class CameraSetup:
     and a unique identifier.
     """
 
-    def __init__(self, camera, config, identifier):
+    def __init__(self, camera, config, identifier, normalize=True):
         self.camera = camera
-        self.config = config
         self.identifier = identifier
+        if normalize:
+            self.config = self.normalize_config(config)
+        else:
+            self.config = config
+
+    @staticmethod
+    def normalize_config(config):
+        """Normalize the camera configuration for consistent processing."""
+
+        # If 'nimages' is provided along with 'exp_times' as a list,
+        # raise an error.
+        if isinstance(config.get("exp_times"), list) and "nimages" in config:
+            raise ValueError("If 'nimages' is provided, 'exp_times' must be a scalar.")
+
+        # If 'exp_times' is a scalar (including 0 or positive values) and
+        # 'nimages' is specified, expand 'exp_times' into a list with 'nimages'
+        # repetitions.
+        elif not isinstance(config.get("exp_times"), list) and "nimages" in config:
+            nimages = config["nimages"]
+            exp_times = config.get("exp_times", 0)  # Default to 0 if not provided
+            config["exp_times"] = [exp_times] * nimages
+
+        # If 'exp_times' is a scalar and 'nimages' is not provided,
+        # transform 'exp_times' into a list with a single element.
+        elif not isinstance(config.get("exp_times"), list):
+            exp_times = config.get("exp_times", 0)  # Default to 0 if not provided
+            config["exp_times"] = [exp_times]
+
+        return config
 
 
 class TakeImageAnyCam(BaseBlockScript):
@@ -107,6 +135,13 @@ class TakeImageAnyCam(BaseBlockScript):
                           type: number
                           minimum: 0
                         minItems: 1
+                  nimages:
+                    description: Optional number of images to take. If given, exp_times must be a scalar.
+                      If given and exp_times is a list, it raises an error.
+                    anyOf:
+                      - type: integer
+                        minimum: 1
+                      - type: "null"
                   image_type:
                     description: Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, OBJECT)
                     type: string
@@ -135,6 +170,13 @@ class TakeImageAnyCam(BaseBlockScript):
                           type: number
                           minimum: 0
                         minItems: 1
+                  nimages:
+                    description: Optional number of images to take. If given, exp_times must be a scalar.
+                      If given and exp_times is a list, it raises an error.
+                    anyOf:
+                      - type: integer
+                        minimum: 1
+                      - type: "null"
                   image_type:
                     description: Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, OBJECT)
                     type: string
@@ -170,6 +212,17 @@ class TakeImageAnyCam(BaseBlockScript):
                             type: number
                             minimum: 0
                           minItems: 1
+                    nimages:
+                      description: Optional number of images to take. If given, exp_times must be a scalar.
+                        If given and exp_times is a list, it raises an error.
+                      anyOf:
+                        - type: integer
+                          minimum: 1
+                        - type: "null"
+                    image_type:
+                      description: Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, OBJECT)
+                      type: string
+                      enum: ["BIAS", "DARK", "FLAT", "OBJECT", "ENGTEST", "ACQ", "CWFS", "FOCUS", "STUTTERED"]
                   required:
                     - index
                     - exp_times
@@ -217,26 +270,12 @@ class TakeImageAnyCam(BaseBlockScript):
 
         This method initializes the MTCS and any cameras specified in the
         configuration (`config`). It supports initializing ComCam, LSSTCam,
-        and an arbitrary number of Generic Cameras.
+        and the Generic Cameras.
 
-        Parameters
-        ----------
-        config : `types.SimpleNamespace`
-            Configuration namespace containing camera-specific configurations.
-
-        Notes
-        -----
-        - `self.mtcs`: An instance of the MTCS. Initialized
-        only once and used to control telescope components beyond cameras.
-
-        - `self.camera_setups`: A dictionary of `CameraSetup` instances.
-          Each instance encapsulates a camera object (ComCam, LSSTCam,
-          orGenericCamera), its specific imaging configuration, and an
-          identifier.
-
-        The method ensures that MTCS and each camera are initialized only once.
-        For generic cameras, initialization tasks are executed concurrently to
-        optimize startup time.
+        Raises
+        ------
+        ValueError
+            If `nimages` is provided and `exp_times` is not a scalar.
         """
 
         self.config = config
@@ -245,7 +284,7 @@ class TakeImageAnyCam(BaseBlockScript):
         if hasattr(config, "program") and "-" not in config.program:
             raise ValueError(
                 "Program name requires a dash separating program from id number "
-                "(e.g. TEST-123)."
+                "(e.g. BLOCK-123)."
             )
 
         # Initialize MTCS if not already done
@@ -256,62 +295,69 @@ class TakeImageAnyCam(BaseBlockScript):
         else:
             self.log.debug("MTCS already defined, skipping.")
 
-        # Initialize or update  LSSTCam if configured
-        if "lsstcam" not in self.camera_setups and hasattr(config, "lsstcam"):
-            self.log.debug("Creating LSSTCam.")
-            lsstcam = LSSTCam(self.domain, log=self.log)
-            await lsstcam.start_task
-            self.camera_setups["lsstcam"] = CameraSetup(
-                lsstcam, config.lsstcam, "LSSTCam"
-            )
-        elif hasattr(config, "lsstcam"):
-            self.log.debug("LSSTCam already defined, updating configuration.")
-            self.camera_setups["lsstcam"].config = config.lsstcam
-
-        # Initialize or update  ComCam if configured
-        if "comcam" not in self.camera_setups and hasattr(config, "comcam"):
-            self.log.debug("Creating ComCam.")
-            comcam = ComCam(self.domain, log=self.log)
-            await comcam.start_task
-            self.camera_setups["comcam"] = CameraSetup(comcam, config.comcam, "ComCam")
-        elif hasattr(config, "comcam"):
-            self.log.debug("ComCam already defined, updating configuration.")
-            self.camera_setups["comcam"].config = config.comcam
-
-        # Initialize or update Generic Cameras if configured
-        if hasattr(config, "gencam"):
-            # Prepare tasks for initializing or updating generic cameras
-            init_update_tasks = [
-                self.init_or_update_gencam(gencam_config)
-                for gencam_config in config.gencam
-            ]
-
-            # Execute tasks concurrently
-            await asyncio.gather(*init_update_tasks)
+        # Initialize cameras and set configuration
+        await self.configure_cameras(config)
 
         await super().configure(config=config)
 
-    async def init_or_update_gencam(self, gencam_config):
-        """Initialize or update a generic camera."""
-        # Key used in self.camera_setups
-        gencam_key = f"generic_camera_{gencam_config['index']}"
-        # Identifier used in CameraSetup
-        gencam_identifier = f"GenericCam_{gencam_config['index']}"
-
-        if gencam_key not in self.camera_setups:
-            self.log.debug(f"Creating {gencam_identifier}.")
-            gencam = GenericCamera(
-                gencam_config["index"], domain=self.domain, log=self.log
+    async def configure_cameras(self, config):
+        """Configure all cameras based on the script configuration,
+        with asynchronous setup for generic cameras."""
+        tasks = []
+        if hasattr(config, "lsstcam"):
+            tasks.append(
+                self.configure_camera(
+                    CameraClass=LSSTCam,
+                    cam_key="lsstcam",
+                    cam_config=config.lsstcam,
+                    cam_identifier="LSSTCam",
+                )
             )
-            await gencam.start_task
-            self.camera_setups[gencam_key] = CameraSetup(
-                gencam, gencam_config, gencam_identifier
+        if hasattr(config, "comcam"):
+            tasks.append(
+                self.configure_camera(
+                    CameraClass=ComCam,
+                    cam_key="comcam",
+                    cam_config=config.comcam,
+                    cam_identifier="ComCam",
+                )
+            )
+        if hasattr(config, "gencam"):
+            for gencam_config in config.gencam:
+                gencam_key = f"generic_camera_{gencam_config['index']}"
+                gen_cam_identifier = f"GenericCam_{gencam_config['index']}"
+                tasks.append(
+                    self.configure_camera(
+                        CameraClass=GenericCamera,
+                        cam_key=gencam_key,
+                        cam_config=gencam_config,
+                        cam_identifier=gen_cam_identifier,
+                        is_generic=True,
+                    )
+                )
+        await asyncio.gather(*tasks)
+
+    async def configure_camera(
+        self, CameraClass, cam_key, cam_config, cam_identifier, is_generic=False
+    ):
+        """Configure a specific camera."""
+
+        if cam_key not in self.camera_setups:
+            camera = (
+                CameraClass(domain=self.domain, log=self.log)
+                if not is_generic
+                else CameraClass(cam_config["index"], domain=self.domain, log=self.log)
+            )
+            await camera.start_task
+            # Setting up the camera.
+            self.camera_setups[cam_key] = CameraSetup(
+                camera, cam_config, cam_identifier
             )
         else:
-            self.log.debug(
-                f"{gencam_identifier} already defined, updating configuration."
+            # upating the camera configuration if already defined.
+            self.camera_setups[cam_key].config = CameraSetup.normalize_config(
+                cam_config
             )
-            self.camera_setups[gencam_key].config = gencam_config
 
     def set_metadata(self, metadata: type_hints.BaseMsgType) -> None:
         """Set script metadata."""
@@ -321,20 +367,13 @@ class TakeImageAnyCam(BaseBlockScript):
 
         camera_durations = {}
         for camera_setup in self.camera_setups.values():
-            if len(camera_setup.config) != 0:
+            if camera_setup.config:
                 self.log.info(
-                    f"{camera_setup.identifier} configuration: "
-                    f"{camera_setup.config}"
+                    f"{camera_setup.identifier} configuration: {camera_setup.config}"
                 )
-                exp_times = (
-                    camera_setup.config["exp_times"]
-                    if "exp_times" in camera_setup.config
-                    else 0
-                )
-                nimages = len(exp_times) if isinstance(exp_times, list) else 1
-                total_exptime = (
-                    sum(exp_times) if isinstance(exp_times, list) else exp_times
-                )
+                exp_times = camera_setup.config["exp_times"]
+                nimages = len(exp_times)
+                total_exptime = sum(exp_times)
                 read_out_time = getattr(camera_setup.camera, "read_out_time", 0)
                 shutter_time = getattr(camera_setup.camera, "shutter_time", 0)
 
@@ -344,8 +383,10 @@ class TakeImageAnyCam(BaseBlockScript):
                     + (read_out_time + shutter_time * 2) * nimages
                 )
                 camera_durations[camera_setup.identifier] = duration
+                self.log.info(
+                    f"{camera_setup.identifier} will take {nimages}. Total duration: {duration}."
+                )
 
-        # Safeguard against empty sequences
         if camera_durations:
             self.camera_longest, self.camera_longest_duration = max(
                 camera_durations.items(), key=lambda item: item[1]
@@ -358,28 +399,20 @@ class TakeImageAnyCam(BaseBlockScript):
     def get_instrument_configuration(self, camera_config: dict) -> dict:
         # Ensure the return value is always a dictionary
         instrument_config = {}
-        if hasattr(camera_config, "filter"):
+        if "filter" in camera_config:
             instrument_config["filter"] = camera_config["filter"]
         return instrument_config
 
     async def assert_feasibility(self):
-        """
-        Verify that the system and all configured cameras are in a
-        feasible state to execute the script.
-        """
+        """Verify that the system and all configured cameras are in
+        a feasible state to execute the script."""
         checks = [self.mtcs.assert_liveliness()]
-
         for camera_setup in self.camera_setups.values():
             if hasattr(camera_setup.camera, "assert_all_enabled"):
                 checks.append(camera_setup.camera.assert_all_enabled())
             if hasattr(camera_setup.camera, "assert_liveliness"):
                 checks.append(camera_setup.camera.assert_liveliness())
-
         await asyncio.gather(*checks)
-
-    def normalize_exp_times(self, exp_times):
-        """Ensure exp_times is always a list for consistent processing."""
-        return exp_times if isinstance(exp_times, list) else [exp_times]
 
     async def take_images_with_camera(self, camera_setup: CameraSetup):
         """
@@ -394,8 +427,7 @@ class TakeImageAnyCam(BaseBlockScript):
         """
 
         if len(camera_setup.config) != 0:
-
-            exp_times = self.normalize_exp_times(camera_setup.config["exp_times"])
+            exp_times = camera_setup.config["exp_times"]
             image_type = camera_setup.config["image_type"]
             note = getattr(self.config, "note", None)
             reason = getattr(self.config, "reason", None)
@@ -420,9 +452,9 @@ class TakeImageAnyCam(BaseBlockScript):
                 await camera_setup.camera.take_imgtype(
                     image_type=image_type,
                     exp_time=exp_time,
-                    note=note,
-                    reason=reason,
                     program=program,
+                    reason=reason,
+                    note=note,
                     group_id=self.group_id,
                 )
 

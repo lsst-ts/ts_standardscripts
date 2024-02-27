@@ -21,7 +21,8 @@
 
 import unittest
 
-from lsst.ts import standardscripts
+import pytest
+from lsst.ts import salobj, standardscripts
 from lsst.ts.standardscripts.maintel import CameraSetup, TakeImageAnyCam
 
 
@@ -58,7 +59,10 @@ class TestTakeImageAnyCam(
             camera.read_out_time = 2
             camera.shutter_time = 0.1
             self.script.camera_setups[cam.lower()] = CameraSetup(
-                camera=camera, config=dict(), identifier=cam
+                camera=camera,
+                config=dict(),
+                identifier=cam,
+                normalize=False,
             )
 
         # Mocking generic cameras
@@ -71,7 +75,10 @@ class TestTakeImageAnyCam(
             camera.read_out_time = 1
             camera.shutter_time = 0.1
             self.script.camera_setups[gen_cam_key] = CameraSetup(
-                camera=camera, config=dict(), identifier=f"GenericCam_{i}"
+                camera=camera,
+                config=dict(),
+                identifier=f"GenericCam_{i}",
+                normalize=False,
             )
 
     async def assert_camera_setup(self, camera_setup_key, expected_config):
@@ -85,25 +92,64 @@ class TestTakeImageAnyCam(
             The camera setup key of the camera to check ("lsstcam", "comcam",
             "generic_camera_1", "generic_camera_2", "generic_camera_3").
         expected_config : dict
-            The expected configuration dictionary for the camera.
+            The expected configuration dictionary for the camera, before
+            normalization.
         """
         camera_setup_found = False
+
+        # Normalize the expected configuration to ensure it matches
+        # the format stored within CameraSetup objects.
+        normalized_expected_config = CameraSetup.normalize_config(expected_config)
 
         camera_setup = self.script.camera_setups.get(camera_setup_key)
         if camera_setup:
             camera_setup_config = camera_setup.config
-            assert (
-                camera_setup_config == expected_config
-            ), f"Configuration mismatch for {camera_setup_key}"
+            assert camera_setup_config == normalized_expected_config, (
+                f"Configuration mismatch for {camera_setup_key}: expected "
+                f"{normalized_expected_config}, got {camera_setup_config}"
+            )
             camera_setup_found = True
 
         assert (
             camera_setup_found
         ), f"{camera_setup_key} setup missing or incorrect in camera_setups."
 
+    async def test_invalid_program_name(self):
+        # Testing invalid program name
+        bad_config = {
+            "comcam": {
+                "exp_times": [5, 15, 20],
+                "nimages": 10,
+                "image_type": "OBJECT",
+                "filter": None,
+            },
+            "reason": "SITCOM-321",
+            "program": "BLOCK123",
+            "note": "Test image",
+        }
+
+        async with self.make_script():
+            with pytest.raises(salobj.ExpectedError):
+                await self.configure_script(**bad_config)
+
+    async def test_invalid_config_comcam(self):
+        # Testing invalid exp_times and nimages entry
+        bad_config = {
+            "comcam": {
+                "exp_times": [5, 15, 20],
+                "nimages": 10,
+                "image_type": "OBJECT",
+                "filter": None,
+            },
+        }
+
+        async with self.make_script():
+            with pytest.raises(salobj.ExpectedError):
+                await self.configure_script(**bad_config)
+
     async def test_configure_with_only_lsstcam(self):
         lsstcam_config = {
-            "exp_times": [15, 30, 45],
+            "exp_times": [15, 30, 45, 60, 75, 90],
             "image_type": "OBJECT",
             "filter": "r",
         }
@@ -130,6 +176,7 @@ class TestTakeImageAnyCam(
     async def test_configure_with_only_comcam(self):
         comcam_config = {
             "exp_times": 15,
+            "nimages": 10,
             "image_type": "OBJECT",
             "filter": 1,
         }
@@ -156,13 +203,18 @@ class TestTakeImageAnyCam(
     async def test_configure_with_lsstcam_and_generic_cams(self):
         config = {
             "lsstcam": {
-                "exp_times": [15, 30, 45, 60, 75, 90],
-                "image_type": "OBJECT",
-                "filter": None,
+                "exp_times": 0,
+                "nimages": 30,
+                "image_type": "BIAS",
             },
             "gencam": [
-                {"index": 101, "exp_times": 5, "image_type": "OBJECT"},
-                {"index": 102, "exp_times": [15, 35, 60], "image_type": "OBJECT"},
+                {"index": 101, "exp_times": 5, "nimages": 10, "image_type": "OBJECT"},
+                {"index": 102, "exp_times": 30, "nimages": 1, "image_type": "DARK"},
+                {
+                    "index": 103,
+                    "exp_times": [5, 10, 20, 40, 60, 120],
+                    "image_type": "FLAT",
+                },
             ],
             "reason": "SITCOM-321",
             "program": "BLOCK-123",
@@ -199,15 +251,12 @@ class TestTakeImageAnyCam(
             "comcam": {
                 "exp_times": 30,
                 "image_type": "OBJECT",
-                "filter": "r",
+                "filter": None,
             },
             "gencam": [
                 {"index": 101, "exp_times": 5, "image_type": "OBJECT"},
-                {
-                    "index": 102,
-                    "exp_times": [15, 30, 60, 90, 120],
-                    "image_type": "OBJECT",
-                },
+                {"index": 102, "exp_times": [15, 30, 60], "image_type": "OBJECT"},
+                {"index": 103, "exp_times": 30, "nimages": 10, "image_type": "OBJECT"},
             ],
         }
 
@@ -240,8 +289,8 @@ class TestTakeImageAnyCam(
         config = {
             "gencam": [
                 {"index": 101, "exp_times": [15], "image_type": "OBJECT"},
-                {"index": 102, "exp_times": 5, "image_type": "OBJECT"},
-                {"index": 103, "exp_times": [15, 30], "image_type": "OBJECT"},
+                {"index": 102, "exp_times": 5, "nimages": 10, "image_type": "OBJECT"},
+                {"index": 103, "exp_times": 0, "image_type": "BIAS"},
             ],
         }
 
@@ -273,73 +322,62 @@ class TestTakeImageAnyCam(
             if comcam_setup:
                 assert comcam_setup.config == dict()
 
-    def normalize_exp_times(self, exp_times):
-        """Ensure exp_times is always treated as a list,
-        even for single values or zero.
-        """
-        # Adjust to handle a single zero value or non-list exp_times
-        if not isinstance(exp_times, list) or exp_times == 0:
-            return [exp_times]
-        return exp_times
-
-    def validate_camera_configuration(self, cam_config, cam_key=None):
+    async def validate_camera_configuration(self, cam_config, cam_key=None):
         """Validates the camera setup and call counts based on its
-        configuration.
-
-        Parameters
-        ----------
-        cam_config : dict
-            The configuration for the camera setup.
-        cam_key : str, optional
-            The camera setup key, if different from the camera identifier.
+        configuration, ensuring that expected configuration is
+        normalized.
         """
-        if isinstance(cam_config, dict) and "exp_times" in cam_config:
-            # Normalize exp_times to ensure it's a list
-            exp_times = cam_config["exp_times"]
-            if not isinstance(exp_times, list):
-                exp_times = [exp_times]
-
-            # Calculate expected_calls considering zero as valid exposure
-            expected_calls = len([exp for exp in exp_times if exp >= 0])
-
-            # Retrieve the appropriate camera setup
-            camera_key = (
-                cam_key if cam_key else f"generic_camera_{cam_config.get('index')}"
-            )
-            camera_setup = self.script.camera_setups.get(camera_key)
-
-            if camera_setup:
-                actual_calls = camera_setup.camera.take_imgtype.await_count
-                self.assertEqual(
-                    actual_calls,
-                    expected_calls,
-                    f"Expected {expected_calls} calls for {camera_key}, but got {actual_calls}.",
-                )
-
-                # Validate the filter setup if applicable
-                if "filter" in cam_config:
-                    camera_setup.camera.setup_instrument.assert_awaited_once_with(
-                        filter=cam_config["filter"]
-                    )
-            else:
-                raise AssertionError(f"Camera setup for {camera_key} not found.")
-        else:
+        if "exp_times" not in cam_config:
             raise ValueError(
-                f"Invalid configuration for {cam_key}. Configuration must be a dictionary with 'exp_times'."
+                f"Invalid configuration for {cam_key}. Configuration must include 'exp_times'."
+            )
+
+        # Normalize the expected configuration to match the script's
+        # internal representation.
+        normalized_cam_config = CameraSetup.normalize_config(cam_config.copy())
+
+        # Calculate expected calls considering zero as valid exposure time
+        expected_calls = len(
+            [exp for exp in normalized_cam_config["exp_times"] if exp >= 0]
+        )
+
+        camera_key = cam_key if cam_key else f"generic_camera_{cam_config.get('index')}"
+        camera_setup = self.script.camera_setups.get(camera_key)
+
+        if not camera_setup:
+            raise AssertionError(f"Camera setup for {camera_key} not found.")
+
+        actual_calls = camera_setup.camera.take_imgtype.await_count
+        assert (
+            actual_calls == expected_calls
+        ), f"Expected {expected_calls} calls for {camera_key}, got {actual_calls}."
+
+        # Validate the filter setup if applicable
+        if "filter" in normalized_cam_config:
+            camera_setup.camera.setup_instrument.assert_awaited_once_with(
+                filter=normalized_cam_config["filter"]
             )
 
     async def test_run_block(self):
         async with self.make_script():
             # Cnfiguration for LSSTCam, ComCam, and generic cameras
             config = {
-                "lsstcam": {"exp_times": [10, 20], "image_type": "OBJECT"},
+                "lsstcam": {
+                    "exp_times": 30,
+                    "nimages": 10,
+                    "image_type": "OBJECT",
+                    "filter": None,
+                },
                 "gencam": [
-                    {"index": 101, "exp_times": [5, 5], "image_type": "DARK"},
-                    {"index": 102, "exp_times": 0, "image_type": "BIAS"},
+                    {"index": 101, "exp_times": 30, "image_type": "DARK"},
+                    {"index": 102, "exp_times": [15, 30, 60], "image_type": "OBJECT"},
+                    {
+                        "index": 103,
+                        "exp_times": 30,
+                        "nimages": 10,
+                        "image_type": "OBJECT",
+                    },
                 ],
-                "reason": "SITCOM-321",
-                "program": "BLOCK-123",
-                "note": "Test image",
             }
 
             await self.configure_script(**config)
@@ -349,12 +387,9 @@ class TestTakeImageAnyCam(
             for cam_key, cam_config in config.items():
                 if cam_key == "gencam":  # gencam is a list of dictionaries
                     for gencam_config in cam_config:
-                        self.validate_camera_configuration(gencam_config)
-                elif cam_key in [
-                    "lsstcam",
-                    "comcam",
-                ]:  # lsstcam and comcam are dictionaries
-                    self.validate_camera_configuration(config[cam_key], cam_key)
+                        await self.validate_camera_configuration(gencam_config)
+                else:  # lsstcam and comcam are dictionaries
+                    await self.validate_camera_configuration(cam_config, cam_key)
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
