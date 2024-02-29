@@ -41,6 +41,7 @@ class TestTakeImageAnyCam(
         """Mock MTCS instances and its methods."""
         self.script.mtcs = unittest.mock.AsyncMock()
         self.script.mtcs.assert_liveliness = unittest.mock.AsyncMock()
+        self.script.mtcs.components_attr = ["mtm1m3"]
 
         # Initialize camera_setups with mock cameras
         self.script.camera_setups = {}
@@ -114,6 +115,28 @@ class TestTakeImageAnyCam(
             camera_setup_found
         ), f"{camera_setup_key} setup missing or incorrect in camera_setups."
 
+    async def test_config_ignore(self):
+        # Testing ignored components
+        lsstcam_config = {
+            "exp_times": 5,
+            "nimages": 5,
+            "image_type": "OBJECT",
+            "filter": "r",
+        }
+        config = {
+            "lsstcam": lsstcam_config,
+            "reason": "SITCOM-321",
+            "program": "BLOCK-123",
+            "note": "Test image",
+            "ignore": ["mtm1m3", "no_comp"],
+        }
+        async with self.make_script():
+            await self.configure_script(**config)
+
+            # Asserting that component were ignored
+            assert self.script.mtcs.check.mtm1m3 is False
+            self.script.mtcs.check.no_comp.assert_not_called()
+
     async def test_invalid_program_name(self):
         # Testing invalid program name
         bad_config = {
@@ -158,6 +181,7 @@ class TestTakeImageAnyCam(
             "reason": "SITCOM-321",
             "program": "BLOCK-123",
             "note": "Test image",
+            "ignore": ["mtm1m3", "no_comp"],
         }
 
         async with self.make_script():
@@ -258,6 +282,7 @@ class TestTakeImageAnyCam(
                 {"index": 102, "exp_times": [15, 30, 60], "image_type": "OBJECT"},
                 {"index": 103, "exp_times": 30, "nimages": 10, "image_type": "OBJECT"},
             ],
+            "ignore": ["mtm1m3", "no_comp"],
         }
 
         async with self.make_script():
@@ -292,6 +317,7 @@ class TestTakeImageAnyCam(
                 {"index": 102, "exp_times": 5, "nimages": 10, "image_type": "OBJECT"},
                 {"index": 103, "exp_times": 0, "image_type": "BIAS"},
             ],
+            "ignore": ["mtm1m3", "no_comp"],
         }
 
         async with self.make_script():
