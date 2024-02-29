@@ -451,8 +451,9 @@ class TakeImageAnyCam(BaseBlockScript):
                         f"exp_time={exp_time}s for {camera_setup.identifier}."
                     )
                 await camera_setup.camera.take_imgtype(
-                    image_type=image_type,
-                    exp_time=exp_time,
+                    imgtype=image_type,
+                    exptime=exp_time,
+                    n=1,
                     program=program,
                     reason=reason,
                     note=note,
