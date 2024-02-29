@@ -227,6 +227,13 @@ class TakeImageAnyCam(BaseBlockScript):
                     - index
                     - exp_times
                     - image_type
+              ignore:
+                  description: >-
+                      CSCs from the group to ignore in status check. Name must
+                      match those in self.group.components, e.g.; hexapod_1.
+                  type: array
+                  items:
+                      type: string
               reason:
                 description: Optional reason for taking the data (e.g. SITCOM-321).
                 type: string
@@ -291,15 +298,31 @@ class TakeImageAnyCam(BaseBlockScript):
         if self.mtcs is None:
             self.log.debug("Creating MTCS.")
             self.mtcs = MTCS(domain=self.domain, log=self.log)
-            self.mtcs.check.mtm1m3 = False
+            if hasattr(self.config, "ignore"):
+                self.ignore_components(config)
             await self.mtcs.start_task
         else:
+            # Ignoring components if already defined (for unit test)
+            if hasattr(self.config, "ignore"):
+                self.ignore_components(config)
             self.log.debug("MTCS already defined, skipping.")
 
         # Initialize cameras and set configuration
         await self.configure_cameras(config)
 
         await super().configure(config=config)
+
+    def ignore_components(self, config):
+
+        for comp in self.config.ignore:
+            if comp not in self.mtcs.components_attr:
+                self.log.warning(
+                    f"Component {comp} not in CSC Group. "
+                    f"Must be one of {self.mtcs.components_attr}. "
+                )
+            else:
+                self.log.debug(f"Ignoring component {comp}.")
+                setattr(self.mtcs.check, comp, False)
 
     async def configure_cameras(self, config):
         """Configure all cameras based on the script configuration,
@@ -385,7 +408,7 @@ class TakeImageAnyCam(BaseBlockScript):
                 )
                 camera_durations[camera_setup.identifier] = duration
                 self.log.info(
-                    f"{camera_setup.identifier} will take {nimages}. Total duration: {duration}."
+                    f"{camera_setup.identifier} will take {nimages} images. Total duration: {duration}."
                 )
 
         if camera_durations:
