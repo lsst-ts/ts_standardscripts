@@ -291,6 +291,7 @@ class TakeImageAnyCam(BaseBlockScript):
         if self.mtcs is None:
             self.log.debug("Creating MTCS.")
             self.mtcs = MTCS(domain=self.domain, log=self.log)
+            self.mtcs.check.mtm1m3 = False
             await self.mtcs.start_task
         else:
             self.log.debug("MTCS already defined, skipping.")
