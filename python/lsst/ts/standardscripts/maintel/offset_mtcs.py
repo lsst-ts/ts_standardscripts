@@ -44,6 +44,7 @@ class OffsetMTCS(BaseOffsetTCS):
         mtcs_usage = None if add_remotes else MTCSUsages.DryTest
 
         self.mtcs = MTCS(domain=self.domain, intended_usage=mtcs_usage, log=self.log)
+        self.mtcs.check.mtm1m3 = False
 
     @property
     def tcs(self):
