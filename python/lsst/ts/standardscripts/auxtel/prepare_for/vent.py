@@ -34,14 +34,11 @@ from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 class VentConstraints:
     sun_elevation_max = 55.0
     sun_elevation_min = 5.0
-    sun_azimuth_min = 0.0
-    sun_azimuth_max = 180.0
 
     def __repr__(self) -> str:
         return (
             "VentConstraints:: \n\n"
             f"Sun elevation between {self.sun_elevation_max} and {self.sun_elevation_min} degrees.\n"
-            f"Sun azimuth larger than {self.sun_azimuth_max} or lower than {self.sun_elevation_min}."
         )
 
 
@@ -169,10 +166,7 @@ class PrepareForVent(salobj.BaseScript):
             If not in the vent band.
         """
         if (
-            self.vent_constraints.sun_azimuth_min
-            < sun_az
-            < self.vent_constraints.sun_azimuth_max
-            or sun_el > self.vent_constraints.sun_elevation_max
+            sun_el > self.vent_constraints.sun_elevation_max
             or sun_el < self.vent_constraints.sun_elevation_min
         ):
             raise RuntimeError(
