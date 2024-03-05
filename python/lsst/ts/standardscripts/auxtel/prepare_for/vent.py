@@ -32,7 +32,7 @@ from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 
 @dataclasses.dataclass
 class VentConstraints:
-    sun_elevation_max = 55.0
+    sun_elevation_max = 90.0
     sun_elevation_min = 5.0
 
     def __repr__(self) -> str:
