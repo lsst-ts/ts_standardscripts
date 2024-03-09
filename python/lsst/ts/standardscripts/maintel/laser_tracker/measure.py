@@ -24,15 +24,15 @@ __all__ = ["Measure"]
 import asyncio
 
 import yaml
-from lsst.ts import salobj
 from lsst.ts.idl.enums.LaserTracker import LaserStatus
 from lsst.ts.observatory.control import RemoteGroup
 from lsst.ts.observatory.control.remote_group import Usages
 
+from ...base_block_script import BaseBlockScript
 from .align import AlignComponent
 
 
-class Measure(salobj.BaseScript):
+class Measure(BaseBlockScript):
     """Measure component using laser tracker.
 
     Parameters
@@ -122,7 +122,7 @@ class Measure(salobj.BaseScript):
         except asyncio.TimeoutError:
             self.log.warning("Cannot determine Laser Tracker state, continuing.")
 
-    async def run(self):
+    async def run_block(self):
         """Run the script."""
 
         await self.check_laser_status_ok()
