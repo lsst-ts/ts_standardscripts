@@ -86,10 +86,20 @@ class Measure(BaseBlockScript):
         required:
             - target
         """
-        return yaml.safe_load(schema_yaml)
+        schema_dict = yaml.safe_load(schema_yaml)
+
+        base_schema_dict = super().get_schema()
+
+        for properties in base_schema_dict["properties"]:
+            schema_dict["properties"][properties] = base_schema_dict["properties"][
+                properties
+            ]
+
+        return schema_dict
 
     async def configure(self, config):
         self.target = getattr(AlignComponent, config.target)
+        await super().configure(config=config)
 
     def set_metadata(self, metadata):
         """Set estimated duration of the script."""

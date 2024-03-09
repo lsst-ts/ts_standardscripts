@@ -112,7 +112,16 @@ class Align(BaseBlockScript):
         required:
             - target
         """
-        return yaml.safe_load(schema_yaml)
+        schema_dict = yaml.safe_load(schema_yaml)
+
+        base_schema_dict = super().get_schema()
+
+        for properties in base_schema_dict["properties"]:
+            schema_dict["properties"][properties] = base_schema_dict["properties"][
+                properties
+            ]
+
+        return schema_dict
 
     async def configure(self, config):
         if self.laser_tracker is None:
@@ -122,6 +131,7 @@ class Align(BaseBlockScript):
                 log=self.log,
             )
             await self.laser_tracker.start_task
+        await super().configure(config=config)
 
         if self.mtcs is None:
             self.mtcs = MTCS(
