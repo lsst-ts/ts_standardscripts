@@ -41,10 +41,16 @@ class TestTakeImageComCam(
         async with self.make_script():
             exp_times = 1.1
             image_type = "OBJECT"
-            await self.configure_script(exp_times=exp_times, image_type=image_type)
+            visit_metadata = dict(ra=10.0, dec=-90.0, rot_sky=5.0)
+            await self.configure_script(
+                exp_times=exp_times,
+                image_type=image_type,
+                visit_metadata=visit_metadata,
+            )
             assert self.script.config.exp_times == [exp_times]
             assert self.script.config.image_type == image_type
             assert self.script.config.filter is None
+            assert self.script.config.visit_metadata == visit_metadata
 
         async with self.make_script():
             exp_times = 1.1
