@@ -215,8 +215,8 @@ class PowerOnATCalSys(salobj.BaseScript):
                 flush=True, timeout=self.timeout_std
             )
             tel_chiller_temp = chiller_temps.supplyTemperature
-            self.log.debug(
-                f"Chiller supply temperature: {tel_chiller_temp:0.1f} deg "
+            self.log.debug( 
+               f"Chiller supply temperature: {tel_chiller_temp:0.1f} deg "
                 f"[set:{chiller_temps.setTemperature} deg]."
             )
             if (
