@@ -22,6 +22,7 @@
 __all__ = ["BaseTakeImage"]
 
 import abc
+import asyncio
 import collections
 
 import astropy.units
@@ -130,6 +131,10 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
               note:
                 description: A descriptive note about the image being taken.
                 type: string
+              slew_time:
+                description: Emulate a slewttime by sleeping before taking data.
+                type: number
+                default: 0
               visit_metadata:
                 type: object
                 properties:
@@ -189,6 +194,7 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
         mean_exptime = np.mean(self.config.exp_times)
         metadata.duration = (
             self.instrument_setup_time
+            + self.config.slew_time
             + (
                 mean_exptime + self.camera.read_out_time + self.camera.shutter_time * 2
                 if self.camera.shutter_time
@@ -221,9 +227,20 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
         reason = getattr(self.config, "reason", None)
         program = getattr(self.config, "program", None)
 
-        await self.checkpoint("setup instrument")
-        await self.camera.setup_instrument(**self.get_instrument_configuration())
+        setup_tasks = [
+            self.camera.setup_instrument(**self.get_instrument_configuration())
+        ]
 
+        if self.config.slew_time > 0:
+            await self.checkpoint(
+                f"Setup instrument and concurrently sleep for {self.config.slew_time}s "
+                "before data acquisition."
+            )
+            setup_tasks.append(asyncio.sleep(self.config.slew_time))
+        else:
+            await self.checkpoint("setup instrument")
+
+        await asyncio.gather(*setup_tasks)
         for i, exposure in enumerate(self.config.exp_times):
             self.log.debug(
                 f"Exposing image {i+1} of {nimages} with exp_time={exposure}s."
