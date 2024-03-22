@@ -86,11 +86,7 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
         -------
         instrument_filter: `string`
         """
-        instrument_configuration = self.get_instrument_configuration()
-        if isinstance(instrument_configuration["filter"], str):
-            return instrument_configuration["filter"].split("_")[0]
-        else:
-            return instrument_configuration["filter"]
+        return self.get_instrument_configuration().get("filter", "")
 
     @classmethod
     def get_schema(cls):
