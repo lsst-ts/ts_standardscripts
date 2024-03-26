@@ -219,7 +219,7 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
             metadata.cameraAngle = self.config.visit_metadata["rot_sky"]
 
         if self.get_instrument_filter() is not None:
-            metadata.filters = self.get_instrument_filter()
+            metadata.filters = str(self.get_instrument_filter())
 
     async def run(self):
         nimages = len(self.config.exp_times)
