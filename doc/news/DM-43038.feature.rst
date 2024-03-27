@@ -1,0 +1,36 @@
+Update the following scripts to block scripts:
+
+  - ``maintel/laser_tracker/shut_down``.
+
+  - ``maintel/laser_tracker/set_up``.
+
+  - ``maintel/laser_tracker/measure``.
+
+  - ``maintel/laser_tracker/align``.
+
+Add Script to move the dome.
+
+In ``auxtel/prepare_for/vent``:
+
+  - remove azimuth constraints for venting.
+
+  - adjust elevation limit to allow venting at elevations higher than 5 degrees.
+
+  - Partially open ATDome when venting.
+
+Ignore m1m3 in offset_mtcs.
+
+In ``take_image_anycam``, add the ability to ignore a component when initializing mtcs.
+
+In ``base_track_target``, load local catalog.
+
+In ``base_take_image``:
+
+  - Make sure filter is of type string.
+  - Add a configuration parameter to allow specifying a "slew_time" (in seconds).
+  - Return the full filter name when retrieving filter name for configuration.
+
+In ``take_image_comcam``, add a configuration option to specify data is being taken with comcam in simulation mode.
+
+Add new ``maintel/mtdome/crawl_az.py`` script to move the MTDome is a particular direction.
+

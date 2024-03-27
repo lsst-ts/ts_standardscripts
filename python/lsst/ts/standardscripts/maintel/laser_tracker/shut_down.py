@@ -21,13 +21,14 @@
 
 __all__ = ["ShutDown"]
 
-from lsst.ts import salobj
 from lsst.ts.idl.enums.LaserTracker import LaserStatus
 from lsst.ts.observatory.control import RemoteGroup
 from lsst.ts.observatory.control.remote_group import Usages
 
+from ...base_block_script import BaseBlockScript
 
-class ShutDown(salobj.BaseScript):
+
+class ShutDown(BaseBlockScript):
     """Shut down Laser Tracker.
 
     Parameters
@@ -88,7 +89,7 @@ class ShutDown(salobj.BaseScript):
                 )
             )
 
-    async def run(self):
+    async def run_block(self):
         """Run the script."""
 
         await self.checkpoint("Shutting down Laser Tracker.")

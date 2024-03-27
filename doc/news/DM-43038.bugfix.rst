@@ -1,0 +1,4 @@
+In ``point_azel``, fix error configuring TCS.
+
+In ``take_image_anycam``, fix call to ``take_imgtype``.
+

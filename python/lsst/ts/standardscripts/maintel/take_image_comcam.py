@@ -54,7 +54,7 @@ class TakeImageComCam(BaseTakeImage):
 
         self.instrument_setup_time = self._comcam.filter_change_timeout
 
-        self.instrument_name = "ComCam"
+        self.instrument_name = "LSSTComCam"
 
     @property
     def camera(self):
@@ -77,6 +77,10 @@ class TakeImageComCam(BaseTakeImage):
                     minimum: 1
                   - type: "null"
                 default: null
+              sim:
+                description: Is ComCam in simulation mode? This mode is used for tests.
+                type: boolean
+                default: false
             additionalProperties: false
         """
         schema_dict = yaml.safe_load(schema_yaml)
@@ -89,6 +93,9 @@ class TakeImageComCam(BaseTakeImage):
         return schema_dict
 
     def get_instrument_name(self):
+        if self.config is not None and self.config.sim:
+            return self.instrument_name + "Sim"
+
         return self.instrument_name
 
     def get_instrument_configuration(self):

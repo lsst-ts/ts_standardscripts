@@ -17,35 +17,6 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["OffsetMTCS"]
-
-from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-
-from ..base_offset_tcs import BaseOffsetTCS
-
-
-class OffsetMTCS(BaseOffsetTCS):
-    """Perform an MTCS offset.
-
-    Parameters
-    ----------
-    index : `int`
-        Index of Script SAL component.
-    """
-
-    def __init__(self, index, add_remotes: bool = True):
-        super().__init__(
-            index=index,
-            descr="Perform an MTCS offset",
-        )
-
-        mtcs_usage = None if add_remotes else MTCSUsages.DryTest
-
-        self.mtcs = MTCS(domain=self.domain, intended_usage=mtcs_usage, log=self.log)
-        self.mtcs.check.mtm1m3 = False
-
-    @property
-    def tcs(self):
-        return self.mtcs
+from .crawl_az import *
