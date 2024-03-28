@@ -1,1 +1,0 @@
-Extended the `slew_ephem_target` functionality of the `base_tcs` to `base_track_target`, enabling the tracking of targets based on ephemeris data for both Simonyi and Auxiliary telescopes.
