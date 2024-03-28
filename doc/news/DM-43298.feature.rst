@@ -1,3 +1,0 @@
-- In ``base_take_image.py``, add new section to populate additional optional nextVisit metadata as part of config. 
-- In ``maintel/take_image_comcam.py`` and ``maintel/take_image_lsstcam``, add hooks for nextVisit metadata. 
-- In ``auxtel/take_image_latiss.py``, add hooks for nextVisit metadata. 

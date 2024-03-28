@@ -8,6 +8,70 @@ Version History
 
 .. towncrier release notes start
 
+v1.31.0 (2024-03-28)
+====================
+
+New Features
+------------
+
+- Extended the `slew_ephem_target` functionality of the `base_tcs` to `base_track_target`, enabling the tracking of targets based on ephemeris data for both Simonyi and Auxiliary telescopes. (`DM-41340 <https://jira.lsstcorp.org/browse/DM-41340>`_)
+- Add a new ``maintel/take_image_anycam.py`` script to take data with any of the Simonyi cameras concurrently. (`DM-42516 <https://jira.lsstcorp.org/browse/DM-42516>`_)
+- Update the following scripts to block scripts:
+
+    - ``maintel/laser_tracker/shut_down``.
+
+    - ``maintel/laser_tracker/set_up``.
+
+    - ``maintel/laser_tracker/measure``.
+
+    - ``maintel/laser_tracker/align``.
+
+  Add Script to move the dome.
+
+  In ``auxtel/prepare_for/vent``:
+
+    - remove azimuth constraints for venting.
+
+    - adjust elevation limit to allow venting at elevations higher than 5 degrees.
+
+    - Partially open ATDome when venting.
+
+  Ignore m1m3 in offset_mtcs.
+
+  In ``take_image_anycam``, add the ability to ignore a component when initializing mtcs.
+
+  In ``base_track_target``, load local catalog.
+
+  In ``base_take_image``:
+
+    - Make sure filter is of type string.
+    - Add a configuration parameter to allow specifying a "slew_time" (in seconds).
+    - Return the full filter name when retrieving filter name for configuration.
+
+  In ``take_image_comcam``, add a configuration option to specify data is being taken with comcam in simulation mode.
+
+  Add new ``maintel/mtdome/crawl_az.py`` script to move the MTDome is a particular direction. (`DM-43038 <https://jira.lsstcorp.org/browse/DM-43038>`_)
+  - In ``base_take_image.py``, add new section to populate additional optional nextVisit metadata as part of config. 
+  - In ``maintel/take_image_comcam.py`` and ``maintel/take_image_lsstcam``, add hooks for nextVisit metadata. 
+  - In ``auxtel/take_image_latiss.py``, add hooks for nextVisit metadata. (`DM-43298 <https://jira.lsstcorp.org/browse/DM-43298>`_)
+
+
+Bug Fixes
+---------
+
+- In ``point_azel``, fix error configuring TCS.
+
+  In ``take_image_anycam``, fix call to ``take_imgtype``. (`DM-43038 <https://jira.lsstcorp.org/browse/DM-43038>`_)
+
+
+Performance Enhancement
+-----------------------
+
+- In ``maintel/take_image_anycam.py``, a ``nimages`` parameter has been added to facilitate capturing multiple images with a single exposure time.
+  This eliminates the necessity of entering ``exp_times`` as a list when multiple images with identical exposure times are required.
+  Furthermore, this enhancement aligns with the standard behavior of other image capture scripts. (`DM-43030 <https://jira.lsstcorp.org/browse/DM-43030>`_)
+
+
 v1.30.0 (2024-02-13)
 ====================
 
