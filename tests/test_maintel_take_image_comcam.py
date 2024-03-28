@@ -37,15 +37,28 @@ class TestTakeImageComCam(
 
         return (self.script,)
 
-    async def test_configure(self):
+    async def test_configure_with_metadata_and_slew_time_sim(self):
         async with self.make_script():
             exp_times = 1.1
             image_type = "OBJECT"
-            await self.configure_script(exp_times=exp_times, image_type=image_type)
+            visit_metadata = dict(ra=10.0, dec=-90.0, rot_sky=5.0)
+            slew_time = 10
+
+            await self.configure_script(
+                exp_times=exp_times,
+                image_type=image_type,
+                visit_metadata=visit_metadata,
+                slew_time=slew_time,
+                sim=True,
+            )
             assert self.script.config.exp_times == [exp_times]
             assert self.script.config.image_type == image_type
             assert self.script.config.filter is None
+            assert self.script.config.visit_metadata == visit_metadata
+            assert self.script.config.slew_time == slew_time
+            assert self.script.get_instrument_name() == "LSSTComCamSim"
 
+    async def test_configure_no_filter(self):
         async with self.make_script():
             exp_times = 1.1
             image_type = "OBJECT"
@@ -61,10 +74,12 @@ class TestTakeImageComCam(
             assert self.script.config.image_type == image_type
             assert self.script.config.filter == filter
 
+    async def test_configure_filter_as_str(self):
         async with self.make_script():
             exp_times = 1.1
             nimages = 2
             filter = "blue"
+            image_type = "OBJECT"
             await self.configure_script(
                 exp_times=exp_times,
                 image_type=image_type,
@@ -75,9 +90,11 @@ class TestTakeImageComCam(
             assert self.script.config.image_type == image_type
             assert self.script.config.filter == filter
 
+    async def test_configure_filter_as_number(self):
         async with self.make_script():
             exp_times = [0, 2, 0.5]
             filter = 2
+            image_type = "OBJECT"
             await self.configure_script(
                 exp_times=exp_times,
                 image_type=image_type,
@@ -87,8 +104,10 @@ class TestTakeImageComCam(
             assert self.script.config.image_type == image_type
             assert self.script.config.filter == filter
 
+    async def test_configure_fails_missing_image_type(self):
         async with self.make_script():
             exp_times = [0, 2, 0.5]
+            image_type = "OBJECT"
             nimages = len(exp_times) + 1
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(

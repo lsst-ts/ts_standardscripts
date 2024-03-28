@@ -39,6 +39,7 @@ from .standby_comcam import *
 from .standby_mtcs import *
 from .stop import *
 from .stop_rotator import *
+from .take_image_anycam import *
 from .take_image_comcam import *
 from .take_image_lsstcam import *
 from .track_target import *

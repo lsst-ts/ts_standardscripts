@@ -55,6 +55,16 @@ class TestATTrackTarget(
             # Script can be configured with slew_planet
             await self.configure_script(slew_planet=dict(planet_name="PLUTO"))
 
+    async def test_configure_with_slew_ephem(self):
+        async with self.make_script():
+            self.script._mtcs = unittest.mock.AsyncMock()
+            self.script._mtcs.start_task = utils.make_done_future()
+
+            # Script can be configured with slew_ephem
+            await self.configure_script(
+                slew_ephem=dict(ephem_file="filename.txt", object_name="Chariklo")
+            )
+
     async def test_run_slew_target_name(self):
         async with self.make_script():
             self.script.tcs.slew_icrs = unittest.mock.AsyncMock()
@@ -124,6 +134,27 @@ class TestATTrackTarget(
 
             self.assert_slew_planet(planet_name)
 
+    async def test_run_slew_ephem(self):
+        async with self.make_script():
+            self.script._atcs = unittest.mock.AsyncMock()
+            self.script._atcs.start_task = utils.make_done_future()
+            self.script.tcs.slew_ephem_target = unittest.mock.AsyncMock()
+            self.script.tcs.stop_tracking = unittest.mock.AsyncMock()
+
+            # Check running with ephem file
+            config = dict(
+                slew_ephem=dict(ephem_file="filename.txt", object_name="Chariklo")
+            )
+
+            await self.configure_script(**config)
+
+            await self.run_script()
+
+            self.assert_slew_ephem_target(
+                ephem_file=config["slew_ephem"]["ephem_file"],
+                object_name=config["slew_ephem"]["object_name"],
+            )
+
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
         script_path = scripts_dir / "auxtel" / "track_target.py"
@@ -178,6 +209,17 @@ class TestATTrackTarget(
             rot_sky=self.script.config.rot_value,
             slew_timeout=self.script.config.slew_timeout,
         )
+        self.script.tcs.stop_tracking.assert_not_awaited()
+
+    def assert_slew_ephem_target(self, ephem_file, object_name):
+        self.script.tcs.slew_ephem_target.assert_awaited_once()
+        self.script.tcs.slew_ephem_target.assert_awaited_with(
+            ephem_file=ephem_file,
+            target_name=object_name,
+            rot_sky=self.script.config.rot_value,
+            slew_timeout=self.script.config.slew_timeout,
+        )
+
         self.script.tcs.stop_tracking.assert_not_awaited()
 
     def assert_config(self, config, config_validated):

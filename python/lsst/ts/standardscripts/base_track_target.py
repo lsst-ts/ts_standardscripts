@@ -38,6 +38,7 @@ class SlewType(enum.IntEnum):
     ICRS = enum.auto()
     AZEL = enum.auto()
     PLANET = enum.auto()
+    EPHEM = enum.auto()
 
 
 class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
@@ -65,7 +66,7 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
         self.tracking_started = False
 
         # Flag to specify which type of slew will be performend:
-        # slew_icrs, slew_object or slew_planet
+        # slew_icrs, slew_object, slew_planet or slew_ephem
         self.slew_type = SlewType.OBJECT
 
         # Timeout for slewing (in seconds).
@@ -127,6 +128,19 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                     description: The name of a Solar system planet.
                     type: string
                     enum: [{planet_names}]
+              slew_ephem:
+                type: object
+                description: >-
+                    Optional configuration section. Slew to a target based on
+                    ephemeris data. If not specified it will be ignored.
+                additionalProperties: false
+                properties:
+                  ephem_file:
+                    description: Ephemeris filename to be used for the slew.
+                    type: string
+                  object_name:
+                    description: The name of object.
+                    type: string
               find_target:
                 type: object
                 additionalProperties: false
@@ -261,6 +275,8 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                   const: null
                 slew_planet:
                   const: null
+                slew_ephem:
+                  const: null
             then:
               oneOf:
                 - required:
@@ -273,6 +289,8 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                   - slew_icrs
                 - required:
                   - slew_planet
+                - required:
+                  - slew_ephem
             additionalProperties: false
         """
         schema_dict = yaml.safe_load(schema_yaml)
@@ -301,6 +319,8 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
             self.slew_type = SlewType.ICRS
         elif hasattr(self.config, "slew_planet"):
             self.slew_type = SlewType.PLANET
+        elif hasattr(self.config, "slew_ephem"):
+            self.slew_type = SlewType.EPHEM
         elif hasattr(self.config, "find_target"):
             self.slew_type = SlewType.AZEL
 
@@ -310,7 +330,9 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
 
         self.config.rot_type = getattr(RotType, self.config.rot_type)
 
-        if self.slew_type == SlewType.PLANET and self.config.rot_type != RotType.Sky:
+        if (
+            self.slew_type == SlewType.PLANET or self.slew_type == SlewType.EPHEM
+        ) and self.config.rot_type != RotType.Sky:
             self.log.warning(
                 f"Slew_type={self.slew_type!r} only works for {RotType.Sky!r}, "
                 f"got {self.config.rot_type!r}. Ignoring."
@@ -383,11 +405,29 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
             planet_enum = Planets[planet_name]
 
             self.log.info(
-                f"Slew and track planet_name={planet_name} rot_sky={self.config.rot_value}."
+                f"Slew and track planet_name={planet_name}; rot_sky={self.config.rot_value}."
+                f"offset by; x={offset_x}; y={offset_y}"
             )
 
             await self.tcs.slew_to_planet(
                 planet=planet_enum,
+                rot_sky=self.config.rot_value,
+                slew_timeout=self.slew_timeout,
+            )
+
+        elif self.slew_type == SlewType.EPHEM:
+            ephem_file = self.config.slew_ephem["ephem_file"]
+            object_name = self.config.slew_ephem["object_name"]
+
+            self.log.info(
+                f"Slew and track object_name={object_name}; "
+                f"ephem_file={ephem_file}; rot_sky={self.config.rot_value}; "
+                f"offset by; x={offset_x}; y={offset_y}"
+            )
+
+            await self.tcs.slew_ephem_target(
+                ephem_file=self.config.slew_ephem["ephem_file"],
+                target_name=self.config.slew_ephem["object_name"],
                 rot_sky=self.config.rot_value,
                 slew_timeout=self.slew_timeout,
             )
@@ -402,6 +442,10 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 f"rot={self.config.rot_value}; rot_type={self.config.rot_type}; "
                 f"offset by; x={offset_x}; y={offset_y}"
             )
+            try:
+                self.tcs.load_catalog("HD_cwfs_stars")
+            except Exception:
+                self.log.exception("Failed to load local star catalog. Ignoring.")
 
             target_name = await self.tcs.find_target(**self.config.find_target)
 

@@ -54,6 +54,8 @@ class TakeImageLSSTCam(BaseTakeImage):
 
         self.instrument_setup_time = self._lsstcam.filter_change_timeout
 
+        self.instrument_name = "LSSTCam"
+
     @property
     def camera(self):
         return self._lsstcam
@@ -85,6 +87,9 @@ class TakeImageLSSTCam(BaseTakeImage):
             schema_dict["properties"][prop] = base_schema_dict["properties"][prop]
 
         return schema_dict
+
+    def get_instrument_name(self):
+        return self.instrument_name
 
     def get_instrument_configuration(self):
         return dict(filter=self.config.filter)

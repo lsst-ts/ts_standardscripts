@@ -1,0 +1,3 @@
+- In ``maintel/take_image_anycam.py``, a ``nimages`` parameter has been added to facilitate capturing multiple images with a single exposure time.
+This eliminates the necessity of entering ``exp_times`` as a list when multiple images with identical exposure times are required.
+Furthermore, this enhancement aligns with the standard behavior of other image capture scripts.

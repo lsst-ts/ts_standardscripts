@@ -50,6 +50,8 @@ class TakeImageLatiss(BaseTakeImage):
             self.domain, intended_usage=LATISSUsages.TakeImageFull, log=self.log
         )
 
+        self.instrument_name = "LATISS"
+
     @property
     def camera(self):
         return self._latiss
@@ -97,9 +99,23 @@ class TakeImageLatiss(BaseTakeImage):
 
         return schema_dict
 
+    def get_instrument_name(self):
+        return self.instrument_name
+
     def get_instrument_configuration(self):
         return dict(
             filter=self.config.filter,
             grating=self.config.grating,
             linear_stage=self.config.linear_stage,
         )
+
+    def get_instrument_filter(self):
+        """Get instrument filter configuration.
+
+        Returns
+        -------
+        instrument_filter: `string`
+        """
+        filter = self.config.filter
+        grating = self.config.grating
+        return f"{filter}~{grating}"
