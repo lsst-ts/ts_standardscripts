@@ -26,10 +26,11 @@ import enum
 
 import numpy as np
 import yaml
-from lsst.ts import salobj
 from lsst.ts.idl.enums.LaserTracker import LaserStatus
 from lsst.ts.observatory.control import RemoteGroup
 from lsst.ts.observatory.control.maintel.mtcs import MTCS
+
+from ...base_block_script import BaseBlockScript
 
 
 # TODO (DM-38880) - Subsitute by class in idl.enum when available
@@ -40,7 +41,7 @@ class AlignComponent(enum.IntEnum):
     TMA_UPPER = 5
 
 
-class Align(salobj.BaseScript):
+class Align(BaseBlockScript):
     """Align component using laser tracker.
 
     Parameters
@@ -111,7 +112,16 @@ class Align(salobj.BaseScript):
         required:
             - target
         """
-        return yaml.safe_load(schema_yaml)
+        schema_dict = yaml.safe_load(schema_yaml)
+
+        base_schema_dict = super().get_schema()
+
+        for properties in base_schema_dict["properties"]:
+            schema_dict["properties"][properties] = base_schema_dict["properties"][
+                properties
+            ]
+
+        return schema_dict
 
     async def configure(self, config):
         if self.laser_tracker is None:
@@ -121,6 +131,7 @@ class Align(salobj.BaseScript):
                 log=self.log,
             )
             await self.laser_tracker.start_task
+        await super().configure(config=config)
 
         if self.mtcs is None:
             self.mtcs = MTCS(
@@ -236,7 +247,7 @@ class Align(salobj.BaseScript):
         except asyncio.TimeoutError:
             self.log.warning("Cannot determine Laser Tracker state, continuing.")
 
-    async def run(self):
+    async def run_block(self):
         """Run the script."""
 
         await self.check_laser_status_ok()

@@ -127,6 +127,8 @@ class BasePointAzEl(BaseBlockScript, metaclass=abc.ABCMeta):
         """
         self.config = config
 
+        await self.configure_tcs()
+
         if hasattr(self.config, "ignore"):
             for comp in self.config.ignore:
                 if comp not in self.tcs.components_attr:
@@ -137,8 +139,6 @@ class BasePointAzEl(BaseBlockScript, metaclass=abc.ABCMeta):
                 else:
                     self.log.debug(f"Ignoring component {comp}.")
                     setattr(self.tcs.check, comp, False)
-
-        await self.configure_tcs()
 
         await super().configure(config=config)
 

@@ -442,6 +442,10 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 f"rot={self.config.rot_value}; rot_type={self.config.rot_type}; "
                 f"offset by; x={offset_x}; y={offset_y}"
             )
+            try:
+                self.tcs.load_catalog("HD_cwfs_stars")
+            except Exception:
+                self.log.exception("Failed to load local star catalog. Ignoring.")
 
             target_name = await self.tcs.find_target(**self.config.find_target)
 
