@@ -56,6 +56,9 @@ class MockScheduler(salobj.Controller):
             "Scheduler:2/2022/04/07/Scheduler:2_Scheduler:2_2022-04-08T09:56:57.726.p"
         )
 
+        self.observing_blocks = []
+        self.valid_observing_block_id = "valid-block"
+
         self.cmd_disable.callback = self.do_disable
         self.cmd_enable.callback = self.do_enable
         self.cmd_standby.callback = self.do_standby
@@ -63,6 +66,7 @@ class MockScheduler(salobj.Controller):
         self.cmd_load.callback = self.do_load
         self.cmd_resume.callback = self.do_resume
         self.cmd_stop.callback = self.do_stop
+        self.cmd_addBlock.callback = self.do_add_block
         self.evt_summaryState.set(summaryState=initial_state)
 
     async def start(self):
@@ -127,6 +131,12 @@ class MockScheduler(salobj.Controller):
         assert self.evt_summaryState.data.summaryState == salobj.State.ENABLED
         self.abort_observations.append(data.abort)
         self.running = False
+
+    async def do_add_block(self, data):
+        assert self.evt_summaryState.data.summaryState == salobj.State.ENABLED
+        assert data.id == self.valid_observing_block_id
+
+        self.observing_blocks.append(data.id)
 
     async def _do_change_state(self, cmd_name, allowed_current_states, new_state):
         current_state = self.evt_summaryState.data.summaryState
