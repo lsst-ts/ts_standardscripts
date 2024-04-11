@@ -1,3 +1,0 @@
-Add script to run blocks from the Scheduler. 
-
-In ``scheduler/testutils/``, add feature to mock addBlock cmd. 
