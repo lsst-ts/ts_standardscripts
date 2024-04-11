@@ -1,0 +1,7 @@
+In `data/scripts` add executable scripts to interact with OCS Scheduler:
+
+ - `ocs/scheduler/enable.py`: It enables the OCS Scheduler.
+ - `ocs/scheduler/load_snapshot.py`: It loads a snapshot into the OCS Scheduler.
+ - `ocs/scheduler/resume.py`: It resumes the OCS Scheduler.
+ - `ocs/scheduler/standby.py`: It puts the OCS Scheduler into standby mode.
+ - `ocs/scheduler/stop.py`: It stops the OCS Scheduler.

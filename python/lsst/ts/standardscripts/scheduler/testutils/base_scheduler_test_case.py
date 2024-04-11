@@ -82,3 +82,10 @@ class BaseSchedulerTestCase(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
         assert len(self.controller.snapshots) == len(snapshots)
         for snapshot in snapshots:
             assert snapshot in self.controller.snapshots
+
+    def assert_loaded_observing_blocks(
+        self, observing_blocks: typing.List[str]
+    ) -> None:
+        assert len(self.controller.observing_blocks) == len(observing_blocks)
+        for observing_block in observing_blocks:
+            assert observing_block in self.controller.observing_blocks

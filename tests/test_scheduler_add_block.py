@@ -19,69 +19,54 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Scheduler import SalIndex
 from lsst.ts.standardscripts import get_scripts_dir
-from lsst.ts.standardscripts.scheduler.load_snapshot import LoadSnapshot
+from lsst.ts.standardscripts.scheduler.add_block import AddBlock
 from lsst.ts.standardscripts.scheduler.testutils import BaseSchedulerTestCase
 
 
-class TestSchedulerBaseLoadSnapshot(BaseSchedulerTestCase):
+class TestSchedulerAddBlock(BaseSchedulerTestCase):
     async def basic_make_script(self, index):
-        self.script = LoadSnapshot(
+        self.script = AddBlock(
             index=index,
             scheduler_index=SalIndex.MAIN_TEL,
         )
         return [self.script]
 
-    async def test_valid_uri(self) -> None:
+    async def test_valid_block(self) -> None:
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-            await self.configure_script(snapshot=self.controller.valid_snapshot)
+            await self.configure_script(id=self.controller.valid_observing_block_id)
             await self.run_script()
 
-            self.assert_loaded_snapshots(snapshots=[self.controller.valid_snapshot])
+            self.assert_loaded_observing_blocks(
+                observing_blocks=[self.controller.valid_observing_block_id]
+            )
 
-    async def test_latest(self) -> None:
+    async def test_invalid_block(self) -> None:
         async with self.make_script(), self.make_controller(
             initial_state=salobj.State.ENABLED, publish_initial_state=True
         ):
-            await self.configure_script(snapshot="latest")
-            await self.run_script()
-
-            self.assert_loaded_snapshots(snapshots=[self.controller.valid_snapshot])
-
-    async def test_invalid_uri(self) -> None:
-        async with self.make_script(), self.make_controller(
-            initial_state=salobj.State.ENABLED, publish_initial_state=True
-        ):
-            await self.configure_script(snapshot="invalid")
+            await self.configure_script(id="invalid_block")
 
             with self.assertRaises(AssertionError):
                 await self.run_script()
 
-            self.assert_loaded_snapshots(snapshots=[])
-
-    async def test_fail_config_latest_not_published(self) -> None:
-        async with self.make_script(randomize_topic_subname=True), self.make_controller(
-            initial_state=salobj.State.ENABLED, publish_initial_state=False
-        ):
-            with pytest.raises(salobj.ExpectedError):
-                await self.configure_script(snapshot="latest")
+            self.assert_loaded_observing_blocks(observing_blocks=[])
 
     async def test_auxtel_executable(self):
         scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "scheduler" / "load_snapshot.py"
+        script_path = scripts_dir / "auxtel" / "scheduler" / "add_block.py"
         await self.check_executable(script_path)
 
     async def test_maintel_executable(self):
         scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "scheduler" / "load_snapshot.py"
+        script_path = scripts_dir / "maintel" / "scheduler" / "add_block.py"
         await self.check_executable(script_path)
 
     async def test_ocs_executable(self):
         scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "ocs" / "scheduler" / "load_snapshot.py"
+        script_path = scripts_dir / "ocs" / "scheduler" / "add_block.py"
         await self.check_executable(script_path)

@@ -209,6 +209,11 @@ class TestSchedulerBaseStandBy(BaseSchedulerTestCase):
         script_path = scripts_dir / "maintel" / "scheduler" / "standby.py"
         await self.check_executable(script_path)
 
+    async def test_ocs_executable(self):
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "ocs" / "scheduler" / "standby.py"
+        await self.check_executable(script_path)
+
 
 if __name__ == "__main__":
     unittest.main()

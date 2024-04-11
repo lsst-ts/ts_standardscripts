@@ -1,0 +1,1 @@
+Add new ``auxtel/atdome`` scripts and unit tests to open, close, and home the dome. 
