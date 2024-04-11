@@ -8,6 +8,25 @@ Version History
 
 .. towncrier release notes start
 
+v1.32.0 (2024-04-11)
+====================
+
+New Features
+------------
+
+- Add new ``auxtel/atdome`` scripts and unit tests to open, close, and home the dome. (`DM-42269 <https://jira.lsstcorp.org/browse/DM-42269>`_)
+- In `data/scripts` add executable scripts to interact with OCS Scheduler:
+
+   - `ocs/scheduler/enable.py`: It enables the OCS Scheduler.
+   - `ocs/scheduler/load_snapshot.py`: It loads a snapshot into the OCS Scheduler.
+   - `ocs/scheduler/resume.py`: It resumes the OCS Scheduler.
+   - `ocs/scheduler/standby.py`: It puts the OCS Scheduler into standby mode.
+   - `ocs/scheduler/stop.py`: It stops the OCS Scheduler. (`DM-43547 <https://jira.lsstcorp.org/browse/DM-43547>`_)
+- Add script to run blocks from the Scheduler. 
+
+  In ``scheduler/testutils/``, add feature to mock addBlock cmd. (`DM-43548 <https://jira.lsstcorp.org/browse/DM-43548>`_)
+
+
 v1.31.0 (2024-03-28)
 ====================
 
