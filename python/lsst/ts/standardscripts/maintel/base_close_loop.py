@@ -317,6 +317,9 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             program=self.program,
         )
 
+        # Move the hexapod back to in focus position
+        await self.mtcs.move_camera_hexapod(z=self.dz)
+
         return intra_image, extra_image
 
     async def handle_fam_mode(self) -> None:
