@@ -192,6 +192,13 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                     Apply OFC corrections after each iteration.
                 type: boolean
                 default: true
+              ignore:
+                  description: >-
+                      CSCs from the group to ignore in status check. Name must
+                      match those in self.group.components, e.g.; hexapod_1.
+                  type: array
+                  items:
+                      type: string
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -240,6 +247,16 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # Set apply_corrections
         self.apply_corrections = config.apply_corrections
+
+        for comp in getattr(config, "ignore", []):
+            if comp not in self.mtcs.components_attr:
+                self.log.warning(
+                    f"Component {comp} not in CSC Group. "
+                    f"Must be one of {self.mtcs.components_attr}. Ignoring."
+                )
+            else:
+                self.log.debug(f"Ignoring component {comp}.")
+                setattr(self.mtcs.check, comp, False)
 
     def set_metadata(self, metadata: salobj.type_hints.BaseMsgType) -> None:
         """Sets script metadata.
@@ -459,7 +476,6 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         """Verify that the telescope and camera are in a feasible state to
         execute the script.
         """
-
         await self.mtcs.assert_all_enabled()
         await self.camera.assert_all_enabled()
 
