@@ -425,7 +425,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                 await self.checkpoint(f"[{i + 1}/{self.max_iter}]: Taking image...")
 
             # Flush wavefront error topic
-            await self.mtcs.rem.mtaos.evt_wavefrontError.flush()
+            self.mtcs.rem.mtaos.evt_wavefrontError.flush()
 
             # Run the operational mode handler function.
             await self.operation_model_handlers[self.mode]()
