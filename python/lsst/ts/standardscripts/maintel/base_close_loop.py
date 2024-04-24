@@ -350,7 +350,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         extra_visit_id = int(extra_image[0])
 
         # Run WEP
-        self.mtcs.rem.mtaos.cmd_runWEP.set_start(
+        await self.mtcs.rem.mtaos.cmd_runWEP.set_start(
             visitId=intra_visit_id, extraId=extra_visit_id, timeout=2 * CMD_TIMEOUT
         )
 
@@ -370,7 +370,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         visit_id = int(image[0])
 
         # Run WEP
-        self.mtcs.rem.mtaos.cmd_runWEP.set_start(
+        await self.mtcs.rem.mtaos.cmd_runWEP.set_start(
             visitId=visit_id, timeout=2 * CMD_TIMEOUT
         )
 
