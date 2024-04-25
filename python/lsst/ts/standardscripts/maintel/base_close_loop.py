@@ -192,6 +192,13 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                     Apply OFC corrections after each iteration.
                 type: boolean
                 default: true
+              ignore:
+                  description: >-
+                      CSCs from the group to ignore in status check. Name must
+                      match those in self.group.components, e.g.; hexapod_1.
+                  type: array
+                  items:
+                      type: string
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -241,6 +248,16 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         # Set apply_corrections
         self.apply_corrections = config.apply_corrections
 
+        for comp in getattr(config, "ignore", []):
+            if comp not in self.mtcs.components_attr:
+                self.log.warning(
+                    f"Component {comp} not in CSC Group. "
+                    f"Must be one of {self.mtcs.components_attr}. Ignoring."
+                )
+            else:
+                self.log.debug(f"Ignoring component {comp}.")
+                setattr(self.mtcs.check, comp, False)
+
     def set_metadata(self, metadata: salobj.type_hints.BaseMsgType) -> None:
         """Sets script metadata.
 
@@ -285,7 +302,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         # Take intra focal image
         self.log.debug("Moving to intra-focal position")
 
-        await self.mtcs.move_camera_hexapod(z=self.dz)
+        await self.mtcs.move_camera_hexapod(x=0, y=0, z=self.dz, u=0, v=0)
 
         self.log.debug("Taking intra-focal image")
 
@@ -303,7 +320,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         # Hexapod offsets are relative, so need to move 2x the offset
         # to get from the intra- to the extra-focal position.
         z_offset = -(self.dz * 2.0)
-        await self.mtcs.move_camera_hexapod(z=z_offset)
+        await self.mtcs.move_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
 
         self.log.debug("Taking extra-focal image")
 
@@ -316,6 +333,9 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             reason="EXTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
         )
+
+        # Move the hexapod back to in focus position
+        await self.mtcs.move_camera_hexapod(x=0, y=0, z=self.dz, u=0, v=0)
 
         return intra_image, extra_image
 
@@ -330,7 +350,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         extra_visit_id = int(extra_image[0])
 
         # Run WEP
-        self.mtcs.rem.mtaos.cmd_runWEP.set_start(
+        await self.mtcs.rem.mtaos.cmd_runWEP.set_start(
             visitId=intra_visit_id, extraId=extra_visit_id, timeout=2 * CMD_TIMEOUT
         )
 
@@ -350,7 +370,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         visit_id = int(image[0])
 
         # Run WEP
-        self.mtcs.rem.mtaos.cmd_runWEP.set_start(
+        await self.mtcs.rem.mtaos.cmd_runWEP.set_start(
             visitId=visit_id, timeout=2 * CMD_TIMEOUT
         )
 
@@ -405,7 +425,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                 await self.checkpoint(f"[{i + 1}/{self.max_iter}]: Taking image...")
 
             # Flush wavefront error topic
-            await self.mtcs.rem.mtaos.evt_wavefrontError.flush()
+            self.mtcs.rem.mtaos.evt_wavefrontError.flush()
 
             # Run the operational mode handler function.
             await self.operation_model_handlers[self.mode]()
@@ -456,7 +476,6 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         """Verify that the telescope and camera are in a feasible state to
         execute the script.
         """
-
         await self.mtcs.assert_all_enabled()
         await self.camera.assert_all_enabled()
 

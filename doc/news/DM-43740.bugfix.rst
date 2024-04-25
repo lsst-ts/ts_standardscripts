@@ -1,0 +1,2 @@
+In ``maintel/base_close_loop``, remove await from flush function.
+

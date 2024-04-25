@@ -1,0 +1,2 @@
+In ``base_take_image.py``, add CWFS to the list of valid image types.
+

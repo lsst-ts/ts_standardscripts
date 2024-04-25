@@ -1,0 +1,2 @@
+In ``maintel/offset_camera_hexapod``, add feature to ignore individual MTCS components.
+
