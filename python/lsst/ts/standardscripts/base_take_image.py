@@ -119,9 +119,9 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
                     minimum: 0
                 default: 0
               image_type:
-                description: Image type (a.k.a. IMGTYPE) (e.g. e.g. BIAS, DARK, FLAT, OBJECT)
+                description: Image type (a.k.a. IMGTYPE) (e.g. BIAS, DARK, FLAT, OBJECT)
                 type: string
-                enum: ["BIAS", "DARK", "FLAT", "OBJECT", "ENGTEST", "ACQ", "SPOT"]
+                enum: ["BIAS", "DARK", "FLAT", "OBJECT", "ENGTEST", "ACQ", "SPOT", "CWFS"]
               reason:
                 description: Optional reason for taking the data.
                 type: string

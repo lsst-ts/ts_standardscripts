@@ -1,0 +1,2 @@
+In base_close_loop.py, fixing move_camera_hexapod in base_close_loop.py
+
