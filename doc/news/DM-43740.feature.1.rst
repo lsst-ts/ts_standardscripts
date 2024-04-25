@@ -1,2 +1,0 @@
-In ``maintel/base_close_loop``, add feature to ignore individual MTCS components.
-
