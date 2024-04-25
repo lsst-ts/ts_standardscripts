@@ -1,2 +1,0 @@
-In ``base_close_loop.py``, move hexapod back to focus after intra/extra images
-

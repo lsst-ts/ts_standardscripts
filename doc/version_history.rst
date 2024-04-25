@@ -8,6 +8,26 @@ Version History
 
 .. towncrier release notes start
 
+v1.33.0 (2024-04-24)
+====================
+
+New Features
+------------
+
+- In ``maintel/base_close_loop``, add feature to ignore individual MTCS components. (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
+- In ``base_take_image.py``, add CWFS to the list of valid image types. (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
+- In ``maintel/offset_camera_hexapod``, add feature to ignore individual MTCS components. (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
+
+
+Bug Fixes
+---------
+
+- In base_close_loop.py, adding await to cmd_runWEP (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
+- In base_close_loop.py, fixing move_camera_hexapod in base_close_loop.py (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
+- In ``base_close_loop.py``, move hexapod back to focus after intra/extra images (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
+- In ``maintel/base_close_loop``, remove await from flush function. (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
+
+
 v1.32.0 (2024-04-11)
 ====================
 
