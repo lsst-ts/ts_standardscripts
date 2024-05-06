@@ -21,6 +21,7 @@
 
 import asyncio
 import random
+import types
 import unittest
 
 import numpy as np
@@ -78,7 +79,8 @@ class TestCloseLoopLSSTCam(
         self.state_0 = np.zeros(50)
         self.state_0[:5] += 1
 
-        self.corrections = np.zeros(50)
+        self.corrections = types.SimpleNamespace(visitDoF=np.zeros(50))
+
         return (self.script,)
 
     async def return_zernikes(self, *args, **kwargs):
@@ -89,15 +91,15 @@ class TestCloseLoopLSSTCam(
 
     async def apply_offsets(self, *args, **kwags):
         await asyncio.sleep(0.5)
-        self.state_0 += self.corrections
+        self.state_0 += self.corrections.visitDoF
 
     async def get_offsets(self, *args, **kwags):
         # return corrections to be non zero the first time this is called
         await asyncio.sleep(0.5)
-        self.corrections = np.zeros(50)
+        self.corrections = types.SimpleNamespace(visitDoF=np.zeros(50))
 
         if any(self.state_0):
-            self.corrections[:5] -= 0.5
+            self.corrections.visitDoF[:5] -= 0.5
 
     async def test_configure(self):
         # Try configure with minimum set of parameters declared
