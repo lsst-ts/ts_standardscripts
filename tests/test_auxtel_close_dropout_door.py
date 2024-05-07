@@ -19,8 +19,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .close_dome import *
-from .close_dropout_door import *
-from .home_dome import *
-from .open_dome import *
-from .open_dropout_door import *
+import unittest
+
+from lsst.ts import standardscripts
+from lsst.ts.standardscripts.auxtel.atdome import CloseDropoutDoor
+
+
+class TestCloseDropoutDoor(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
+    async def basic_make_script(self, index):
+        self.script = CloseDropoutDoor(index=index)
+
+        self.script.atcs = unittest.mock.MagicMock()
+        self.script.atcs.close_dropout_door = unittest.mock.AsyncMock()
+
+        return (self.script,)
+
+    async def test_run(self):
+        async with self.make_script():
+            await self.configure_script()
+            await self.run_script()
+
+            self.script.atcs.close_dropout_door.assert_called_once()
+
+    async def test_executable(self):
+        scripts_dir = standardscripts.get_scripts_dir()
+        script_path = scripts_dir / "auxtel" / "atdome" / "close_dropout_door.py"
+        await self.check_executable(script_path)
