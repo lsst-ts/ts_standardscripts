@@ -1,0 +1,2 @@
+Some bugfixes to the maintel base_close_loop script and expanding the script configuration to allow passing overrided to the wep pipeline.
+
