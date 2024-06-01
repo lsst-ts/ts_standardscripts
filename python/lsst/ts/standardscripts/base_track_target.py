@@ -39,6 +39,7 @@ class SlewType(enum.IntEnum):
     AZEL = enum.auto()
     PLANET = enum.auto()
     EPHEM = enum.auto()
+    TRACK_AZEL = enum.auto()
 
 
 class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
@@ -114,6 +115,30 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                     anyOf:
                       - type: number
                         minimum: -90
+                        maximum: 90
+                      - type: string
+              track_azel:
+                type: object
+                description: >-
+                    Optional configuration section. Slew to az/el and start tracking.
+                    If not specified it will be ignored.
+                additionalProperties: false
+                required:
+                    - az
+                    - el
+                properties:
+                  az:
+                    description: Azimuth (deg).
+                    anyOf:
+                      - type: number
+                        minimum: 0
+                        maximum: 360
+                      - type: string
+                  el:
+                    description: Elevation (deg).
+                    anyOf:
+                      - type: number
+                        minimum: 0
                         maximum: 90
                       - type: string
               slew_planet:
@@ -273,6 +298,8 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
               properties:
                 slew_icrs:
                   const: null
+                track_azel:
+                  const: null
                 slew_planet:
                   const: null
                 slew_ephem:
@@ -287,6 +314,8 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
               oneOf:
                 - required:
                   - slew_icrs
+                - required:
+                  - track_azel
                 - required:
                   - slew_planet
                 - required:
@@ -317,6 +346,8 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
 
         if hasattr(self.config, "slew_icrs"):
             self.slew_type = SlewType.ICRS
+        elif hasattr(self.config, "track_azel"):
+            self.slew_type = SlewType.TRACK_AZEL
         elif hasattr(self.config, "slew_planet"):
             self.slew_type = SlewType.PLANET
         elif hasattr(self.config, "slew_ephem"):
@@ -399,6 +430,25 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 time_on_target=self.config.track_for,
                 slew_timeout=self.slew_timeout,
             )
+
+        elif self.slew_type == SlewType.TRACK_AZEL:
+            az = self.config.track_azel["az"]
+            el = self.config.track_azel["el"]
+
+            self.log.info(
+                f"Slew and track at "
+                f"az={az}, el={el}; "
+                f"rot={self.config.rot_value}; rot_type={self.config.rot_type}; "
+                f"offset by; x={offset_x}; y={offset_y}"
+            )
+
+            await self.tcs.point_azel(
+                az=az,
+                el=el,
+                rot_tel=self.config.rot_value,
+            )
+            await self.tcs.stop_tracking()
+            await self.tcs.start_tracking()
 
         elif self.slew_type == SlewType.PLANET:
             planet_name = self.config.slew_planet["planet_name"]
