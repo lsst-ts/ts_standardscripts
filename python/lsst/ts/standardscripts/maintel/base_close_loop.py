@@ -33,7 +33,7 @@ from lsst.ts.observatory.control.maintel.mtcs import MTCS
 from lsst.ts.observatory.control.utils.enums import ClosedLoopMode, DOFName
 
 STD_TIMEOUT = 10
-CMD_TIMEOUT = 60
+CMD_TIMEOUT = 400
 
 
 class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
@@ -175,6 +175,10 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                   - type: string
                   - type: "null"
                 default: null
+              wep_config:
+                description: Configuration for WEP pipeline.
+                type: string
+                default: ""
               used_dofs:
                 oneOf:
                   - type: array
@@ -237,6 +241,9 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         # Set program and reason
         self.reason = config.reason
         self.program = config.program
+
+        # Set WEP configuration file
+        self.wep_config = config.wep_config
 
         # Set used dofs
         selected_dofs = config.used_dofs
@@ -351,7 +358,10 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # Run WEP
         await self.mtcs.rem.mtaos.cmd_runWEP.set_start(
-            visitId=intra_visit_id, extraId=extra_visit_id, timeout=2 * CMD_TIMEOUT
+            visitId=intra_visit_id,
+            extraId=extra_visit_id,
+            timeout=2 * CMD_TIMEOUT,
+            config=self.wep_config,
         )
 
     async def handle_cwfs_mode(self) -> None:
@@ -371,7 +381,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # Run WEP
         await self.mtcs.rem.mtaos.cmd_runWEP.set_start(
-            visitId=visit_id, timeout=2 * CMD_TIMEOUT
+            visitId=visit_id, timeout=2 * CMD_TIMEOUT, config=self.wep_config
         )
 
     async def compute_ofc_offsets(self) -> None:
@@ -379,15 +389,17 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # Create the config to run OFC
         config = {
-            "filter_name": self.filter,
+            # TODO (DM-44247): Update how base_close_loop script handle
+            # passing filter information.
+            "filter_name": "",
             "comp_dof_idx": {
-                "m2HexPos": self.used_dofs[:5],
-                "camHexPos": self.used_dofs[5:10],
-                "M1M3Bend": self.used_dofs[10:30],
-                "M2Bend": self.used_dofs[30:],
+                "m2HexPos": [float(val) for val in self.used_dofs[:5]],
+                "camHexPos": [float(val) for val in self.used_dofs[5:10]],
+                "M1M3Bend": [float(val) for val in self.used_dofs[10:30]],
+                "M2Bend": [float(val) for val in self.used_dofs[30:]],
             },
         }
-        config_yaml = yaml.dump(config, default_flow_style=False)
+        config_yaml = yaml.safe_dump(config)
 
         # Run OFC
         await self.mtcs.rem.mtaos.cmd_runOFC.set_start(
@@ -456,7 +468,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                 await self.mtcs.rem.mtaos.cmd_issueCorrection.start(timeout=CMD_TIMEOUT)
 
             # Check if corrections have converged. If they have, then we stop.
-            if all(abs(dof_offset) < self.threshold):
+            if all(np.abs(dof_offset.visitDoF) < self.threshold):
                 self.log.info(f"OFC offsets are inside tolerance ({self.threshold}). ")
                 if checkpoint:
                     await self.checkpoint(

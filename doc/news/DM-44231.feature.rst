@@ -1,0 +1,1 @@
+In auxtel/calibrations/power_on_atcalsys.py, update grating_type enumerations and default value.

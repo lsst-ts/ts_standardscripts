@@ -131,8 +131,6 @@ class TestOffsetATCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             self.script.atcs.offset_radec.assert_awaited_once_with(
                 ra=1,
                 dec=-1,
-                absorb=False,
-                relative=True,
             )
 
     async def test_offset_xy(self):

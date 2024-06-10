@@ -19,30 +19,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .apply_dof import *
-from .base_close_loop import *
-from .close_loop_comcam import *
-from .close_loop_lsstcam import *
-from .disable_hexapod_compensation_mode import *
-from .enable_comcam import *
-from .enable_hexapod_compensation_mode import *
-from .enable_mtcs import *
-from .home_both_axes import *
-from .move_p2p import *
-from .offline_comcam import *
-from .offline_mtcs import *
-from .offset_camera_hexapod import *
-from .offset_mtcs import *
-from .point_azel import *
-from .setup_mtcs import *
-from .standby_comcam import *
-from .standby_mtcs import *
-from .stop import *
-from .stop_rotator import *
-from .take_image_anycam import *
-from .take_image_comcam import *
-from .take_image_lsstcam import *
-from .take_triplet_comcam import *
-from .track_target import *
-from .track_target_and_take_image_comcam import *
-from .track_target_and_take_image_gencam import *
+import unittest
+
+from lsst.ts import standardscripts
+from lsst.ts.standardscripts.auxtel.atdome import CloseDropoutDoor
+
+
+class TestCloseDropoutDoor(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
+    async def basic_make_script(self, index):
+        self.script = CloseDropoutDoor(index=index)
+
+        self.script.atcs = unittest.mock.MagicMock()
+        self.script.atcs.close_dropout_door = unittest.mock.AsyncMock()
+
+        return (self.script,)
+
+    async def test_run(self):
+        async with self.make_script():
+            await self.configure_script()
+            await self.run_script()
+
+            self.script.atcs.close_dropout_door.assert_called_once()
+
+    async def test_executable(self):
+        scripts_dir = standardscripts.get_scripts_dir()
+        script_path = scripts_dir / "auxtel" / "atdome" / "close_dropout_door.py"
+        await self.check_executable(script_path)

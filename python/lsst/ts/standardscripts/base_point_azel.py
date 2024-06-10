@@ -166,7 +166,7 @@ class BasePointAzEl(BaseBlockScript, metaclass=abc.ABCMeta):
             wait_dome=self.config.wait_dome,
             slew_timeout=self.config.slew_timeout,
         )
-        self.tcs.stop_tracking()
+        await self.tcs.stop_tracking()
 
         elapsed_time = time.monotonic() - start_time
 

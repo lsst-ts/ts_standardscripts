@@ -21,3 +21,4 @@
 
 from .power_off_atcalsys import *
 from .power_on_atcalsys import *
+from .run_calibration_sequence import *
