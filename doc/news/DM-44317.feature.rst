@@ -1,1 +1,0 @@
-Add new ``maintel/take_triplet_comcam`` script and unit tests to take a triplet (intra focal, extra focal, and in-focus image) sequence with ComCam.

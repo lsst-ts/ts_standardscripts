@@ -8,6 +8,28 @@ Version History
 
 .. towncrier release notes start
 
+v1.34.0 (2024-06-10)
+====================
+
+New Features
+------------
+
+- Add new ``auxtel/atdome`` scripts and unit tests to open and close the dome dropout door,
+  including wind speed checks before opening. (`DM-41806 <https://jira.lsstcorp.org/browse/DM-41806>`_)
+- In auxtel/calibrations/power_on_atcalsys.py, update grating_type enumerations and default value. (`DM-44231 <https://jira.lsstcorp.org/browse/DM-44231>`_)
+- Add new ``maintel/take_triplet_comcam`` script and unit tests to take a triplet (intra focal, extra focal, and in-focus image) sequence with ComCam. (`DM-44317 <https://jira.lsstcorp.org/browse/DM-44317>`_)
+- Add new auxtel run_calibration_sequence script. (`DM-44454 <https://jira.lsstcorp.org/browse/DM-44454>`_)
+- Add TRACK_AZEL mode to base_track_target.py (`DM-44611 <https://jira.lsstcorp.org/browse/DM-44611>`_)
+
+
+Bug Fixes
+---------
+
+- Some bugfixes to the maintel base_close_loop script and expanding the script configuration to allow passing overrided to the wep pipeline. (`DM-44028 <https://jira.lsstcorp.org/browse/DM-44028>`_)
+- Fix issue with offset_atcs.
+  When calling ``ATCS.offset_radec`` there is no relative/absolute arguments. (`DM-44231 <https://jira.lsstcorp.org/browse/DM-44231>`_)
+
+
 v1.33.0 (2024-04-24)
 ====================
 

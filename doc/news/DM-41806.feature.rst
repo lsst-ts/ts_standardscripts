@@ -1,2 +1,0 @@
-Add new ``auxtel/atdome`` scripts and unit tests to open and close the dome dropout door,
-including wind speed checks before opening.

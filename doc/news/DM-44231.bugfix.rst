@@ -1,3 +1,0 @@
-Fix issue with offset_atcs.
-When calling ``ATCS.offset_radec`` there is no relative/absolute arguments.
-
