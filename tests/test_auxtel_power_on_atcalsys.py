@@ -239,7 +239,7 @@ class TestPowerOnATCalSys(
             assert self.chiller_status.chillerState == "READY"
             assert self.lamp_state.basicState == ATWhiteLight.LampBasicState.ON
             assert self.shutter_status.shutterState == ATWhiteLight.ShutterState.OPEN
-            assert self.grating_status.gratingState == ATMonochromator.Grating.MIRROR
+            assert self.grating_status.gratingState == 0
 
     async def test_run_without_atmonochromator_without_failures(self):
         async with self.make_script():

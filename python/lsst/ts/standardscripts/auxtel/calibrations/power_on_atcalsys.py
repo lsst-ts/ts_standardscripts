@@ -93,10 +93,10 @@ class PowerOnATCalSys(salobj.BaseScript):
                 minimum: 0
 
               grating_type:
-                description: Grating type for each image. The choices are 0=blue, 1=red, 2=mirror.
+                description: Grating type for each image. The choices are 0=mirror, 1=blue, 2=red.
                 type: integer
                 enum: [0, 1, 2]
-                default: 2
+                default: 0
 
               entrance_slit_width:
                 description: Width of the monochrometer entrance slit (mm)

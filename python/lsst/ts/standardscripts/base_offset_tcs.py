@@ -197,8 +197,6 @@ class BaseOffsetTCS(salobj.BaseScript, metaclass=abc.ABCMeta):
             await self.tcs.offset_radec(
                 ra=self.offset_radec["ra"],
                 dec=self.offset_radec["dec"],
-                relative=self.relative,
-                absorb=self.absorb,
             )
 
         if self.offset_xy is not None:
