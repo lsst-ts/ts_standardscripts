@@ -102,13 +102,13 @@ class PowerOnATCalSys(salobj.BaseScript):
                 description: Width of the monochrometer entrance slit (mm)
                 type: number
                 minimum: 0
-                default: 7
+                default: 5
 
               exit_slit_width:
                 description: Width of the monochromator entrance slit (mm)
                 type: number
                 minimum: 0
-                default: 7
+                default: 5
 
               use_atmonochromator:
                 description: Is the monochromator available and can be configured?
