@@ -82,9 +82,7 @@ class TestPowerOnATCalSys(
         self.script.monochromator.configure_mock(
             **{
                 "evt_summaryState.aget.side_effect": self.mock_get_monochromator_summary_state,
-                "cmd_selectGrating.set_start.side_effect": self.mock_change_grating,
-                "cmd_changeWavelength.set_start.side_effect": self.mock_change_wavelength,
-                "cmd_changeSlitWidth.set_start.side_effect": self.mock_change_slit_width,
+                "cmd_updateMonochromatorSetup.set_start.side_effect": self.mock_update_monochromator_setup,
             }
         )
 
@@ -136,17 +134,13 @@ class TestPowerOnATCalSys(
     async def mock_get_monochromator_summary_state(self, **kwargs):
         return types.SimpleNamespace(summaryState=salobj.State.ENABLED)
 
-    async def mock_change_grating(self, **kwargs):
+    async def mock_update_monochromator_setup(self, **kwargs):
         self.grating_status = types.SimpleNamespace(
             gratingState=self.script.grating_type
         )
-
-    async def mock_change_wavelength(self, **kwargs):
         self.wavelength_status = types.SimpleNamespace(
             wavelength=self.script.wavelength
         )
-
-    async def mock_change_slit_width(self, **kwargs):
         self.slit_status = types.SimpleNamespace(width=self.script.entrance_slit_width)
 
     async def test_configure(self):
@@ -203,32 +197,12 @@ class TestPowerOnATCalSys(
             self.script.wait_for_lamp_to_warm_up.assert_awaited_once()
 
             # Monochromator configuration
-            self.script.monochromator.cmd_selectGrating.set_start.assert_awaited_once_with(
-                gratingType=self.script.grating_type, timeout=self.script.cmd_timeout
-            )
-
-            self.script.monochromator.cmd_changeWavelength.set_start.assert_awaited_once_with(
-                wavelength=self.script.wavelength, timeout=self.script.cmd_timeout
-            )
-
-            expected_awaits = len(
-                [
-                    unittest.mock.call(
-                        slit=1,
-                        slitWidth=self.script.exit_slit_width,
-                        timeout=self.script.cmd_timeout,
-                    ),
-                    unittest.mock.call(
-                        slit=2,
-                        slitWidth=self.script.exit_slit_width,
-                        timeout=self.script.cmd_timeout,
-                    ),
-                ]
-            )
-
-            assert (
-                self.script.monochromator.cmd_changeSlitWidth.set_start.await_count
-                == expected_awaits
+            self.script.monochromator.cmd_updateMonochromatorSetup.set_start.assert_awaited_once_with(
+                gratingType=self.script.grating_type,
+                fontExitSlitWidth=self.script.exit_slit_width,
+                fontEntranceSlitWidth=self.script.entrance_slit_width,
+                wavelength=self.script.wavelength,
+                timeout=self.script.cmd_timeout,
             )
 
             # Summary State

@@ -1,0 +1,1 @@
+In ``auxtel/calibrations/power_on_atcalsys.py``, update default entrance/exit slit widths to new max range.
