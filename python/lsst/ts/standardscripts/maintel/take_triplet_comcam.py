@@ -96,6 +96,13 @@ class TakeTripletComCam(BaseBlockScript):
                   - type: string
                   - type: "null"
                 default: null
+              ignore:
+                description: >-
+                    CSCs from the group to ignore in status check. Name must
+                    match those in self.group.components, e.g.; hexapod_1.
+                type: array
+                items:
+                    type: string
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -111,6 +118,21 @@ class TakeTripletComCam(BaseBlockScript):
         # Configure tcs and camera
         await self.configure_tcs()
         await self.configure_camera()
+
+        if hasattr(config, "ignore"):
+            for comp in config.ignore:
+                if comp in self.mtcs.components_attr:
+                    self.log.debug(f"Ignoring MTCS component {comp}.")
+                    setattr(self.mtcs.check, comp, False)
+                elif comp in self.camera.components_attr:
+                    self.log.debug(f"Ignoring Camera component {comp}.")
+                    setattr(self.camera.check, comp, False)
+                else:
+                    self.log.warning(
+                        f"Component {comp} not in CSC Groups. "
+                        f"Must be one of {self.mtcs.components_attr} or "
+                        f"{self.camera.components_attr}. Ignoring."
+                    )
 
         # Set filter
         self.filter = config.filter
