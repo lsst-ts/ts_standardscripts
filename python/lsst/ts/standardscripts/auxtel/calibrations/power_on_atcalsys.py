@@ -102,13 +102,13 @@ class PowerOnATCalSys(salobj.BaseScript):
                 description: Width of the monochrometer entrance slit (mm)
                 type: number
                 minimum: 0
-                default: 7
+                default: 5
 
               exit_slit_width:
                 description: Width of the monochromator entrance slit (mm)
                 type: number
                 minimum: 0
-                default: 7
+                default: 5
 
               use_atmonochromator:
                 description: Is the monochromator available and can be configured?
@@ -284,20 +284,12 @@ class PowerOnATCalSys(salobj.BaseScript):
         the self.grating_type grating, wavelength of self.wavelength nm,
         and the entry and exit slits to be self.entrance_slit_width and
         self.exit_slit_width mm opened"""
-        await self.monochromator.cmd_selectGrating.set_start(
-            gratingType=self.grating_type, timeout=self.cmd_timeout
-        )
-
-        await self.monochromator.cmd_changeWavelength.set_start(
-            wavelength=self.wavelength, timeout=self.cmd_timeout
-        )
-
-        await self.monochromator.cmd_changeSlitWidth.set_start(
-            slit=1, slitWidth=self.entrance_slit_width, timeout=self.cmd_timeout
-        )
-
-        await self.monochromator.cmd_changeSlitWidth.set_start(
-            slit=2, slitWidth=self.exit_slit_width, timeout=self.cmd_timeout
+        await self.monochromator.cmd_updateMonochromatorSetup.set_start(
+            gratingType=self.grating_type,
+            fontExitSlitWidth=self.exit_slit_width,
+            fontEntranceSlitWidth=self.entrance_slit_width,
+            wavelength=self.wavelength,
+            timeout=self.cmd_timeout,
         )
 
         params = await self.get_monochromator_parameters()

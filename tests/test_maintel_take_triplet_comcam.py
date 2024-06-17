@@ -69,6 +69,35 @@ class TestTakeTripletComCam(
             assert self.script.dz == 2000.0
             assert self.script.n_triplets == n_triplets
 
+    async def test_configure_ignore(self):
+        async with self.make_script():
+            self.script.mtcs.check.mtmount = True
+            self.script.mtcs.check.mtrotator = True
+            self.script.mtcs.check.mtm2 = True
+            self.script.camera.check.ccoods = True
+
+            exposure_time = 15.0
+            filter = "g"
+            dz = 2000.0
+            n_triplets = 15
+            ignore = ["mtrotator", "mtm2", "ccoods"]
+
+            await self.configure_script(
+                filter=filter,
+                exposure_time=exposure_time,
+                dz=dz,
+                n_triplets=n_triplets,
+                ignore=ignore,
+            )
+            assert self.script.exposure_time == exposure_time
+            assert self.script.filter == filter
+            assert self.script.dz == 2000.0
+            assert self.script.n_triplets == n_triplets
+            assert self.script.mtcs.check.mtmount
+            assert not self.script.mtcs.check.mtrotator
+            assert not self.script.mtcs.check.mtm2
+            assert not self.script.camera.check.ccoods
+
     async def test_take_triplets(self):
         async with self.make_script():
             exposure_time = 15.0
