@@ -1,0 +1,2 @@
+In ``auxtel/calibrations/power_on_atcalsys.py``, change ``configure_monochromator`` method to use the ``updateMonochromatorSetup`` command.
+
