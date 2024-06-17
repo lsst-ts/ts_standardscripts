@@ -1,4 +1,0 @@
-Add ``OffsetM2Hexapod`` script.
-
-This is basically a copy of the OffsetCameraHexapod Script but will move m2 hexapod instead.
-

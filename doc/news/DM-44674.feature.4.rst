@@ -1,2 +1,0 @@
-In ``maintel/take_triplet_comcam.py``, add feature to ignore components in MTCS and ComCam.
-

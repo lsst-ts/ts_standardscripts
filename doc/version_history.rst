@@ -8,6 +8,21 @@ Version History
 
 .. towncrier release notes start
 
+v1.35.0 (2024-06-17)
+====================
+
+New Features
+------------
+
+- In ``auxtel/calibrations/power_on_atcalsys.py``, change ``configure_monochromator`` method to use the ``updateMonochromatorSetup`` command. (`DM-44674 <https://jira.lsstcorp.org/browse/DM-44674>`_)
+- Add ``OffsetM2Hexapod`` script.
+
+  This is basically a copy of the OffsetCameraHexapod Script but will move m2 hexapod instead. (`DM-44674 <https://jira.lsstcorp.org/browse/DM-44674>`_)
+- In ``base_take_image``, add FOCUS to the list of valid image types. (`DM-44674 <https://jira.lsstcorp.org/browse/DM-44674>`_)
+- In ``maintel/take_triplet_comcam.py``, add feature to ignore components in MTCS and ComCam. (`DM-44674 <https://jira.lsstcorp.org/browse/DM-44674>`_)
+- In ``auxtel/calibrations/power_on_atcalsys.py``, update default entrance/exit slit widths to new max range. (`DM-44674 <https://jira.lsstcorp.org/browse/DM-44674>`_)
+
+
 v1.34.0 (2024-06-10)
 ====================
 
