@@ -22,8 +22,6 @@
 __all__ = ["EnableM1M3SlewControllerFlags"]
 
 
-import asyncio
-
 import yaml
 from lsst.ts.observatory.control.maintel import MTCS
 from lsst.ts.salobj import type_hints
@@ -165,16 +163,7 @@ class EnableM1M3SlewControllerFlags(BaseBlockScript):
         await super().configure(config=config)
 
     async def run_block(self):
-        setting_tasks = [
-            self.mtcs.set_m1m3_slew_controller_settings(flag, enable)
-            for flag, enable in zip(self.config.slew_flags, self.config.enable)
-        ]
-        results = await asyncio.gather(*setting_tasks, return_exceptions=True)
 
-        for result, (flag, enable) in zip(
-            results, zip(self.config.slew_flags, self.config.enable)
-        ):
-            if isinstance(result, Exception):
-                self.log.error(f"Error setting M1M3 {flag.name} to {enable}: {result}")
-            else:
-                self.log.info(f"M1M3 {flag.name} set to {enable}.")
+        for flag, enable in zip(self.config.slew_flags, self.config.enable):
+            self.log.info(f"Setting m1m3 slew flag {flag.name} to {enable}.")
+            await self.mtcs.set_m1m3_slew_controller_settings(flag, enable)
