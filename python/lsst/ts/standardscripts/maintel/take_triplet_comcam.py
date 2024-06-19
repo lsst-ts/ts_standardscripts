@@ -188,7 +188,9 @@ class TakeTripletComCam(BaseBlockScript):
             self.log.debug("Creating Camera.")
 
             self.camera = ComCam(
-                self.domain, log=self.log, intended_usage=ComCamUsages.TakeImage
+                self.domain,
+                log=self.log,
+                intended_usage=ComCamUsages.TakeImage + ComCamUsages.StateTransition,
             )
             await self.camera.start_task
         else:
