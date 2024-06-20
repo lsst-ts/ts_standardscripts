@@ -229,10 +229,12 @@ class TakeTripletComCam(BaseBlockScript):
 
         self.log.info("Taking intra-focal image")
 
+        supplemented_group_id = self.next_supplemented_group_id()
+
         intra_visit_id = await self.camera.take_cwfs(
             exptime=self.exposure_time,
             n=1,
-            group_id=self.group_id,
+            group_id=supplemented_group_id,
             filter=self.filter,
             reason="INTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
@@ -250,7 +252,7 @@ class TakeTripletComCam(BaseBlockScript):
         extra_visit_id = await self.camera.take_cwfs(
             exptime=self.exposure_time,
             n=1,
-            group_id=self.group_id,
+            group_id=supplemented_group_id,
             filter=self.filter,
             reason="EXTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
