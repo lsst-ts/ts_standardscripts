@@ -29,19 +29,19 @@ from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 class OffsetCameraHexapod(salobj.BaseScript):
     """Perform a camera hexapod offset.
 
-    Parameters
-    ----------
-    index : `int`
-        Index of Script SAL component.
+     Parameters
+     ----------
+     index : `int`
+         Index of Script SAL component.
 
     Notes
-    -----
-    **Checkpoints**
+     -----
+     **Checkpoints**
 
-    **Details**
+     **Details**
 
-    This script can be used to either apply a user-specified offset to any of
-    the Camera Hexapod axes.
+     This script can be used to either apply a user-specified offset to any of
+     the Camera Hexapod axes.
     """
 
     def __init__(self, index, add_remotes: bool = True):
@@ -65,13 +65,13 @@ class OffsetCameraHexapod(salobj.BaseScript):
             properties:
               x:
                 type: number
-                description: Offset hexapod in x axis (mm).
+                description: Offset hexapod in x axis (micron).
               y:
                 type: number
-                description: Offset hexapod in y axis (mm).
+                description: Offset hexapod in y axis (micron).
               z:
                 type: number
-                description: Offset hexapod in z axis (mm).
+                description: Offset hexapod in z axis (micron).
               u:
                 type: number
                 description: Rx offset (deg).
