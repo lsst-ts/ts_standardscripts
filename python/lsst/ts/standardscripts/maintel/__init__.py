@@ -27,6 +27,8 @@ from .disable_hexapod_compensation_mode import *
 from .enable_comcam import *
 from .enable_hexapod_compensation_mode import *
 from .enable_mtcs import *
+from .focus_sweep_comcam import *
+from .focus_sweep_lsstcam import *
 from .home_both_axes import *
 from .move_p2p import *
 from .offline_comcam import *
