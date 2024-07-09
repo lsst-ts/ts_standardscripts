@@ -51,7 +51,7 @@ class PowerOnATCalSys(salobj.BaseScript):
         self.monochromator = None
 
         # White lamp config
-        self.timeout_lamp_warm_up = 60 * 15
+        self.timeout_lamp_warm_up = 60 * 20
         self.track_lamp_warmup = 60
         self.cmd_timeout = 30
         self.timeout_std = 20
