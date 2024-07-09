@@ -1,0 +1,4 @@
+Update ``maintel/m1m3/enable_m1m3_slew_controller_flags.py`` to simplify how it sets the slew flags.
+
+Set one at a time in a loop instead of trying to set them all at once.
+

@@ -22,6 +22,7 @@
 __all__ = ["TakeTripletComCam"]
 
 import asyncio
+import json
 import types
 
 import yaml
@@ -55,6 +56,7 @@ class TakeTripletComCam(BaseBlockScript):
         self.config = None
         self.mtcs = None
         self.camera = None
+        self.ocps = None
 
     @classmethod
     def get_schema(cls) -> dict:
@@ -188,11 +190,20 @@ class TakeTripletComCam(BaseBlockScript):
             self.log.debug("Creating Camera.")
 
             self.camera = ComCam(
-                self.domain, log=self.log, intended_usage=ComCamUsages.TakeImage
+                self.domain,
+                log=self.log,
+                intended_usage=ComCamUsages.TakeImage + ComCamUsages.StateTransition,
             )
             await self.camera.start_task
         else:
             self.log.debug("Camera already defined, skipping.")
+
+        if self.ocps is None:
+            self.log.debug("Create OCPS remote.")
+
+            self.ocps = salobj.Remote(self.domain, "OCPS", 101)
+
+            await self.ocps.start_task
 
     async def configure_tcs(self) -> None:
         """Handle creating MTCS object and waiting for remote to start."""
@@ -218,10 +229,12 @@ class TakeTripletComCam(BaseBlockScript):
 
         self.log.info("Taking intra-focal image")
 
-        await self.camera.take_cwfs(
+        supplemented_group_id = self.next_supplemented_group_id()
+
+        intra_visit_id = await self.camera.take_cwfs(
             exptime=self.exposure_time,
             n=1,
-            group_id=self.group_id,
+            group_id=supplemented_group_id,
             filter=self.filter,
             reason="INTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
@@ -236,13 +249,24 @@ class TakeTripletComCam(BaseBlockScript):
 
         self.log.info("Taking extra-focal image")
 
-        await self.camera.take_cwfs(
+        extra_visit_id = await self.camera.take_cwfs(
             exptime=self.exposure_time,
             n=1,
-            group_id=self.group_id,
+            group_id=supplemented_group_id,
             filter=self.filter,
             reason="EXTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
+        )
+
+        self.log.info("Send processing request to RA OCPS.")
+        config = {
+            "LSSTComCamSim-FROM-OCS_DONUTPAIR": f"{intra_visit_id[0]},{extra_visit_id[0]}"
+        }
+        ocps_execute_task = asyncio.create_task(
+            self.ocps.cmd_execute.set_start(
+                config=json.dumps(config),
+                timeout=self.camera.fast_timeout,
+            )
         )
 
         self.log.debug("Moving to in-focus position")
@@ -260,6 +284,11 @@ class TakeTripletComCam(BaseBlockScript):
             reason="INFOCUS" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
         )
+
+        try:
+            await ocps_execute_task
+        except Exception:
+            self.log.exception("Executing OCPS task failed. Ignoring.")
 
     async def run_block(self) -> None:
         """Execute script operations."""
