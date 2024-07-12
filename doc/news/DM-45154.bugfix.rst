@@ -1,0 +1,2 @@
+In auxtel/daytime_checkout/atpneumatics_checkout.py, await for atcs.start_task after creating ATCS instance.
+
