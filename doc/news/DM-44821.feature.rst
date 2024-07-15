@@ -1,5 +1,0 @@
-- Introduced a suite of scripts for taking focus sweep images with LSSTCam, LSSTComCam and LATISS:
-  - `base_focus_sweep.py`: Base class for running common operations.
-  - `focus_sweep_lsstcam.py`: Script for taking focus sweep images with Simonyi Telescope using LSSTCam.
-  - `focus_sweep_comcam.py`: Script for taking focus sweep images with Simonyi Telescope using LSSTComCam.
-  - `focus_sweep_latiss.py`: Script for taking focus sweep images with Auxiliary Telescope using LATISS.

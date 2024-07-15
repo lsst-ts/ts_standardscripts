@@ -1,3 +1,0 @@
-In auxtel/calibrations/power_on_atcalsys, increase timeout waiting for the lamp to be ready to 20 minutes.
-
-This operations takes at least 15 minutes on the CSC side, so having the script timeout also be 15 minutes causes frequent issues running the script.
