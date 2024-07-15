@@ -8,6 +8,42 @@ Version History
 
 .. towncrier release notes start
 
+v1.36.0 (2024-07-15)
+====================
+
+New Features
+------------
+
+- - Introduced a suite of scripts for taking focus sweep images with LSSTCam, LSSTComCam and LATISS:
+    - `base_focus_sweep.py`: Base class for running common operations.
+    - `focus_sweep_lsstcam.py`: Script for taking focus sweep images with Simonyi Telescope using LSSTCam.
+    - `focus_sweep_comcam.py`: Script for taking focus sweep images with Simonyi Telescope using LSSTComCam.
+    - `focus_sweep_latiss.py`: Script for taking focus sweep images with Auxiliary Telescope using LATISS. (`DM-44821 <https://jira.lsstcorp.org/browse/DM-44821>`_)
+- In maintel/take_image_comcam, remove setting instrument_setup_time.
+
+  This will fallback to the default value of 0. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
+- In maintel/offset_camera_hexapod, fix units for xyz offsets in the script configuration. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
+- Update ``maintel/m1m3/enable_m1m3_slew_controller_flags.py`` to simplify how it sets the slew flags.
+
+  Set one at a time in a loop instead of trying to set them all at once. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
+- In ``maintel/take_triplet_comcam.py``, update how ComCam is setup to include state transition events. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
+- In maintel/take_triplet_comcam, use suplemented group id for the CWFS images. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
+- Update BaseTrackTarget to add a sleep between stop tracking and start tracking when doing track_azel. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
+- In maintel/offset_m2_hexapod, fix units for xyz offsets in the script configuration. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_, `DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
+
+
+Bug Fixes
+---------
+
+- In auxtel/daytime_checkout/atpneumatics_checkout.py, await for atcs.start_task after creating ATCS instance. (`DM-45154 <https://jira.lsstcorp.org/browse/DM-45154>`_)
+- In auxtel/calibrations/power_on_atcalsys, increase timeout waiting for the lamp to be ready to 20 minutes.
+
+  This operations takes at least 15 minutes on the CSC side, so having the script timeout also be 15 minutes causes frequent issues running the script. (`DM-45154 <https://jira.lsstcorp.org/browse/DM-45154>`_)
+- In auxtel/calibrations/power_off_atcalsys, increase timeout waiting for the lamp to be ready to 20 minutes.
+
+  This operations takes at least 15 minutes on the CSC side. This script had it as 16 minutes but increasing it further helps reduce false timeout issues. (`DM-45154 <https://jira.lsstcorp.org/browse/DM-45154>`_)
+
+
 v1.35.0 (2024-06-17)
 ====================
 

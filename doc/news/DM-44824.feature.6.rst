@@ -1,2 +1,0 @@
- In maintel/take_triplet_comcam, use suplemented group id for the CWFS images.
-

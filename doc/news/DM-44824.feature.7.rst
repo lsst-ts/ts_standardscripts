@@ -1,2 +1,0 @@
-Update BaseTrackTarget to add a sleep between stop tracking and start tracking when doing track_azel.
-
