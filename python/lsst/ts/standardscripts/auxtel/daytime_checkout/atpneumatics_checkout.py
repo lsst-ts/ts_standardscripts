@@ -87,6 +87,7 @@ class ATPneumaticsCheckout(salobj.BaseScript):
         # This script does not require any configuration
         if self.atcs is None:
             self.atcs = ATCS(domain=self.domain, log=self.log)
+            await self.atcs.start_task
 
     def set_metadata(self, metadata):
         """Set estimated duration of the script."""

@@ -48,7 +48,7 @@ class PowerOffATCalSys(salobj.BaseScript):
         self.white_light_source = None
 
         # White lamp config
-        self.timeout_lamp_cool_down = 60 * 16
+        self.timeout_lamp_cool_down = 60 * 20
         self.cmd_timeout = 30
 
         # Shutter
