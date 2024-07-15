@@ -8,6 +8,15 @@ Version History
 
 .. towncrier release notes start
 
+v1.36.1 (2024-07-15)
+====================
+
+Documentation
+-------------
+
+- Update version history notes and towncrier ticket links to use cloud jira project. (`DM-44192 <https://rubinobs.atlassian.net/browse/DM-44192>`_)
+
+
 v1.36.0 (2024-07-15)
 ====================
 
