@@ -18,30 +18,30 @@ New Features
     - `base_focus_sweep.py`: Base class for running common operations.
     - `focus_sweep_lsstcam.py`: Script for taking focus sweep images with Simonyi Telescope using LSSTCam.
     - `focus_sweep_comcam.py`: Script for taking focus sweep images with Simonyi Telescope using LSSTComCam.
-    - `focus_sweep_latiss.py`: Script for taking focus sweep images with Auxiliary Telescope using LATISS. (`DM-44821 <https://jira.lsstcorp.org/browse/DM-44821>`_)
+    - `focus_sweep_latiss.py`: Script for taking focus sweep images with Auxiliary Telescope using LATISS. (`DM-44821 <https://rubinobs.atlassian.net/browse/DM-44821>`_)
 - In maintel/take_image_comcam, remove setting instrument_setup_time.
 
-  This will fallback to the default value of 0. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
-- In maintel/offset_camera_hexapod, fix units for xyz offsets in the script configuration. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
+  This will fallback to the default value of 0. (`DM-44824 <https://rubinobs.atlassian.net/browse/DM-44824>`_)
+- In maintel/offset_camera_hexapod, fix units for xyz offsets in the script configuration. (`DM-44824 <https://rubinobs.atlassian.net/browse/DM-44824>`_)
 - Update ``maintel/m1m3/enable_m1m3_slew_controller_flags.py`` to simplify how it sets the slew flags.
 
-  Set one at a time in a loop instead of trying to set them all at once. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
-- In ``maintel/take_triplet_comcam.py``, update how ComCam is setup to include state transition events. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
-- In maintel/take_triplet_comcam, use suplemented group id for the CWFS images. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
-- Update BaseTrackTarget to add a sleep between stop tracking and start tracking when doing track_azel. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
-- In maintel/offset_m2_hexapod, fix units for xyz offsets in the script configuration. (`DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_, `DM-44824 <https://jira.lsstcorp.org/browse/DM-44824>`_)
+  Set one at a time in a loop instead of trying to set them all at once. (`DM-44824 <https://rubinobs.atlassian.net/browse/DM-44824>`_)
+- In ``maintel/take_triplet_comcam.py``, update how ComCam is setup to include state transition events. (`DM-44824 <https://rubinobs.atlassian.net/browse/DM-44824>`_)
+- In maintel/take_triplet_comcam, use suplemented group id for the CWFS images. (`DM-44824 <https://rubinobs.atlassian.net/browse/DM-44824>`_)
+- Update BaseTrackTarget to add a sleep between stop tracking and start tracking when doing track_azel. (`DM-44824 <https://rubinobs.atlassian.net/browse/DM-44824>`_)
+- In maintel/offset_m2_hexapod, fix units for xyz offsets in the script configuration. (`DM-44824 <https://rubinobs.atlassian.net/browse/DM-44824>`_, `DM-44824 <https://rubinobs.atlassian.net/browse/DM-44824>`_)
 
 
 Bug Fixes
 ---------
 
-- In auxtel/daytime_checkout/atpneumatics_checkout.py, await for atcs.start_task after creating ATCS instance. (`DM-45154 <https://jira.lsstcorp.org/browse/DM-45154>`_)
+- In auxtel/daytime_checkout/atpneumatics_checkout.py, await for atcs.start_task after creating ATCS instance. (`DM-45154 <https://rubinobs.atlassian.net/browse/DM-45154>`_)
 - In auxtel/calibrations/power_on_atcalsys, increase timeout waiting for the lamp to be ready to 20 minutes.
 
-  This operations takes at least 15 minutes on the CSC side, so having the script timeout also be 15 minutes causes frequent issues running the script. (`DM-45154 <https://jira.lsstcorp.org/browse/DM-45154>`_)
+  This operations takes at least 15 minutes on the CSC side, so having the script timeout also be 15 minutes causes frequent issues running the script. (`DM-45154 <https://rubinobs.atlassian.net/browse/DM-45154>`_)
 - In auxtel/calibrations/power_off_atcalsys, increase timeout waiting for the lamp to be ready to 20 minutes.
 
-  This operations takes at least 15 minutes on the CSC side. This script had it as 16 minutes but increasing it further helps reduce false timeout issues. (`DM-45154 <https://jira.lsstcorp.org/browse/DM-45154>`_)
+  This operations takes at least 15 minutes on the CSC side. This script had it as 16 minutes but increasing it further helps reduce false timeout issues. (`DM-45154 <https://rubinobs.atlassian.net/browse/DM-45154>`_)
 
 
 v1.35.0 (2024-06-17)
@@ -50,13 +50,13 @@ v1.35.0 (2024-06-17)
 New Features
 ------------
 
-- In ``auxtel/calibrations/power_on_atcalsys.py``, change ``configure_monochromator`` method to use the ``updateMonochromatorSetup`` command. (`DM-44674 <https://jira.lsstcorp.org/browse/DM-44674>`_)
+- In ``auxtel/calibrations/power_on_atcalsys.py``, change ``configure_monochromator`` method to use the ``updateMonochromatorSetup`` command. (`DM-44674 <https://rubinobs.atlassian.net/browse/DM-44674>`_)
 - Add ``OffsetM2Hexapod`` script.
 
-  This is basically a copy of the OffsetCameraHexapod Script but will move m2 hexapod instead. (`DM-44674 <https://jira.lsstcorp.org/browse/DM-44674>`_)
-- In ``base_take_image``, add FOCUS to the list of valid image types. (`DM-44674 <https://jira.lsstcorp.org/browse/DM-44674>`_)
-- In ``maintel/take_triplet_comcam.py``, add feature to ignore components in MTCS and ComCam. (`DM-44674 <https://jira.lsstcorp.org/browse/DM-44674>`_)
-- In ``auxtel/calibrations/power_on_atcalsys.py``, update default entrance/exit slit widths to new max range. (`DM-44674 <https://jira.lsstcorp.org/browse/DM-44674>`_)
+  This is basically a copy of the OffsetCameraHexapod Script but will move m2 hexapod instead. (`DM-44674 <https://rubinobs.atlassian.net/browse/DM-44674>`_)
+- In ``base_take_image``, add FOCUS to the list of valid image types. (`DM-44674 <https://rubinobs.atlassian.net/browse/DM-44674>`_)
+- In ``maintel/take_triplet_comcam.py``, add feature to ignore components in MTCS and ComCam. (`DM-44674 <https://rubinobs.atlassian.net/browse/DM-44674>`_)
+- In ``auxtel/calibrations/power_on_atcalsys.py``, update default entrance/exit slit widths to new max range. (`DM-44674 <https://rubinobs.atlassian.net/browse/DM-44674>`_)
 
 
 v1.34.0 (2024-06-10)
@@ -66,19 +66,19 @@ New Features
 ------------
 
 - Add new ``auxtel/atdome`` scripts and unit tests to open and close the dome dropout door,
-  including wind speed checks before opening. (`DM-41806 <https://jira.lsstcorp.org/browse/DM-41806>`_)
-- In auxtel/calibrations/power_on_atcalsys.py, update grating_type enumerations and default value. (`DM-44231 <https://jira.lsstcorp.org/browse/DM-44231>`_)
-- Add new ``maintel/take_triplet_comcam`` script and unit tests to take a triplet (intra focal, extra focal, and in-focus image) sequence with ComCam. (`DM-44317 <https://jira.lsstcorp.org/browse/DM-44317>`_)
-- Add new auxtel run_calibration_sequence script. (`DM-44454 <https://jira.lsstcorp.org/browse/DM-44454>`_)
-- Add TRACK_AZEL mode to base_track_target.py (`DM-44611 <https://jira.lsstcorp.org/browse/DM-44611>`_)
+  including wind speed checks before opening. (`DM-41806 <https://rubinobs.atlassian.net/browse/DM-41806>`_)
+- In auxtel/calibrations/power_on_atcalsys.py, update grating_type enumerations and default value. (`DM-44231 <https://rubinobs.atlassian.net/browse/DM-44231>`_)
+- Add new ``maintel/take_triplet_comcam`` script and unit tests to take a triplet (intra focal, extra focal, and in-focus image) sequence with ComCam. (`DM-44317 <https://rubinobs.atlassian.net/browse/DM-44317>`_)
+- Add new auxtel run_calibration_sequence script. (`DM-44454 <https://rubinobs.atlassian.net/browse/DM-44454>`_)
+- Add TRACK_AZEL mode to base_track_target.py (`DM-44611 <https://rubinobs.atlassian.net/browse/DM-44611>`_)
 
 
 Bug Fixes
 ---------
 
-- Some bugfixes to the maintel base_close_loop script and expanding the script configuration to allow passing overrided to the wep pipeline. (`DM-44028 <https://jira.lsstcorp.org/browse/DM-44028>`_)
+- Some bugfixes to the maintel base_close_loop script and expanding the script configuration to allow passing overrided to the wep pipeline. (`DM-44028 <https://rubinobs.atlassian.net/browse/DM-44028>`_)
 - Fix issue with offset_atcs.
-  When calling ``ATCS.offset_radec`` there is no relative/absolute arguments. (`DM-44231 <https://jira.lsstcorp.org/browse/DM-44231>`_)
+  When calling ``ATCS.offset_radec`` there is no relative/absolute arguments. (`DM-44231 <https://rubinobs.atlassian.net/browse/DM-44231>`_)
 
 
 v1.33.0 (2024-04-24)
@@ -87,18 +87,18 @@ v1.33.0 (2024-04-24)
 New Features
 ------------
 
-- In ``maintel/base_close_loop``, add feature to ignore individual MTCS components. (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
-- In ``base_take_image.py``, add CWFS to the list of valid image types. (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
-- In ``maintel/offset_camera_hexapod``, add feature to ignore individual MTCS components. (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
+- In ``maintel/base_close_loop``, add feature to ignore individual MTCS components. (`DM-43740 <https://rubinobs.atlassian.net/browse/DM-43740>`_)
+- In ``base_take_image.py``, add CWFS to the list of valid image types. (`DM-43740 <https://rubinobs.atlassian.net/browse/DM-43740>`_)
+- In ``maintel/offset_camera_hexapod``, add feature to ignore individual MTCS components. (`DM-43740 <https://rubinobs.atlassian.net/browse/DM-43740>`_)
 
 
 Bug Fixes
 ---------
 
-- In base_close_loop.py, adding await to cmd_runWEP (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
-- In base_close_loop.py, fixing move_camera_hexapod in base_close_loop.py (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
-- In ``base_close_loop.py``, move hexapod back to focus after intra/extra images (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
-- In ``maintel/base_close_loop``, remove await from flush function. (`DM-43740 <https://jira.lsstcorp.org/browse/DM-43740>`_)
+- In base_close_loop.py, adding await to cmd_runWEP (`DM-43740 <https://rubinobs.atlassian.net/browse/DM-43740>`_)
+- In base_close_loop.py, fixing move_camera_hexapod in base_close_loop.py (`DM-43740 <https://rubinobs.atlassian.net/browse/DM-43740>`_)
+- In ``base_close_loop.py``, move hexapod back to focus after intra/extra images (`DM-43740 <https://rubinobs.atlassian.net/browse/DM-43740>`_)
+- In ``maintel/base_close_loop``, remove await from flush function. (`DM-43740 <https://rubinobs.atlassian.net/browse/DM-43740>`_)
 
 
 v1.32.0 (2024-04-11)
@@ -107,17 +107,17 @@ v1.32.0 (2024-04-11)
 New Features
 ------------
 
-- Add new ``auxtel/atdome`` scripts and unit tests to open, close, and home the dome. (`DM-42269 <https://jira.lsstcorp.org/browse/DM-42269>`_)
+- Add new ``auxtel/atdome`` scripts and unit tests to open, close, and home the dome. (`DM-42269 <https://rubinobs.atlassian.net/browse/DM-42269>`_)
 - In `data/scripts` add executable scripts to interact with OCS Scheduler:
 
    - `ocs/scheduler/enable.py`: It enables the OCS Scheduler.
    - `ocs/scheduler/load_snapshot.py`: It loads a snapshot into the OCS Scheduler.
    - `ocs/scheduler/resume.py`: It resumes the OCS Scheduler.
    - `ocs/scheduler/standby.py`: It puts the OCS Scheduler into standby mode.
-   - `ocs/scheduler/stop.py`: It stops the OCS Scheduler. (`DM-43547 <https://jira.lsstcorp.org/browse/DM-43547>`_)
+   - `ocs/scheduler/stop.py`: It stops the OCS Scheduler. (`DM-43547 <https://rubinobs.atlassian.net/browse/DM-43547>`_)
 - Add script to run blocks from the Scheduler. 
 
-  In ``scheduler/testutils/``, add feature to mock addBlock cmd. (`DM-43548 <https://jira.lsstcorp.org/browse/DM-43548>`_)
+  In ``scheduler/testutils/``, add feature to mock addBlock cmd. (`DM-43548 <https://rubinobs.atlassian.net/browse/DM-43548>`_)
 
 
 v1.31.0 (2024-03-28)
@@ -126,8 +126,8 @@ v1.31.0 (2024-03-28)
 New Features
 ------------
 
-- Extended the `slew_ephem_target` functionality of the `base_tcs` to `base_track_target`, enabling the tracking of targets based on ephemeris data for both Simonyi and Auxiliary telescopes. (`DM-41340 <https://jira.lsstcorp.org/browse/DM-41340>`_)
-- Add a new ``maintel/take_image_anycam.py`` script to take data with any of the Simonyi cameras concurrently. (`DM-42516 <https://jira.lsstcorp.org/browse/DM-42516>`_)
+- Extended the `slew_ephem_target` functionality of the `base_tcs` to `base_track_target`, enabling the tracking of targets based on ephemeris data for both Simonyi and Auxiliary telescopes. (`DM-41340 <https://rubinobs.atlassian.net/browse/DM-41340>`_)
+- Add a new ``maintel/take_image_anycam.py`` script to take data with any of the Simonyi cameras concurrently. (`DM-42516 <https://rubinobs.atlassian.net/browse/DM-42516>`_)
 - Update the following scripts to block scripts:
 
     - ``maintel/laser_tracker/shut_down``.
@@ -162,10 +162,10 @@ New Features
 
   In ``take_image_comcam``, add a configuration option to specify data is being taken with comcam in simulation mode.
 
-  Add new ``maintel/mtdome/crawl_az.py`` script to move the MTDome is a particular direction. (`DM-43038 <https://jira.lsstcorp.org/browse/DM-43038>`_)
+  Add new ``maintel/mtdome/crawl_az.py`` script to move the MTDome is a particular direction. (`DM-43038 <https://rubinobs.atlassian.net/browse/DM-43038>`_)
   - In ``base_take_image.py``, add new section to populate additional optional nextVisit metadata as part of config. 
   - In ``maintel/take_image_comcam.py`` and ``maintel/take_image_lsstcam``, add hooks for nextVisit metadata. 
-  - In ``auxtel/take_image_latiss.py``, add hooks for nextVisit metadata. (`DM-43298 <https://jira.lsstcorp.org/browse/DM-43298>`_)
+  - In ``auxtel/take_image_latiss.py``, add hooks for nextVisit metadata. (`DM-43298 <https://rubinobs.atlassian.net/browse/DM-43298>`_)
 
 
 Bug Fixes
@@ -173,7 +173,7 @@ Bug Fixes
 
 - In ``point_azel``, fix error configuring TCS.
 
-  In ``take_image_anycam``, fix call to ``take_imgtype``. (`DM-43038 <https://jira.lsstcorp.org/browse/DM-43038>`_)
+  In ``take_image_anycam``, fix call to ``take_imgtype``. (`DM-43038 <https://rubinobs.atlassian.net/browse/DM-43038>`_)
 
 
 Performance Enhancement
@@ -181,7 +181,7 @@ Performance Enhancement
 
 - In ``maintel/take_image_anycam.py``, a ``nimages`` parameter has been added to facilitate capturing multiple images with a single exposure time.
   This eliminates the necessity of entering ``exp_times`` as a list when multiple images with identical exposure times are required.
-  Furthermore, this enhancement aligns with the standard behavior of other image capture scripts. (`DM-43030 <https://jira.lsstcorp.org/browse/DM-43030>`_)
+  Furthermore, this enhancement aligns with the standard behavior of other image capture scripts. (`DM-43030 <https://rubinobs.atlassian.net/browse/DM-43030>`_)
 
 
 v1.30.0 (2024-02-13)
@@ -190,22 +190,22 @@ v1.30.0 (2024-02-13)
 New Features
 ------------
 
-- Add new `mute_alarms` SAL Script. (`DM-41610 <https://jira.lsstcorp.org/browse/DM-41610>`_)
-- Introduce SAL scripts to enable/disable M2 closed-loop. (`DM-41611 <https://jira.lsstcorp.org/browse/DM-41611>`_)
+- Add new `mute_alarms` SAL Script. (`DM-41610 <https://rubinobs.atlassian.net/browse/DM-41610>`_)
+- Introduce SAL scripts to enable/disable M2 closed-loop. (`DM-41611 <https://rubinobs.atlassian.net/browse/DM-41611>`_)
 - Introduce SAL scripts to enable/disable hexapods compensation mode of the Simonyi Survey Telescope:
   - ``enable_hexapods_compensation``: enable hexapods compensation mode.
-  - ``disable_hexapods_compensation``: disable hexapods compensation mode. (`DM-41799 <https://jira.lsstcorp.org/browse/DM-41799>`_)
-- Introduce a SAL Script to set the m1m3 slew controller flags. (`DM-42403 <https://jira.lsstcorp.org/browse/DM-42403>`_)
+  - ``disable_hexapods_compensation``: disable hexapods compensation mode. (`DM-41799 <https://rubinobs.atlassian.net/browse/DM-41799>`_)
+- Introduce a SAL Script to set the m1m3 slew controller flags. (`DM-42403 <https://rubinobs.atlassian.net/browse/DM-42403>`_)
 - Update ``maintel/home_both_axes`` to add a configuration option to ignore the m1m3.
 
-  Update ``auxtel/prepare_for/vent`` to not partially open the dome. (`DM-42690 <https://jira.lsstcorp.org/browse/DM-42690>`_)
+  Update ``auxtel/prepare_for/vent`` to not partially open the dome. (`DM-42690 <https://rubinobs.atlassian.net/browse/DM-42690>`_)
 
 
 Bug Fixes
 ---------
 
-- `run_m2_actuator_bump_test` call updated to use `actuator` instead of `actuator_id` (`DM-42105 <https://jira.lsstcorp.org/browse/DM-42105>`_)
-- Increase `timeout_std`` to 130s for `laser_tracker/measure.py` script (`DM-42339 <https://jira.lsstcorp.org/browse/DM-42339>`_)
+- `run_m2_actuator_bump_test` call updated to use `actuator` instead of `actuator_id` (`DM-42105 <https://rubinobs.atlassian.net/browse/DM-42105>`_)
+- Increase `timeout_std`` to 130s for `laser_tracker/measure.py` script (`DM-42339 <https://rubinobs.atlassian.net/browse/DM-42339>`_)
 
 
 Other Changes and Additions
@@ -238,7 +238,7 @@ Other Changes and Additions
 
   Update all m1m3 scripts to only setup their instance of the ``MTCS`` class during the configuration stage.
   This also removes the ``add_remotes`` parameter from their initialization.
-  Instantiation of the class is now done in the ``configure`` method. (`DM-42517 <https://jira.lsstcorp.org/browse/DM-42517>`_)
+  Instantiation of the class is now done in the ``configure`` method. (`DM-42517 <https://rubinobs.atlassian.net/browse/DM-42517>`_)
 
 
 v1.29.0 (2023-12-14)
@@ -247,7 +247,7 @@ v1.29.0 (2023-12-14)
 New Features
 ------------
 
-- Add new maintel/laser_tracker/measure.py script, unit test, and executable. (`DM-42122 <https://jira.lsstcorp.org/browse/DM-42122>`_)
+- Add new maintel/laser_tracker/measure.py script, unit test, and executable. (`DM-42122 <https://rubinobs.atlassian.net/browse/DM-42122>`_)
 
 
 Bug Fixes
@@ -256,7 +256,7 @@ Bug Fixes
 - In ``maintel/m1m3/check_actuators``, add a timer task that will be set to wait for ``time_one_bump`` 
   when a bump test fails.
 
-  In ``base_point_azel``, call ``configure_tcs`` in the ``configure`` method. (`DM-41870 <https://jira.lsstcorp.org/browse/DM-41870>`_)
+  In ``base_point_azel``, call ``configure_tcs`` in the ``configure`` method. (`DM-41870 <https://rubinobs.atlassian.net/browse/DM-41870>`_)
 
 
 v1.28.0 (2023-11-29)
@@ -266,10 +266,10 @@ New Features
 ------------
 
 - Introduce the ``maintel/m2/check_actuators.py`` script.
-  This new addition allows users to run M2 bump tests. (`DM-40554 <https://jira.lsstcorp.org/browse/DM-40554>`_)
-- Introduce the ``pause_queue.py`` script. This new addition allows users to sent an indefinte pause command to the script queue. (`DM-41094 <https://jira.lsstcorp.org/browse/DM-41094>`_)
-- Extended the `slew_to_planet` functionality of the `base_tcs` to `base_track_target`, enabling the tracking of planets of the Solar system for both Simonyi and Auxiliary telescopes. (`DM-41338 <https://jira.lsstcorp.org/browse/DM-41338>`_)
-- In ``latiss_take_sequence``, add optional config parameters for ra, dec, and rot_sky for script queue metadata. (`DM-41538 <https://jira.lsstcorp.org/browse/DM-41538>`_)
+  This new addition allows users to run M2 bump tests. (`DM-40554 <https://rubinobs.atlassian.net/browse/DM-40554>`_)
+- Introduce the ``pause_queue.py`` script. This new addition allows users to sent an indefinte pause command to the script queue. (`DM-41094 <https://rubinobs.atlassian.net/browse/DM-41094>`_)
+- Extended the `slew_to_planet` functionality of the `base_tcs` to `base_track_target`, enabling the tracking of planets of the Solar system for both Simonyi and Auxiliary telescopes. (`DM-41338 <https://rubinobs.atlassian.net/browse/DM-41338>`_)
+- In ``latiss_take_sequence``, add optional config parameters for ra, dec, and rot_sky for script queue metadata. (`DM-41538 <https://rubinobs.atlassian.net/browse/DM-41538>`_)
 
 
 Bug Fixes
@@ -279,7 +279,7 @@ Bug Fixes
 
   In ``maintel/laser_tracker/align.py``, fix scalar units.
 
-  In ``maintel/mtrotator/move_rotator``, fix call to ``mtcs.move_rotator``. (`DM-41538 <https://jira.lsstcorp.org/browse/DM-41538>`_)
+  In ``maintel/mtrotator/move_rotator``, fix call to ``mtcs.move_rotator``. (`DM-41538 <https://rubinobs.atlassian.net/browse/DM-41538>`_)
 
 
 v1.27.0 (2023-11-02)
@@ -288,25 +288,25 @@ v1.27.0 (2023-11-02)
 New Features
 ------------
 
-- Update ``maintel/track_target_and_take_image_gencam_.py`` to allow taking images with multiple cameras. (`DM-38338 <https://jira.lsstcorp.org/browse/DM-38338>`_)
-- Add new maintel/take_image_lsstcam.py script, test and executable. (`DM-40208 <https://jira.lsstcorp.org/browse/DM-40208>`_)
+- Update ``maintel/track_target_and_take_image_gencam_.py`` to allow taking images with multiple cameras. (`DM-38338 <https://rubinobs.atlassian.net/browse/DM-38338>`_)
+- Add new maintel/take_image_lsstcam.py script, test and executable. (`DM-40208 <https://rubinobs.atlassian.net/browse/DM-40208>`_)
 - Add new base_close_loop.py script, and executable. 
   This script allows to run the closed loop, that is, taking images, processing them, and apply ts_ofc corrections.
 
   Add new maintel/close_loop_comcam.py script, unit test, and executable.
 
-  Add new maintel/close_loop_lsstcam.py script, unit test, and executable. (`DM-40213 <https://jira.lsstcorp.org/browse/DM-40213>`_)
-- Add new maintel/apply_dof.py script, unit test, and executable. (`DM-40219 <https://jira.lsstcorp.org/browse/DM-40219>`_)
-- In ``auxtel/prepare_for/onsky``, allow users to ignore components from ``LATISS`` as well. (`DM-40580 <https://jira.lsstcorp.org/browse/DM-40580>`_)
+  Add new maintel/close_loop_lsstcam.py script, unit test, and executable. (`DM-40213 <https://rubinobs.atlassian.net/browse/DM-40213>`_)
+- Add new maintel/apply_dof.py script, unit test, and executable. (`DM-40219 <https://rubinobs.atlassian.net/browse/DM-40219>`_)
+- In ``auxtel/prepare_for/onsky``, allow users to ignore components from ``LATISS`` as well. (`DM-40580 <https://rubinobs.atlassian.net/browse/DM-40580>`_)
 - Introduced the following scripts to position the respective telescope based on (az, el, rot_tel) coordinates:
 
   - `maintel/point_azel.py`: tailored for the Main Telescope.
   - `auxtel/point_azel.py`: designed for the Auxiliary Telescope.
 
-  The specialized methods were built upon the generic module `base_point_azel.py`. (`DM-40700 <https://jira.lsstcorp.org/browse/DM-40700>`_)
-- * Add new ``maintel/mtrotator/move_rotator.py`` SAL Script. (`DM-41081 <https://jira.lsstcorp.org/browse/DM-41081>`_)
-- Introduce the ``sleep.py`` script. This new addition allows users to sent a sleep command to the script queue for a desired duration. (`DM-41082 <https://jira.lsstcorp.org/browse/DM-41082>`_)
-- Add new maintel/stop_rotator.py script, executable, and unit test. (`DM-41083 <https://jira.lsstcorp.org/browse/DM-41083>`_)
+  The specialized methods were built upon the generic module `base_point_azel.py`. (`DM-40700 <https://rubinobs.atlassian.net/browse/DM-40700>`_)
+- * Add new ``maintel/mtrotator/move_rotator.py`` SAL Script. (`DM-41081 <https://rubinobs.atlassian.net/browse/DM-41081>`_)
+- Introduce the ``sleep.py`` script. This new addition allows users to sent a sleep command to the script queue for a desired duration. (`DM-41082 <https://rubinobs.atlassian.net/browse/DM-41082>`_)
+- Add new maintel/stop_rotator.py script, executable, and unit test. (`DM-41083 <https://rubinobs.atlassian.net/browse/DM-41083>`_)
 
 
 Other Changes and Additions
@@ -328,7 +328,7 @@ Other Changes and Additions
 
       - Update to get list of components from ts-xml and to limit the number of components it checks at a single time.
 
-      - Treat non-index component the same way indexed components are treated, e.g. wait for at least ``min_heartbeat`` heartbeat events before deming it alive. (`DM-40580 <https://jira.lsstcorp.org/browse/DM-40580>`_)
+      - Treat non-index component the same way indexed components are treated, e.g. wait for at least ``min_heartbeat`` heartbeat events before deming it alive. (`DM-40580 <https://rubinobs.atlassian.net/browse/DM-40580>`_)
 
 
 v1.26.0 (2023-10-06)
@@ -337,21 +337,21 @@ v1.26.0 (2023-10-06)
 New Features
 ------------
 
-- Add new maintel/offset_camera_hexapod.py script, unit test, and executable. (`DM-40852 <https://jira.lsstcorp.org/browse/DM-40852>`_)
+- Add new maintel/offset_camera_hexapod.py script, unit test, and executable. (`DM-40852 <https://rubinobs.atlassian.net/browse/DM-40852>`_)
 
 
 Documentation
 -------------
 
-- Integrate towncrier for release notes and change log management (`DM-40534 <https://jira.lsstcorp.org/browse/DM-40534>`_)
+- Integrate towncrier for release notes and change log management (`DM-40534 <https://rubinobs.atlassian.net/browse/DM-40534>`_)
 
 
 Other Changes and Additions
 ---------------------------
 
 - Update the `lsst.ts.criopy`` imports in `m1m3/check_actuators.py`` to ensure compatibility with the latest criopy version. 
-  The `ts.criopy.M1M3FATable` table is now living in the `ts.xml.tables.m1m3` module. (`DM-40534 <https://jira.lsstcorp.org/browse/DM-40534>`_)
-- In ``auxtel/calibrations/power_off_atcalsys``, remove temporary work-around to missing ACK from faulty shutter limit switch. (`DM-40852 <https://jira.lsstcorp.org/browse/DM-40852>`_)
+  The `ts.criopy.M1M3FATable` table is now living in the `ts.xml.tables.m1m3` module. (`DM-40534 <https://rubinobs.atlassian.net/browse/DM-40534>`_)
+- In ``auxtel/calibrations/power_off_atcalsys``, remove temporary work-around to missing ACK from faulty shutter limit switch. (`DM-40852 <https://rubinobs.atlassian.net/browse/DM-40852>`_)
 
 
 v1.25.5
