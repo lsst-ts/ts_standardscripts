@@ -52,8 +52,6 @@ class TakeImageComCam(BaseTakeImage):
             self.domain, intended_usage=ComCamUsages.TakeImage, log=self.log
         )
 
-        self.instrument_setup_time = self._comcam.filter_change_timeout
-
         self.instrument_name = "LSSTComCam"
 
     @property

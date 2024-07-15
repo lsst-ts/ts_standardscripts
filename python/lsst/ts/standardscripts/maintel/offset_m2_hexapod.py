@@ -65,13 +65,13 @@ class OffsetM2Hexapod(salobj.BaseScript):
             properties:
               x:
                 type: number
-                description: Offset hexapod in x axis (mm).
+                description: Offset hexapod in x axis (micron).
               y:
                 type: number
-                description: Offset hexapod in y axis (mm).
+                description: Offset hexapod in y axis (micron).
               z:
                 type: number
-                description: Offset hexapod in z axis (mm).
+                description: Offset hexapod in z axis (micron).
               u:
                 type: number
                 description: Rx offset (deg).

@@ -448,6 +448,7 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 rot_tel=self.config.rot_value,
             )
             await self.tcs.stop_tracking()
+            await asyncio.sleep(1.0)
             await self.tcs.start_tracking()
 
         elif self.slew_type == SlewType.PLANET:

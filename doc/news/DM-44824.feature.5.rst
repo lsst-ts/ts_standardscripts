@@ -1,0 +1,2 @@
+In maintel/offset_m2_hexapod, fix units for xyz offsets in the script configuration.
+

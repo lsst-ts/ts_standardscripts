@@ -1,0 +1,4 @@
+In maintel/take_image_comcam, remove setting instrument_setup_time.
+
+This will fallback to the default value of 0.
+
