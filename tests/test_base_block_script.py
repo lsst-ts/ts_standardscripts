@@ -20,11 +20,13 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import contextlib
+import os
 import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
 from lsst.ts.standardscripts.maintel import MoveP2P
+from lsst.ts.utils import ImageNameServiceClient
 
 
 class TestBaseBlockScript(
@@ -321,6 +323,76 @@ class TestBaseBlockScript(
                 == "MoveP2P BLOCK-123 202306060001 SITCOM-321"
             )
 
+    @unittest.mock.patch.dict(os.environ, {"LSST_SITE": "summit"})
+    @unittest.mock.patch.object(
+        ImageNameServiceClient,
+        "get_next_obs_id",
+        return_value=(None, ["BL123-202306060001"]),
+    )
+    async def test_get_obs_id_block_ticket(self, mock_get_next_obs_id):
+        async with self.make_dry_script():
+            program = "BLOCK-123"
+            self.script.program = program
+
+            obs_id = await self.script.get_obs_id()
+            assert obs_id is not None
+            assert obs_id.startswith("BL123")
+
+    # Assuming obs_is for test cases will start with BT
+    @unittest.mock.patch.dict(os.environ, {"LSST_SITE": "summit"})
+    @unittest.mock.patch.object(
+        ImageNameServiceClient,
+        "get_next_obs_id",
+        return_value=(None, ["BT123-202306060001"]),
+    )
+    async def test_get_obs_id_block_test_case(self, mock_get_next_obs_id):
+        async with self.make_dry_script():
+            program = "BLOCK-T123"
+            self.script.program = program
+
+            obs_id = await self.script.get_obs_id()
+            assert obs_id is not None
+            assert obs_id.startswith("BT123")
+
+    async def test_config_reason_program_block_test_case(self) -> None:
+        async with self.make_dry_script():
+            self.script.get_obs_id = unittest.mock.AsyncMock(
+                side_effect=["202306060001"]
+            )
+
+            az = 0.0
+            el = 80.0
+            pause_for = 10.0
+            program = "BLOCK-T123"
+            reason = "SITCOM-321"
+            test_case = dict(
+                name="BLOCK-T2190",
+                execution="BLOCK-E2390",
+                version="1.0",
+                project="SITCOM",
+            )
+
+            await self.configure_script(
+                az=az,
+                el=el,
+                pause_for=pause_for,
+                program=program,
+                reason=reason,
+                test_case=test_case,
+            )
+
+            assert self.script.program == program
+            assert self.script.reason == reason
+            assert self.script.test_case["name"] == test_case["name"]
+            assert self.script.test_case["execution"] == test_case["execution"]
+            assert self.script.test_case["version"] == test_case["version"]
+            assert "initial_step" not in self.script.test_case
+            assert self.script.test_case["project"] == test_case["project"]
+            assert (
+                self.script.checkpoint_message
+                == "MoveP2P BLOCK-T123 202306060001 SITCOM-321"
+            )
+
     async def test_run_no_test_case(self):
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -330,7 +402,7 @@ class TestBaseBlockScript(
             ra = [0.0, 10.0, 20.0]
             dec = [80.0, 70.0, 60.0]
             timeout = 100.0
-            program = "BLOCK-123"
+            program = "BLOCK-T123"
             reason = "SITCOM-321"
 
             await self.configure_script(
@@ -359,11 +431,14 @@ class TestBaseBlockScript(
 
             ra = [0.0, 10.0, 20.0]
             dec = [80.0, 70.0, 60.0]
-            program = "BLOCK-123"
+            program = "BLOCK-T123"
             reason = "SITCOM-321"
             timeout = 100.0
             test_case = dict(
-                name="LVV-T2190", execution="LVV-E2390", version="1.0", project="SITCOM"
+                name="BLOCK-T2190",
+                execution="BLOCK-E2390",
+                version="1.0",
+                project="BLOCK",
             )
 
             await self.configure_script(

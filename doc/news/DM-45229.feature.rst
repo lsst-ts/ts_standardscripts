@@ -1,0 +1,1 @@
+Enhance `base_block_script.py` to support Block Test Cases by adding regular expression-based parsing for program names, accommodating both `BLOCK-NNNN` for block tickets and `BLOCK-TNNNN`` for block test cases.
