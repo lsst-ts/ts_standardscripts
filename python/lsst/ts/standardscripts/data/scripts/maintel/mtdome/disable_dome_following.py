@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
@@ -19,6 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .crawl_az import *
-from .disable_dome_following import *
-from .enable_dome_following import *
+import asyncio
+
+from lsst.ts.standardscripts.maintel.mtdome import DisableDomeFollowing
+
+asyncio.run(DisableDomeFollowing.amain())

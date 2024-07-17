@@ -19,6 +19,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .crawl_az import *
-from .disable_dome_following import *
-from .enable_dome_following import *
+import unittest
+
+from lsst.ts import standardscripts
+from lsst.ts.standardscripts.maintel.mtdome import DisableDomeFollowing
+
+
+class TestDisableDomeFollowing(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
+    async def basic_make_script(self, index):
+        self.script = DisableDomeFollowing(index=index)
+        return self.script
+
+    async def test_executable(self):
+        scripts_dir = standardscripts.get_scripts_dir()
+        script_path = scripts_dir / "maintel" / "mtdome" / "disable_dome_following.py"
+        await self.check_executable(script_path)
