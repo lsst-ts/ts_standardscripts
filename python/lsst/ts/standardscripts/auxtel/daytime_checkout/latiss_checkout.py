@@ -86,12 +86,15 @@ class LatissCheckout(salobj.BaseScript):
 
     async def configure(self, config):
         # This script does not require any configuration
-        pass
+        self.program = "BLOCK-T17"
 
     def set_metadata(self, metadata):
         """Set estimated duration of the script."""
 
         metadata.duration = 20
+        metadata.instrument = "LATISS"
+        metadata.filters = "empty~empty"
+        metadata.survey = self.program
 
     async def run(self):
         await self.assert_feasibility()
@@ -120,7 +123,7 @@ class LatissCheckout(salobj.BaseScript):
         await self.checkpoint("Bias Frame Verification")
 
         self.latiss.rem.atoods.evt_imageInOODS.flush()
-        await self.latiss.take_bias(nbias=1)
+        await self.latiss.take_bias(nbias=1, filter=0, grating=0, program=self.program)
         try:
             ingest_event = await self.latiss.rem.atoods.evt_imageInOODS.next(
                 flush=False, timeout=STD_TIMEOUT
@@ -142,7 +145,7 @@ class LatissCheckout(salobj.BaseScript):
         await self.checkpoint("Engineering Frame Verification")
 
         self.latiss.rem.atoods.evt_imageInOODS.flush()
-        await self.latiss.take_engtest(2, filter=0, grating=0)
+        await self.latiss.take_engtest(2, filter=0, grating=0, program=self.program)
         try:
             ingest_event = await self.latiss.rem.atoods.evt_imageInOODS.next(
                 flush=False, timeout=STD_TIMEOUT
