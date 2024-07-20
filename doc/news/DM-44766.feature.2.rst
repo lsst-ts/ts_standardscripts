@@ -1,0 +1,1 @@
+Introduced auxtel/atdome/enable_dome_following.py, a script for enabling ATDome following.
