@@ -21,6 +21,9 @@
 
 from .close_dome import *
 from .close_dropout_door import *
+from .disable_dome_following import *
+from .enable_dome_following import *
 from .home_dome import *
 from .open_dome import *
 from .open_dropout_door import *
+from .slew_dome import *
