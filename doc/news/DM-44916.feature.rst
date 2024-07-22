@@ -1,0 +1,1 @@
+Add ``EnableDomeFollowing`` and ``DisableDomeFollowing`` scripts for ``MTDome``.
