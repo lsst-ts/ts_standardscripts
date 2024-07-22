@@ -18,12 +18,44 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
+__all__ = ["EnableDomeFollowing"]
 
-from .close_dome import *
-from .close_dropout_door import *
-from .disable_dome_following import *
-from .enable_dome_following import *
-from .home_dome import *
-from .open_dome import *
-from .open_dropout_door import *
-from .slew_dome import *
+from lsst.ts import salobj
+from lsst.ts.observatory.control.auxtel.atcs import ATCS
+
+
+class EnableDomeFollowing(salobj.BaseScript):
+    """Run enable dome following on ATCS.
+
+    Parameters
+    ----------
+    index : `int`
+        Index of Script SAL component.
+
+    Notes
+    -----
+    **Checkpoints**
+
+    None
+
+    """
+
+    def __init__(self, index):
+        super().__init__(index=index, descr="Enable ATDome following.")
+
+        self.atcs = None
+
+    @classmethod
+    def get_schema(cls):
+        # This script does not require any configuration
+        return None
+
+    async def configure(self, config):
+        if self.atcs is None:
+            self.atcs = ATCS(domain=self.domain, log=self.log)
+
+    def set_metadata(self, metadata):
+        metadata.duration = 5.0
+
+    async def run(self):
+        await self.atcs.enable_dome_following()

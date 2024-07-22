@@ -1,0 +1,1 @@
+Introduced auxtel/atdome/disable_dome_following.py, a script for disabling ATDome following.
