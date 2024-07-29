@@ -42,9 +42,7 @@ class EnableATAOSCorrections(salobj.BaseScript):
             descr="Enable ATAOS corrections.",
         )
 
-        self.atcs = ATCS(
-            domain=self.domain, intended_usage=ATCSUsages.All, log=self.log
-        )
+        self.atcs = None
 
     @classmethod
     def get_schema(cls):
@@ -73,6 +71,12 @@ class EnableATAOSCorrections(salobj.BaseScript):
             Script configuration, as defined by `schema`.
         """
         self.config = config
+
+        if self.atcs is None:
+            self.atcs = ATCS(
+                domain=self.domain, intended_usage=ATCSUsages.All, log=self.log
+            )
+            await self.atcs.start_task
 
         if hasattr(self.config, "ignore"):
             for comp in self.config.ignore:

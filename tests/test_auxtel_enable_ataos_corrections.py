@@ -37,15 +37,14 @@ class TestEnableATAOSCorrections(
 ):
     async def basic_make_script(self, index):
         self.script = EnableATAOSCorrections(index=index)
-        self.script.atcs.check = unittest.mock.Mock()
         self.atcs_mock = ATCSMock()
 
         return (self.script, self.atcs_mock)
 
     async def test_run(self):
         async with self.make_script():
-            await self.script.atcs.enable()
             await self.configure_script()
+            await self.script.atcs.enable()
 
             await self.run_script()
 
@@ -71,7 +70,7 @@ class TestEnableATAOSCorrections(
             components = ["not_atcs_comp", "atmcs"]
             await self.configure_script(ignore=components)
 
-            self.script.atcs.check.not_atcs_comp.assert_not_called()
+            assert hasattr(self.script.atcs, "not_atcs_comp") is False
             assert self.script.atcs.check.atmcs is False
 
 
