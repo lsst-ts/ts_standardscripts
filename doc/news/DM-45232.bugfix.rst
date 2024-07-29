@@ -1,0 +1,2 @@
+In latiss_checkout.py, remove metadata from the bias test frame, add group_id to the engtest image and set the instrument configuration to be empty/empty (no optical element in the beam).
+
