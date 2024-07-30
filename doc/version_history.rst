@@ -8,6 +8,29 @@ Version History
 
 .. towncrier release notes start
 
+v1.37.0 (2024-07-30)
+====================
+
+New Features
+------------
+
+- Add `EnableATAOSCorrections` SAL script for `auxtel`. (`DM-44629 <https://rubinobs.atlassian.net/browse/DM-44629>`_)
+- Introduced auxtel/atdome/disable_dome_following.py, a script for disabling ATDome following. (`DM-44766 <https://rubinobs.atlassian.net/browse/DM-44766>`_)
+- Introduced auxtel/atdome/enable_dome_following.py, a script for enabling ATDome following. (`DM-44766 <https://rubinobs.atlassian.net/browse/DM-44766>`_)
+- Introduced auxtel/atdome/slew_dome.py, a script for slewing the AT dome. (`DM-44766 <https://rubinobs.atlassian.net/browse/DM-44766>`_)
+- Add ``EnableDomeFollowing`` and ``DisableDomeFollowing`` scripts for ``MTDome``. (`DM-44916 <https://rubinobs.atlassian.net/browse/DM-44916>`_)
+- Enhance `base_block_script.py` to support Block Test Cases by adding regular expression-based parsing for program names, accommodating both `BLOCK-NNNN` for block tickets and `BLOCK-TNNNN`` for block test cases. (`DM-45229 <https://rubinobs.atlassian.net/browse/DM-45229>`_)
+- Add takeStutteredComCam script. (`DM-45350 <https://rubinobs.atlassian.net/browse/DM-45350>`_)
+- Add takeStutteredLSSTCam script. (`DM-45350 <https://rubinobs.atlassian.net/browse/DM-45350>`_)
+- Add more metadata to the exposures in the LATISS daytime checkout (`DM-45351 <https://rubinobs.atlassian.net/browse/DM-45351>`_)
+
+
+Bug Fixes
+---------
+
+- In latiss_checkout.py, remove metadata from the bias test frame, add group_id to the engtest image and set the instrument configuration to be empty/empty (no optical element in the beam). (`DM-45232 <https://rubinobs.atlassian.net/browse/DM-45232>`_)
+
+
 v1.36.1 (2024-07-15)
 ====================
 
