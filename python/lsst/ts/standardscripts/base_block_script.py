@@ -27,6 +27,7 @@ import hashlib
 import io
 import json
 import os
+import re
 from datetime import datetime
 
 import yaml
@@ -146,9 +147,24 @@ class BaseBlockScript(salobj.BaseScript, metaclass=abc.ABCMeta):
         `str` or None
             Id generated from camera server.
         """
-        project, ticket_id_str = self.program.split("-", maxsplit=1)
+        block_regex = re.compile(
+            r"(?P<block_test_case>BLOCK-T)?(?P<block>BLOCK-)?(?P<id>[0-9]*)"
+        )
+        match = block_regex.match(self.program)
+
+        if match.span()[1] == 0:
+            raise RuntimeError(
+                f"{self.program} has the wrong format, should be BLOCK-N or BLOCK-TN..."
+            )
+
+        block_id = match.groupdict()["id"]
+
         site = os.environ.get("LSST_SITE")
-        if site is None or site not in IMAGE_SERVER_URL or project != "BLOCK":
+        if (
+            site is None
+            or site not in IMAGE_SERVER_URL
+            or not self.program.startswith("BLOCK")
+        ):
             message = (
                 "LSST_SITE environment variable not defined"
                 if site is None
@@ -162,16 +178,23 @@ class BaseBlockScript(salobj.BaseScript, metaclass=abc.ABCMeta):
             return None
 
         try:
-            ticket_id = abs(int(ticket_id_str))
+            ticket_id = abs(int(block_id))
             image_server_url = IMAGE_SERVER_URL[site]
+
+            # Determine if it's a Block test case or Block ticket
+            if match.groupdict()["block_test_case"] is not None:
+                block_type = "BlockT"
+            else:
+                block_type = "Block"
+
             image_server_client = utils.ImageNameServiceClient(
-                image_server_url, ticket_id, "Block"
+                image_server_url, ticket_id, block_type
             )
             _, data = await image_server_client.get_next_obs_id(num_images=1)
             return data[0]
         except ValueError:
             raise RuntimeError(
-                f"Invalid BLOCK id. Got {ticket_id_str}, expected an integer type id."
+                f"Invalid {block_type} id. Got {block_id}, expected an integer type id."
             )
         except Exception:
             self.log.exception(f"Failed to generate obs id for {self.program}.")

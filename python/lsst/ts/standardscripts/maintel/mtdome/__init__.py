@@ -20,3 +20,5 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from .crawl_az import *
+from .disable_dome_following import *
+from .enable_dome_following import *

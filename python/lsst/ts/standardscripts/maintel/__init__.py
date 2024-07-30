@@ -45,6 +45,8 @@ from .stop_rotator import *
 from .take_image_anycam import *
 from .take_image_comcam import *
 from .take_image_lsstcam import *
+from .take_stuttered_comcam import *
+from .take_stuttered_lsstcam import *
 from .take_triplet_comcam import *
 from .track_target import *
 from .track_target_and_take_image_comcam import *

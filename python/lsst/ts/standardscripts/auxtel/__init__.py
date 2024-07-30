@@ -20,6 +20,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from .calsys_takedata import *
+from .enable_ataos_corrections import *
 from .enable_atcs import *
 from .enable_latiss import *
 from .focus_sweep_latiss import *

@@ -19,11 +19,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .close_dome import *
-from .close_dropout_door import *
-from .disable_dome_following import *
-from .enable_dome_following import *
-from .home_dome import *
-from .open_dome import *
-from .open_dropout_door import *
-from .slew_dome import *
+__all__ = ["EnableDomeFollowing"]
+
+from lsst.ts import salobj
+from lsst.ts.observatory.control.maintel.mtcs import MTCS
+
+
+class EnableDomeFollowing(salobj.BaseScript):
+    """Enable Dome Following for the MTDome.
+
+    Parameters
+    ----------
+    index : `int`
+        Index of Script SAL component.
+
+    Notes
+    -----
+    **Checkpoints**
+
+    None
+
+    """
+
+    def __init__(self, index):
+        super().__init__(index=index, descr="Enable Dome Following for the MTDome.")
+
+        self.mtcs = None
+
+    @classmethod
+    def get_schema(cls):
+        # This script does not require any configuration
+        return None
+
+    async def configure(self, config):
+        if self.mtcs is None:
+            self.mtcs = MTCS(domain=self.domain, log=self.log)
+
+    def set_metadata(self, metadata):
+        metadata.duration = 5.0
+
+    async def run(self):
+        await self.mtcs.enable_dome_following()

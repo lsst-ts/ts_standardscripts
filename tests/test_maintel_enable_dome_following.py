@@ -19,11 +19,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .close_dome import *
-from .close_dropout_door import *
-from .disable_dome_following import *
-from .enable_dome_following import *
-from .home_dome import *
-from .open_dome import *
-from .open_dropout_door import *
-from .slew_dome import *
+import unittest
+
+from lsst.ts import standardscripts
+from lsst.ts.standardscripts.maintel.mtdome import EnableDomeFollowing
+
+
+class TestEnableDomeFollowing(
+    standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
+):
+    async def basic_make_script(self, index):
+        self.script = EnableDomeFollowing(index=index)
+        return self.script
+
+    async def test_executable(self):
+        scripts_dir = standardscripts.get_scripts_dir()
+        script_path = scripts_dir / "maintel" / "mtdome" / "enable_dome_following.py"
+        await self.check_executable(script_path)
