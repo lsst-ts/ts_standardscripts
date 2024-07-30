@@ -119,11 +119,13 @@ class LatissCheckout(salobj.BaseScript):
             f"The available filters are {available_setup[0]} and gratings are {available_setup[1]} "
         )
 
+        await self.latiss.setup_atspec(filter=0, grating=0)
+
         # Bias Verification, start with checkpoint for observer
         await self.checkpoint("Bias Frame Verification")
 
         self.latiss.rem.atoods.evt_imageInOODS.flush()
-        await self.latiss.take_bias(nbias=1, filter=0, grating=0, program=self.program)
+        await self.latiss.take_bias(nbias=1)
         try:
             ingest_event = await self.latiss.rem.atoods.evt_imageInOODS.next(
                 flush=False, timeout=STD_TIMEOUT
@@ -145,7 +147,9 @@ class LatissCheckout(salobj.BaseScript):
         await self.checkpoint("Engineering Frame Verification")
 
         self.latiss.rem.atoods.evt_imageInOODS.flush()
-        await self.latiss.take_engtest(2, filter=0, grating=0, program=self.program)
+        await self.latiss.take_engtest(
+            2, filter=0, grating=0, program=self.program, group_id=self.group_id
+        )
         try:
             ingest_event = await self.latiss.rem.atoods.evt_imageInOODS.next(
                 flush=False, timeout=STD_TIMEOUT

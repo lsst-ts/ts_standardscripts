@@ -71,7 +71,10 @@ class TestLatissCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
         self.script.latiss.take_engtest = unittest.mock.AsyncMock()
         self.script.latiss.setup_instrument = unittest.mock.AsyncMock()
 
-        self.script.latiss.rem = types.SimpleNamespace(atoods=unittest.mock.AsyncMock())
+        self.script.latiss.rem = types.SimpleNamespace(
+            atoods=unittest.mock.AsyncMock(),
+            atspectrograph=unittest.mock.AsyncMock(),
+        )
         self.script.latiss.rem.atoods.configure_mock(
             **{"evt_imageInOODS.next.side_effect": self.get_atoods_ingest_event}
         )
@@ -101,7 +104,7 @@ class TestLatissCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             await self.configure_script()
 
             self.script.latiss.rem.atoods.configure_mock(
-                **{"evt_imageInOODS.next.side_effect": 1}
+                **{"evt_imageInOODS.next.side_effect": asyncio.TimeoutError}
             )
 
             with pytest.raises(AssertionError):
