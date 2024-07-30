@@ -1,1 +1,0 @@
-Add `EnableATAOSCorrections` SAL script for `auxtel`.
