@@ -384,14 +384,18 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             visitId=visit_id, timeout=2 * CMD_TIMEOUT, config=self.wep_config
         )
 
-    async def compute_ofc_offsets(self) -> None:
-        """Compute offsets using ts_ofc."""
+    async def compute_ofc_offsets(self, rotation_angle: float) -> None:
+        """Compute offsets using ts_ofc.
 
+        Parameters
+        ----------
+        rotation_angle : `float`
+            Rotation angle of the camera in deg.
+        """
         # Create the config to run OFC
         config = {
-            # TODO (DM-44247): Update how base_close_loop script handle
-            # passing filter information.
-            "filter_name": "",
+            "filter_name": self.filter,
+            "rotation_angle": rotation_angle,
             "comp_dof_idx": {
                 "m2HexPos": [float(val) for val in self.used_dofs[:5]],
                 "camHexPos": [float(val) for val in self.used_dofs[5:10]],
@@ -439,8 +443,23 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             # Flush wavefront error topic
             self.mtcs.rem.mtaos.evt_wavefrontError.flush()
 
+            # Retrieve the rotation angle before taking data.
+            start_rotation_angle = await self.mtcs.rem.mtrotator.tel_rotation.next(
+                flush=True, timeout=STD_TIMEOUT
+            )
+
             # Run the operational mode handler function.
             await self.operation_model_handlers[self.mode]()
+
+            # Retrieve the rotation angle after taking data.
+            end_rotation_angle = await self.mtcs.rem.mtrotator.tel_rotation.next(
+                flush=True, timeout=STD_TIMEOUT
+            )
+
+            # Compute average rotation angle while taking data
+            rotation_angle = (
+                start_rotation_angle.actualPosition + end_rotation_angle.actualPosition
+            ) / 2
 
             # Save the wavefront error
             wavefront_error = await self.mtcs.rem.mtaos.evt_wavefrontError.next(
@@ -452,7 +471,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             )
 
             # Compute ts_ofc offsets
-            dof_offset = await self.compute_ofc_offsets()
+            dof_offset = await self.compute_ofc_offsets(rotation_angle)
 
             # If apply_corrections is true,
             # then we apply the corrections
