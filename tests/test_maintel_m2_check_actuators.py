@@ -130,6 +130,9 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
                     actuators=actuators,
                 )
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_configure_with_program_reason(self):
         """Testing a valid configuration: with program and reason"""
 

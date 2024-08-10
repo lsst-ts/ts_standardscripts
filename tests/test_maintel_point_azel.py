@@ -89,6 +89,9 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             assert self.script.mtcs.check.mtdometrajectory is False
             self.script.mtcs.check.no_comp.assert_not_called()
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_configure_with_program_reason(self):
         """Testing a valid configuration: with program and reason"""
 
