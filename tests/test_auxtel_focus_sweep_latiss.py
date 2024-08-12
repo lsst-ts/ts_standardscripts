@@ -81,6 +81,59 @@ class TestFocusSweepLatiss(
             assert self.script.config.grating == 1
             assert self.script.config.n_images_per_step == 1
 
+    async def test_configure_focus_step_sequence(self):
+        config = {
+            "axis": "x",
+            "focus_step_sequence": [0, 0.1, 0.2, 0.3, 0.4],
+            "exp_time": 10.0,
+            "filter": "SDSSr_65mm",
+            "grating": 1,
+            "n_images_per_step": 1,
+        }
+
+        expected_step_sequence = [-0.2, -0.1, 0, 0.1, 0.2]
+        async with self.make_script():
+            await self.configure_script(**config)
+
+            assert self.script.config.axis == "x"
+            assert self.script.config.focus_window == 0.4
+            assert self.script.config.n_steps == 5
+            for step, expected_step in zip(
+                self.script.config.focus_step_sequence, expected_step_sequence
+            ):
+                self.assertAlmostEqual(step, expected_step)
+            assert self.script.config.exp_time == 10.0
+            assert self.script.config.filter == "SDSSr_65mm"
+            assert self.script.config.grating == 1
+            assert self.script.config.n_images_per_step == 1
+
+    async def test_configure_focus_step_sequence_with_window(self):
+        config = {
+            "axis": "x",
+            "focus_window": 0.4,
+            "n_steps": 5,
+            "exp_time": 10.0,
+            "filter": "SDSSr_65mm",
+            "grating": 1,
+            "n_images_per_step": 1,
+        }
+
+        expected_step_sequence = [-0.2, -0.1, 0, 0.1, 0.2]
+        async with self.make_script():
+            await self.configure_script(**config)
+
+            assert self.script.config.axis == "x"
+            assert self.script.config.focus_window == 0.4
+            assert self.script.config.n_steps == 5
+            for step, expected_step in zip(
+                self.script.config.focus_step_sequence, expected_step_sequence
+            ):
+                self.assertAlmostEqual(step, expected_step)
+            assert self.script.config.exp_time == 10.0
+            assert self.script.config.filter == "SDSSr_65mm"
+            assert self.script.config.grating == 1
+            assert self.script.config.n_images_per_step == 1
+
     async def test_configure_ignore(self):
         config = {
             "axis": "x",
@@ -138,6 +191,22 @@ class TestFocusSweepLatiss(
             for bad_config in bad_configs:
                 with pytest.raises(salobj.ExpectedError):
                     await self.configure_script(**bad_config)
+
+    async def test_invalid_configuration_steps_and_window(self):
+        bad_config = {
+            "axis": "x",
+            "focus_window": 0.4,
+            "n_steps": 5,
+            "focus_step_sequence": [0, 0.1, 0.2, 0.3, 0.4],
+            "exp_time": 10,
+            "filter": "SDSSr_65mm",
+            "grating": "blue300lpmm_qn1",
+            "n_images_per_step": 1,
+        }
+
+        async with self.make_script():
+            with pytest.raises(salobj.ExpectedError):
+                await self.configure_script(**bad_config)
 
     async def test_focus_sweep(self):
         config = {
