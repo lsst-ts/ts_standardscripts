@@ -89,6 +89,9 @@ class TestCheckHardpoint(
             assert self.script.reason is None
             assert self.script.checkpoint_message is None
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_configure_with_program_reason(self):
         """Testing a valid configuration: with program and reason"""
 

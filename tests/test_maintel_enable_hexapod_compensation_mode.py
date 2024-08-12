@@ -58,6 +58,9 @@ class TestEnableHexapodCompensationMode(
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script(components=components)
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_configure_with_program_reason(self):
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
