@@ -131,8 +131,6 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                     description: Azimuth (deg).
                     anyOf:
                       - type: number
-                        minimum: 0
-                        maximum: 360
                       - type: string
                   el:
                     description: Elevation (deg).
