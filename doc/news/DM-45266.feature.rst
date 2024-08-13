@@ -1,0 +1,1 @@
+Add configuration option to pass focus sweep steps as array to ``BaseFocusSweep``.
