@@ -84,7 +84,7 @@ class TestFocusSweepLatiss(
     async def test_configure_focus_step_sequence(self):
         config = {
             "axis": "x",
-            "focus_step_sequence": [0, 0.1, 0.2, 0.3, 0.4],
+            "focus_step_sequence": [-0.2, -0.1, 0, 0.1, 0.2],
             "exp_time": 10.0,
             "filter": "SDSSr_65mm",
             "grating": 1,
@@ -197,7 +197,7 @@ class TestFocusSweepLatiss(
             "axis": "x",
             "focus_window": 0.4,
             "n_steps": 5,
-            "focus_step_sequence": [0, 0.1, 0.2, 0.3, 0.4],
+            "focus_step_sequence": [-0.2, -0.1, 0, 0.1, 0.2],
             "exp_time": 10,
             "filter": "SDSSr_65mm",
             "grating": "blue300lpmm_qn1",
