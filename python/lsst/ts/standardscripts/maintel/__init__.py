@@ -36,6 +36,8 @@ from .offline_mtcs import *
 from .offset_camera_hexapod import *
 from .offset_m2_hexapod import *
 from .offset_mtcs import *
+from .parameter_march_comcam import *
+from .parameter_march_lsstcam import *
 from .point_azel import *
 from .setup_mtcs import *
 from .standby_comcam import *
