@@ -208,9 +208,9 @@ class BaseFocusSweep(BaseBlockScript):
                 i * config.focus_window / (config.n_steps - 1)
                 for i in range(config.n_steps)
             ]
-        config.focus_step_sequence = [
-            s - config.focus_window * 0.5 for s in config.focus_step_sequence
-        ]
+            config.focus_step_sequence = [
+                s - config.focus_window * 0.5 for s in config.focus_step_sequence
+            ]
 
         self.config = config
 

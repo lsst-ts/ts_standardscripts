@@ -85,7 +85,7 @@ class TestFocusSweepComCam(
     async def test_configure_focus_step_sequence(self):
         config = {
             "axis": "z",
-            "focus_step_sequence": [0, 100, 200, 300, 400],
+            "focus_step_sequence": [-200, -100, 0, 100, 200],
             "exp_time": 15.0,
             "filter": "g",
             "n_images_per_step": 1,
@@ -192,7 +192,7 @@ class TestFocusSweepComCam(
             "axis": "z",
             "focus_window": 400,
             "n_steps": 5,
-            "focus_step_sequence": [0, 100, 200, 300, 400],
+            "focus_step_sequence": [-200, -100, 0, 100, 200],
             "exp_time": 15,
             "filter": "g",
             "n_images_per_step": 1,
