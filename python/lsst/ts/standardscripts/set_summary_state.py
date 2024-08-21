@@ -25,6 +25,8 @@ import asyncio
 
 import yaml
 from lsst.ts import salobj
+from lsst.ts.salobj.base import WildcardIndexError
+from lsst.ts.standardscripts.utils import find_running_instances
 
 
 class SetSummaryState(salobj.BaseScript):
@@ -71,6 +73,7 @@ class SetSummaryState(salobj.BaseScript):
                 description: List of (CSC_name[:index], state_name [, override_to_apply]);
                     the default index is 0;
                     the default override_to_apply is ""
+                    If the index is '*', the script will discover all running instances.
                 type: array
                 minItems: 1
                 items:
@@ -130,7 +133,14 @@ class SetSummaryState(salobj.BaseScript):
         # parse the data
         nameind_state_override = []
         for elt in config.data:
-            name, index = salobj.name_to_name_index(elt[0])
+
+            try:
+                # Try to parse the name and index
+                name, index = salobj.name_to_name_index(elt[0])
+            except WildcardIndexError as e:
+                name = e.name
+                index = "*"  # Mark as wildcard
+
             state_name = elt[1]
             if not isinstance(state_name, str):
                 raise ValueError(f"{elt} summary state {state_name!r} is not a string")
@@ -146,7 +156,17 @@ class SetSummaryState(salobj.BaseScript):
                     raise ValueError(f"{elt} override {override!r} is not a string")
             else:
                 override = ""
-            nameind_state_override.append(((name, index), state, override))
+
+            # If wildcard index is used, enter discovery mode
+            if index == "*":
+                component, discovered_indices = await find_running_instances(
+                    self.domain, name
+                )
+
+                for idx in discovered_indices:
+                    nameind_state_override.append(((name, idx), state, override))
+            else:
+                nameind_state_override.append(((name, index), state, override))
 
         # construct remotes
         remotes = dict()
