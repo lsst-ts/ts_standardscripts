@@ -27,6 +27,7 @@ __all__ = [
     "format_grid",
 ]
 
+import asyncio
 import collections.abc
 import os
 import pathlib
@@ -199,3 +200,51 @@ def get_topic_time_utc(topic):
     topic_time.format = "iso"
     topic_time_utc = topic_time.utc
     return topic_time_utc
+
+
+async def find_running_instances(
+    domain, component: str, min_heartbeat=3, hb_timeout=5
+) -> tuple[str, list[int]]:
+    """Find indices of any running instance for the component.
+
+    Parameters
+    ----------
+    domain : Domain object
+        The SAL domain.
+    component : str
+        Name of the component.
+    min_heartbeat : int, optional
+        Minimum number of heartbeats to consider the component running
+            (default=3).
+    hb_timeout : int, optional
+        Timeout for waiting on heartbeats in seconds (default=5).
+
+    Returns
+    -------
+    tuple[str, list[int]]
+        Name of the component and list of indices for running instances.
+    """
+    indices = []
+    heartbeats = {}
+
+    async with salobj.Remote(
+        domain, component, index=0, include=["heartbeat"], readonly=True
+    ) as remote:
+        # Flush old heartbeats to avoid historical data.
+        remote.evt_heartbeat.flush()
+
+        while all([value < min_heartbeat for value in heartbeats.values()]):
+            try:
+                hb = await remote.evt_heartbeat.next(timeout=hb_timeout, flush=False)
+                sal_index = hb.salIndex if hasattr(hb, "salIndex") else 0
+
+                if sal_index not in heartbeats:
+                    heartbeats[sal_index] = 1
+                else:
+                    heartbeats[sal_index] += 1
+            except asyncio.TimeoutError:
+                break
+
+        indices = list(heartbeats.keys())
+
+    return component, indices
