@@ -27,6 +27,7 @@ import typing
 
 import yaml
 from lsst.ts import salobj, xml
+from lsst.ts.standardscripts.utils import find_running_instances
 
 
 class SystemWideShutdown(salobj.BaseScript):
@@ -177,7 +178,7 @@ additionalProperties: false
         components = self._get_all_components()
 
         task_find_running_instances = [
-            asyncio.create_task(self.find_running_instances(component))
+            asyncio.create_task(find_running_instances(self.domain, component))
             for component in components
         ]
 
@@ -204,56 +205,6 @@ additionalProperties: false
                 components.remove(component)
 
         return components
-
-    async def find_running_instances(self, component: str) -> tuple[str, list[int]]:
-        """Find indices of any running instance for the component.
-
-        Parameters
-        ----------
-        component : str
-            Name of the component.
-
-        Returns
-        -------
-        tuple[str, list[int]]
-            Name of the component and list of indexes for running instances.
-        """
-
-        indices: list[int] = []
-        min_heartbeat = 3
-        hb_timeout = 5
-
-        self.log.debug(f"Finding running instances of {component}")
-
-        async with self._concurrent_capacity, salobj.Remote(
-            self.domain, component, index=0, include=["heartbeat"], readonly=True
-        ) as remote:
-            heartbeats: dict[int, int] = dict()
-
-            # Flush event to avoid old historical data.
-            remote.evt_heartbeat.flush()
-
-            while all([value < min_heartbeat for value in heartbeats.values()]):
-                try:
-                    hb = await remote.evt_heartbeat.next(
-                        timeout=hb_timeout, flush=False
-                    )
-                    self.log.debug(f"Got {hb}")
-                    sal_index = hb.salIndex if hasattr(hb, "salIndex") else 0
-
-                    if sal_index not in heartbeats:
-                        heartbeats[sal_index] = 1
-                    else:
-                        heartbeats[sal_index] += 1
-                except asyncio.TimeoutError:
-                    self.log.debug(
-                        f"No heartbeat from {component} in the last {hb_timeout}s. "
-                        "Component probably not running."
-                    )
-                    return component, []
-            indices = [sal_index for sal_index in heartbeats]
-
-        return component, indices
 
     async def shutdown(self, component: str, indices: list[int]) -> None:
         """Shutdown component with given indices.
