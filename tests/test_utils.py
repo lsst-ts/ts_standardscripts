@@ -19,14 +19,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import pathlib
 import unittest
 
 import pytest
-from lsst.ts import standardscripts
+from lsst.ts import salobj, standardscripts
+from lsst.ts.standardscripts.utils import find_running_instances
 
 
-class TestUtils(unittest.TestCase):
+# class TestUtils(unittest.TestCase):
+class TestUtils(
+    unittest.IsolatedAsyncioTestCase
+):  # Use IsolatedAsyncioTestCase for async tests
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        salobj.set_random_lsst_dds_partition_prefix()
+        os.environ["LSST_SITE"] = "test"
+
+    async def add_test_cscs(self, initial_state=salobj.State.STANDBY):
+        """Add a Test controller"""
+        if not hasattr(self, "mock_cscs"):
+            self.mock_cscs = []
+        index = len(self.mock_cscs) + 1  # Ensure indices are unique
+        mock_csc = salobj.TestCsc(index=index, initial_state=initial_state)
+        await mock_csc.start_task  # Start the controller asynchronously
+        self.mock_cscs.append(mock_csc)
+
     def test_get_scripts_dir(self):
         scripts_dir = standardscripts.get_scripts_dir()
         print(f"*** script dir: {scripts_dir}")
@@ -59,6 +79,27 @@ class TestUtils(unittest.TestCase):
         with pytest.raises(ValueError):
             recurrences = 3
             new_list = standardscripts.utils.format_as_list(test_case, recurrences)
+
+    async def test_find_running_instances(self):
+        """Test find_running_instances utility function."""
+        # Create multiple CSCs with same name but different states
+        await self.add_test_cscs(initial_state=salobj.State.OFFLINE)
+        await self.add_test_cscs(initial_state=salobj.State.STANDBY)
+        await self.add_test_cscs(initial_state=salobj.State.STANDBY)
+        await self.add_test_cscs(initial_state=salobj.State.DISABLED)
+        await self.add_test_cscs(initial_state=salobj.State.ENABLED)
+
+        # Note: Skip the OFFLINE CSC domain as it is not set. Hence,
+        # mock_cscs[1], is skipped. Any valid domain would work.
+        component, component_indices = await find_running_instances(
+            self.mock_cscs[1].domain, "Test"
+        )
+
+        # Verify the results
+        assert component == "Test"
+        assert (
+            len(component_indices) == 4
+        )  # Note: An OFFLINE CSC doesn't have a remote, hence is not discoverable
 
 
 if __name__ == "__main__":
