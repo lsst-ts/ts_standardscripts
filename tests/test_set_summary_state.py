@@ -21,12 +21,13 @@
 
 import asyncio
 import logging
+import os
 import random
 import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts.xml.enums.Script import ScriptState
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -78,10 +79,25 @@ class TrivialController(salobj.Controller):
 class TestSetSummaryState(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        os.environ["LSST_SITE"] = "test"
+
     async def basic_make_script(self, index):
         self.script = standardscripts.SetSummaryState(index=index)
+
         self.controllers = []
+
         return [self.script]
+
+    async def add_test_cscs(self, initial_state=salobj.State.STANDBY):
+        """Add a Test controller"""
+        index = self.next_index()
+
+        controller = salobj.TestCsc(index=index, initial_state=initial_state)
+        await controller.start_task
+        self.controllers.append(controller)
 
     async def add_controller(self, initial_state=salobj.State.STANDBY):
         """Add a Test controller"""
@@ -191,6 +207,62 @@ class TestSetSummaryState(
         scripts_dir = standardscripts.get_scripts_dir()
         script_path = scripts_dir / "set_summary_state.py"
         await self.check_executable(script_path)
+
+    async def test_configure_wildcard_index(self):
+        """Test the configure method with a wildcard (*) index.
+
+        This simulates the discovery of multiple instances of a CSC
+        and setting their states.
+        """
+        async with self.make_script(verbose=True):
+            await self.add_test_cscs(initial_state=salobj.State.OFFLINE)
+            await self.add_test_cscs(initial_state=salobj.State.STANDBY)
+            await self.add_test_cscs(initial_state=salobj.State.STANDBY)
+            await self.add_test_cscs(initial_state=salobj.State.DISABLED)
+            await self.add_test_cscs(initial_state=salobj.State.ENABLED)
+
+            name_ind = [("Test:*", "ENABLED")]
+
+            await self.configure_script(data=name_ind)
+
+            # Assert that all controllers are present (4 total)
+            assert (
+                len(self.controllers) == 5
+            ), f"Expected 4 controllers, found {len(self.controllers)}"
+
+            # Assert that the remotes (excluding OFFLINE controllers)
+            # are present (4 remotes)
+            assert (
+                len(self.script.remotes) == 4
+            ), f"Expected 4 remotes, found {len(self.script.remotes)}"
+
+            await self.run_script()
+
+            # Assert that all controllers (except OFFLINE) have transitioned
+            # to ENABLED
+            for controller in self.controllers:
+                name_index = (controller.salinfo.name, controller.salinfo.index)
+
+                if (
+                    controller.evt_summaryState.data.summaryState
+                    != salobj.State.OFFLINE
+                ):
+                    assert (
+                        controller.evt_summaryState.data.summaryState
+                        == salobj.State.ENABLED
+                    ), (
+                        f"Controller {name_index} did not transition to ENABLED. "
+                        f"Current state: {controller.evt_summaryState.data.summaryState}"
+                    )
+                else:
+                    # Verify that OFFLINE controllers remain OFFLINE
+                    assert (
+                        controller.evt_summaryState.data.summaryState
+                        == salobj.State.OFFLINE
+                    ), (
+                        f"Controller {name_index} was expected to remain OFFLINE but is in state "
+                        f"{controller.evt_summaryState.data.summaryState}"
+                    )
 
 
 if __name__ == "__main__":
