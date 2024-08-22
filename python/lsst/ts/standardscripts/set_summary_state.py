@@ -25,7 +25,13 @@ import asyncio
 
 import yaml
 from lsst.ts import salobj
-from lsst.ts.salobj.base import WildcardIndexError
+
+try:
+    from lsst.ts.salobj import WildcardIndexError, name_to_name_index
+except ImportError:
+    # If not available in ts_salobj, use the local fallback from utils
+    from lsst.ts.standardscripts.utils import name_to_name_index, WildcardIndexError
+
 from lsst.ts.standardscripts.utils import find_running_instances
 
 
@@ -136,7 +142,7 @@ class SetSummaryState(salobj.BaseScript):
 
             try:
                 # Try to parse the name and index
-                name, index = salobj.name_to_name_index(elt[0])
+                name, index = name_to_name_index(elt[0])
             except WildcardIndexError as e:
                 name = e.name
                 index = "*"  # Mark as wildcard

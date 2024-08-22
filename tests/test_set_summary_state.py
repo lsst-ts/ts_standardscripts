@@ -24,6 +24,7 @@ import logging
 import os
 import random
 import unittest
+from unittest import mock
 
 import pytest
 from lsst.ts import salobj, standardscripts
@@ -208,7 +209,7 @@ class TestSetSummaryState(
         script_path = scripts_dir / "set_summary_state.py"
         await self.check_executable(script_path)
 
-    async def test_configure_wildcard_index(self):
+    async def run_configure_wildcard_index_test(self):
         """Test the configure method with a wildcard (*) index.
 
         This simulates the discovery of multiple instances of a CSC
@@ -263,6 +264,37 @@ class TestSetSummaryState(
                         f"Controller {name_index} was expected to remain OFFLINE but is in state "
                         f"{controller.evt_summaryState.data.summaryState}"
                     )
+
+    async def test_configure_wildcard_index_local_fallback(self):
+        """Test the configure method with a wildcard (*) index
+        using the local fallback for wildcard handling.
+        """
+        from lsst.ts.standardscripts.utils import (
+            WildcardIndexError as LocalWildcardIndexError,
+        )
+        from lsst.ts.standardscripts.utils import (
+            name_to_name_index as local_name_to_name_index,
+        )
+
+        with mock.patch(
+            "lsst.ts.standardscripts.set_summary_state.name_to_name_index",
+            local_name_to_name_index,
+        ), mock.patch(
+            "lsst.ts.standardscripts.set_summary_state.WildcardIndexError",
+            LocalWildcardIndexError,
+        ):
+            await self.run_configure_wildcard_index_test()
+
+    async def test_configure_wildcard_index_salobj(self):
+        """Test the configure method with ts_salobj's native wildcard
+        handling."""
+        try:
+            # Check if WildcardIndexError exists in ts_salobj
+            from lsst.ts.salobj import WildcardIndexError  # noqa: F401
+        except ImportError:
+            pytest.skip("ts_salobj does not yet support WildcardIndexError")
+
+        await self.run_configure_wildcard_index_test()
 
 
 if __name__ == "__main__":
