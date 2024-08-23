@@ -25,6 +25,7 @@ import unittest
 import pytest
 from lsst.ts import salobj, standardscripts
 from lsst.ts.standardscripts import SystemWideShutdown
+from lsst.ts.standardscripts.utils import find_running_instances
 
 
 class TestSystemWideShutdown(
@@ -81,8 +82,8 @@ class TestSystemWideShutdown(
         self.make_test_cscs = True
 
         async with self.make_script():
-            component, component_indices = await self.script.find_running_instances(
-                "Test"
+            component, component_indices = await find_running_instances(
+                self.script.domain, "Test"
             )
 
             assert component == "Test"
@@ -90,8 +91,8 @@ class TestSystemWideShutdown(
 
     async def test_find_running_instances_not_running(self):
         async with self.make_script():
-            component, component_indices = await self.script.find_running_instances(
-                "Test"
+            component, component_indices = await find_running_instances(
+                self.script.domain, "Test"
             )
 
             assert component == "Test"
