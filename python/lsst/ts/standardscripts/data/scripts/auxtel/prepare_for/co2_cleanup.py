@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
@@ -19,7 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .co2_cleanup import *
-from .flats import *
-from .onsky import *
-from .vent import *
+import asyncio
+
+from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForCO2Cleanup
+
+asyncio.run(PrepareForCO2Cleanup.amain())
