@@ -1,1 +1,0 @@
-In ``base_track_target.py``, remove limits from azimuth configuration schema.
