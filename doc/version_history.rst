@@ -8,6 +8,32 @@ Version History
 
 .. towncrier release notes start
 
+v1.38.0 (2024-09-03)
+====================
+
+New Features
+------------
+
+- Add ``PrepareForCO2Cleanup`` SAL script for ``auxtel``. (`DM-42061 <https://rubinobs.atlassian.net/browse/DM-42061>`_)
+- Add `DisableATAOSCorrections` SAL script for `auxtel`. (`DM-44630 <https://rubinobs.atlassian.net/browse/DM-44630>`_)
+- - Modified `SetSummaryState` to send all instances of a CSC to a desired state. (`DM-45216 <https://rubinobs.atlassian.net/browse/DM-45216>`_)
+- Add configuration option to pass focus sweep steps as array to ``BaseFocusSweep``. (`DM-45266 <https://rubinobs.atlassian.net/browse/DM-45266>`_)
+- Update unit tests for BaseBlockScript to work with the latest version of salobj that adds support for block to BaseScript. (`DM-45637 <https://rubinobs.atlassian.net/browse/DM-45637>`_)
+- In ``base_track_target.py``, remove limits from azimuth configuration schema. (`DM-45747 <https://rubinobs.atlassian.net/browse/DM-45747>`_)
+
+
+Bug Fixes
+---------
+
+- Update configuration of ``BaseFocusSweep`` to avoid re-centering a user provided set of focus steps via the ``focus_steps_sequence`` config. (`DM-45774 <https://rubinobs.atlassian.net/browse/DM-45774>`_)
+
+
+Performance Enhancement
+-----------------------
+
+- * Fixed `maintel/base_closed_loop.py` to pass filter name and rotator angle to OFC. (`DM-45551 <https://rubinobs.atlassian.net/browse/DM-45551>`_)
+
+
 v1.37.0 (2024-07-30)
 ====================
 

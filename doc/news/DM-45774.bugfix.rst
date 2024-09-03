@@ -1,1 +1,0 @@
-Update configuration of ``BaseFocusSweep`` to avoid re-centering a user provided set of focus steps via the ``focus_steps_sequence`` config.
