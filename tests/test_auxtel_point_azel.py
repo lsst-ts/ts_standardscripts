@@ -98,6 +98,9 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             self.script.atcs.check.no_comp.assert_not_called()
             self.script.configure_tcs.assert_awaited_once()
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_configure_with_program_reason(self):
         """Testing a valid configuration: with program and reason"""
 

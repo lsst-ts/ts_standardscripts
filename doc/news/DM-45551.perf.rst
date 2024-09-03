@@ -1,0 +1,1 @@
+* Fixed `maintel/base_closed_loop.py` to pass filter name and rotator angle to OFC.

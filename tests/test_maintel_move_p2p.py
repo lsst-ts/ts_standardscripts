@@ -265,6 +265,9 @@ class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
             assert self.script.reason is None
             assert self.script.checkpoint_message is None
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_config_pause_for_reason_program(self) -> None:
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(

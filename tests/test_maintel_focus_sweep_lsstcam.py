@@ -82,6 +82,53 @@ class TestFocusSweepLSSTCam(
             assert self.script.config.n_images_per_step == 1
             assert self.script.hexapod == "Camera"
 
+    async def test_configure_focus_step_sequence(self):
+        config = {
+            "axis": "z",
+            "focus_step_sequence": [-200, -100, 0, 100, 200],
+            "exp_time": 15.0,
+            "filter": "g",
+            "n_images_per_step": 1,
+            "hexapod": "Camera",
+        }
+
+        expected_step_sequence = [-200, -100, 0, 100, 200]
+        async with self.make_script():
+            await self.configure_script(**config)
+
+            assert self.script.config.axis == "z"
+            assert self.script.config.focus_window == 400
+            assert self.script.config.n_steps == 5
+            assert self.script.config.focus_step_sequence == expected_step_sequence
+            assert self.script.config.exp_time == 15.0
+            assert self.script.config.filter == "g"
+            assert self.script.config.n_images_per_step == 1
+            assert self.script.hexapod == "Camera"
+
+    async def test_configure_focus_step_sequence_with_window(self):
+        config = {
+            "axis": "z",
+            "focus_window": 400,
+            "n_steps": 5,
+            "exp_time": 15.0,
+            "filter": "g",
+            "n_images_per_step": 1,
+            "hexapod": "Camera",
+        }
+
+        expected_step_sequence = [-200, -100, 0, 100, 200]
+        async with self.make_script():
+            await self.configure_script(**config)
+
+            assert self.script.config.axis == "z"
+            assert self.script.config.focus_window == 400
+            assert self.script.config.n_steps == 5
+            assert self.script.config.focus_step_sequence == expected_step_sequence
+            assert self.script.config.exp_time == 15.0
+            assert self.script.config.filter == "g"
+            assert self.script.config.n_images_per_step == 1
+            assert self.script.hexapod == "Camera"
+
     async def test_configure_ignore(self):
         config = {
             "axis": "z",
@@ -139,6 +186,22 @@ class TestFocusSweepLSSTCam(
             for bad_config in bad_configs:
                 with pytest.raises(salobj.ExpectedError):
                     await self.configure_script(**bad_config)
+
+    async def test_invalid_configuration_steps_and_window(self):
+        bad_config = {
+            "axis": "z",
+            "focus_window": 400,
+            "n_steps": 5,
+            "focus_step_sequence": [-200, -100, 0, 100, 200],
+            "exp_time": 15,
+            "filter": "g",
+            "n_images_per_step": 1,
+            "hexapod": "Camera",
+        }
+
+        async with self.make_script():
+            with pytest.raises(salobj.ExpectedError):
+                await self.configure_script(**bad_config)
 
     async def test_focus_sweep(self):
         config = {

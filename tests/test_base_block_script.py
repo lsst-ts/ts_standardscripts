@@ -46,6 +46,9 @@ class TestBaseBlockScript(
             self.script.mtcs.components_attr = ["mtm1m3"]
             yield
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_config_fail_test_case_name_only(self):
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -70,6 +73,9 @@ class TestBaseBlockScript(
                     test_case=test_case,
                 )
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_config_fail_test_case_execution_only(self):
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -94,6 +100,9 @@ class TestBaseBlockScript(
                     test_case=test_case,
                 )
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_config_fail_test_case_version_only(self):
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -118,6 +127,9 @@ class TestBaseBlockScript(
                     test_case=test_case,
                 )
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_config_fail_test_case_name_execution_only(self):
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -142,6 +154,9 @@ class TestBaseBlockScript(
                     test_case=test_case,
                 )
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_config_fail_test_case_name_version_only(self):
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -166,6 +181,9 @@ class TestBaseBlockScript(
                     test_case=test_case,
                 )
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_config_fail_test_case_program_version_only(self):
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -190,6 +208,9 @@ class TestBaseBlockScript(
                     test_case=test_case,
                 )
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_config_reason_program(self) -> None:
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -217,6 +238,9 @@ class TestBaseBlockScript(
                 == "MoveP2P BLOCK-123 202306060001 SITCOM-321"
             )
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_config_reason_program_test_case(self) -> None:
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -251,6 +275,9 @@ class TestBaseBlockScript(
                 == "MoveP2P BLOCK-123 202306060001 SITCOM-321"
             )
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_config_reason_program_test_case_initial_step(self) -> None:
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -287,6 +314,9 @@ class TestBaseBlockScript(
                 == "MoveP2P BLOCK-123 202306060001 SITCOM-321"
             )
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_config_reason_program_test_case_project(self) -> None:
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -354,6 +384,9 @@ class TestBaseBlockScript(
             assert obs_id is not None
             assert obs_id.startswith("BT123")
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_config_reason_program_block_test_case(self) -> None:
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -423,6 +456,9 @@ class TestBaseBlockScript(
 
             assert not self.script.evt_largeFileObjectAvailable.has_data
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_run_with_test_case(self):
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
@@ -474,6 +510,9 @@ class TestBaseBlockScript(
             for test_step in self.script.step_results:
                 assert test_step["status"] == "PASSED"
 
+    @unittest.mock.patch(
+        "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
+    )
     async def test_run_fail_with_test_case(self):
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(

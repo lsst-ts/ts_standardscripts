@@ -119,7 +119,15 @@ class BaseFocusSweep(BaseBlockScript):
               n_steps:
                 description: Number of steps to take inside the focus window.
                 type: number
-                minimum: 3
+                minimum: 2
+              focus_step_sequence:
+                description: >-
+                    User-provided sequence of focus steps to take for the focus sweep,
+                    used for unevenly spaced steps.
+                type: array
+                items:
+                  type: number
+                minItems: 2
               n_images_per_step:
                 description: Number of images to take at each focus position.
                 type: integer
@@ -142,7 +150,14 @@ class BaseFocusSweep(BaseBlockScript):
                 type: array
                 items:
                   type: string
-            required: ["axis", "focus_window", "n_steps"]
+            oneOf:
+                - required:
+                    - axis
+                    - focus_window
+                    - n_steps
+                - required:
+                    - axis
+                    - focus_step_sequence
             additionalProperties: false
         """
         schema_dict = yaml.safe_load(schema_yaml)
@@ -183,6 +198,20 @@ class BaseFocusSweep(BaseBlockScript):
                         f"{self.camera.components_attr}. Ignoring."
                     )
 
+        if hasattr(config, "focus_step_sequence"):
+            config.focus_window = (
+                config.focus_step_sequence[-1] - config.focus_step_sequence[0]
+            )
+            config.n_steps = len(config.focus_step_sequence)
+        elif hasattr(config, "focus_window"):
+            config.focus_step_sequence = [
+                i * config.focus_window / (config.n_steps - 1)
+                for i in range(config.n_steps)
+            ]
+            config.focus_step_sequence = [
+                s - config.focus_window * 0.5 for s in config.focus_step_sequence
+            ]
+
         self.config = config
 
         await super().configure(config=config)
@@ -222,9 +251,7 @@ class BaseFocusSweep(BaseBlockScript):
 
         axis = self.config.axis
 
-        half_window = self.config.focus_window / 2
-        start_position = -half_window
-        hexapod_offset = self.config.focus_window / self.config.n_steps
+        start_position = self.config.focus_step_sequence[0]
 
         offset_display_value = (
             f"{start_position:+0.2} um"
@@ -256,6 +283,10 @@ class BaseFocusSweep(BaseBlockScript):
             for self.iterations_executed in range(1, self.config.n_steps):
                 await self.checkpoint(
                     f"Step {self.iterations_executed+1}/{self.config.n_steps} {axis=}."
+                )
+                hexapod_offset = (
+                    self.config.focus_step_sequence[self.iterations_executed]
+                    - self.config.focus_step_sequence[self.iterations_executed - 1]
                 )
                 await self.move_hexapod(axis, hexapod_offset)
                 self.total_focus_offset += hexapod_offset

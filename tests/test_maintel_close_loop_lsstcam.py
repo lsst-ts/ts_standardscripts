@@ -55,6 +55,14 @@ class TestCloseLoopLSSTCam(
         # MTCS mocks
         self.script.mtcs.assert_all_enabled = unittest.mock.AsyncMock()
         self.script.mtcs.move_camera_hexapod = unittest.mock.AsyncMock()
+        self.script.mtcs.rem.mtrotator = unittest.mock.AsyncMock()
+        self.script.mtcs.rem.mtrotator.configure_mock(
+            **{
+                "tel_rotation.next.return_value": types.SimpleNamespace(
+                    actualPosition=0.0
+                ),
+            }
+        )
 
         # MTAOS mocks
         self.script.mtcs.rem.mtaos = unittest.mock.AsyncMock()
