@@ -24,11 +24,22 @@ import os
 import random
 import types
 import unittest
+import warnings
 
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.observatory_control.enums import LaserOpticalConfiguration
 from lsst.ts.standardscripts.maintel.calibration import PowerOnTunableLaser
 from lsst.ts.xml.enums.TunableLaser import LaserDetailedState
+
+# TODO: (DM-46168) Revert workaround for TunableLaser XML changes
+try:
+    from lsst.ts.xml.enums.TunableLaser import (
+        OpticalConfiguration as LaserOpticalConfiguration,
+    )
+except ImportError:
+    warnings.warn(
+        "OpticalConfiguration enumeration not availble in ts-xml. Using local version."
+    )
+    from lsst.ts.observatory_control.enums import LaserOpticalConfiguration
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
