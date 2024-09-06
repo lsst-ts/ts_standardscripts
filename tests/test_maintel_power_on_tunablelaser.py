@@ -39,7 +39,7 @@ except ImportError:
     warnings.warn(
         "OpticalConfiguration enumeration not availble in ts-xml. Using local version."
     )
-    from lsst.ts.observatory_control.enums import LaserOpticalConfiguration
+    from lsst.ts.observatory.control.utils.enums import LaserOpticalConfiguration
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
