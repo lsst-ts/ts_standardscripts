@@ -19,18 +19,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["PowerOnATCalSys"]
+__all__ = ["PowerOnTunableLaser"]
 
 import asyncio
-import time as time
 
 import yaml
 from lsst.ts import salobj
+from lsst.ts.idl.enums import TunableLaser
 
 
 class PowerOnTunableLaser(salobj.BaseScript):
     """Starts propagating the Tunable Laser for functional
-    testing. 
+    testing.
 
     Parameters
     ----------
@@ -46,13 +46,13 @@ class PowerOnTunableLaser(salobj.BaseScript):
         )
 
         self.laser = None
-        self.laser_warmup = 20. #some time for Laser to warmup
+        self.laser_warmup = 10.0  # time to start propagating
 
     @classmethod
     def get_schema(cls):
         schema_yaml = """
             $schema: http://json-schema.org/draft-07/schema#
-            $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/calibrations/power_on_tunablelaser.yaml
+            $id: https://github.com/lsst-ts/ts_standardscripts/maintel/calibrations/power_on_tunablelaser.yaml
             title: PowerOnTunableLaser v1
             description: Configuration for PowerOnTunableLaser.
               Each attribute can be specified as a scalar or array.
@@ -61,16 +61,16 @@ class PowerOnTunableLaser(salobj.BaseScript):
             properties:
               mode:
                 description: Continuous or Burst Mode
-                type: str
-                default: Continuous
+                type: enum
+                default: TunableLaser.LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
 
               optical_configuration:
                 description: Output Configuration
-                type: string
-                default: SCU
+                type: enum
+                default: TunableLaser.LaserOpticalConfiguration.SCU
 
               wavelength:
-                description: Wavelength (nm). 0 nm is for white light.
+                description: Wavelength (nm)
                 type: number
                 default: 500.
                 minimum: 250.
@@ -124,21 +124,21 @@ class PowerOnTunableLaser(salobj.BaseScript):
 
     async def start_propagation_on(self):
         """Starts propagation of the laser"""
-        self.laser.evt_lampState.flush()
 
-        await self.laser.cmd_startPropagateLaser.start(
-            timeout=self.laser_warmup
-        )
+        await self.laser.cmd_startPropagateLaser.start(timeout=self.laser_warmup)
 
     async def configure_tunablelaser(self):
         """Configure the TunableLaser for the mode and optical configuration"""
-        await self.laser.changeWavelength.set_start(wavelength=self.wavelength, timeout=self.long_timeout
+        await self.laser.cmd_changeWavelength.set_start(
+            wavelength=self.wavelength, timeout=self.long_timeout
         )
-        await self.laser.setOpticalConfiguration.set_start(configuration=self.optical_configuration, timeout=self.long_timeout)
-        if self.mode == "Continuous":
-            await self.laser.setContinuousMode.start(timeout=self.long_timeout)
-        elif self.mode == "Burst":
-            await self.laser.setBurstMode.start(timeout=self.long_timeout)
+        await self.laser.cmd_setOpticalConfiguration.set_start(
+            configuration=self.optical_configuration, timeout=self.long_timeout
+        )
+        if self.mode == TunableLaser.LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE:
+            await self.laser.cmd_setContinuousMode.start(timeout=self.long_timeout)
+        elif self.mode == TunableLaser.LaserDetailedState.NONPROPAGATING_BURST_MODE:
+            await self.laser.cmd_setBurstMode.start(timeout=self.long_timeout)
 
         params = await self.get_laser_parameters()
 
@@ -150,8 +150,8 @@ class PowerOnTunableLaser(salobj.BaseScript):
             f"Cont. mode is {params[4]}"
         )
 
-    async def get_monochromator_parameters(self):
-        """Gets ATMonochromator configuration"""
+    async def get_tunablelaser_parameters(self):
+        """Gets Laser configuration"""
         return await asyncio.gather(
             self.laser.evt_opticalConfiguration.aget(timeout=self.cmd_timeout),
             self.laser.evt_wavelengthChanged.aget(timeout=self.cmd_timeout),
@@ -161,7 +161,7 @@ class PowerOnTunableLaser(salobj.BaseScript):
         )
 
     async def assert_components_enabled(self):
-        """Checks if ATWhiteLight and ATMonochromator are ENABLED
+        """Checks if TunableLaser is ENABLED
 
         Raises
         ------
@@ -176,4 +176,3 @@ class PowerOnTunableLaser(salobj.BaseScript):
                 salobj.State.ENABLED
             ):
                 raise RuntimeError(f"{comp} is not ENABLED")
-
