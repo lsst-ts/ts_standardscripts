@@ -25,7 +25,7 @@ import asyncio
 
 import yaml
 from lsst.ts import salobj
-from lsst.ts.idl.enums import TunableLaser
+from lsst.ts.observatory.control.maintel.mtcalsys import MTCalsys
 
 
 class PowerOnTunableLaser(salobj.BaseScript):
@@ -46,7 +46,7 @@ class PowerOnTunableLaser(salobj.BaseScript):
         )
 
         self.laser = None
-        self.laser_warmup = 10.0  # time to start propagating
+        self.mtcalsys = None
 
     @classmethod
     def get_schema(cls):
@@ -59,21 +59,9 @@ class PowerOnTunableLaser(salobj.BaseScript):
               All arrays must have the same length (one item per image).
             type: object
             properties:
-              mode:
-                description: Continuous or Burst Mode
-                type: enum
-                default: TunableLaser.LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
-
-              optical_configuration:
-                description: Output Configuration
-                type: enum
-                default: TunableLaser.LaserOpticalConfiguration.SCU
-
-              wavelength:
-                description: Wavelength (nm)
-                type: number
-                default: 500.
-                minimum: 250.
+              sequence_name:
+                description: Name of sequence in MTCalsys
+                type: string
 
             additionalProperties: false
         """
@@ -88,10 +76,23 @@ class PowerOnTunableLaser(salobj.BaseScript):
 
         """
         self.log.info("Configure started")
+        if self.mtcalsys is None:
+            self.log.debug("Creating MTCalSys.")
+            self.mtcalsys = MTCalsys(
+                domain=self.domain, log=self.log, latiss=self.latiss
+            )
+            await self.mtcalsys.start_task
 
-        self.mode = config.mode
-        self.optical_configuration = config.optical_configuration
-        self.wavelength = config.wavelength
+        self.sequence_name = config.sequence_name
+        self.mtcalsys.load_calibration_config_file()
+        self.mtcalsys.assert_valid_configuration_option(name=self.sequence_name)
+
+        self.config_data = self.mtcalsys.get_calibration_configuration(
+            self.sequence_name
+        )
+        self.laser_mode = self.config_data.laser_mode
+        self.optical_configuration = self.config_data.optical_configuration
+        self.wavelength = self.config_data.wavelength
 
         if self.laser is None:
             self.laser = salobj.Remote(
@@ -102,15 +103,6 @@ class PowerOnTunableLaser(salobj.BaseScript):
         self.laser.start_task
 
         self.log.info("Configure completed")
-
-    def set_metadata(self, metadata):
-        """Compute estimated duration.
-
-        Parameters
-        ----------
-        metadata : SAPY_Script.Script_logevent_metadataC
-        """
-        metadata.duration = self.laser_warmup
 
     async def run(self):
         """Run script."""
@@ -125,22 +117,18 @@ class PowerOnTunableLaser(salobj.BaseScript):
     async def start_propagation_on(self):
         """Starts propagation of the laser"""
 
-        await self.laser.cmd_startPropagateLaser.start(timeout=self.laser_warmup)
+        await MTCalsys.laser_start_propagate.start()
 
     async def configure_tunablelaser(self):
         """Configure the TunableLaser for the mode and optical configuration"""
-        await self.laser.cmd_changeWavelength.set_start(
-            wavelength=self.wavelength, timeout=self.long_timeout
+        await MTCalsys.setup_laser(
+            mode=self.laser_mode,
+            wavelength=self.wavelength,
+            optical_configuration=self.optical_configuration,
+            use_projector=False,
         )
-        await self.laser.cmd_setOpticalConfiguration.set_start(
-            configuration=self.optical_configuration, timeout=self.long_timeout
-        )
-        if self.mode == TunableLaser.LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE:
-            await self.laser.cmd_setContinuousMode.start(timeout=self.long_timeout)
-        elif self.mode == TunableLaser.LaserDetailedState.NONPROPAGATING_BURST_MODE:
-            await self.laser.cmd_setBurstMode.start(timeout=self.long_timeout)
 
-        params = await self.get_laser_parameters()
+        params = await self.get_tunablelaser_parameters()
 
         self.log.info(
             f"Laser Configuration is {params[0]}, \n"
