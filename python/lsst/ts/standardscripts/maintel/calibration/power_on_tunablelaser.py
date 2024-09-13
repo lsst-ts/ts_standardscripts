@@ -39,7 +39,7 @@ class PowerOnTunableLaser(salobj.BaseScript):
 
     """
 
-    def __init__(self, index, add_remotes: bool = True):
+    def __init__(self, index):
         super().__init__(
             index=index,
             descr="Power On Tunable Laser",
