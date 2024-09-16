@@ -50,7 +50,7 @@ class TestPowerOnTunableLaser(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
     async def basic_make_script(self, index):
-        self.script = PowerOnTunableLaser(index=index, add_remotes=False)
+        self.script = PowerOnTunableLaser(index=index)
 
         self.laser_state = types.SimpleNamespace(
             detailedState=LaserDetailedState.NONPROPAGATING_BURST_MODE
