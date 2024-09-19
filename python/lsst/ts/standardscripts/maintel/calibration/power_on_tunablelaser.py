@@ -62,10 +62,14 @@ class PowerOnTunableLaser(salobj.BaseScript):
               sequence_name:
                 description: Name of sequence in MTCalsys
                 type: string
+                default: laser_functional
 
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
+
+    def set_metadata(self, metadata):
+        metadata.duration = 30
 
     async def configure(self, config):
         """Configure the script.
@@ -78,9 +82,7 @@ class PowerOnTunableLaser(salobj.BaseScript):
         self.log.info("Configure started")
         if self.mtcalsys is None:
             self.log.debug("Creating MTCalSys.")
-            self.mtcalsys = MTCalsys(
-                domain=self.domain, log=self.log, latiss=self.latiss
-            )
+            self.mtcalsys = MTCalsys(domain=self.domain, log=self.log)
             await self.mtcalsys.start_task
 
         self.sequence_name = config.sequence_name
@@ -90,9 +92,10 @@ class PowerOnTunableLaser(salobj.BaseScript):
         self.config_data = self.mtcalsys.get_calibration_configuration(
             self.sequence_name
         )
-        self.laser_mode = self.config_data.laser_mode
-        self.optical_configuration = self.config_data.optical_configuration
-        self.wavelength = self.config_data.wavelength
+
+        self.laser_mode = self.config_data["laser_mode"]
+        self.optical_configuration = self.config_data["optical_configuration"]
+        self.wavelength = self.config_data["wavelength"]
 
         if self.laser is None:
             self.laser = salobj.Remote(
@@ -117,11 +120,11 @@ class PowerOnTunableLaser(salobj.BaseScript):
     async def start_propagation_on(self):
         """Starts propagation of the laser"""
 
-        await MTCalsys.laser_start_propagate.start()
+        await self.mtcalsys.laser_start_propagate.start()
 
     async def configure_tunablelaser(self):
         """Configure the TunableLaser for the mode and optical configuration"""
-        await MTCalsys.setup_laser(
+        await self.mtcalsys.setup_laser(
             mode=self.laser_mode,
             wavelength=self.wavelength,
             optical_configuration=self.optical_configuration,

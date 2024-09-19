@@ -99,19 +99,13 @@ class TestPowerOnTunableLaser(
     async def test_configure(self):
         # Try to configure with only some of the optional parameters
         async with self.make_script():
-            mode = LaserDetailedState.PROPAGATING_CONTINUOUS_MODE
-            optical_configuration = (
-                LaserOpticalConfiguration.PROPAGATING_CONTINUOUS_MODE
-            )
-            wavelength = 650.0
+            mode = LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
+            optical_configuration = LaserOpticalConfiguration.SCU.name
+            wavelength = 500.0
 
-            await self.configure_script(
-                mode=mode,
-                optical_configuration=optical_configuration,
-                wavelength=wavelength,
-            )
+            await self.configure_script()
 
-            assert self.script.mode == mode
+            assert self.script.laser_mode == mode
             assert self.script.optical_configuration == optical_configuration
             assert self.script.wavelength == wavelength
 
@@ -121,7 +115,6 @@ class TestPowerOnTunableLaser(
 
             await self.run_script()
 
-            # Chiller
             self.script.laser.cmd_changeWavelength.set_start.assert_awaited_once_with(
                 wavelength=self.script.wavelength,
                 timeout=self.script.cmd_timeout,
@@ -146,8 +139,12 @@ class TestPowerOnTunableLaser(
             # Assert states are OK
             assert (
                 self.laser_status.detailedState
-                == LaserDetailedState.PROPAGATING_CONTINUOUS_MODE
+                == LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
             )
+            assert (
+                self.script.optical_configuration == LaserOpticalConfiguration.SCU.name
+            )
+            assert self.script.wavelength == 500.0
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
