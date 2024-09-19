@@ -112,18 +112,6 @@ class PowerOnTunableLaser(salobj.BaseScript):
         await self.assert_components_enabled()
 
         await self.checkpoint("Configuring TunableLaser")
-        await self.configure_tunablelaser()
-
-        await self.checkpoint("Starting laser propagation")
-        await self.start_propagation_on()
-
-    async def start_propagation_on(self):
-        """Starts propagation of the laser"""
-
-        await self.mtcalsys.laser_start_propagate.start()
-
-    async def configure_tunablelaser(self):
-        """Configure the TunableLaser for the mode and optical configuration"""
         await self.mtcalsys.setup_laser(
             mode=self.laser_mode,
             wavelength=self.wavelength,
@@ -131,7 +119,7 @@ class PowerOnTunableLaser(salobj.BaseScript):
             use_projector=False,
         )
 
-        params = await self.get_tunablelaser_parameters()
+        params = await self.mtcalsys.get_laser_parameters()
 
         self.log.info(
             f"Laser Configuration is {params[0]}, \n"
@@ -140,6 +128,14 @@ class PowerOnTunableLaser(salobj.BaseScript):
             f"Burst mode is {params[3]}, \n"
             f"Cont. mode is {params[4]}"
         )
+
+        await self.checkpoint("Starting laser propagation")
+        await self.start_propagation_on()
+
+    async def start_propagation_on(self):
+        """Starts propagation of the laser"""
+
+        await self.mtcalsys.laser_start_propagate.start()
 
     async def get_tunablelaser_parameters(self):
         """Gets Laser configuration"""
