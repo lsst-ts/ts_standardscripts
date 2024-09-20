@@ -42,6 +42,7 @@ class TestOffsetM2Hexapod(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     @contextlib.asynccontextmanager
     async def setup_mocks(self):
         self.script.mtcs.offset_m2_hexapod = unittest.mock.AsyncMock()
+        self.script.mtcs.move_m2_hexapod = unittest.mock.AsyncMock()
         yield
 
     async def test_executable(self):
@@ -54,9 +55,12 @@ class TestOffsetM2Hexapod(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
         # Set of valid configurations to test, considering different possible
         # combinations of configuration parameters
         configs_good = [
-            dict(z=0.1),
+            dict(z=0.1),  # reset_axes defaults to False
             dict(x=0.1, y=0.2),
             dict(x=0.1, u=0.1, v=-0.1, sync=False),
+            dict(x=0.1, y=0.2, reset_axes=True),
+            dict(reset_axes=["x", "y"]),
+            dict(reset_axes="all"),
         ]
 
         self.remotes_needed = False
@@ -71,6 +75,7 @@ class TestOffsetM2Hexapod(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
                     u=0,
                     v=0,
                     sync=True,
+                    reset_axes=[],
                 )
 
                 self.assert_config(default_values, config)
@@ -78,7 +83,9 @@ class TestOffsetM2Hexapod(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     async def test_invalid_configurations(self):
         # Set of invalid configurations to test, all should fail to configure
         configs_bad = [
-            dict(),
+            dict(),  # No offsets or reset operation
+            dict(x=0.0, y=0.0, reset_axes=False),  # All offsets zero, no reset
+            dict(reset_axes=True),  # reset_axes is True but no offsets provided
         ]
 
         self.remotes_needed = False
@@ -97,14 +104,33 @@ class TestOffsetM2Hexapod(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             u=self.script.offsets["u"],
             v=self.script.offsets["v"],
             sync=self.script.sync,
+            reset_axes=self.script.reset_axes,
         )
 
         for parameter in default_values:
             with self.subTest(config=config, parameter=parameter):
-                assert (
-                    config.get(parameter, default_values.get(parameter))
-                    == configured_values[parameter]
-                )
+                if parameter == "reset_axes":
+                    # Determine the expected reset_axes based on the config
+                    reset_axes_config = config.get("reset_axes", False)
+                    if reset_axes_config is True:
+                        expected_reset_axes = [
+                            axis
+                            for axis, value in configured_values.items()
+                            if axis in ["x", "y", "z", "u", "v"] and value != 0.0
+                        ]
+                    elif reset_axes_config == "all":
+                        expected_reset_axes = ["x", "y", "z", "u", "v"]
+                    elif isinstance(reset_axes_config, list):
+                        expected_reset_axes = reset_axes_config
+                    else:
+                        expected_reset_axes = default_values["reset_axes"]
+                    expected_value = expected_reset_axes
+                else:
+                    expected_value = config.get(
+                        parameter, default_values.get(parameter)
+                    )
+
+                assert expected_value == configured_values[parameter]
 
     async def test_offset_m2_hexapod(self):
         async with self.make_script(), self.setup_mocks():
@@ -118,6 +144,52 @@ class TestOffsetM2Hexapod(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
                 x=-0.1, y=0.2, z=0.1, u=-1.0, v=1.0, sync=False
             )
 
+    async def test_offset_m2_hexapod_with_a_reset(self):
+        async with self.make_script(), self.setup_mocks():
+            config = dict(
+                x=-0.1, y=0.2, z=0.1, u=-1.0, v=1.0, reset_axes=True, sync=False
+            )
 
-if __name__ == "__main__":
-    unittest.main()
+            await self.configure_script(**config)
+
+            await self.run_script()
+
+            self.script.mtcs.move_m2_hexapod.assert_awaited_once_with(
+                x=0.0, y=0.0, z=0.0, u=0.0, v=0.0, sync=False
+            )
+
+            self.script.mtcs.offset_m2_hexapod.assert_awaited_once_with(
+                x=-0.1, y=0.2, z=0.1, u=-1.0, v=1.0, sync=False
+            )
+
+    async def test_reset_only(self):
+        async with self.make_script(), self.setup_mocks():
+            config = dict(reset_axes=["x", "z"])
+
+            await self.configure_script(**config)
+
+            await self.run_script()
+
+            # Check if only the reset happened without any offset
+            self.script.mtcs.move_m2_hexapod.assert_awaited_once_with(
+                x=0.0, z=0.0, sync=True
+            )
+
+            # Ensure that offset method was not called
+            self.script.mtcs.offset_m2_hexapod.assert_not_awaited()
+
+    async def test_reset_all_axes_only(self):
+        async with self.make_script(), self.setup_mocks():
+            config = dict(reset_axes="all")
+
+            await self.configure_script(**config)
+
+            await self.run_script()
+
+            # Check if all axes were reset without applying any offsets
+            self.script.mtcs.move_m2_hexapod.assert_awaited_once_with(
+                x=0.0, y=0.0, z=0.0, u=0.0, v=0.0, sync=True
+            )
+
+            # Ensure that offset method was not called
+            self.script.mtcs.offset_m2_hexapod.assert_not_awaited()
