@@ -108,6 +108,8 @@ class AddBlock(salobj.BaseScript):
     async def run(self) -> None:
         await self.checkpoint(f"Loading {self.id} into scheduler")
         await self.scheduler_remote.cmd_addBlock.set_start(
-            id=self.id, override=self.override, timeout=self.timeout_start
+            id=self.id,
+            override=yaml.safe_dump(self.override),
+            timeout=self.timeout_start,
         )
         await self.checkpoint("BLOCK successfully loaded")
