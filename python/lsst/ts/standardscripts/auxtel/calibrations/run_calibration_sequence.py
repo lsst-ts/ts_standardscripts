@@ -175,7 +175,7 @@ class RunCalibrationSequence(BaseBlockScript):
 
         self.log.info(f"Preparing ATCalSys for sequence {self.sequence_name}.")
 
-        await self.atcalsys.prepare_for_flat(config_name=self.sequence_name)
+        await self.atcalsys.prepare_for_flat(sequence_name=self.sequence_name)
 
         await self.prepare_summary_table()
 

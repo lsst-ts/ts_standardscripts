@@ -98,6 +98,12 @@ class TakeTripletComCam(BaseBlockScript):
                   - type: string
                   - type: "null"
                 default: null
+              note:
+                description: A descriptive note about the image being taken.
+                anyOf:
+                  - type: string
+                  - type: "null"
+                default: null
               ignore:
                 description: >-
                     CSCs from the group to ignore in status check. Name must
@@ -148,9 +154,10 @@ class TakeTripletComCam(BaseBlockScript):
         # Set maximum number of iterations
         self.n_triplets = config.n_triplets
 
-        # Set program and reason
-        self.reason = config.reason
+        # Set program, reason and note
         self.program = config.program
+        self.reason = config.reason
+        self.note = config.note
 
     def set_metadata(self, metadata: salobj.type_hints.BaseMsgType) -> None:
         """Sets script metadata.
@@ -238,6 +245,7 @@ class TakeTripletComCam(BaseBlockScript):
             filter=self.filter,
             reason="INTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
+            note=self.note,
         )
 
         self.log.debug("Moving to extra-focal position")
@@ -256,6 +264,7 @@ class TakeTripletComCam(BaseBlockScript):
             filter=self.filter,
             reason="EXTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
+            note=self.note,
         )
 
         self.log.info("Send processing request to RA OCPS.")
@@ -283,6 +292,7 @@ class TakeTripletComCam(BaseBlockScript):
             filter=self.filter,
             reason="INFOCUS" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
+            note=self.note,
         )
 
         try:

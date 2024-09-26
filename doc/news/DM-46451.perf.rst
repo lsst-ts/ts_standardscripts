@@ -1,0 +1,1 @@
+- Add note configuration parameter to `take_triplet_comcam.py`
