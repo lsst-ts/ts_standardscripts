@@ -27,27 +27,32 @@ from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 
 class OffsetCameraHexapod(salobj.BaseScript):
-    """Perform a camera hexapod offset.
+    """Perform a camera hexapod offset or reset operation.
 
-     Parameters
-     ----------
-     index : `int`
-         Index of Script SAL component.
+    This script allows for precise control over the Camera Hexapod
+    by either applying user-specified offsets to its axes and/or resetting
+    the position of specified axes.
+
+
+    Parameters
+    ----------
+    index : `int`
+        Index of Script SAL component.
 
     Notes
-     -----
-     **Checkpoints**
+    -----
+    **Details**
 
-     **Details**
-
-     This script can be used to either apply a user-specified offset to any of
-     the Camera Hexapod axes.
+    This script can be used to either apply a user-specified offset to any of
+    the Camera Hexapod axes or to reset the position of the provided axes. It
+    can either reset the positions before applying the offsets or just apply
+    a reset without applying offsets.
     """
 
     def __init__(self, index, add_remotes: bool = True):
         super().__init__(
             index=index,
-            descr="Perform a camera hexapod offset",
+            descr="Perform a camera hexapod offset or reset the position of the provided axes.",
         )
 
         mtcs_usage = None if add_remotes else MTCSUsages.DryTest
@@ -78,25 +83,45 @@ class OffsetCameraHexapod(salobj.BaseScript):
               v:
                 type: number
                 description: Ry offset (deg).
+              reset_axes:
+                default: false
+                oneOf:
+                  - type: boolean
+                    description: >-
+                      If true, resets the axes provided in the offsets before applying the offsets.
+                      If false or not provided, no reset is performed.
+                  - type: string
+                    enum: ["all"]
+                    description: Reset all axes.
+                  - type: array
+                    items:
+                      minItems: 1
+                      type: string
+                      enum: ["x", "y", "z", "u", "v"]
+                    description: List of axes to reset.
+                description: >-
+                  Axes to reset before applying offsets. Use true to reset axes provided in offsets,
+                  "all" to reset all axes, or a list of axes to reset specific axes. Default is false.
               sync:
                 type: boolean
                 default: true
                 description: Synchronize hexapod movement. Default true.
               ignore:
-                  description: >-
-                      CSCs from the group to ignore in status check. Name must
-                      match those in self.group.components, e.g.; hexapod_1.
-                  type: array
-                  items:
-                      type: string
-
+                description: >-
+                  CSCs from the group to ignore in status check. Name must
+                  match those in self.group.components, e.g.; hexapod_1.
+                type: array
+                items:
+                    type: string
             additionalProperties: false
             anyOf:
-                - required: ["x"]
-                - required: ["y"]
-                - required: ["z"]
-                - required: ["u"]
-                - required: ["v"]
+              - required: ["reset_axes"]
+              - anyOf:
+                  - required: ["x"]
+                  - required: ["y"]
+                  - required: ["z"]
+                  - required: ["u"]
+                  - required: ["v"]
         """
         return yaml.safe_load(schema_yaml)
 
@@ -107,13 +132,49 @@ class OffsetCameraHexapod(salobj.BaseScript):
         ----------
         config : `types.SimpleNamespace`
             Script configuration, as defined by `schema`.
+
+        Raises
+        ------
+        ValueError
+            If neither non-zero offsets nor a reset operation is provided
+            in the configuration.
+
+            If reset_axes is set to true, but no non-zero axis offsets
+            are provided to reset.
         """
 
-        self.offsets = dict(
-            [(axis, getattr(config, axis, 0.0)) for axis in ["x", "y", "z", "u", "v"]]
-        )
+        # Initialize offsets with 0.0
+        self.offsets = {
+            axis: getattr(config, axis, 0.0) for axis in ["x", "y", "z", "u", "v"]
+        }
 
         self.sync = config.sync
+
+        # Handle reset_axes
+        self.reset_axes = []
+        reset_axes_config = getattr(config, "reset_axes", False)
+        if reset_axes_config is True:
+            # Reset axes provided in the offsets
+            self.reset_axes = [
+                axis for axis, value in self.offsets.items() if value != 0.0
+            ]
+            if not self.reset_axes:
+                raise ValueError(
+                    "reset_axes is set to true, but no non-zero axis offsets are provided to reset."
+                )
+        elif reset_axes_config == "all":
+            self.reset_axes = ["x", "y", "z", "u", "v"]
+        elif isinstance(reset_axes_config, list):
+            self.reset_axes = reset_axes_config
+
+        # Validate configuration
+        offsets_provided = any(value != 0.0 for value in self.offsets.values())
+        reset_operation = bool(self.reset_axes)
+
+        if not offsets_provided and not reset_operation:
+            raise ValueError(
+                "Configuration must provide at least one non-zero axis offset or a reset operation."
+            )
 
         for comp in getattr(config, "ignore", []):
             if comp not in self.mtcs.components_attr:
@@ -137,5 +198,21 @@ class OffsetCameraHexapod(salobj.BaseScript):
     async def run(self):
         await self.assert_feasibility()
 
-        await self.checkpoint("Applying Camera Hexapod offsets...")
-        await self.mtcs.offset_camera_hexapod(**self.offsets, sync=self.sync)
+        # Perform reset operation if specified
+        if self.reset_axes:
+            reset_values = {axis: 0.0 for axis in self.reset_axes}
+            await self.checkpoint(
+                f"Resetting the following axes: {list(reset_values.keys())}"
+            )
+            await self.mtcs.move_camera_hexapod(**reset_values, sync=self.sync)
+
+        # Apply the offsets
+        offsets_to_apply = {
+            axis: value for axis, value in self.offsets.items() if value != 0.0
+        }
+
+        if offsets_to_apply:
+            await self.checkpoint(
+                f"Applying Camera Hexapod offsets to the following axes: {list(offsets_to_apply.keys())}."
+            )
+            await self.mtcs.offset_camera_hexapod(**offsets_to_apply, sync=self.sync)
