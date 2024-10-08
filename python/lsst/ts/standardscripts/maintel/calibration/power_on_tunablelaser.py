@@ -21,7 +21,6 @@
 
 __all__ = ["PowerOnTunableLaser"]
 
-import asyncio
 
 import yaml
 from lsst.ts import salobj
@@ -135,17 +134,7 @@ class PowerOnTunableLaser(salobj.BaseScript):
     async def start_propagation_on(self):
         """Starts propagation of the laser"""
 
-        await self.mtcalsys.laser_start_propagate.start()
-
-    async def get_tunablelaser_parameters(self):
-        """Gets Laser configuration"""
-        return await asyncio.gather(
-            self.laser.evt_opticalConfiguration.aget(timeout=self.cmd_timeout),
-            self.laser.evt_wavelengthChanged.aget(timeout=self.cmd_timeout),
-            self.laser.evt_interlockState.aget(timeout=self.cmd_timeout),
-            self.laser.evt_burstModeSet.aget(timeout=self.cmd_timeout),
-            self.laser.evt_continuousModeSet.aget(timeout=self.cmd_timeout),
-        )
+        await self.mtcalsys.laser_start_propagate()
 
     async def assert_components_enabled(self):
         """Checks if TunableLaser is ENABLED
