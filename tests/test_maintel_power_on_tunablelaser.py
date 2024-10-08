@@ -53,7 +53,7 @@ class TestPowerOnTunableLaser(
         self.script = PowerOnTunableLaser(index=index)
 
         self.laser_state = types.SimpleNamespace(
-            detailedState=LaserDetailedState.NONPROPAGATING_BURST_MODE
+            detailedState=LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
         )
         self.optical_config_state = types.SimpleNamespace(
             configuration=LaserOpticalConfiguration.NO_SCU
