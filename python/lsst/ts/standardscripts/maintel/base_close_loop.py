@@ -175,6 +175,12 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                   - type: string
                   - type: "null"
                 default: null
+              note:
+                description: A descriptive note about the image being taken.
+                anyOf:
+                  - type: string
+                  - type: "null"
+                default: null
               wep_config:
                 description: Configuration for WEP pipeline.
                 type: string
@@ -241,6 +247,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         # Set program and reason
         self.reason = config.reason
         self.program = config.program
+        self.note = config.note
 
         # Set WEP configuration file
         self.wep_config = config.wep_config
@@ -320,6 +327,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             filter=self.filter,
             reason="INTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
+            note=self.note,
         )
 
         self.log.debug("Moving to extra-focal position")
@@ -339,6 +347,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             filter=self.filter,
             reason="EXTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
+            note=self.note,
         )
 
         # Move the hexapod back to in focus position
@@ -374,6 +383,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             reason="INFOCUS" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
             filter=self.filter,
+            note=self.note,
         )
 
         # Set visit id
