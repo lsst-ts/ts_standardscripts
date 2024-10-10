@@ -404,7 +404,8 @@ class ApplyDOF(salobj.BaseScript):
 
         # Loop through properties and assign their values to the vector
         for key, value in vars(config).items():
-            self.dofs[getattr(DOFName, key)] = value
+            if key != "ignore":
+                elf.dofs[getattr(DOFName, key)] = value
 
         for comp in getattr(config, "ignore", []):
             if comp not in self.mtcs.components_attr:
