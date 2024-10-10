@@ -390,6 +390,13 @@ class ApplyDOF(salobj.BaseScript):
                     Defines the offset applied to the M2 bending mode 20.
                     Units in um.
                   default: 0.0
+              ignore:
+                  description: >-
+                      CSCs from the group to ignore in status check. Name must
+                      match those in self.group.components, e.g.; hexapod_1.
+                  type: array
+                  items:
+                      type: string
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -412,6 +419,16 @@ class ApplyDOF(salobj.BaseScript):
             # Loop through properties and assign their values to the vector
             for key, value in vars(config).items():
                 self.dofs[getattr(DOFName, key)] = value
+
+        for comp in getattr(config, "ignore", []):
+            if comp not in self.mtcs.components_attr:
+                self.log.warning(
+                    f"Component {comp} not in CSC Group. "
+                    f"Must be one of {self.mtcs.components_attr}. Ignoring."
+                )
+            else:
+                self.log.debug(f"Ignoring component {comp}.")
+                setattr(self.mtcs.check, comp, False)
 
     def set_metadata(self, metadata) -> None:
         """Set script metadata.
