@@ -24,22 +24,10 @@ import os
 import random
 import types
 import unittest
-import warnings
 
 from lsst.ts import salobj, standardscripts, utils
 from lsst.ts.standardscripts.maintel.calibration import PowerOffTunableLaser
 from lsst.ts.xml.enums.TunableLaser import LaserDetailedState
-
-# TODO: (DM-46168) Revert workaround for TunableLaser XML changes
-try:
-    from lsst.ts.xml.enums.TunableLaser import (
-        OpticalConfiguration as LaserOpticalConfiguration,
-    )
-except ImportError:
-    warnings.warn(
-        "OpticalConfiguration enumeration not availble in ts-xml. Using local version."
-    )
-    from lsst.ts.observatory.control.utils.enums import LaserOpticalConfiguration
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -67,7 +55,7 @@ class TestPowerOffTunableLaser(
         self.script.laser.configure_mock(
             **{
                 "evt_summaryState.aget.side_effect": self.mock_get_laser_summary_state,
-                "cmd_startPropagateLaser.start.side_effect": self.mock_start_laser,
+                "cmd_stopPropagateLaser.start.side_effect": self.mock_stop_laser,
             }
         )
 
@@ -76,21 +64,8 @@ class TestPowerOffTunableLaser(
 
     async def mock_stop_laser(self, **kwargs):
         self.laser_state = types.SimpleNamespace(
-            detailedState=LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
+            detailedState=LaserDetailedState.PROPAGATING_CONTINUOUS_MODE
         )
-
-    async def test_configure(self):
-        # Try to configure with only some of the optional parameters
-        async with self.make_script():
-            mode = LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
-            optical_configuration = LaserOpticalConfiguration.SCU.name
-            wavelength = 500.0
-
-            await self.configure_script()
-
-            assert self.script.laser_mode == mode
-            assert self.script.optical_configuration == optical_configuration
-            assert self.script.wavelength == wavelength
 
     async def test_run_without_failures(self):
         async with self.make_script():
@@ -114,7 +89,7 @@ class TestPowerOffTunableLaser(
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
         script_path = os.path.join(
-            scripts_dir, "maintel", "calibration", "power_on_tunablelaser.py"
+            scripts_dir, "maintel", "calibration", "power_off_tunablelaser.py"
         )
         await self.check_executable(script_path)
 
