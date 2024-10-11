@@ -139,7 +139,7 @@ class TestPowerOnTunableLaser(
             # Assert states are OK
             assert (
                 self.laser_status.detailedState
-                == LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
+                == LaserDetailedState.PROPAGATING_CONTINUOUS_MODE
             )
             assert (
                 self.script.optical_configuration == LaserOpticalConfiguration.SCU.name
