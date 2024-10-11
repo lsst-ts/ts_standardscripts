@@ -206,9 +206,8 @@ class OffsetCameraHexapod(salobj.BaseScript):
             )
             await self.mtcs.move_camera_hexapod(**reset_values, sync=self.sync)
 
-        # Apply the offsets
-        required_axes = ["x", "y", "z", "u", "v"]
-        offsets_to_apply = {axis: 0.0 for axis in required_axes}
+        # Dictionary with offsets to apply
+        offsets_to_apply = {axis: 0.0 for axis in ["x", "y", "z", "u", "v"]}
         offsets_to_apply.update(
             {axis: value for axis, value in self.offsets.items() if value != 0.0}
         )
