@@ -20,8 +20,10 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import unittest
+from unittest.mock import patch
 
 from lsst.ts import standardscripts
+from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.standardscripts.maintel import Mode, TakeAOSSequenceComCam
@@ -46,8 +48,8 @@ class TestTakeAOSSequenceComCam(
         )
 
         self.script.mtcs.offset_camera_hexapod = unittest.mock.AsyncMock()
-        self.script.camera.take_cwfs = unittest.mock.AsyncMock()
-        self.script.camera.take_acq = unittest.mock.AsyncMock()
+        self.script.camera.expose = unittest.mock.AsyncMock()
+        self.script.camera.setup_instrument = unittest.mock.AsyncMock()
 
         return (self.script,)
 
@@ -104,8 +106,12 @@ class TestTakeAOSSequenceComCam(
             assert not self.script.mtcs.check.mtm2
             assert not self.script.camera.check.ccoods
 
-    async def test_take_triplets(self):
+    async def run_take_triplets_test(
+        self, mock_ready_to_take_data=None, expect_exception=None
+    ):
         async with self.make_script():
+            self.script.camera.ready_to_take_data = mock_ready_to_take_data
+
             exposure_time = 15.0
             filter = "g"
             dz = 2000.0
@@ -120,13 +126,90 @@ class TestTakeAOSSequenceComCam(
                 mode=mode,
             )
 
-            await self.run_script()
+            # Wrap `take_cwfs` and `take_acq` to count calls
+            with patch.object(
+                self.script.camera, "take_cwfs", wraps=self.script.camera.take_cwfs
+            ) as mock_take_cwfs, patch.object(
+                self.script.camera, "take_acq", wraps=self.script.camera.take_acq
+            ) as mock_take_acq:
 
-            assert n_sequences * 2 == self.script.camera.take_cwfs.await_count
-            assert n_sequences == self.script.camera.take_acq.await_count
+                if expect_exception is not None:
+                    await self.run_script(expected_final_state=ScriptState.FAILED)
+                    self.assertEqual(self.script.state.state, ScriptState.FAILED)
+                    self.assertIn(
+                        str(mock_ready_to_take_data.side_effect),
+                        self.script.state.reason,
+                    )
+                    # the first image taken is type  cwfs and in this case
+                    # it should throw and exception for TCS not being ready
+                    expected_take_cwfs_calls = 1
+                    expected_take_acq_calls = 0
+                else:
+                    await self.run_script()
+                    self.assertEqual(self.script.state.state, ScriptState.DONE)
+                    expected_take_cwfs_calls = n_sequences * 2
+                    expected_take_acq_calls = n_sequences
+
+                expected_tcs_ready_calls = (
+                    expected_take_cwfs_calls + expected_take_acq_calls
+                )
+                if expected_take_acq_calls > 0:
+                    # number of calls to the expose method
+                    # in BaseCamera.take_imgtype
+                    expected_expose_calls = expected_tcs_ready_calls
+                else:
+                    expected_expose_calls = 0
+
+                if mock_ready_to_take_data is not None:
+                    self.assertEqual(
+                        mock_ready_to_take_data.await_count,
+                        expected_tcs_ready_calls,
+                        f"ready_to_take_data was called {mock_ready_to_take_data.await_count} times, "
+                        f"expected {expected_tcs_ready_calls}",
+                    )
+                else:
+                    with self.assertRaises(AttributeError):
+                        self.script.camera.ready_to_take_data.assert_not_called()
+
+                self.assertEqual(
+                    self.script.camera.expose.await_count,
+                    expected_expose_calls,
+                    f"expose was called {self.script.camera.expose.await_count} times, "
+                    f"expected {expected_expose_calls}",
+                )
+                self.assertEqual(
+                    mock_take_cwfs.await_count,
+                    expected_take_cwfs_calls,
+                    f"take_cwfs was called {mock_take_cwfs.await_count} times, "
+                    f"expected {expected_take_cwfs_calls}",
+                )
+                self.assertEqual(
+                    mock_take_acq.await_count,
+                    expected_take_acq_calls,
+                    f"take_acq was called {mock_take_acq.await_count} times, "
+                    f"expected {expected_take_acq_calls}",
+                )
+
+    async def test_take_triplets(self):
+        await self.run_take_triplets_test()
+
+    async def test_take_triplets_tcs_ready(self):
+        mock_ready = unittest.mock.AsyncMock(return_value=None)
+        await self.run_take_triplets_test(
+            mock_ready_to_take_data=mock_ready,
+        )
+
+    async def test_take_triplets_tcs_not_ready(self):
+        mock_ready = unittest.mock.AsyncMock(side_effect=RuntimeError("TCS not ready"))
+        await self.run_take_triplets_test(
+            mock_ready_to_take_data=mock_ready, expect_exception=RuntimeError
+        )
 
     async def test_take_doublet(self):
         async with self.make_script():
+            self.script.camera.take_cwfs = unittest.mock.AsyncMock()
+            self.script.camera.take_acq = unittest.mock.AsyncMock()
+
             exposure_time = 15.0
             filter = "g"
             dz = 2000.0

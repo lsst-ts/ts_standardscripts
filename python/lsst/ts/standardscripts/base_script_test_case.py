@@ -232,7 +232,7 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
     def next_index(self):
         return next(self._index_iter)
 
-    async def run_script(self):
+    async def run_script(self, expected_final_state=Script.ScriptState.DONE):
         """Run the script.
 
         Requires that the script be configured and the group ID set
@@ -241,7 +241,7 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
         run_data = self.script.cmd_run.DataType()
         await self.script.do_run(run_data)
         await self.script.done_task
-        assert self.script.state.state == Script.ScriptState.DONE
+        assert self.script.state.state == expected_final_state
 
     async def wait_for(self, coro, timeout, description, verbose):
         """A wrapper around asyncio.wait_for that prints timing information.

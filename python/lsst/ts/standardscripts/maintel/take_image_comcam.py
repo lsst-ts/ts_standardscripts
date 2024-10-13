@@ -22,7 +22,9 @@
 __all__ = ["TakeImageComCam"]
 
 import yaml
+from lsst.ts.observatory.control.maintel import MTCS
 from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
+from lsst.ts.observatory.control.maintel.mtcs import MTCSUsages
 
 from ..base_take_image import BaseTakeImage
 
@@ -48,8 +50,13 @@ class TakeImageComCam(BaseTakeImage):
 
         self.config = None
 
+        self.mtcs = MTCS(self.domain, log=self.log, intended_usage=MTCSUsages.Slew)
+
         self._comcam = ComCam(
-            self.domain, intended_usage=ComCamUsages.TakeImage, log=self.log
+            self.domain,
+            intended_usage=ComCamUsages.TakeImage,
+            log=self.log,
+            tcs_ready_to_take_data=self.mtcs.ready_to_take_data,
         )
 
         self.instrument_name = "LSSTComCam"
