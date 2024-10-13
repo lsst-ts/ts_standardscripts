@@ -22,7 +22,7 @@
 __all__ = ["TakeImageLatiss"]
 
 import yaml
-from lsst.ts.observatory.control.auxtel import LATISS, LATISSUsages
+from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
 
 from ..base_take_image import BaseTakeImage
 
@@ -46,8 +46,13 @@ class TakeImageLatiss(BaseTakeImage):
     def __init__(self, index):
         super().__init__(index=index, descr="Take images with AT Camera")
 
+        self.atcs = ATCS(self.domain, log=self.log, intended_usage=ATCSUsages.Slew)
+
         self._latiss = LATISS(
-            self.domain, intended_usage=LATISSUsages.TakeImageFull, log=self.log
+            self.domain,
+            intended_usage=LATISSUsages.TakeImageFull,
+            log=self.log,
+            tcs_ready_to_take_data=self.atcs.ready_to_take_data,
         )
 
         self.instrument_name = "LATISS"
