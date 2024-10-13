@@ -82,10 +82,15 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
         # super().__init__() above. We can also pass in the script domain and
         # logger to both classes so log messages generated internally are
         # published to the efd.
-        self.latiss = LATISS(
-            domain=self.domain, intended_usage=latiss_usage, log=self.log
-        )
         self.atcs = ATCS(domain=self.domain, intended_usage=atcs_usage, log=self.log)
+
+        tcs_ready_to_take_data = self.atcs if add_remotes else None
+        self.latiss = LATISS(
+            domain=self.domain,
+            intended_usage=latiss_usage,
+            log=self.log,
+            tcs_ready_to_take_data=tcs_ready_to_take_data,
+        )
 
     @classmethod
     def get_schema(cls):
