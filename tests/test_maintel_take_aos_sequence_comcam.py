@@ -27,7 +27,7 @@ from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.standardscripts.maintel import TakeAOSSequenceComCam
 
 
-class TakeAOSSequenceComCam(
+class TestTakeAOSSequenceComCam(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
     async def basic_make_script(self, index):
@@ -57,7 +57,7 @@ class TakeAOSSequenceComCam(
             filter = "g"
             dz = 2000.0
             n_sequences = 15
-            mode = 'intra'
+            mode = "intra"
 
             await self.configure_script(
                 filter=filter,
@@ -70,7 +70,7 @@ class TakeAOSSequenceComCam(
             assert self.script.filter == filter
             assert self.script.dz == 2000.0
             assert self.script.n_sequences == n_sequences
-            assert self.script.mode == 'intra'
+            assert self.script.mode == "intra"
 
     async def test_configure_ignore(self):
         async with self.make_script():
@@ -83,7 +83,7 @@ class TakeAOSSequenceComCam(
             filter = "g"
             dz = 2000.0
             n_sequences = 15
-            mode = 'intra'
+            mode = "intra"
             ignore = ["mtrotator", "mtm2", "ccoods"]
 
             await self.configure_script(
@@ -98,7 +98,7 @@ class TakeAOSSequenceComCam(
             assert self.script.filter == filter
             assert self.script.dz == 2000.0
             assert self.script.n_sequences == n_sequences
-            assert self.script.mode == 'intra'
+            assert self.script.mode == "intra"
             assert self.script.mtcs.check.mtmount
             assert not self.script.mtcs.check.mtrotator
             assert not self.script.mtcs.check.mtm2
@@ -110,7 +110,7 @@ class TakeAOSSequenceComCam(
             filter = "g"
             dz = 2000.0
             n_sequences = 3
-            mode = 'triplet'
+            mode = "triplet"
 
             await self.configure_script(
                 filter=filter,
@@ -131,7 +131,7 @@ class TakeAOSSequenceComCam(
             filter = "g"
             dz = 2000.0
             n_sequences = 3
-            mode = 'intra'
+            mode = "intra"
 
             await self.configure_script(
                 filter=filter,

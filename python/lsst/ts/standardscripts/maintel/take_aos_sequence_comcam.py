@@ -34,7 +34,7 @@ from ..base_block_script import BaseBlockScript
 
 
 class TakeAOSSequenceComCam(BaseBlockScript):
-    """Take aos sequence, either triplet (intra-focal, extra-focal 
+    """Take aos sequence, either triplet (intra-focal, extra-focal
     and in-focus images), intra doublets (intra and in-focus) or extra
     doublets (extra and in-focus) sequences with ComCam.
 
@@ -283,7 +283,8 @@ class TakeAOSSequenceComCam(BaseBlockScript):
                 self.log.exception("Executing OCPS task failed. Ignoring.")
 
     async def move_hexapod(self, target_z: float) -> None:
-        """Move the hexapod to the target z position (relative to current position).
+        """Move the hexapod to the target z position
+        (relative to current position).
 
         Parameters
         ----------
