@@ -91,7 +91,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
                 type: integer
                 default: 1
               mode:
-                description: >-\
+                description: >-
                     Mode of operation. Options are 'triplet' (default), 'intra' or 'extra'.
                 type: str
                 default: 'triplet'
