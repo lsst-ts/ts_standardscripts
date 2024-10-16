@@ -102,7 +102,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
                     Mode of operation. Options are 'triplet' (default), 'intra' or 'extra'.
                 type: str
                 default: TRIPLET
-                enum: {[mode.name for mode in Mode]}
+                enum: {[mode for mode in Mode]}
               program:
                 description: >-
                     Optional name of the program this dataset belongs to.
