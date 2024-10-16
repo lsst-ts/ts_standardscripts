@@ -32,6 +32,10 @@ from lsst.ts.observatory.control.maintel.mtcs import MTCS
 
 from ..base_block_script import BaseBlockScript
 
+class Mode(enum.IntEnum):
+    TRIPLET = enum.auto()
+    INTRA = enum.auto()
+    EXTRA = enum.auto()
 
 class TakeAOSSequenceComCam(BaseBlockScript):
     """Take aos sequence, either triplet (intra-focal, extra-focal
@@ -94,8 +98,8 @@ class TakeAOSSequenceComCam(BaseBlockScript):
                 description: >-
                     Mode of operation. Options are 'triplet' (default), 'intra' or 'extra'.
                 type: str
-                default: 'triplet'
-                enum: ['triplet', 'intra', 'extra']
+                default: TRIPLET
+                enum: {[mode for mode in Mode]}
               program:
                 description: >-
                     Optional name of the program this dataset belongs to.
@@ -162,6 +166,8 @@ class TakeAOSSequenceComCam(BaseBlockScript):
 
         # Set maximum number of iterations
         self.n_sequences = config.n_sequences
+
+        self.mode = getattr(Mode, config.mode)
 
         # Set program, reason and note
         self.program = config.program
@@ -238,19 +244,19 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         """Take out-of-focus sequence images."""
         self.supplemented_group_id = self.next_supplemented_group_id()
 
-        if self.mode == "triplet" or self.mode == "intra":
+        if self.mode == Mode.TRIPLET or self.mode == Mode.INTRA:
             self.log.debug("Moving to intra-focal position")
             await self.move_hexapod(self.dz)
             self.log.info("Taking in-focus image")
             intra_visit_id = await self.take_cwfs_image("INTRA")
 
-        if self.mode == "triplet" or self.mode == "extra":
+        if self.mode == Mode.TRIPLET or self.mode == Mode.EXTRA:
             self.log.debug("Moving to extra-focal position")
             await self.move_hexapod(-self.dz)
             self.log.info("Taking extra-focal image")
             extra_visit_id = await self.take_cwfs_image("EXTRA")
 
-        if self.mode == "triplet":
+        if self.mode == Mode.TRIPLET:
             self.log.info("Send processing request to RA OCPS.")
             config = {
                 "LSSTComCamSim-FROM-OCS_DONUTPAIR": f"{intra_visit_id[0]},{extra_visit_id[0]}"
@@ -276,7 +282,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
             note=self.note,
         )
 
-        if self.mode == "triplet":
+        if self.mode == Mode.TRIPLET:
             try:
                 await ocps_execute_task
             except Exception:
