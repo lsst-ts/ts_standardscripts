@@ -100,7 +100,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
               mode:
                 description: >-
                     Mode of operation. Options are 'triplet' (default), 'intra' or 'extra'.
-                type: str
+                type: string
                 default: TRIPLET
                 enum: {[mode for mode in Mode]}
               program:
