@@ -64,7 +64,7 @@ class SetSummaryState(salobj.BaseScript):
         self.create_remote_time = 15
         # time limit for each state transition command (sec);
         # make it generous enough to handle any CSC
-        self.cmd_timeout = 10
+        self.cmd_timeout = 60
 
     @classmethod
     def get_schema(cls):
