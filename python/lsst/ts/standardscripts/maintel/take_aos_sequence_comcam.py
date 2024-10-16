@@ -22,6 +22,7 @@
 __all__ = ["TakeAOSSequenceComCam"]
 
 import asyncio
+import enum
 import json
 import types
 
@@ -36,6 +37,7 @@ class Mode(enum.IntEnum):
     TRIPLET = enum.auto()
     INTRA = enum.auto()
     EXTRA = enum.auto()
+
 
 class TakeAOSSequenceComCam(BaseBlockScript):
     """Take aos sequence, either triplet (intra-focal, extra-focal
