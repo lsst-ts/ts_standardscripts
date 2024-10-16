@@ -70,7 +70,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
 
     @classmethod
     def get_schema(cls) -> dict:
-        schema_yaml = """
+        schema_yaml = f"""
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/maintel/TakeAOSSequenceComCam.yaml
             title: TakeAOSSequenceComCam v1
