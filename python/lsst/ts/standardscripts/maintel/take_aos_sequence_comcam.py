@@ -33,6 +33,7 @@ from lsst.ts.observatory.control.maintel.mtcs import MTCS
 
 from ..base_block_script import BaseBlockScript
 
+
 class Mode(enum.IntEnum):
     TRIPLET = enum.auto()
     INTRA = enum.auto()
