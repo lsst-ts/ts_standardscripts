@@ -1,0 +1,1 @@
+Extend TCS readiness check to other image types beyond OBJECT.

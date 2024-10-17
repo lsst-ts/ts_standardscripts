@@ -200,6 +200,7 @@ class TakeTripletComCam(BaseBlockScript):
                 self.domain,
                 log=self.log,
                 intended_usage=ComCamUsages.TakeImage + ComCamUsages.StateTransition,
+                tcs_ready_to_take_data=self.mtcs.tcs_ready_to_take_data,
             )
             await self.camera.start_task
         else:
