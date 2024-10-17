@@ -79,6 +79,17 @@ class ApplyDOF(salobj.BaseScript):
             description: Configuration for ApplyDOF Script.
             type: object
             properties:
+              dofs:
+                type: array
+                description: >-
+                  Defines a 50-dimensional vector for all DOFs, combining M2,
+                  Camera, M1M3, and M2 bending modes. This overrides individual DOF inputs.
+                  First 5 elements for M2, next 5 for Camera, next 20 for M1M3 bending modes,
+                  last 20 for M2 bending modes. Units: microns or arcsec.
+                items:
+                  type: number
+                minItems: 50
+                maxItems: 50
               M2_dz:
                   type: number
                   description: >-
@@ -395,9 +406,12 @@ class ApplyDOF(salobj.BaseScript):
         # Configure tcs and camera
         await self.configure_tcs()
 
-        # Loop through properties and assign their values to the vector
-        for key, value in vars(config).items():
-            self.dofs[getattr(DOFName, key)] = value
+        if hasattr(config, "dofs"):
+            self.dofs = config.dofs
+        else:
+            # Loop through properties and assign their values to the vector
+            for key, value in vars(config).items():
+                self.dofs[getattr(DOFName, key)] = value
 
     def set_metadata(self, metadata) -> None:
         """Set script metadata.
