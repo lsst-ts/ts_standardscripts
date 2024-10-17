@@ -65,7 +65,6 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         self.mtcs = None
         self.camera = None
         self.ocps = None
-        self.supplemented_group_id = None
         self.current_z_position = 0
 
     @classmethod
@@ -189,7 +188,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         # Estimated duration is maximum number of iterations multiplied by
         # 3 or 2 multiplied by the time it takes to take an image
         # plus estimation on reading out the images (10s)
-        number_of_images = 3 if self.mode == "triplet" else 2
+        number_of_images = 3 if self.mode == Mode.TRIPLET else 2
 
         metadata.duration = (
             self.n_sequences
@@ -243,21 +242,38 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         else:
             self.log.debug("MTCS already defined, skipping.")
 
-    async def take_out_of_focus_sequence(self) -> None:
+    async def take_aos_sequence(self) -> None:
         """Take out-of-focus sequence images."""
-        self.supplemented_group_id = self.next_supplemented_group_id()
+        supplemented_group_id = self.next_supplemented_group_id()
 
         if self.mode == Mode.TRIPLET or self.mode == Mode.INTRA:
             self.log.debug("Moving to intra-focal position")
             await self.move_hexapod(self.dz)
-            self.log.info("Taking in-focus image")
-            intra_visit_id = await self.take_cwfs_image("INTRA")
+            self.log.info("Taking intra-focal image")
+            intra_visit_id = await self.camera.take_cwfs(
+                exptime=self.exposure_time,
+                n=1,
+                group_id=supplemented_group_id,
+                filter=self.filter,
+                reason="INTRA" + ("" if self.reason is None else f"_{self.reason}"),
+                program=self.program,
+                note=self.note,
+            )
 
         if self.mode == Mode.TRIPLET or self.mode == Mode.EXTRA:
             self.log.debug("Moving to extra-focal position")
             await self.move_hexapod(-self.dz)
             self.log.info("Taking extra-focal image")
-            extra_visit_id = await self.take_cwfs_image("EXTRA")
+
+            extra_visit_id = await self.camera.take_cwfs(
+                exptime=self.exposure_time,
+                n=1,
+                group_id=supplemented_group_id,
+                filter=self.filter,
+                reason="EXTRA" + ("" if self.reason is None else f"_{self.reason}"),
+                program=self.program,
+                note=self.note,
+            )
 
         if self.mode == Mode.TRIPLET:
             self.log.info("Send processing request to RA OCPS.")
@@ -305,35 +321,12 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         self.current_z_position = target_z  # Update current position
         self.log.debug(f"Moved hexapod to z={target_z} (relative move: {z_move}).")
 
-    async def take_cwfs_image(self, reason_suffix: str) -> int:
-        """Helper method to handle image acquisition for cwfs images.
-
-        Parameters
-        ----------
-        reason_suffix : `str`
-            Suffix to add to the reason (e.g., INTRA, EXTRA).
-
-        Returns
-        -------
-        visit_id : `int`
-            Visit ID of the image.
-        """
-        return await self.camera.take_cwfs(
-            exptime=self.exposure_time,
-            n=1,
-            group_id=self.supplemented_group_id,
-            filter=self.filter,
-            reason=reason_suffix + ("" if self.reason is None else f"_{self.reason}"),
-            program=self.program,
-            note=self.note,
-        )
-
     async def run_block(self) -> None:
         """Execute script operations."""
         await self.assert_feasibility()
 
         for i in range(self.n_sequences):
-            self.log.info(f"Starting out-of-focus sequence {i+1} of {self.n_sequences}")
+            self.log.info(f"Starting aos sequence {i+1} of {self.n_sequences}")
             await self.checkpoint(f"out-of-focus sequence {i+1} of {self.n_sequences}")
 
-            await self.take_out_of_focus_sequence()
+            await self.take_aos_sequence()
