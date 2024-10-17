@@ -24,7 +24,7 @@ import unittest
 from lsst.ts import standardscripts
 from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-from lsst.ts.standardscripts.maintel import TakeAOSSequenceComCam
+from lsst.ts.standardscripts.maintel import TakeAOSSequenceComCam, Mode
 
 
 class TestTakeAOSSequenceComCam(
@@ -57,7 +57,7 @@ class TestTakeAOSSequenceComCam(
             filter = "g"
             dz = 2000.0
             n_sequences = 15
-            mode = "intra"
+            mode = Mode.INTRA
 
             await self.configure_script(
                 filter=filter,
@@ -70,7 +70,7 @@ class TestTakeAOSSequenceComCam(
             assert self.script.filter == filter
             assert self.script.dz == 2000.0
             assert self.script.n_sequences == n_sequences
-            assert self.script.mode == "intra"
+            assert self.script.mode == Mode.INTRA
 
     async def test_configure_ignore(self):
         async with self.make_script():
@@ -83,7 +83,7 @@ class TestTakeAOSSequenceComCam(
             filter = "g"
             dz = 2000.0
             n_sequences = 15
-            mode = "intra"
+            mode = Mode.INTRA
             ignore = ["mtrotator", "mtm2", "ccoods"]
 
             await self.configure_script(
@@ -98,7 +98,7 @@ class TestTakeAOSSequenceComCam(
             assert self.script.filter == filter
             assert self.script.dz == 2000.0
             assert self.script.n_sequences == n_sequences
-            assert self.script.mode == "intra"
+            assert self.script.mode == Mode.INTRA
             assert self.script.mtcs.check.mtmount
             assert not self.script.mtcs.check.mtrotator
             assert not self.script.mtcs.check.mtm2
@@ -110,7 +110,7 @@ class TestTakeAOSSequenceComCam(
             filter = "g"
             dz = 2000.0
             n_sequences = 3
-            mode = "triplet"
+            mode = Mode.TRIPLET
 
             await self.configure_script(
                 filter=filter,
@@ -131,7 +131,7 @@ class TestTakeAOSSequenceComCam(
             filter = "g"
             dz = 2000.0
             n_sequences = 3
-            mode = "intra"
+            mode = Mode.INTRA
 
             await self.configure_script(
                 filter=filter,
