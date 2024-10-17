@@ -57,7 +57,7 @@ class TestTakeAOSSequenceComCam(
             filter = "g"
             dz = 2000.0
             n_sequences = 15
-            mode = Mode.INTRA
+            mode = "INTRA"
 
             await self.configure_script(
                 filter=filter,
@@ -83,7 +83,7 @@ class TestTakeAOSSequenceComCam(
             filter = "g"
             dz = 2000.0
             n_sequences = 15
-            mode = Mode.INTRA
+            mode = "INTRA"
             ignore = ["mtrotator", "mtm2", "ccoods"]
 
             await self.configure_script(
@@ -110,7 +110,7 @@ class TestTakeAOSSequenceComCam(
             filter = "g"
             dz = 2000.0
             n_sequences = 3
-            mode = Mode.TRIPLET
+            mode = "TRIPLET"
 
             await self.configure_script(
                 filter=filter,
@@ -131,7 +131,7 @@ class TestTakeAOSSequenceComCam(
             filter = "g"
             dz = 2000.0
             n_sequences = 3
-            mode = Mode.INTRA
+            mode = "INTRA"
 
             await self.configure_script(
                 filter=filter,
