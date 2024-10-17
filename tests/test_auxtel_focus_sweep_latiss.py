@@ -62,7 +62,7 @@ class TestFocusSweepLatiss(
     async def test_configure(self):
         config = {
             "axis": "x",
-            "focus_window": 700,
+            "focus_window": 700,  # Value measured in um
             "n_steps": 7,
             "exp_time": 10.0,
             "filter": "SDSSr_65mm",
@@ -74,7 +74,9 @@ class TestFocusSweepLatiss(
             await self.configure_script(**config)
 
             assert self.script.config.axis == "x"
-            assert self.script.config.focus_window == 700
+            self.assertAlmostEqual(
+                self.script.config.focus_window, 0.7
+            )  # Checks that translation to mm was made
             assert self.script.config.n_steps == 7
             assert self.script.config.exp_time == 10.0
             assert self.script.config.filter == "SDSSr_65mm"
@@ -84,19 +86,21 @@ class TestFocusSweepLatiss(
     async def test_configure_focus_step_sequence(self):
         config = {
             "axis": "x",
-            "focus_step_sequence": [-0.2, -0.1, 0, 0.1, 0.2],
+            "focus_step_sequence": [-200, -100, 0, 100, 200],  # Measured in um
             "exp_time": 10.0,
             "filter": "SDSSr_65mm",
             "grating": 1,
             "n_images_per_step": 1,
         }
 
-        expected_step_sequence = [-0.2, -0.1, 0, 0.1, 0.2]
+        expected_step_sequence = [-0.2, -0.1, 0, 0.1, 0.2]  # Measured in mm
         async with self.make_script():
             await self.configure_script(**config)
 
             assert self.script.config.axis == "x"
-            assert self.script.config.focus_window == 0.4
+            self.assertAlmostEqual(
+                self.script.config.focus_window, 0.4
+            )  # Measured in mm
             assert self.script.config.n_steps == 5
             for step, expected_step in zip(
                 self.script.config.focus_step_sequence, expected_step_sequence
@@ -110,7 +114,7 @@ class TestFocusSweepLatiss(
     async def test_configure_focus_step_sequence_with_window(self):
         config = {
             "axis": "x",
-            "focus_window": 0.4,
+            "focus_window": 400,  # Measured in um
             "n_steps": 5,
             "exp_time": 10.0,
             "filter": "SDSSr_65mm",
@@ -123,7 +127,9 @@ class TestFocusSweepLatiss(
             await self.configure_script(**config)
 
             assert self.script.config.axis == "x"
-            assert self.script.config.focus_window == 0.4
+            self.assertAlmostEqual(
+                self.script.config.focus_window, 0.4  # Measured in mm
+            )
             assert self.script.config.n_steps == 5
             for step, expected_step in zip(
                 self.script.config.focus_step_sequence, expected_step_sequence
@@ -137,7 +143,7 @@ class TestFocusSweepLatiss(
     async def test_configure_ignore(self):
         config = {
             "axis": "x",
-            "focus_window": 700,
+            "focus_window": 700,  # Measured in um
             "n_steps": 7,
             "exp_time": 10.0,
             "filter": "SDSSr_65mm",
@@ -154,7 +160,9 @@ class TestFocusSweepLatiss(
             await self.configure_script(**config)
 
             assert self.script.config.axis == "x"
-            assert self.script.config.focus_window == 700
+            self.assertAlmostEqual(
+                self.script.config.focus_window, 0.7  # Measured in mm
+            )
             assert self.script.config.n_steps == 7
             assert self.script.config.exp_time == 10.0
             assert self.script.config.filter == "SDSSr_65mm"
@@ -169,7 +177,7 @@ class TestFocusSweepLatiss(
         bad_configs = [
             {
                 "axis": "invalid_axis",
-                "focus_window": 700,
+                "focus_window": 700,  # Measured in um
                 "n_steps": 7,
                 "exp_time": 10,
                 "filter": "SDSSr_65mm",
@@ -178,7 +186,7 @@ class TestFocusSweepLatiss(
             },
             {
                 "axis": "z",
-                "focus_window": 700,
+                "focus_window": 700,  # Measured in um
                 "n_steps": 1,
                 "exp_time": 10.0,
                 "filter": "SDSSr_65mm",
@@ -195,9 +203,9 @@ class TestFocusSweepLatiss(
     async def test_invalid_configuration_steps_and_window(self):
         bad_config = {
             "axis": "x",
-            "focus_window": 0.4,
+            "focus_window": 400,  # Measured in um
             "n_steps": 5,
-            "focus_step_sequence": [-0.2, -0.1, 0, 0.1, 0.2],
+            "focus_step_sequence": [-200, -100, 0, 100, 200],  # Measured in um
             "exp_time": 10,
             "filter": "SDSSr_65mm",
             "grating": "blue300lpmm_qn1",
@@ -211,7 +219,7 @@ class TestFocusSweepLatiss(
     async def test_focus_sweep(self):
         config = {
             "axis": "x",
-            "focus_window": 700,
+            "focus_window": 700,  # Measured in um
             "n_steps": 7,
             "exp_time": 10.0,
             "filter": "SDSSr_65mm",
@@ -235,7 +243,7 @@ class TestFocusSweepLatiss(
     async def test_cleanup(self):
         config = {
             "axis": "x",
-            "focus_window": 700,
+            "focus_window": 700,  # Measured in um
             "n_steps": 7,
             "exp_time": 10.0,
             "filter": "SDSSr_65mm",
