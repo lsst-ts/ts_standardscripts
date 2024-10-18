@@ -114,7 +114,7 @@ class BaseFocusSweep(BaseBlockScript):
                 type: string
                 enum: ["x", "y", "z", "u", "v"]
               focus_window:
-                description: Total range (window) for the focus sweep.
+                description: Total range (window) measured in um for the focus sweep.
                 type: number
               n_steps:
                 description: Number of steps to take inside the focus window.
@@ -122,7 +122,7 @@ class BaseFocusSweep(BaseBlockScript):
                 minimum: 2
               focus_step_sequence:
                 description: >-
-                    User-provided sequence of focus steps to take for the focus sweep,
+                    User-provided sequence of focus steps measured in um to take for the focus sweep,
                     used for unevenly spaced steps.
                 type: array
                 items:
