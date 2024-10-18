@@ -1,0 +1,1 @@
+Update `take_triplet_comcam` to `take_aos_sequence_comcam.py` to allow for doublets and triplets.
