@@ -23,6 +23,7 @@ from .apply_dof import *
 from .base_close_loop import *
 from .close_loop_comcam import *
 from .close_loop_lsstcam import *
+from .close_mirror_covers import *
 from .disable_hexapod_compensation_mode import *
 from .enable_comcam import *
 from .enable_hexapod_compensation_mode import *
@@ -36,6 +37,7 @@ from .offline_mtcs import *
 from .offset_camera_hexapod import *
 from .offset_m2_hexapod import *
 from .offset_mtcs import *
+from .open_mirror_covers import *
 from .point_azel import *
 from .setup_mtcs import *
 from .standby_comcam import *
