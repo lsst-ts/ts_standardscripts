@@ -20,16 +20,10 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import contextlib
-import logging
-import random
 import unittest
 
 from lsst.ts import standardscripts
 from lsst.ts.standardscripts.maintel import CloseMirrorCovers
-
-random.seed(47)  # for set_random_lsst_dds_partition_prefix
-
-logging.basicConfig()
 
 
 class TestCloseMirrorCovers(

@@ -37,15 +37,13 @@ class CloseMirrorCovers(salobj.BaseScript):
     -----
     **Checkpoints**
 
-    None
-
+    Closing mirror covers: before issuing close mirror covers command.
     """
 
     def __init__(self, index):
         super().__init__(index=index, descr="Close the MT mirror covers.")
 
         self.mtcs = None
-        self.mirror_covers_time_guess = 120
 
     @classmethod
     def get_schema(cls):
@@ -60,8 +58,9 @@ class CloseMirrorCovers(salobj.BaseScript):
             await self.mtcs.start_task
 
     def set_metadata(self, metadata):
-        metadata.duration = self.mirror_covers_time_guess
+        metadata.duration = self.mtcs.mirror_covers_timeout
 
     async def run(self):
         await self.mtcs.assert_all_enabled()
+        await self.checkpoint("Closing mirror covers.")
         await self.mtcs.close_m1_cover()
