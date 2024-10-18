@@ -24,14 +24,14 @@ import unittest
 from lsst.ts import standardscripts
 from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-from lsst.ts.standardscripts.maintel import TakeTripletComCam
+from lsst.ts.standardscripts.maintel import Mode, TakeAOSSequenceComCam
 
 
-class TestTakeTripletComCam(
+class TestTakeAOSSequenceComCam(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
     async def basic_make_script(self, index):
-        self.script = TakeTripletComCam(index=index)
+        self.script = TakeAOSSequenceComCam(index=index)
 
         self.script.mtcs = MTCS(
             domain=self.script.domain,
@@ -56,18 +56,21 @@ class TestTakeTripletComCam(
             exposure_time = 15.0
             filter = "g"
             dz = 2000.0
-            n_triplets = 15
+            n_sequences = 15
+            mode = "INTRA"
 
             await self.configure_script(
                 filter=filter,
                 exposure_time=exposure_time,
                 dz=dz,
-                n_triplets=n_triplets,
+                n_sequences=n_sequences,
+                mode=mode,
             )
             assert self.script.exposure_time == exposure_time
             assert self.script.filter == filter
             assert self.script.dz == 2000.0
-            assert self.script.n_triplets == n_triplets
+            assert self.script.n_sequences == n_sequences
+            assert self.script.mode == Mode.INTRA
 
     async def test_configure_ignore(self):
         async with self.make_script():
@@ -79,20 +82,23 @@ class TestTakeTripletComCam(
             exposure_time = 15.0
             filter = "g"
             dz = 2000.0
-            n_triplets = 15
+            n_sequences = 15
+            mode = "INTRA"
             ignore = ["mtrotator", "mtm2", "ccoods"]
 
             await self.configure_script(
                 filter=filter,
                 exposure_time=exposure_time,
                 dz=dz,
-                n_triplets=n_triplets,
+                n_sequences=n_sequences,
                 ignore=ignore,
+                mode=mode,
             )
             assert self.script.exposure_time == exposure_time
             assert self.script.filter == filter
             assert self.script.dz == 2000.0
-            assert self.script.n_triplets == n_triplets
+            assert self.script.n_sequences == n_sequences
+            assert self.script.mode == Mode.INTRA
             assert self.script.mtcs.check.mtmount
             assert not self.script.mtcs.check.mtrotator
             assert not self.script.mtcs.check.mtm2
@@ -103,24 +109,47 @@ class TestTakeTripletComCam(
             exposure_time = 15.0
             filter = "g"
             dz = 2000.0
-            n_triplets = 3
+            n_sequences = 3
+            mode = "TRIPLET"
 
             await self.configure_script(
                 filter=filter,
                 exposure_time=exposure_time,
                 dz=dz,
-                n_triplets=n_triplets,
+                n_sequences=n_sequences,
+                mode=mode,
             )
 
             await self.run_script()
 
-            assert n_triplets * 2 == self.script.camera.take_cwfs.await_count
-            assert n_triplets == self.script.camera.take_acq.await_count
+            assert n_sequences * 2 == self.script.camera.take_cwfs.await_count
+            assert n_sequences == self.script.camera.take_acq.await_count
+
+    async def test_take_doublet(self):
+        async with self.make_script():
+            exposure_time = 15.0
+            filter = "g"
+            dz = 2000.0
+            n_sequences = 3
+            mode = "INTRA"
+
+            await self.configure_script(
+                filter=filter,
+                exposure_time=exposure_time,
+                dz=dz,
+                n_sequences=n_sequences,
+                mode=mode,
+            )
+
+            await self.run_script()
+
+            assert n_sequences == self.script.camera.take_cwfs.await_count
+            assert n_sequences == self.script.camera.take_acq.await_count
 
     async def test_executable_lsstcam(self) -> None:
         """Test that the script is executable."""
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "take_triplet_comcam.py"
+        script_path = scripts_dir / "maintel" / "take_aos_sequence_comcam.py"
         await self.check_executable(script_path)
 
 
