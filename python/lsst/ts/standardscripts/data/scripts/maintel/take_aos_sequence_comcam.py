@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import TakeTripletComCam
+from lsst.ts.standardscripts.maintel import TakeAOSSequenceComCam
 
-asyncio.run(TakeTripletComCam.amain())
+asyncio.run(TakeAOSSequenceComCam.amain())
