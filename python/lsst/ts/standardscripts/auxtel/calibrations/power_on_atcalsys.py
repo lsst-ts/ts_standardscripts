@@ -93,7 +93,7 @@ class PowerOnATCalSys(salobj.BaseScript):
                 minimum: 0
 
               grating_type:
-                description: Grating type for each image. The choices are 0=mirror, 1=blue, 2=red.
+                description: Grating type for each image. The choices are 0=mirror, 1=red, 2=blue.
                 type: integer
                 enum: [0, 1, 2]
                 default: 0
