@@ -205,12 +205,14 @@ class OffsetM2Hexapod(salobj.BaseScript):
             )
             await self.mtcs.move_m2_hexapod(**reset_values, sync=self.sync)
 
-        # Apply the offsets
-        offsets_to_apply = {
-            axis: value for axis, value in self.offsets.items() if value != 0.0
-        }
+        # Dictionary with offsets to apply
+        offsets_to_apply = {axis: 0.0 for axis in ["x", "y", "z", "u", "v"]}
+        offsets_to_apply.update(
+            {axis: value for axis, value in self.offsets.items() if value != 0.0}
+        )
 
-        if offsets_to_apply:
+        # Check if at least one value in offsets_to_apply is not zero
+        if any(offsets_to_apply.values()):
             await self.checkpoint(
                 f"Applying M2 Hexapod offsets to the following axes: {list(offsets_to_apply.keys())}."
             )
