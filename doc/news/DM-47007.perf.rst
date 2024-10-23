@@ -1,0 +1,1 @@
+Update `take_aos_sequence_comcam.py` to use ComCam instead of ComCamSim.
