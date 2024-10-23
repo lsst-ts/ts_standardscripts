@@ -80,7 +80,7 @@ class CrawlAz(salobj.BaseScript):
             self.mtdome = salobj.Remote(
                 self.domain,
                 "MTDome",
-                include=["summaryState"],
+                includes=["summaryState"],
             )
 
             await self.mtdome.start_task
