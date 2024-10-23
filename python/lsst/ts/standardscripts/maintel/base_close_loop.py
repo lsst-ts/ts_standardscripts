@@ -202,6 +202,11 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                     Apply OFC corrections after each iteration.
                 type: boolean
                 default: true
+              ocps:
+                description: >-
+                    Use OCPS to run the wavefront estimation pipeline.
+                type: boolean
+                default: true
               ignore:
                   description: >-
                       CSCs from the group to ignore in status check. Name must
@@ -251,6 +256,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # Set WEP configuration file
         self.wep_config = config.wep_config
+        self.wep_config.useOCPS = config.ocps
 
         # Set used dofs
         selected_dofs = config.used_dofs
