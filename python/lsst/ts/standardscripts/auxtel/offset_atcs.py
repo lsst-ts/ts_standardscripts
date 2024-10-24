@@ -48,3 +48,11 @@ class OffsetATCS(BaseOffsetTCS):
     @property
     def tcs(self):
         return self.atcs
+
+    async def configure_tcs(self):
+        """Handle creating ATCS object and waiting for remote to start."""
+
+        if self.atcs is None:
+            self.log.debug("Creating ATCS")
+            self.atcs = ATCS(self.domain, log=self.log)
+            await self.atcs.start_task

@@ -49,3 +49,11 @@ class OffsetMTCS(BaseOffsetTCS):
     @property
     def tcs(self):
         return self.mtcs
+
+    async def configure_tcs(self):
+        """Handle creating MTCS object and waiting for remote to start."""
+
+        if self.mtcs is None:
+            self.log.debug("Creating MTCS")
+            self.mtcs = MTCS(self.domain, log=self.log)
+            await self.mtcs.start_task

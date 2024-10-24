@@ -56,6 +56,11 @@ class BaseOffsetTCS(salobj.BaseScript, metaclass=abc.ABCMeta):
     def tcs(self):
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    async def configure_tcs(self):
+        """Abstract method to configure the TCS."""
+        raise NotImplementedError()
+
     @classmethod
     def get_schema(cls):
         schema_yaml = """
@@ -141,6 +146,13 @@ class BaseOffsetTCS(salobj.BaseScript, metaclass=abc.ABCMeta):
                     slews.
                 type: boolean
                 default: False
+              ignore:
+                description: >-
+                    CSCs from the group to ignore in status check. Name must
+                    match those in self.group.components, e.g.; hexapod_1.
+                type: array
+                items:
+                    type: string
             additionalProperties: false
             oneOf:
                 - required: ["offset_azel"]
@@ -169,6 +181,19 @@ class BaseOffsetTCS(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         self.relative = config.relative
         self.absorb = config.absorb
+
+        await self.configure_tcs()
+
+        if hasattr(config, "ignore"):
+            for comp in config.ignore:
+                if comp not in self.tcs.components_attr:
+                    self.log.warning(
+                        f"Component {comp} not in CSC Group. "
+                        f"Must be one of {self.tcs.components_attr}. Ignoring."
+                    )
+                else:
+                    self.log.debug(f"Ignoring component {comp}.")
+                    setattr(self.tcs.check, comp, False)
 
     def set_metadata(self, metadata):
         metadata.duration = 10
