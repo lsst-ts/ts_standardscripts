@@ -289,7 +289,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         if self.mode == Mode.TRIPLET:
             self.log.info("Send processing request to RA OCPS.")
             config = {
-                "LSSTComCamSim-FROM-OCS_DONUTPAIR": f"{intra_visit_id[0]},{extra_visit_id[0]}"
+                "LSSTComCam-FROM-OCS_DONUTPAIR": f"{intra_visit_id[0]},{extra_visit_id[0]}"
             }
             ocps_execute_task = asyncio.create_task(
                 self.ocps.cmd_execute.set_start(
