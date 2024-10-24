@@ -27,6 +27,7 @@ import unittest
 import pytest
 from lsst.ts import salobj, standardscripts
 from lsst.ts.standardscripts.auxtel import TakeImageLatiss
+from lsst.ts.xml.enums import Script
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -162,8 +163,12 @@ class TestATCamTakeImage(
                     exp_times=exp_times, image_type=image_type, nimages=nimages
                 )
 
-    async def test_take_images(self):
+    async def run_take_images_test(
+        self, mock_ready_to_take_data=None, expect_exception=None
+    ):
         async with self.make_script():
+            self.script.camera.ready_to_take_data = mock_ready_to_take_data
+
             config = await self.configure_script(
                 nimages=1,
                 exp_times=1.0,
@@ -172,16 +177,45 @@ class TestATCamTakeImage(
                 grating=1,
                 linear_stage=100,
             )
-            await self.run_script()
 
-            assert self.nimages == config.nimages
-            assert len(self.selected_filter) == config.nimages
-            assert len(self.selected_disperser) == config.nimages
-            assert len(self.selected_linear_stage) == config.nimages
+            if expect_exception is not None:
+                await self.run_script(expected_final_state=Script.ScriptState.FAILED)
+                self.assertEqual(self.script.state.state, Script.ScriptState.FAILED)
+                self.assertIn(
+                    str(mock_ready_to_take_data.side_effect), self.script.state.reason
+                )
 
-            assert config.filter in self.selected_filter
-            assert config.grating in self.selected_disperser
-            assert config.linear_stage in self.selected_linear_stage
+            else:
+                await self.run_script()
+
+            if mock_ready_to_take_data is not None:
+                mock_ready_to_take_data.assert_called_once()
+            else:
+                with self.assertRaises(AttributeError):
+                    self.script.camera.ready_to_take_data.assert_not_called()
+
+            if expect_exception is None:
+                assert self.nimages == config.nimages
+                assert len(self.selected_filter) == config.nimages
+                assert len(self.selected_disperser) == config.nimages
+                assert len(self.selected_linear_stage) == config.nimages
+
+                assert config.filter in self.selected_filter
+                assert config.grating in self.selected_disperser
+                assert config.linear_stage in self.selected_linear_stage
+
+    async def test_take_images(self):
+        await self.run_take_images_test()
+
+    async def test_take_images_tcs_ready(self):
+        mock_ready = unittest.mock.AsyncMock(return_value=None)
+        await self.run_take_images_test(mock_ready_to_take_data=mock_ready)
+
+    async def test_take_images_tcs_not_ready(self):
+        mock_ready = unittest.mock.AsyncMock(side_effect=RuntimeError("TCS not ready"))
+        await self.run_take_images_test(
+            mock_ready_to_take_data=mock_ready, expect_exception=RuntimeError
+        )
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
