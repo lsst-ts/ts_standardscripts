@@ -22,9 +22,8 @@
 __all__ = ["TakeImageComCam"]
 
 import yaml
-from lsst.ts.observatory.control.maintel import MTCS
 from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
-from lsst.ts.observatory.control.maintel.mtcs import MTCSUsages
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 from ..base_take_image import BaseTakeImage
 
