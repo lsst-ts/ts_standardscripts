@@ -251,7 +251,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
             self.log.debug("Moving to intra-focal position")
 
             # Move the hexapod to the target z position
-            z_offset = self.dz - self.current_z_position
+            z_offset = -self.dz - self.current_z_position
             await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
             self.current_z_position = self.dz
 
@@ -270,7 +270,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
             self.log.debug("Moving to extra-focal position")
 
             # Move the hexapod to the target z position
-            z_offset = -self.dz - self.current_z_position
+            z_offset = self.dz - self.current_z_position
             await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
             self.current_z_position = -self.dz
 
