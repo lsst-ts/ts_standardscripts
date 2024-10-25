@@ -22,8 +22,8 @@
 __all__ = ["TakeImageLSSTCam"]
 
 import yaml
-from lsst.ts.observatory.control.maintel import MTCS
 from lsst.ts.observatory.control.maintel.lsstcam import LSSTCam, LSSTCamUsages
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 from ..base_take_image import BaseTakeImage
 
@@ -49,7 +49,7 @@ class TakeImageLSSTCam(BaseTakeImage):
 
         self.config = None
 
-        self.mtcs = MTCS(self.domain, log=self.log)
+        self.mtcs = MTCS(self.domain, log=self.log, intended_usage=MTCSUsages.Slew)
 
         self._lsstcam = LSSTCam(
             self.domain,
