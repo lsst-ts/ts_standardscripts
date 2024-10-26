@@ -140,12 +140,6 @@ class TestTakeImageComCam(
         script_path = scripts_dir / "maintel" / "take_image_comcam.py"
         await self.check_executable(script_path)
 
-    async def test_executable_lsstcam(self) -> None:
-        """Test that the script is executable for LSSTCam."""
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "take_image_lsstcam.py"
-        await self.check_executable(script_path)
-
 
 if __name__ == "__main__":
     unittest.main()
