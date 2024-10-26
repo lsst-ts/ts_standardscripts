@@ -253,7 +253,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
             # Move the hexapod to the target z position
             z_offset = -self.dz - self.current_z_position
             await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
-            self.current_z_position = self.dz
+            self.current_z_position = -self.dz
 
             self.log.info("Taking in-focus image")
             intra_visit_id = await self.camera.take_cwfs(
@@ -272,7 +272,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
             # Move the hexapod to the target z position
             z_offset = self.dz - self.current_z_position
             await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
-            self.current_z_position = -self.dz
+            self.current_z_position = self.dz
 
             self.log.info("Taking extra-focal image")
 
