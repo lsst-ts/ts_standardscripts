@@ -255,9 +255,13 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         self.note = config.note
 
         # Set WEP configuration file
-        self.wep_config = yaml.safe_load(config.wep_config)
-        self.wep_config["useOCPS"] = config.use_ocps
+        if config.wep_config == "":
+            wep_config = {}
+        else:
+            wep_config = yaml.safe_load(config.wep_config)
+        self.wep_config = wep_config
         self.wep_config = yaml.dump(self.wep_config)
+        self.use_ocps = config.use_ocps
 
         # Set used dofs
         selected_dofs = config.used_dofs
@@ -376,8 +380,9 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         await self.mtcs.rem.mtaos.cmd_runWEP.set_start(
             visitId=intra_visit_id,
             extraId=extra_visit_id,
-            timeout=2 * CMD_TIMEOUT,
+            useOCPS=self.use_ocps,
             config=self.wep_config,
+            timeout=2 * CMD_TIMEOUT,
         )
 
     async def handle_cwfs_mode(self) -> None:
