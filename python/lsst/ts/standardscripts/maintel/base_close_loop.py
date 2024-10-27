@@ -22,6 +22,7 @@
 __all__ = ["BaseCloseLoop"]
 
 import abc
+import asyncio
 import types
 import typing
 
@@ -103,6 +104,11 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def configure_camera(self) -> None:
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
+    def oods(self) -> None:
         raise NotImplementedError()
 
     async def configure_tcs(self) -> None:
@@ -350,6 +356,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         self.log.debug("Taking extra-focal image")
 
+        self.oods.evt_imageInOODS.flush()
         # Take extra-focal iamge
         extra_image = await self.camera.take_cwfs(
             exptime=self.exposure_time,
@@ -361,8 +368,10 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             note=self.note,
         )
 
+        task1 = self.oods.evt_imageInOODS.next(flush=False, timeout=self.exposure_time)
         # Move the hexapod back to in focus position
-        await self.mtcs.offset_camera_hexapod(x=0, y=0, z=-self.dz, u=0, v=0)
+        task2 = self.mtcs.offset_camera_hexapod(x=0, y=0, z=-self.dz, u=0, v=0)
+        await asyncio.gather(task1, task2)
 
         return intra_image, extra_image
 
