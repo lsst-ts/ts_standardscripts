@@ -143,9 +143,9 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                 type: number
                 default: 30.
               dz:
-                description: De-focus to apply when acquiring the intra/extra focal images (mm).
+                description: De-focus to apply when acquiring the intra/extra focal images (microns).
                 type: number
-                default: 0.8
+                default: 1500.
               threshold:
                 description: >-
                     DOF threshold for convergence (um). If DOF offsets are
@@ -327,7 +327,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         # Take intra focal image
         self.log.debug("Moving to intra-focal position")
 
-        await self.mtcs.move_camera_hexapod(x=0, y=0, z=self.dz, u=0, v=0)
+        await self.mtcs.offset_camera_hexapod(x=0, y=0, z=-self.dz, u=0, v=0)
 
         self.log.debug("Taking intra-focal image")
 
@@ -345,8 +345,8 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # Hexapod offsets are relative, so need to move 2x the offset
         # to get from the intra- to the extra-focal position.
-        z_offset = -(self.dz * 2.0)
-        await self.mtcs.move_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
+        z_offset = self.dz * 2.0
+        await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
 
         self.log.debug("Taking extra-focal image")
 
@@ -362,7 +362,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         )
 
         # Move the hexapod back to in focus position
-        await self.mtcs.move_camera_hexapod(x=0, y=0, z=self.dz, u=0, v=0)
+        await self.mtcs.offset_camera_hexapod(x=0, y=0, z=-self.dz, u=0, v=0)
 
         return intra_image, extra_image
 
