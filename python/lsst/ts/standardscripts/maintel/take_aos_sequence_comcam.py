@@ -256,6 +256,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
             self.current_z_position = -self.dz
 
             self.log.info("Taking in-focus image")
+            self.camera.rem.ccoods.evt_imageInOODS.flush()
             intra_visit_id = await self.camera.take_cwfs(
                 exptime=self.exposure_time,
                 n=1,
@@ -276,6 +277,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
 
             self.log.info("Taking extra-focal image")
 
+            self.camera.rem.ccoods.evt_imageInOODS.flush()
             extra_visit_id = await self.camera.take_cwfs(
                 exptime=self.exposure_time,
                 n=1,
@@ -287,6 +289,10 @@ class TakeAOSSequenceComCam(BaseBlockScript):
             )
 
         if self.mode == Mode.TRIPLET:
+            self.log.debug("Waiting for images to be ingested in OODS.")
+            await self.camera.rem.ccoods.evt_imageInOODS.next(
+                flush=False, timeout=self.exposure_time
+            )
             self.log.info("Send processing request to RA OCPS.")
             config = {
                 "LSSTComCam-FROM-OCS_DONUTPAIR": f"{intra_visit_id[0]},{extra_visit_id[0]}"
@@ -306,6 +312,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         self.current_z_position = 0
 
         self.log.info("Taking in-focus image")
+        self.camera.rem.ccoods.evt_imageInOODS.flush()
         await self.camera.take_acq(
             exptime=self.exposure_time,
             n=1,
