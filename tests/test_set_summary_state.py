@@ -29,6 +29,7 @@ from unittest import mock
 import pytest
 from lsst.ts import salobj, standardscripts
 from lsst.ts.xml.enums.Script import ScriptState
+from lsst.ts.xml.enums.Watcher import AlarmSeverity
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -295,6 +296,78 @@ class TestSetSummaryState(
             pytest.skip("ts_salobj does not yet support WildcardIndexError")
 
         await self.run_configure_wildcard_index_test()
+
+    async def test_mute_alarms_when_offline(self):
+        """Test that alarms are muted when CSCs are set to OFFLINE with
+        mute_alarms=True."""
+        async with self.make_script():
+            self.script.watcher = unittest.mock.AsyncMock()
+
+            await self.add_test_cscs(initial_state=salobj.State.ENABLED)
+            await self.add_test_cscs(initial_state=salobj.State.ENABLED)
+            await self.add_test_cscs(initial_state=salobj.State.ENABLED)
+            await self.add_test_cscs(initial_state=salobj.State.ENABLED)
+
+            controllers = self.controllers
+            csc_info = []
+            for controller in controllers:
+                name = controller.salinfo.name
+                index = controller.salinfo.index
+                name_ind = f"{name}:{index}"
+                csc_info.append((controller, name, index, name_ind))
+
+            offline_cscs = [csc_info[0][0], csc_info[2][0]]
+
+            config_data = []
+            for controller, name, index, name_ind in csc_info:
+                if controller in offline_cscs:
+                    config_data.append((name_ind, "OFFLINE"))
+                else:
+                    config_data.append((name_ind, "STANDBY"))
+
+            await self.configure_script(
+                data=config_data, mute_alarms=True, mute_duration=31.0
+            )
+
+            await self.run_script()
+
+            expected_mute_calls = [
+                mock.call(
+                    name=rf"^(Enabled|Heartbeat)\.{name}:{index}",
+                    duration=1860.0,  # mute_duration * 60 secs`
+                    severity=AlarmSeverity.CRITICAL,
+                    mutedBy="set_summary_state script",
+                )
+                for controller, name, index, name_ind in csc_info
+                if controller in offline_cscs
+            ]
+
+            self.script.watcher.cmd_mute.set_start.assert_has_awaits(
+                expected_mute_calls, any_order=True
+            )
+
+            expected_mute_calls_count = len(offline_cscs)
+            actual_mute_calls_count = self.script.watcher.cmd_mute.set_start.await_count
+            self.assertEqual(
+                actual_mute_calls_count,
+                expected_mute_calls_count,
+                f"Expected {expected_mute_calls_count} mute command(s), but got {actual_mute_calls_count}",
+            )
+
+            # Verify that CSCs have transitioned to the correct states
+            for controller, name, index, name_ind in csc_info:
+                expected_state = (
+                    salobj.State.OFFLINE
+                    if controller in offline_cscs
+                    else salobj.State.STANDBY
+                )
+                actual_state = controller.evt_summaryState.data.summaryState
+                self.assertEqual(
+                    actual_state,
+                    expected_state,
+                    f"CSC {name_ind} expected to be in state {expected_state.name}, but found "
+                    f"{actual_state.name}",
+                )
 
 
 if __name__ == "__main__":
