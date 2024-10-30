@@ -25,6 +25,7 @@ import unittest
 import pytest
 from lsst.ts import salobj, standardscripts
 from lsst.ts.standardscripts.maintel import TakeImageComCam
+from lsst.ts.xml.enums import Script
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -114,25 +115,69 @@ class TestTakeImageComCam(
                     exp_times=exp_times, image_type=image_type, nimages=nimages
                 )
 
-    async def test_take_images(self):
+    async def run_take_images_test(
+        self, mock_ready_to_take_data=None, expect_exception=None
+    ):
         async with self.make_script():
-            self.script.camera.take_imgtype = unittest.mock.AsyncMock()
+            self.script.camera.ready_to_take_data = mock_ready_to_take_data
+            # instead of mocking camera.take_imgtype mock expose
+            self.script.camera.expose = unittest.mock.AsyncMock()
             self.script.camera.setup_instrument = unittest.mock.AsyncMock()
 
             nimages = 5
 
-            await self.configure_script(
+            config = await self.configure_script(
                 nimages=nimages,
                 exp_times=1.0,
                 image_type="OBJECT",
                 filter=1,
             )
 
-            await self.run_script()
+            if expect_exception is not None:
+                await self.run_script(expected_final_state=Script.ScriptState.FAILED)
+                self.assertEqual(self.script.state.state, Script.ScriptState.FAILED)
+                self.assertIn(
+                    str(mock_ready_to_take_data.side_effect), self.script.state.reason
+                )
+            else:
+                await self.run_script()
+                self.assertEqual(self.script.state.state, Script.ScriptState.DONE)
 
-            assert nimages == self.script.camera.take_imgtype.await_count
-            self.script.camera.setup_instrument.assert_awaited_once()
-            self.script.camera.setup_instrument.assert_awaited_with(filter=1)
+            if mock_ready_to_take_data is not None:
+                if expect_exception:
+                    mock_ready_to_take_data.assert_awaited_once()
+                else:
+                    self.assertEqual(mock_ready_to_take_data.await_count, nimages)
+            else:
+                with self.assertRaises(AttributeError):
+                    self.script.camera.ready_to_take_data.assert_not_called()
+
+            if expect_exception is None:
+                assert nimages == config.nimages
+
+                # Define the expected calls: first with filter=1 which is
+                # first called in BaseTakeImage run method, the rest
+                # happens in (take_imgtype x nimages) without arguments
+                expected_calls = [unittest.mock.call(filter=1)] + [
+                    unittest.mock.call()
+                ] * nimages
+
+                self.script.camera.setup_instrument.assert_has_awaits(
+                    expected_calls, any_order=False
+                )
+
+    async def test_take_images(self):
+        await self.run_take_images_test()
+
+    async def test_take_images_tcs_ready(self):
+        mock_ready = unittest.mock.AsyncMock(return_value=None)
+        await self.run_take_images_test(mock_ready_to_take_data=mock_ready)
+
+    async def test_take_images_tcs_not_ready(self):
+        mock_ready = unittest.mock.AsyncMock(side_effect=RuntimeError("TCS not ready"))
+        await self.run_take_images_test(
+            mock_ready_to_take_data=mock_ready, expect_exception=RuntimeError
+        )
 
     async def test_executable_comcam(self):
         """Test that the script is executable for ComCam."""

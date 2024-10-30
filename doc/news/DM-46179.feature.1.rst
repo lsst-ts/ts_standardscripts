@@ -1,0 +1,5 @@
+Added expected_final_state argument to run_script method in BaseScriptTestCase
+
+We use this argument to test the overall state of the script execution.
+expected_final_state defaults to ScriptState.DONE if not passed.
+
