@@ -385,6 +385,17 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         intra_visit_id = int(intra_image[0])
         extra_visit_id = int(extra_image[0])
 
+        take_infocus_image_task = asyncio.create_task(
+            self.camera.take_acq(
+                self.exposure_time,
+                group_id=self.group_id,
+                reason="INFOCUS" + ("" if self.reason is None else f"_{self.reason}"),
+                program=self.program,
+                filter=self.filter,
+                note=self.note,
+            )
+        )
+
         # Run WEP
         await self.mtcs.rem.mtaos.cmd_runWEP.set_start(
             visitId=intra_visit_id,
@@ -393,6 +404,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             config=self.wep_config,
             timeout=2 * CMD_TIMEOUT,
         )
+        await take_infocus_image_task
 
     async def handle_cwfs_mode(self) -> None:
         """Handle CWFS mode."""
