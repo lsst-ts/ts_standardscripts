@@ -1,0 +1,27 @@
+Add option to mute watcher alarms when setting CSCs to OFFLINE
+    
+Added `mute_alarms` and `mute_duration` parameters to the `set_summary_state` script
+configuration.
+`mute_alarms` defaults to `False`
+`mute_duration` defaults to `30 mins`
+    
+E.g.
+       data:
+         -
+           - MTMount
+           - Offline
+       mute_alarms: true
+    
+     or
+  
+       data:
+         -
+           - MTMount
+           - Offline
+       mute_alarms: true
+       mute_duration: 60.0
+    
+When `mute_alarms` is enabled and a component is transitioned to OFFLINE, related watcher
+alarms are temporarily muted for the specified duration, defaulting to 30 minutes.
+    
+Muting is applied only to components transitioning to OFFLINE state.

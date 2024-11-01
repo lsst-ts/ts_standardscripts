@@ -33,6 +33,7 @@ except ImportError:
     from lsst.ts.standardscripts.utils import name_to_name_index, WildcardIndexError
 
 from lsst.ts.standardscripts.utils import find_running_instances
+from lsst.ts.xml.enums.Watcher import AlarmSeverity
 
 
 class SetSummaryState(salobj.BaseScript):
@@ -66,6 +67,8 @@ class SetSummaryState(salobj.BaseScript):
         # make it generous enough to handle any CSC
         self.cmd_timeout = 60
 
+        self.watcher = None
+
     @classmethod
     def get_schema(cls):
         schema_yaml = """
@@ -88,8 +91,18 @@ class SetSummaryState(salobj.BaseScript):
                     maxItems: 3
                     items:
                         type: string
+              mute_alarms:
+                description: If true, temporarily mute watcher alarms for components being sent to Offline.
+                type: boolean
+                default: false
+              mute_duration:
+                description: Duration in minutes to mute the alarms. Default is 30.0 minutes.
+                type: number
+                minimum: 0
+                default: 30.0
             required: [data]
             additionalProperties: false
+
         """
         return yaml.safe_load(schema_yaml)
 
@@ -189,6 +202,13 @@ class SetSummaryState(salobj.BaseScript):
         self.nameind_state_override = nameind_state_override
         self.remotes = remotes
 
+        self.mute_alarms = getattr(config, "mute_alarms", False)
+        self.mute_duration = getattr(config, "mute_duration", 30.0)
+
+        if self.mute_alarms and self.watcher is None:
+            self.watcher = salobj.Remote(self.domain, "Watcher")
+            await self.watcher.start_task
+
     def set_metadata(self, metadata):
         """Compute estimated duration.
 
@@ -213,8 +233,24 @@ class SetSummaryState(salobj.BaseScript):
 
         for name_index, state, override in self.nameind_state_override:
             name, index = name_index
-            await self.checkpoint(f"set {name}:{index}")
             remote = self.remotes[(name, index)]
+            if self.mute_alarms and state == salobj.State.OFFLINE:
+                self.log.info(
+                    f"Muting alarms for (Enabled|Heartbeat).{name}:{index} Severity "
+                    f"{AlarmSeverity.CRITICAL.name} for {self.mute_duration} minutes"
+                )
+                try:
+                    alarm_name_pattern = rf"^(Enabled|Heartbeat)\.{name}:{index}"
+                    await self.watcher.cmd_mute.set_start(
+                        name=alarm_name_pattern,
+                        duration=self.mute_duration * 60,  # Convert to seconds
+                        severity=AlarmSeverity.CRITICAL,
+                        mutedBy="set_summary_state script",
+                    )
+                except Exception as e:
+                    self.log.warning(f"Failed to mute alarms for {name}:{index}: {e}")
+
+            await self.checkpoint(f"set {name}:{index}")
             await salobj.set_summary_state(
                 remote=remote, state=state, override=override, timeout=self.cmd_timeout
             )
