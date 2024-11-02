@@ -418,7 +418,10 @@ class ApplyDOF(salobj.BaseScript):
         else:
             # Loop through properties and assign their values to the vector
             for key, value in vars(config).items():
-                self.dofs[getattr(DOFName, key)] = value
+                if hasattr(DOFName, key):
+                    self.dofs[getattr(DOFName, key)] = value
+                else:
+                    self.log.warning(f"{key} is not a DOFName, ignoring.")
 
         for comp in getattr(config, "ignore", []):
             if comp not in self.mtcs.components_attr:
