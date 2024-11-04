@@ -1,0 +1,1 @@
+In maintel/apply_dof, fix configure method to skip parameters that are not DOFName.
