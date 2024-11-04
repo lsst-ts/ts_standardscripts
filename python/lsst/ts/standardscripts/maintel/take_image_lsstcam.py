@@ -24,6 +24,7 @@ __all__ = ["TakeImageLSSTCam"]
 import yaml
 from lsst.ts.observatory.control.maintel.lsstcam import LSSTCam, LSSTCamUsages
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+from lsst.ts.observatory.control.utils.roi_spec import ROISpec
 
 from ..base_take_image import BaseTakeImage
 
@@ -156,6 +157,7 @@ class TakeImageLSSTCam(BaseTakeImage):
 
     async def run(self):
         if (roi_spec := getattr(self.config, "roi_spec", None)) is not None:
+            roi_spec = ROISpec.parse_obj(roi_spec)
             await self.camera.init_guider(roi_spec=roi_spec)
 
         await super(TakeImageLSSTCam, self).run()
