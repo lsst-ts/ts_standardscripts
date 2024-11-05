@@ -50,6 +50,7 @@ class TestTakeAOSSequenceComCam(
         self.script.mtcs.offset_camera_hexapod = unittest.mock.AsyncMock()
         self.script.camera.expose = unittest.mock.AsyncMock()
         self.script.camera.setup_instrument = unittest.mock.AsyncMock()
+        self.script.camera.rem.ccoods = unittest.mock.AsyncMock()
 
         return (self.script,)
 
