@@ -251,11 +251,12 @@ class TakeAOSSequenceComCam(BaseBlockScript):
             self.log.debug("Moving to intra-focal position")
 
             # Move the hexapod to the target z position
-            z_offset = self.dz - self.current_z_position
+            z_offset = -self.dz - self.current_z_position
             await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
-            self.current_z_position = self.dz
+            self.current_z_position = -self.dz
 
             self.log.info("Taking in-focus image")
+            self.camera.rem.ccoods.evt_imageInOODS.flush()
             intra_visit_id = await self.camera.take_cwfs(
                 exptime=self.exposure_time,
                 n=1,
@@ -270,12 +271,13 @@ class TakeAOSSequenceComCam(BaseBlockScript):
             self.log.debug("Moving to extra-focal position")
 
             # Move the hexapod to the target z position
-            z_offset = -self.dz - self.current_z_position
+            z_offset = self.dz - self.current_z_position
             await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
-            self.current_z_position = -self.dz
+            self.current_z_position = self.dz
 
             self.log.info("Taking extra-focal image")
 
+            self.camera.rem.ccoods.evt_imageInOODS.flush()
             extra_visit_id = await self.camera.take_cwfs(
                 exptime=self.exposure_time,
                 n=1,
@@ -287,9 +289,13 @@ class TakeAOSSequenceComCam(BaseBlockScript):
             )
 
         if self.mode == Mode.TRIPLET:
+            self.log.debug("Waiting for images to be ingested in OODS.")
+            await self.camera.rem.ccoods.evt_imageInOODS.next(
+                flush=False, timeout=self.exposure_time
+            )
             self.log.info("Send processing request to RA OCPS.")
             config = {
-                "LSSTComCamSim-FROM-OCS_DONUTPAIR": f"{intra_visit_id[0]},{extra_visit_id[0]}"
+                "LSSTComCam-FROM-OCS_DONUTPAIR": f"{intra_visit_id[0]},{extra_visit_id[0]}"
             }
             ocps_execute_task = asyncio.create_task(
                 self.ocps.cmd_execute.set_start(
@@ -306,6 +312,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         self.current_z_position = 0
 
         self.log.info("Taking in-focus image")
+        self.camera.rem.ccoods.evt_imageInOODS.flush()
         await self.camera.take_acq(
             exptime=self.exposure_time,
             n=1,

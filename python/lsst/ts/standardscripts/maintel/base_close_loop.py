@@ -22,6 +22,7 @@
 __all__ = ["BaseCloseLoop"]
 
 import abc
+import asyncio
 import types
 import typing
 
@@ -105,6 +106,11 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
     def configure_camera(self) -> None:
         raise NotImplementedError()
 
+    @property
+    @abc.abstractmethod
+    def oods(self) -> None:
+        raise NotImplementedError()
+
     async def configure_tcs(self) -> None:
         """Handle creating MTCS object and waiting for remote to start."""
         if self.mtcs is None:
@@ -143,9 +149,9 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                 type: number
                 default: 30.
               dz:
-                description: De-focus to apply when acquiring the intra/extra focal images (mm).
+                description: De-focus to apply when acquiring the intra/extra focal images (microns).
                 type: number
-                default: 0.8
+                default: 1500.
               threshold:
                 description: >-
                     DOF threshold for convergence (um). If DOF offsets are
@@ -202,6 +208,11 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                     Apply OFC corrections after each iteration.
                 type: boolean
                 default: true
+              use_ocps:
+                description: >-
+                    Use OCPS to run the wavefront estimation pipeline.
+                type: boolean
+                default: true
               ignore:
                   description: >-
                       CSCs from the group to ignore in status check. Name must
@@ -250,7 +261,13 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         self.note = config.note
 
         # Set WEP configuration file
-        self.wep_config = config.wep_config
+        if config.wep_config == "":
+            wep_config = {}
+        else:
+            wep_config = yaml.safe_load(config.wep_config)
+        self.wep_config = wep_config
+        self.wep_config = yaml.dump(self.wep_config)
+        self.use_ocps = config.use_ocps
 
         # Set used dofs
         selected_dofs = config.used_dofs
@@ -316,7 +333,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         # Take intra focal image
         self.log.debug("Moving to intra-focal position")
 
-        await self.mtcs.move_camera_hexapod(x=0, y=0, z=self.dz, u=0, v=0)
+        await self.mtcs.offset_camera_hexapod(x=0, y=0, z=-self.dz, u=0, v=0)
 
         self.log.debug("Taking intra-focal image")
 
@@ -334,11 +351,12 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # Hexapod offsets are relative, so need to move 2x the offset
         # to get from the intra- to the extra-focal position.
-        z_offset = -(self.dz * 2.0)
-        await self.mtcs.move_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
+        z_offset = self.dz * 2.0
+        await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
 
         self.log.debug("Taking extra-focal image")
 
+        self.oods.evt_imageInOODS.flush()
         # Take extra-focal iamge
         extra_image = await self.camera.take_cwfs(
             exptime=self.exposure_time,
@@ -350,8 +368,10 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             note=self.note,
         )
 
+        task1 = self.oods.evt_imageInOODS.next(flush=False, timeout=self.exposure_time)
         # Move the hexapod back to in focus position
-        await self.mtcs.move_camera_hexapod(x=0, y=0, z=self.dz, u=0, v=0)
+        task2 = self.mtcs.offset_camera_hexapod(x=0, y=0, z=-self.dz, u=0, v=0)
+        await asyncio.gather(task1, task2)
 
         return intra_image, extra_image
 
@@ -365,13 +385,26 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         intra_visit_id = int(intra_image[0])
         extra_visit_id = int(extra_image[0])
 
+        take_infocus_image_task = asyncio.create_task(
+            self.camera.take_acq(
+                self.exposure_time,
+                group_id=self.group_id,
+                reason="INFOCUS" + ("" if self.reason is None else f"_{self.reason}"),
+                program=self.program,
+                filter=self.filter,
+                note=self.note,
+            )
+        )
+
         # Run WEP
         await self.mtcs.rem.mtaos.cmd_runWEP.set_start(
             visitId=intra_visit_id,
             extraId=extra_visit_id,
-            timeout=2 * CMD_TIMEOUT,
+            useOCPS=self.use_ocps,
             config=self.wep_config,
+            timeout=2 * CMD_TIMEOUT,
         )
+        await take_infocus_image_task
 
     async def handle_cwfs_mode(self) -> None:
         """Handle CWFS mode."""
