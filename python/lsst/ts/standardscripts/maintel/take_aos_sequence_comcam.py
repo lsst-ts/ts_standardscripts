@@ -28,7 +28,7 @@ import types
 
 import yaml
 from lsst.ts import salobj
-from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
+from lsst.ts.observatory.control.maintel.comcam import ComCam
 from lsst.ts.observatory.control.maintel.mtcs import MTCS
 
 from ..base_block_script import BaseBlockScript
@@ -217,7 +217,6 @@ class TakeAOSSequenceComCam(BaseBlockScript):
             self.camera = ComCam(
                 self.domain,
                 log=self.log,
-                intended_usage=ComCamUsages.TakeImage + ComCamUsages.StateTransition,
                 tcs_ready_to_take_data=self.mtcs.ready_to_take_data,
             )
             await self.camera.start_task
