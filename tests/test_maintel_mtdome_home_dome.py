@@ -40,7 +40,6 @@ class TestHomeDome(
     async def make_dry_script(self):
         async with self.make_script(self):
             self.script.mtcs = unittest.mock.AsyncMock()
-            self.script.mtcs.enable = unittest.mock.AsyncMock()
             self.script.mtcs.assert_all_enabled = unittest.mock.AsyncMock()
             self.script.mtcs.home_dome = unittest.mock.AsyncMock()
             yield
@@ -50,7 +49,6 @@ class TestHomeDome(
             await self.configure_script(physical_az=300.0)
 
             await self.run_script()
-            self.script.mtcs.enable.assert_awaited_once()
             self.script.mtcs.assert_all_enabled.assert_awaited_once()
             self.script.mtcs.home_dome.assert_awaited_once()
             self.script.mtcs.home_dome.assert_called_with(physical_az=300.0)

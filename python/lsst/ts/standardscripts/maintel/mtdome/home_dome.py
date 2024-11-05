@@ -85,7 +85,9 @@ class HomeDome(salobj.BaseScript):
 
         if self.mtcs is None:
             self.mtcs = MTCS(
-                domain=self.domain, intended_usage=MTCSUsages.Slew, log=self.log
+                domain=self.domain,
+                intended_usage=MTCSUsages.Slew | MTCSUsages.StateTransition,
+                log=self.log,
             )
             await self.mtcs.start_task
 
@@ -104,7 +106,6 @@ class HomeDome(salobj.BaseScript):
         metadata.duration = self.home_dome_duration
 
     async def run(self):
-        await self.mtcs.enable()
         await self.mtcs.assert_all_enabled()
         await self.checkpoint("Homing dome")
         await self.mtcs.home_dome(physical_az=self.physical_az)
