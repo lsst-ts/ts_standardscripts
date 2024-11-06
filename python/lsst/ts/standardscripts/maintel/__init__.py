@@ -39,6 +39,7 @@ from .offset_m2_hexapod import *
 from .offset_mtcs import *
 from .open_mirror_covers import *
 from .point_azel import *
+from .set_dof import *
 from .setup_mtcs import *
 from .standby_comcam import *
 from .standby_mtcs import *
