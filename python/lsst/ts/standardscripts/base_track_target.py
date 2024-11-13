@@ -381,6 +381,8 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 else:
                     self.log.debug(f"Ignoring component {comp}.")
                     setattr(self.tcs.check, comp, False)
+        else:
+            self.log.info(f"Not ignoring TCS components: {self.tcs.components_attr}.")
 
         await super().configure(config=config)
 
