@@ -51,7 +51,7 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
         )
 
         mtcs_usage, comcam_usage = (
-            (MTCSUsages.Slew, ComCamUsages.TakeImageFull)
+            (MTCSUsages.Slew | MTCSUsages.StartUp, ComCamUsages.TakeImageFull)
             if add_remotes
             else (MTCSUsages.DryTest, ComCamUsages.DryTest)
         )
@@ -69,9 +69,9 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
     @classmethod
     def get_schema(cls):
         schema_dict = cls.get_base_schema()
-        schema_dict["$id"] = (
-            "https://github.com/lsst-ts/ts_standardscripts/maintel/track_target_and_take_image_comcam.py"
-        )
+        schema_dict[
+            "$id"
+        ] = "https://github.com/lsst-ts/ts_standardscripts/maintel/track_target_and_take_image_comcam.py"
         schema_dict["title"] = "TrackTargetAndTakeImageComCam v1"
         schema_dict["description"] = "Configuration for TrackTargetAndTakeImageComCam."
 
