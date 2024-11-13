@@ -65,6 +65,8 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
         self.mtcs = MTCS(self.domain, intended_usage=mtcs_usage, log=self.log)
         self.comcam = ComCam(self.domain, intended_usage=comcam_usage, log=self.log)
 
+        self.instrument_name = "LSSTComCam"
+
     @property
     def tcs(self):
         return self.mtcs
@@ -79,6 +81,9 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
         schema_dict["description"] = "Configuration for TrackTargetAndTakeImageComCam."
 
         return schema_dict
+
+    def get_instrument_name(self):
+        return self.instrument_name
 
     async def load_playlist(self):
         """Load playlist."""

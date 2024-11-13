@@ -58,6 +58,8 @@ class TrackTargetAndTakeImage(BaseTrackTargetAndTakeImage):
         self.atcs = ATCS(self.domain, intended_usage=atcs_usage, log=self.log)
         self.latiss = LATISS(self.domain, intended_usage=latiss_usage, log=self.log)
 
+        self.instrument_name = "LATISS"
+
     @property
     def tcs(self):
         return self.atcs
@@ -104,6 +106,9 @@ additionalProperties: false
         schema_dict["required"] += base_schema_dict["required"]
 
         return schema_dict
+
+    def get_instrument_name(self):
+        return self.instrument_name
 
     async def configure(self, config):
         """Configure the script.

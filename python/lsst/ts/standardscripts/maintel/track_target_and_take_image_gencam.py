@@ -107,6 +107,8 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
 
         self.gencam = None
 
+        self.instrument_name = "GenCam"
+
     @property
     def tcs(self):
         return self.mtcs
@@ -125,6 +127,9 @@ class TrackTargetAndTakeImageGenCam(BaseTrackTargetAndTakeImage):
             *(gencam.assert_all_enabled() for gencam in self.gencam),
             *(gencam.assert_liveliness() for gencam in self.gencam),
         )
+
+    def get_instrument_name(self):
+        return self.instrument_name
 
     async def configure(self, config):
         await super().configure(config)
