@@ -51,7 +51,7 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
         )
 
         mtcs_usage, comcam_usage = (
-            (MTCSUsages.Slew | MTCSUsages.StartUp, ComCamUsages.TakeImageFull)
+            (MTCSUsages.Slew | MTCSUsages.StateTransition, ComCamUsages.TakeImageFull)
             if add_remotes
             else (MTCSUsages.DryTest, ComCamUsages.DryTest)
         )
