@@ -200,7 +200,7 @@ required:
         metadata.filters = (
             ",".join(self.config.band_filter)
             if isinstance(self.config.band_filter, list)
-            else self.config.band_filter
+            else [self.config.band_filter]
         )
         metadata.dome = MetadataDome.OPEN
         metadata.nimages = self.config.num_exp
