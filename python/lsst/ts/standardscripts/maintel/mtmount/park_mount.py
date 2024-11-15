@@ -106,5 +106,4 @@ class ParkMount(salobj.BaseScript):
                     setattr(self.mtcs.check, comp, False)
 
     async def run(self):
-        await self.mtcs.assert_all_enabled()
         await self.mtcs.park_mount(position=self.position)

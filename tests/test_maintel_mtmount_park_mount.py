@@ -65,7 +65,6 @@ class TestParkMount(
         async with self.make_dry_script():
             await self.configure_script(position="ZENITH")
             await self.run_script()
-            self.script.mtcs.assert_all_enabled.assert_awaited_once()
             self.script.mtcs.park_mount.assert_called_with(
                 position=MTMount.ParkPosition.ZENITH
             )
@@ -74,7 +73,6 @@ class TestParkMount(
         async with self.make_dry_script():
             await self.configure_script(position="HORIZON")
             await self.run_script()
-            self.script.mtcs.assert_all_enabled.assert_awaited_once()
             self.script.mtcs.park_mount.assert_called_with(
                 position=MTMount.ParkPosition.HORIZON
             )

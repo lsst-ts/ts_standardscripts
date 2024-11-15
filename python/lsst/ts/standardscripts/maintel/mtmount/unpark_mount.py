@@ -98,5 +98,4 @@ class UnparkMount(salobj.BaseScript):
                     setattr(self.mtcs.check, comp, False)
 
     async def run(self):
-        await self.mtcs.assert_all_enabled()
         await self.mtcs.unpark_mount()

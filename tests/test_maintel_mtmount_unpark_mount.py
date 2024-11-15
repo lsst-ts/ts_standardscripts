@@ -64,5 +64,4 @@ class TestUnparkMount(
         async with self.make_dry_script():
             await self.configure_script()
             await self.run_script()
-            self.script.mtcs.assert_all_enabled.assert_awaited_once()
             self.script.mtcs.unpark_mount.assert_called_once()
