@@ -25,6 +25,7 @@ import types
 import unittest
 
 import numpy as np
+import yaml
 from lsst.ts import standardscripts
 from lsst.ts.observatory.control.maintel.lsstcam import LSSTCam, LSSTCamUsages
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
@@ -140,6 +141,12 @@ class TestCloseLoopLSSTCam(
             assert all(self.script.used_dofs == configured_dofs)
             assert self.script.threshold == threshold
             assert self.script.apply_corrections == apply_corrections
+
+    async def test_configure_wep_config(self):
+        async with self.make_script():
+            wep_config_dic = {"field1": "val1", "field2": "val2"}
+            await self.configure_script(wep_config=wep_config_dic)
+            assert self.script.wep_config == yaml.dump(wep_config_dic)
 
     async def test_run(self):
         # Start the test itself
