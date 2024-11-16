@@ -188,9 +188,9 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                   - type: "null"
                 default: null
               wep_config:
-                description: Configuration for WEP pipeline.
-                type: string
-                default: ""
+                description: Configuration for WEP pipeline. Optional.
+                type: object
+                additionalProperties: true
               used_dofs:
                 oneOf:
                   - type: array
@@ -260,13 +260,8 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         self.program = config.program
         self.note = config.note
 
-        # Set WEP configuration file
-        if config.wep_config == "":
-            wep_config = {}
-        else:
-            wep_config = yaml.safe_load(config.wep_config)
-        self.wep_config = wep_config
-        self.wep_config = yaml.dump(self.wep_config)
+        # Set WEP configuration string in yaml format
+        self.wep_config = yaml.dump(getattr(config, "wep_config", {}))
         self.use_ocps = config.use_ocps
 
         # Set used dofs
