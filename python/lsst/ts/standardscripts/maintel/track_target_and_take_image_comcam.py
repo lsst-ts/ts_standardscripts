@@ -74,9 +74,9 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
     @classmethod
     def get_schema(cls):
         schema_dict = cls.get_base_schema()
-        schema_dict[
-            "$id"
-        ] = "https://github.com/lsst-ts/ts_standardscripts/maintel/track_target_and_take_image_comcam.py"
+        schema_dict["$id"] = (
+            "https://github.com/lsst-ts/ts_standardscripts/maintel/track_target_and_take_image_comcam.py"
+        )
         schema_dict["title"] = "TrackTargetAndTakeImageComCam v1"
         schema_dict["description"] = "Configuration for TrackTargetAndTakeImageComCam."
 
@@ -136,22 +136,15 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
         it there while the filter is changing.
         """
 
-        tasks_slew_with_fixed_rot = [
-            asyncio.create_task(
-                self.mtcs.slew_icrs(
-                    ra=self.config.ra,
-                    dec=self.config.dec,
-                    rot=self.angle_filter_change,
-                    rot_type=RotType.Physical,
-                    target_name=f"{self.config.name} - filter change",
-                    az_wrap_strategy=self.config.az_wrap_strategy,
-                    time_on_target=self.get_estimated_time_on_target(),
-                )
-            ),
-            asyncio.create_task(self._wait_rotator_reach_filter_change_angle()),
-        ]
-
-        await self.mtcs.process_as_completed(tasks_slew_with_fixed_rot)
+        await self.mtcs.slew_icrs(
+            ra=self.config.ra,
+            dec=self.config.dec,
+            rot=self.angle_filter_change,
+            rot_type=RotType.Physical,
+            target_name=f"{self.config.name} - filter change",
+            az_wrap_strategy=self.config.az_wrap_strategy,
+            time_on_target=self.get_estimated_time_on_target(),
+        )
 
         await self.comcam.setup_filter(filter=self.config.band_filter)
 
