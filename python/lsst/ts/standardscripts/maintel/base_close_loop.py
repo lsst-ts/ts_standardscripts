@@ -84,6 +84,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # exposure time for the intra/extra images (in seconds)
         self.exposure_time = None
+        self.n_images = 9
 
         # Define operation mode handler function
         self.operation_model_handlers = {
@@ -203,6 +204,15 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                       type: string
                       enum: {[dof_name.name for dof_name in DOFName]}
                 default: [1, 2, 3, 4, 5]
+              gain_sequence:
+                description: >-
+                    Gain sequence to apply to the offsets.
+                oneOf:
+                    - type: array
+                      items:
+                        type: number
+                    - type: number
+                default: 0
               apply_corrections:
                 description: >-
                     Apply OFC corrections after each iteration.
@@ -273,6 +283,8 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # Set apply_corrections
         self.apply_corrections = config.apply_corrections
+
+        self.gain_sequence = config.gain_sequence
 
         for comp in getattr(config, "ignore", []):
             if comp not in self.mtcs.components_attr:
@@ -363,12 +375,25 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             note=self.note,
         )
 
-        task1 = self.oods.evt_imageInOODS.next(flush=False, timeout=self.exposure_time)
+        task1 = self.wait_for_images_in_oods()
         # Move the hexapod back to in focus position
         task2 = self.mtcs.offset_camera_hexapod(x=0, y=0, z=-self.dz, u=0, v=0)
         await asyncio.gather(task1, task2)
 
         return intra_image, extra_image
+
+    async def wait_for_images_in_oods(self):
+
+        for _ in range(self.n_images):
+            try:
+                image_in_oods = await self.oods.evt_imageInOODS.next(
+                    flush=False, timeout=self.exposure_time
+                )
+                self.log.info(
+                    f"Image {image_in_oods.obsid} {image_in_oods.raft} {image_in_oods.sensor} ingested."
+                )
+            except asyncio.TimeoutError:
+                self.log.warning("Timeout waiting for images in OODS.")
 
     async def handle_fam_mode(self) -> None:
         """Handle Full Array Mode."""
@@ -422,13 +447,15 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             visitId=visit_id, timeout=2 * CMD_TIMEOUT, config=self.wep_config
         )
 
-    async def compute_ofc_offsets(self, rotation_angle: float) -> None:
+    async def compute_ofc_offsets(self, rotation_angle: float, gain: float) -> None:
         """Compute offsets using ts_ofc.
 
         Parameters
         ----------
         rotation_angle : `float`
             Rotation angle of the camera in deg.
+        gain : `float`
+            Gain to apply to the offsets.
         """
         # Create the config to run OFC
         config = {
@@ -445,13 +472,37 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # Run OFC
         await self.mtcs.rem.mtaos.cmd_runOFC.set_start(
-            config=config_yaml, timeout=CMD_TIMEOUT
+            config=config_yaml, timeout=CMD_TIMEOUT, userGain=gain
         )
 
         # Return offsets
         return await self.mtcs.rem.mtaos.evt_degreeOfFreedom.next(
             flush=False, timeout=STD_TIMEOUT
         )
+
+    def get_gain(self, iteration: int) -> float:
+        """Get the gain to apply to the offsets.
+
+        Parameters
+        ----------
+        iteration : `int`
+            Iteration number.
+
+        Returns
+        -------
+        gain : `float`
+            Gain to apply to the offsets.
+        """
+        if isinstance(self.gain_sequence, float) or isinstance(self.gain_sequence, int):
+            return float(self.gain_sequence)
+        else:
+            if iteration >= len(self.gain_sequence):
+                self.log.warning(
+                    "Iteration is greater than the length of the gain sequence. "
+                    "Using the last value of the gains sequence."
+                )
+                return self.gain_sequence[-1]
+            return self.gain_sequence[iteration]
 
     async def arun(self, checkpoint: bool = False) -> None:
         """Perform wavefront error measurements and DOF adjustments until the
@@ -509,7 +560,9 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             )
 
             # Compute ts_ofc offsets
-            dof_offset = await self.compute_ofc_offsets(rotation_angle)
+            dof_offset = await self.compute_ofc_offsets(
+                rotation_angle, self.get_gain(i)
+            )
 
             # If apply_corrections is true,
             # then we apply the corrections
