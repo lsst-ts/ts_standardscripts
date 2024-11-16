@@ -60,7 +60,7 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
         )
 
         self.angle_filter_change = 0.0
-        self.tolerance_angle_filter_change = 1e-2
+        self.tolerance_angle_filter_change = 20
 
         self.mtcs = MTCS(self.domain, intended_usage=mtcs_usage, log=self.log)
         self.comcam = ComCam(self.domain, intended_usage=comcam_usage, log=self.log)
@@ -74,9 +74,9 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
     @classmethod
     def get_schema(cls):
         schema_dict = cls.get_base_schema()
-        schema_dict[
-            "$id"
-        ] = "https://github.com/lsst-ts/ts_standardscripts/maintel/track_target_and_take_image_comcam.py"
+        schema_dict["$id"] = (
+            "https://github.com/lsst-ts/ts_standardscripts/maintel/track_target_and_take_image_comcam.py"
+        )
         schema_dict["title"] = "TrackTargetAndTakeImageComCam v1"
         schema_dict["description"] = "Configuration for TrackTargetAndTakeImageComCam."
 
