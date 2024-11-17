@@ -66,6 +66,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         self.camera = None
         self.ocps = None
         self.current_z_position = 0
+        self.n_images = 9
 
     @classmethod
     def get_schema(cls) -> dict:
@@ -289,9 +290,18 @@ class TakeAOSSequenceComCam(BaseBlockScript):
 
         if self.mode == Mode.TRIPLET:
             self.log.debug("Waiting for images to be ingested in OODS.")
-            await self.camera.rem.ccoods.evt_imageInOODS.next(
-                flush=False, timeout=self.exposure_time
-            )
+            for i in range(self.n_images):
+                try:
+                    image_in_oods = await self.camera.rem.ccoods.evt_imageInOODS.next(
+                        flush=False, timeout=self.exposure_time
+                    )
+                    self.log.info(
+                        f"Image {image_in_oods.obsid} {image_in_oods.raft} {image_in_oods.sensor} ingested."
+                    )
+                except asyncio.TimeoutError:
+                    self.log.warning(
+                        "Timeout waiting for images to ingest. Continuing."
+                    )
             self.log.info("Send processing request to RA OCPS.")
             config = {
                 "LSSTComCam-FROM-OCS_DONUTPAIR": f"{intra_visit_id[0]},{extra_visit_id[0]}"
