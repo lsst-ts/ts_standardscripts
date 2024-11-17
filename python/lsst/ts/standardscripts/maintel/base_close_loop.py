@@ -471,6 +471,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         config_yaml = yaml.safe_dump(config)
 
         # Run OFC
+        self.mtcs.rem.mtaos.evt_degreeOfFreedom.flush()
         await self.mtcs.rem.mtaos.cmd_runOFC.set_start(
             config=config_yaml, timeout=CMD_TIMEOUT, userGain=gain
         )
