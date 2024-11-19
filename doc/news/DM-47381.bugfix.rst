@@ -1,0 +1,1 @@
+In ``maintel/take_aos_sequence_comcam.py``, fix call to ready_to_take_data.
