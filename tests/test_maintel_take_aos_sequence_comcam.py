@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import types
 import unittest
 from unittest.mock import patch
 
@@ -27,6 +28,9 @@ from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.standardscripts.maintel import Mode, TakeAOSSequenceComCam
+from lsst.ts.utils import index_generator
+
+index_gen = index_generator()
 
 
 class TestTakeAOSSequenceComCam(
@@ -47,12 +51,35 @@ class TestTakeAOSSequenceComCam(
             log=self.script.log,
         )
 
+        self.script.ocps = unittest.mock.AsyncMock()
+
         self.script.mtcs.offset_camera_hexapod = unittest.mock.AsyncMock()
-        self.script.camera.expose = unittest.mock.AsyncMock()
+        self.script.camera.expose = unittest.mock.AsyncMock(
+            side_effect=self._get_visit_id
+        )
         self.script.camera.setup_instrument = unittest.mock.AsyncMock()
         self.script.camera.rem.ccoods = unittest.mock.AsyncMock()
+        self.script.camera.rem.ccoods.configure_mock(
+            **{
+                "evt_imageInOODS.next.side_effect": self._get_next_image_in_oods,
+            }
+        )
+
+        self._dayobs = 2024111900000
+        self._visit_index = next(index_gen)
 
         return (self.script,)
+
+    async def _get_visit_id(self, *args, **kwargs):
+        self._visit_index = next(index_gen)
+        return [self._dayobs + self._visit_index]
+
+    async def _get_next_image_in_oods(self, *args, **kwargs):
+        return types.SimpleNamespace(
+            obsid=f"CC_O_{int(self._dayobs/100000)}_{self._visit_index:06d}",
+            raft=0,
+            sensor=0,
+        )
 
     async def test_configure(self):
         async with self.make_script():
