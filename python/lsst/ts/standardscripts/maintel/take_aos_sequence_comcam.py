@@ -28,7 +28,7 @@ import types
 
 import yaml
 from lsst.ts import salobj
-from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
+from lsst.ts.observatory.control.maintel.comcam import ComCam
 from lsst.ts.observatory.control.maintel.mtcs import MTCS
 
 from ..base_block_script import BaseBlockScript
@@ -66,6 +66,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         self.camera = None
         self.ocps = None
         self.current_z_position = 0
+        self.n_images = 9
 
     @classmethod
     def get_schema(cls) -> dict:
@@ -217,8 +218,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
             self.camera = ComCam(
                 self.domain,
                 log=self.log,
-                intended_usage=ComCamUsages.TakeImage + ComCamUsages.StateTransition,
-                tcs_ready_to_take_data=self.mtcs.tcs_ready_to_take_data,
+                tcs_ready_to_take_data=self.mtcs.ready_to_take_data,
             )
             await self.camera.start_task
         else:
@@ -290,9 +290,32 @@ class TakeAOSSequenceComCam(BaseBlockScript):
 
         if self.mode == Mode.TRIPLET:
             self.log.debug("Waiting for images to be ingested in OODS.")
-            await self.camera.rem.ccoods.evt_imageInOODS.next(
-                flush=False, timeout=self.exposure_time
-            )
+            extra_image_ingested = False
+            while not extra_image_ingested:
+                try:
+                    image_in_oods = await self.camera.rem.ccoods.evt_imageInOODS.next(
+                        flush=False, timeout=self.exposure_time
+                    )
+                    try:
+                        image_name_split = image_in_oods.obsid.split("_")
+                        image_index = int(
+                            f"{image_name_split[-2]}{image_name_split[-1][1:]}"
+                        )
+                        extra_image_ingested = image_index == extra_visit_id[0]
+                    except Exception:
+                        self.log.exception(
+                            "Failed to parse image name into index for {image_in_oods.obsid}."
+                        )
+
+                    self.log.info(
+                        f"Image {image_in_oods.obsid} {image_in_oods.raft} {image_in_oods.sensor} ingested."
+                    )
+
+                except asyncio.TimeoutError:
+                    self.log.warning(
+                        "Timeout waiting for images to ingest. Continuing."
+                    )
+                    break
             self.log.info("Send processing request to RA OCPS.")
             config = {
                 "LSSTComCam-FROM-OCS_DONUTPAIR": f"{intra_visit_id[0]},{extra_visit_id[0]}"
