@@ -40,6 +40,7 @@ class TestHomeBothAxes(
         self.script.mtcs.rem.mtmount = unittest.mock.AsyncMock()
         self.script.mtcs.lower_m1m3 = unittest.mock.AsyncMock()
         self.script.mtcs.disable_m1m3_balance_system = unittest.mock.AsyncMock()
+        self.script.mtcs.enable_m1m3_balance_system = unittest.mock.AsyncMock()
 
         return (self.script,)
 
