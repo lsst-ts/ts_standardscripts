@@ -38,6 +38,7 @@ class Mode(enum.IntEnum):
     TRIPLET = enum.auto()
     INTRA = enum.auto()
     EXTRA = enum.auto()
+    PAIR = enum.auto()
 
 
 class TakeAOSSequenceComCam(BaseBlockScript):
@@ -247,7 +248,11 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         """Take out-of-focus sequence images."""
         supplemented_group_id = self.next_supplemented_group_id()
 
-        if self.mode == Mode.TRIPLET or self.mode == Mode.INTRA:
+        if (
+            self.mode == Mode.TRIPLET
+            or self.mode == Mode.INTRA
+            or self.mode == Mode.PAIR
+        ):
             self.log.debug("Moving to intra-focal position")
 
             # Move the hexapod to the target z position
@@ -267,7 +272,11 @@ class TakeAOSSequenceComCam(BaseBlockScript):
                 note=self.note,
             )
 
-        if self.mode == Mode.TRIPLET or self.mode == Mode.EXTRA:
+        if (
+            self.mode == Mode.TRIPLET
+            or self.mode == Mode.EXTRA
+            or self.mode == Mode.PAIR
+        ):
             self.log.debug("Moving to extra-focal position")
 
             # Move the hexapod to the target z position
@@ -288,7 +297,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
                 note=self.note,
             )
 
-        if self.mode == Mode.TRIPLET:
+        if self.mode == Mode.TRIPLET or self.mode == Mode.PAIR:
             self.log.debug("Waiting for images to be ingested in OODS.")
             extra_image_ingested = False
             while not extra_image_ingested:
@@ -334,17 +343,18 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
         self.current_z_position = 0
 
-        self.log.info("Taking in-focus image")
-        self.camera.rem.ccoods.evt_imageInOODS.flush()
-        await self.camera.take_acq(
-            exptime=self.exposure_time,
-            n=1,
-            group_id=self.group_id,
-            filter=self.filter,
-            reason="INFOCUS" + ("" if self.reason is None else f"_{self.reason}"),
-            program=self.program,
-            note=self.note,
-        )
+        if self.mode != Mode.PAIR:
+            self.log.info("Taking in-focus image")
+            self.camera.rem.ccoods.evt_imageInOODS.flush()
+            await self.camera.take_acq(
+                exptime=self.exposure_time,
+                n=1,
+                group_id=self.group_id,
+                filter=self.filter,
+                reason="INFOCUS" + ("" if self.reason is None else f"_{self.reason}"),
+                program=self.program,
+                note=self.note,
+            )
 
         if self.mode == Mode.TRIPLET:
             try:
