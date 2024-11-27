@@ -123,6 +123,11 @@ class CheckHardpoint(BaseBlockScript):
     def set_metadata(self, metadata):
         metadata.duration = self.timeout_check * 2 + self.timeout_std
 
+    async def run_individual_test(self, idx, hp):
+        await self.checkpoint(f"Testing hardpoint {hp}.")
+        await self.mtcs.run_m1m3_hard_point_test(hp=hp)
+        self.log.info(f"Tests complete: {idx + 1}/{len(self.hardpoints)}")
+
     async def run_block(self):
         # Check that the MTCS is in the right state
         await asyncio.gather(
@@ -135,10 +140,22 @@ class CheckHardpoint(BaseBlockScript):
 
         await self.mtcs.enter_m1m3_engineering_mode()
 
-        for idx, hp in enumerate(self.hardpoints):
-            await self.checkpoint(f"Testing hardpoint {hp}.")
-            await self.mtcs.run_m1m3_hard_point_test(hp=hp)
-            self.log.info(f"Tests complete: {idx + 1}/{len(self.hardpoints)}")
+        tasks = [
+            self.run_individual_test(idx, hp)
+            for (idx, hp) in enumerate(self.hardpoints)
+        ]
+        return_values = await asyncio.gather(*tasks, return_exceptions=True)
+        exceptions = [
+            (hp, value)
+            for (hp, value) in zip(self.hardpoints, return_values)
+            if isinstance(value, Exception)
+        ]
+
+        if exceptions:
+            err_message = f"{len(exceptions)} out of {len(self.hardpoints)} hard point tests failed.\n"
+            for hp, exception in exceptions:
+                err_message += f"Hardpoint {hp} test failed with {exception!r}.\n"
+            raise RuntimeError(err_message)
 
         await self.checkpoint("Hardpoint breakaway check complete.")
 
