@@ -1,0 +1,1 @@
+Add ``last_failed`` option to the ``CheckActuators`` script to run bump tests on actuators that failed their last test.
