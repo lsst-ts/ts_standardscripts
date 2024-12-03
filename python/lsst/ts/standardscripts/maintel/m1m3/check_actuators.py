@@ -141,7 +141,7 @@ class CheckActuators(BaseBlockScript):
                     uniqueItems: true
                     additionalItems: false
                   - type: string
-                    enum: ["all"]
+                    enum: ["all", "last_failed"]
                 default: "all"
             ignore_actuators:
                 description: Actuators to ignore during the bump test.
@@ -172,11 +172,16 @@ class CheckActuators(BaseBlockScript):
             Configuration
         """
 
+        self.config = config
+
         await self.configure_tcs()
 
-        # Getting actuators to be tested.
+        # Get actuators to be tested.
+        # (if "last_failed" is used, select all actuators for later filtering)
         self.actuators_to_test = (
-            self.m1m3_actuator_ids if config.actuators == "all" else config.actuators
+            self.m1m3_actuator_ids
+            if config.actuators in ["all", "last_failed"]
+            else config.actuators
         )
         if config.ignore_actuators:
             self.actuators_to_test = [
@@ -222,6 +227,12 @@ class CheckActuators(BaseBlockScript):
 
         return actuator_id in self.m1m3_secondary_actuator_ids
 
+    async def actuator_last_test_failed(self, actuator_id: int) -> bool:
+        """Determines whether the last bump test for a given actuator
+        failed."""
+        primary, secondary = await self.mtcs.get_m1m3_bump_test_status(actuator_id)
+        return primary == BumpTest.FAILED or secondary == BumpTest.FAILED
+
     async def run_block(self):
         await self.assert_feasibility()
         start_time = time.monotonic()
@@ -235,6 +246,23 @@ class CheckActuators(BaseBlockScript):
             ).detailedState
         )
         self.log.info(f"Current M1M3 detailed state: {detailed_state!r}.")
+
+        # Filter actuator_to_test when the last_failed option is used
+        if self.config.actuators == "last_failed":
+            actuators_mask = await asyncio.gather(
+                *[
+                    self.actuator_last_test_failed(actuator_id)
+                    for actuator_id in self.actuators_to_test
+                ]
+            )
+            self.actuators_to_test = [
+                actuator_id
+                for actuator_id, mask in zip(self.actuators_to_test, actuators_mask)
+                if mask
+            ]
+            self.log.info(
+                f"Selecting actuators that failed the last bump test: {self.actuators_to_test!r}."
+            )
 
         # Put M1M3 in engineering mode
         await self.mtcs.enter_m1m3_engineering_mode()
