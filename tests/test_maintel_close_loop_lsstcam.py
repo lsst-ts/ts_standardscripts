@@ -145,7 +145,7 @@ class TestCloseLoopLSSTCam(
     async def test_configure_wep_config(self):
         async with self.make_script():
             wep_config_dic = {"field1": "val1", "field2": "val2"}
-            await self.configure_script(wep_config=wep_config_dic)
+            await self.configure_script(wep_config=wep_config_dic, filter="r")
             assert self.script.wep_config == yaml.dump(wep_config_dic)
 
     async def test_run(self):

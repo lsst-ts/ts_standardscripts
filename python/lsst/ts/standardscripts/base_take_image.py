@@ -250,6 +250,7 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
                 self.config.image_type,
                 exposure,
                 1,
+                n_snaps=1,
                 reason=reason,
                 program=program,
                 group_id=self.group_id,

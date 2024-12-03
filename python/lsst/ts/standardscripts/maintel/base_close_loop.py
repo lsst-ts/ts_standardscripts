@@ -144,7 +144,6 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
               filter:
                 description: Which filter to use when taking intra/extra focal images.
                 type: string
-                default: empty_1
               exposure_time:
                 description: The exposure time to use when taking images (sec).
                 type: number
@@ -231,6 +230,8 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                   items:
                       type: string
             additionalProperties: false
+            required:
+              - filter
         """
         return yaml.safe_load(schema_yaml)
 
@@ -326,6 +327,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
     async def take_intra_extra_focal_images(
         self,
+        supplemented_group_id: str,
     ) -> typing.Tuple[typing.Any, typing.Any]:
         """Take intra and extra focal images.
 
@@ -347,7 +349,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         intra_image = await self.camera.take_cwfs(
             exptime=self.exposure_time,
             n=1,
-            group_id=self.group_id,
+            group_id=supplemented_group_id,
             filter=self.filter,
             reason="INTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
@@ -368,7 +370,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         extra_image = await self.camera.take_cwfs(
             exptime=self.exposure_time,
             n=1,
-            group_id=self.group_id,
+            group_id=supplemented_group_id,
             filter=self.filter,
             reason="EXTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
@@ -395,11 +397,13 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             except asyncio.TimeoutError:
                 self.log.warning("Timeout waiting for images in OODS.")
 
-    async def handle_fam_mode(self) -> None:
+    async def handle_fam_mode(self, supplemented_group_id: str) -> None:
         """Handle Full Array Mode."""
 
         # Take intra and extra focal images
-        intra_image, extra_image = await self.take_intra_extra_focal_images()
+        intra_image, extra_image = await self.take_intra_extra_focal_images(
+            supplemented_group_id
+        )
 
         # Set intra and extra visit id
         intra_visit_id = int(intra_image[0])
@@ -408,7 +412,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         take_infocus_image_task = asyncio.create_task(
             self.camera.take_acq(
                 self.exposure_time,
-                group_id=self.group_id,
+                group_id=supplemented_group_id,
                 reason="INFOCUS" + ("" if self.reason is None else f"_{self.reason}"),
                 program=self.program,
                 filter=self.filter,
@@ -426,13 +430,13 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         )
         await take_infocus_image_task
 
-    async def handle_cwfs_mode(self) -> None:
+    async def handle_cwfs_mode(self, supplemented_group_id: str) -> None:
         """Handle CWFS mode."""
 
         # Take in-focus image
         image = await self.camera.take_acq(
             self.exposure_time,
-            group_id=self.group_id,
+            group_id=supplemented_group_id,
             reason="INFOCUS" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
             filter=self.filter,
@@ -539,7 +543,9 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             )
 
             # Run the operational mode handler function.
-            await self.operation_model_handlers[self.mode]()
+            await self.operation_model_handlers[self.mode](
+                self.next_supplemented_group_id()
+            )
 
             # Retrieve the rotation angle after taking data.
             end_rotation_angle = await self.mtcs.rem.mtrotator.tel_rotation.next(
