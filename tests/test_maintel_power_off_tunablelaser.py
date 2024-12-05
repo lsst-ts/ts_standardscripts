@@ -124,7 +124,7 @@ class TestPowerOffTunableLaser(
                 "evt_summaryState.aget.side_effect": self.mock_get_laser_summary_state,
                 "cmd_setOpticalConfiguration.set_start.side_effect": self.mock_set_optical_config,
                 "cmd_setContinuousMode.start.side_effect": self.mock_set_continuous_mode,
-                "cmd_startPropagateLaser.start.side_effect": self.mock_start_laser,
+                "cmd_startPropagateLaser.start.side_effect": self.mock_stop_laser,
             }
         )
 
@@ -133,6 +133,11 @@ class TestPowerOffTunableLaser(
 
     async def mock_set_optical_config(self, **kwargs):
         self.optical_config_state = types.SimpleNamespace(configuration="SCU")
+
+    async def mock_set_continuous_mode(self, **kwargs):
+        self.laser_state = types.SimpleNamespace(
+            detailedState=LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
+        )
 
     async def mock_stop_laser(self, **kwargs):
         self.laser_state = types.SimpleNamespace(
