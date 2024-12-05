@@ -1,1 +1,0 @@
-Add infocus image in closed_loop script.

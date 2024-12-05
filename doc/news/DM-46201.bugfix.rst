@@ -1,2 +1,0 @@
-In auxtel/calibrations/run_calibration_sequence.py, update call to ATCalsys.prepare_for_flat use named argument sequence_name instead of config_name.
-

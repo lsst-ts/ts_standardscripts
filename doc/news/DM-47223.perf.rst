@@ -1,1 +1,0 @@
-Improve the ``maintel/m1m3/check_hardpoint.py`` to run tests concurrently.

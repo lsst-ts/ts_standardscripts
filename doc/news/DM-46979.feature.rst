@@ -1,2 +1,0 @@
-Add SAL scripts to park and unpark the TMA for ``maintel``.
-

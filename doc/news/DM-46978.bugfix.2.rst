@@ -1,1 +1,0 @@
-In maintel/take_aos_sequence_comcam.py, update take_aos_sequence to wait for images to be ingested in OODS before sending request to the OCPS.

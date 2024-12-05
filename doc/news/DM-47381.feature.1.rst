@@ -1,1 +1,0 @@
-In ``track_target_and_take_image_comcam.py``, add StateTransition usages to MTCS and ComCam usages.

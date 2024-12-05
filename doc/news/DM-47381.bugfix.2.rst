@@ -1,1 +1,0 @@
-In ``maintel/take_aos_sequence_comcam.py``, wait for all images to be ingested before starting OCPS process.

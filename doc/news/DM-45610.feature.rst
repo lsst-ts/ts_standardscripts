@@ -1,1 +1,0 @@
-Add ``UnparkDome`` SAL Script for ``maintel``.

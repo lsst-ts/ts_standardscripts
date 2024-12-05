@@ -1,1 +1,0 @@
-New SalScript for powering on the Tunable Laser standalone

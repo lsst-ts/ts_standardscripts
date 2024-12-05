@@ -1,1 +1,0 @@
-In ``track_target_and_take_iamge_comcam.py``, simplify the _handle_slew_and_change_filter method.

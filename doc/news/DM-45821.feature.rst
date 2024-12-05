@@ -1,1 +1,0 @@
-Add SAL script to slew main telescope dome to a desired azimuth.

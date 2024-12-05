@@ -1,1 +1,0 @@
-In ``base_track-target_and_take_image.py``, add support for single filters or array of filters in metadata.
