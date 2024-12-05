@@ -206,7 +206,7 @@ class Align(BaseBlockScript):
                     offset.dY * 1e3 if abs(offset.dY) > self.tolerance_linear else 0.0,
                     offset.dZ * 1e3 if abs(offset.dZ) > self.tolerance_linear else 0.0,
                     offset.dRX if abs(offset.dRX) > self.tolerance_angular else 0.0,
-                    offset.dRY if abs(offset.dRX) > self.tolerance_angular else 0.0,
+                    offset.dRY if abs(offset.dRY) > self.tolerance_angular else 0.0,
                 ]
             )
 

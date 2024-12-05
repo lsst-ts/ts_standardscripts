@@ -1,0 +1,1 @@
+Add support for ignoring ``MTCS`` components in open and close mirror covers operation.

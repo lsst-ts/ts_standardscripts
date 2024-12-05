@@ -1,0 +1,1 @@
+In ``maintel/offset_m2_hexapod.py``, update ``offsets_to_apply`` to have defaults to 0.

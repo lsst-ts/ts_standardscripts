@@ -51,7 +51,10 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
         )
 
         mtcs_usage, comcam_usage = (
-            (MTCSUsages.Slew, ComCamUsages.TakeImageFull)
+            (
+                MTCSUsages.Slew | MTCSUsages.StateTransition,
+                ComCamUsages.TakeImageFull | ComCamUsages.StateTransition,
+            )
             if add_remotes
             else (MTCSUsages.DryTest, ComCamUsages.DryTest)
         )
@@ -61,6 +64,8 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
 
         self.mtcs = MTCS(self.domain, intended_usage=mtcs_usage, log=self.log)
         self.comcam = ComCam(self.domain, intended_usage=comcam_usage, log=self.log)
+
+        self.instrument_name = "LSSTComCam"
 
     @property
     def tcs(self):
@@ -76,6 +81,9 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
         schema_dict["description"] = "Configuration for TrackTargetAndTakeImageComCam."
 
         return schema_dict
+
+    def get_instrument_name(self):
+        return self.instrument_name
 
     async def load_playlist(self):
         """Load playlist."""
@@ -128,22 +136,15 @@ class TrackTargetAndTakeImageComCam(BaseTrackTargetAndTakeImage):
         it there while the filter is changing.
         """
 
-        tasks_slew_with_fixed_rot = [
-            asyncio.create_task(
-                self.mtcs.slew_icrs(
-                    ra=self.config.ra,
-                    dec=self.config.dec,
-                    rot=self.angle_filter_change,
-                    rot_type=RotType.Physical,
-                    target_name=f"{self.config.name} - filter change",
-                    az_wrap_strategy=self.config.az_wrap_strategy,
-                    time_on_target=self.get_estimated_time_on_target(),
-                )
-            ),
-            asyncio.create_task(self._wait_rotator_reach_filter_change_angle()),
-        ]
-
-        await self.mtcs.process_as_completed(tasks_slew_with_fixed_rot)
+        await self.mtcs.slew_icrs(
+            ra=self.config.ra,
+            dec=self.config.dec,
+            rot=self.angle_filter_change,
+            rot_type=RotType.Physical,
+            target_name=f"{self.config.name} - filter change",
+            az_wrap_strategy=self.config.az_wrap_strategy,
+            time_on_target=self.get_estimated_time_on_target(),
+        )
 
         await self.comcam.setup_filter(filter=self.config.band_filter)
 

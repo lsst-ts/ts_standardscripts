@@ -1,0 +1,1 @@
+In maintel/base_close_loop, take_intra_extra_focal_images to wait for images to be ingested before returning.

@@ -102,6 +102,35 @@ class FocusSweepLatiss(BaseFocusSweep):
         schema_dict["properties"].update(additional_properties)
         return schema_dict
 
+    async def configure(self, config):
+        """Configure script.
+
+        Parameters
+        ----------
+        config : `types.SimpleNamespace`
+            Script configuration, as defined by `schema`.
+        """
+        await super().configure(config=config)
+        original_focus_window = self.config.focus_window
+        original_focus_step_sequence = self.config.focus_step_sequence
+        self.config.focus_window *= 0.001  # Transform from um to mm
+        self.config.focus_step_sequence = [
+            step * 0.001 for step in self.config.focus_step_sequence  # Transform to mm
+        ]
+        self.log.debug(
+            f"""Applying unit conversion from um to mm for ATHexapod use.
+
+        Original values in um from base class configuration are:
+
+            focus_window = {original_focus_window} um
+            focus_step_sequence = {original_focus_step_sequence} um
+
+        Converted values:
+            focus_window = {self.config.focus_window} mm
+            focus_step_sequence = {self.config.focus_step_sequence} mm
+        """
+        )
+
     def get_instrument_configuration(self) -> dict:
         return dict(
             filter=self.config.filter,

@@ -1,0 +1,1 @@
+In base_track_target, update track_azel routine to remove stop_tracking before start_tracking.

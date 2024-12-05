@@ -22,6 +22,7 @@
 __all__ = ["BaseCloseLoop"]
 
 import abc
+import asyncio
 import types
 import typing
 
@@ -83,6 +84,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # exposure time for the intra/extra images (in seconds)
         self.exposure_time = None
+        self.n_images = 9
 
         # Define operation mode handler function
         self.operation_model_handlers = {
@@ -103,6 +105,11 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def configure_camera(self) -> None:
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
+    def oods(self) -> None:
         raise NotImplementedError()
 
     async def configure_tcs(self) -> None:
@@ -137,15 +144,14 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
               filter:
                 description: Which filter to use when taking intra/extra focal images.
                 type: string
-                default: empty_1
               exposure_time:
                 description: The exposure time to use when taking images (sec).
                 type: number
                 default: 30.
               dz:
-                description: De-focus to apply when acquiring the intra/extra focal images (mm).
+                description: De-focus to apply when acquiring the intra/extra focal images (microns).
                 type: number
-                default: 0.8
+                default: 1500.
               threshold:
                 description: >-
                     DOF threshold for convergence (um). If DOF offsets are
@@ -175,10 +181,16 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                   - type: string
                   - type: "null"
                 default: null
+              note:
+                description: A descriptive note about the image being taken.
+                anyOf:
+                  - type: string
+                  - type: "null"
+                default: null
               wep_config:
-                description: Configuration for WEP pipeline.
-                type: string
-                default: ""
+                description: Configuration for WEP pipeline. Optional.
+                type: object
+                additionalProperties: true
               used_dofs:
                 oneOf:
                   - type: array
@@ -191,9 +203,23 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                       type: string
                       enum: {[dof_name.name for dof_name in DOFName]}
                 default: [1, 2, 3, 4, 5]
+              gain_sequence:
+                description: >-
+                    Gain sequence to apply to the offsets.
+                oneOf:
+                    - type: array
+                      items:
+                        type: number
+                    - type: number
+                default: 0
               apply_corrections:
                 description: >-
                     Apply OFC corrections after each iteration.
+                type: boolean
+                default: true
+              use_ocps:
+                description: >-
+                    Use OCPS to run the wavefront estimation pipeline.
                 type: boolean
                 default: true
               ignore:
@@ -204,6 +230,8 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
                   items:
                       type: string
             additionalProperties: false
+            required:
+              - filter
         """
         return yaml.safe_load(schema_yaml)
 
@@ -241,9 +269,11 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         # Set program and reason
         self.reason = config.reason
         self.program = config.program
+        self.note = config.note
 
-        # Set WEP configuration file
-        self.wep_config = config.wep_config
+        # Set WEP configuration string in yaml format
+        self.wep_config = yaml.dump(getattr(config, "wep_config", {}))
+        self.use_ocps = config.use_ocps
 
         # Set used dofs
         selected_dofs = config.used_dofs
@@ -254,6 +284,8 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
         # Set apply_corrections
         self.apply_corrections = config.apply_corrections
+
+        self.gain_sequence = config.gain_sequence
 
         for comp in getattr(config, "ignore", []):
             if comp not in self.mtcs.components_attr:
@@ -295,6 +327,7 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
 
     async def take_intra_extra_focal_images(
         self,
+        supplemented_group_id: str,
     ) -> typing.Tuple[typing.Any, typing.Any]:
         """Take intra and extra focal images.
 
@@ -309,71 +342,105 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         # Take intra focal image
         self.log.debug("Moving to intra-focal position")
 
-        await self.mtcs.move_camera_hexapod(x=0, y=0, z=self.dz, u=0, v=0)
+        await self.mtcs.offset_camera_hexapod(x=0, y=0, z=-self.dz, u=0, v=0)
 
         self.log.debug("Taking intra-focal image")
 
         intra_image = await self.camera.take_cwfs(
             exptime=self.exposure_time,
             n=1,
-            group_id=self.group_id,
+            group_id=supplemented_group_id,
             filter=self.filter,
             reason="INTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
+            note=self.note,
         )
 
         self.log.debug("Moving to extra-focal position")
 
         # Hexapod offsets are relative, so need to move 2x the offset
         # to get from the intra- to the extra-focal position.
-        z_offset = -(self.dz * 2.0)
-        await self.mtcs.move_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
+        z_offset = self.dz * 2.0
+        await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
 
         self.log.debug("Taking extra-focal image")
 
+        self.oods.evt_imageInOODS.flush()
         # Take extra-focal iamge
         extra_image = await self.camera.take_cwfs(
             exptime=self.exposure_time,
             n=1,
-            group_id=self.group_id,
+            group_id=supplemented_group_id,
             filter=self.filter,
             reason="EXTRA" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
+            note=self.note,
         )
 
+        task1 = self.wait_for_images_in_oods()
         # Move the hexapod back to in focus position
-        await self.mtcs.move_camera_hexapod(x=0, y=0, z=self.dz, u=0, v=0)
+        task2 = self.mtcs.offset_camera_hexapod(x=0, y=0, z=-self.dz, u=0, v=0)
+        await asyncio.gather(task1, task2)
 
         return intra_image, extra_image
 
-    async def handle_fam_mode(self) -> None:
+    async def wait_for_images_in_oods(self):
+
+        for _ in range(self.n_images):
+            try:
+                image_in_oods = await self.oods.evt_imageInOODS.next(
+                    flush=False, timeout=self.exposure_time
+                )
+                self.log.info(
+                    f"Image {image_in_oods.obsid} {image_in_oods.raft} {image_in_oods.sensor} ingested."
+                )
+            except asyncio.TimeoutError:
+                self.log.warning("Timeout waiting for images in OODS.")
+
+    async def handle_fam_mode(self, supplemented_group_id: str) -> None:
         """Handle Full Array Mode."""
 
         # Take intra and extra focal images
-        intra_image, extra_image = await self.take_intra_extra_focal_images()
+        intra_image, extra_image = await self.take_intra_extra_focal_images(
+            supplemented_group_id
+        )
 
         # Set intra and extra visit id
         intra_visit_id = int(intra_image[0])
         extra_visit_id = int(extra_image[0])
 
+        take_infocus_image_task = asyncio.create_task(
+            self.camera.take_acq(
+                self.exposure_time,
+                group_id=supplemented_group_id,
+                reason="INFOCUS" + ("" if self.reason is None else f"_{self.reason}"),
+                program=self.program,
+                filter=self.filter,
+                note=self.note,
+            )
+        )
+
         # Run WEP
         await self.mtcs.rem.mtaos.cmd_runWEP.set_start(
             visitId=intra_visit_id,
             extraId=extra_visit_id,
-            timeout=2 * CMD_TIMEOUT,
+            useOCPS=self.use_ocps,
             config=self.wep_config,
+            timeout=2 * CMD_TIMEOUT,
         )
+        await take_infocus_image_task
 
-    async def handle_cwfs_mode(self) -> None:
+    async def handle_cwfs_mode(self, supplemented_group_id: str) -> None:
         """Handle CWFS mode."""
 
         # Take in-focus image
         image = await self.camera.take_acq(
             self.exposure_time,
-            group_id=self.group_id,
+            group_id=supplemented_group_id,
             reason="INFOCUS" + ("" if self.reason is None else f"_{self.reason}"),
             program=self.program,
             filter=self.filter,
+            note=self.note,
         )
 
         # Set visit id
@@ -384,13 +451,15 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             visitId=visit_id, timeout=2 * CMD_TIMEOUT, config=self.wep_config
         )
 
-    async def compute_ofc_offsets(self, rotation_angle: float) -> None:
+    async def compute_ofc_offsets(self, rotation_angle: float, gain: float) -> None:
         """Compute offsets using ts_ofc.
 
         Parameters
         ----------
         rotation_angle : `float`
             Rotation angle of the camera in deg.
+        gain : `float`
+            Gain to apply to the offsets.
         """
         # Create the config to run OFC
         config = {
@@ -406,14 +475,39 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
         config_yaml = yaml.safe_dump(config)
 
         # Run OFC
+        self.mtcs.rem.mtaos.evt_degreeOfFreedom.flush()
         await self.mtcs.rem.mtaos.cmd_runOFC.set_start(
-            config=config_yaml, timeout=CMD_TIMEOUT
+            config=config_yaml, timeout=CMD_TIMEOUT, userGain=gain
         )
 
         # Return offsets
         return await self.mtcs.rem.mtaos.evt_degreeOfFreedom.next(
             flush=False, timeout=STD_TIMEOUT
         )
+
+    def get_gain(self, iteration: int) -> float:
+        """Get the gain to apply to the offsets.
+
+        Parameters
+        ----------
+        iteration : `int`
+            Iteration number.
+
+        Returns
+        -------
+        gain : `float`
+            Gain to apply to the offsets.
+        """
+        if isinstance(self.gain_sequence, float) or isinstance(self.gain_sequence, int):
+            return float(self.gain_sequence)
+        else:
+            if iteration >= len(self.gain_sequence):
+                self.log.warning(
+                    "Iteration is greater than the length of the gain sequence. "
+                    "Using the last value of the gains sequence."
+                )
+                return self.gain_sequence[-1]
+            return self.gain_sequence[iteration]
 
     async def arun(self, checkpoint: bool = False) -> None:
         """Perform wavefront error measurements and DOF adjustments until the
@@ -449,7 +543,9 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             )
 
             # Run the operational mode handler function.
-            await self.operation_model_handlers[self.mode]()
+            await self.operation_model_handlers[self.mode](
+                self.next_supplemented_group_id()
+            )
 
             # Retrieve the rotation angle after taking data.
             end_rotation_angle = await self.mtcs.rem.mtrotator.tel_rotation.next(
@@ -471,7 +567,9 @@ class BaseCloseLoop(salobj.BaseScript, metaclass=abc.ABCMeta):
             )
 
             # Compute ts_ofc offsets
-            dof_offset = await self.compute_ofc_offsets(rotation_angle)
+            dof_offset = await self.compute_ofc_offsets(
+                rotation_angle, self.get_gain(i)
+            )
 
             # If apply_corrections is true,
             # then we apply the corrections

@@ -23,6 +23,8 @@ __all__ = ["TakeImageLSSTCam"]
 
 import yaml
 from lsst.ts.observatory.control.maintel.lsstcam import LSSTCam, LSSTCamUsages
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+from lsst.ts.observatory.control.utils.roi_spec import ROISpec
 
 from ..base_take_image import BaseTakeImage
 
@@ -48,8 +50,13 @@ class TakeImageLSSTCam(BaseTakeImage):
 
         self.config = None
 
+        self.mtcs = MTCS(self.domain, log=self.log, intended_usage=MTCSUsages.Slew)
+
         self._lsstcam = LSSTCam(
-            self.domain, intended_usage=LSSTCamUsages.TakeImage, log=self.log
+            self.domain,
+            intended_usage=LSSTCamUsages.TakeImage,
+            log=self.log,
+            tcs_ready_to_take_data=self.mtcs.ready_to_take_data,
         )
 
         self.instrument_setup_time = self._lsstcam.filter_change_timeout
@@ -77,6 +84,60 @@ class TakeImageLSSTCam(BaseTakeImage):
                     minimum: 1
                   - type: "null"
                 default: null
+              roi_spec:
+                description: Definition of the ROI Specification.
+                type: object
+                additionalProperties: false
+                required:
+                  - common
+                  - roi
+                properties:
+                  common:
+                    description: Common properties to all ROIs.
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - rows
+                      - cols
+                      - integration_time_millis
+                    properties:
+                      rows:
+                        description: Number of rows for each ROI.
+                        type: number
+                        minimum: 10
+                        maximum: 400
+                      cols:
+                        description: Number of columns for each ROI.
+                        type: number
+                        minimum: 10
+                        maximum: 400
+                      integration_time_millis:
+                        description: Guider exposure integration time in milliseconds.
+                        type: number
+                        minimum: 5
+                        maximum: 200
+                  roi:
+                    description: Definition of the ROIs regions.
+                    minProperties: 1
+                    additionalProperties: false
+                    patternProperties:
+                      "^[a-zA-Z0-9]+$":
+                        type: object
+                        additionalProperties: false
+                        required:
+                          - segment
+                          - start_row
+                          - start_col
+                        properties:
+                          segment:
+                            type: number
+                            description: Segment of the CCD where the center of the ROI is located.
+                          start_row:
+                            type: number
+                            description: The bottom-left row origin of the ROI.
+                          start_col:
+                            type: number
+                            description: The bottom-left column origin of the ROI.
             additionalProperties: false
         """
         schema_dict = yaml.safe_load(schema_yaml)
@@ -93,3 +154,10 @@ class TakeImageLSSTCam(BaseTakeImage):
 
     def get_instrument_configuration(self):
         return dict(filter=self.config.filter)
+
+    async def run(self):
+        if (roi_spec := getattr(self.config, "roi_spec", None)) is not None:
+            roi_spec = ROISpec.parse_obj(roi_spec)
+            await self.camera.init_guider(roi_spec=roi_spec)
+
+        await super(TakeImageLSSTCam, self).run()

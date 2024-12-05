@@ -1,0 +1,1 @@
+Fix instrument to ComCam in take_aos_sequence.py.

@@ -1,0 +1,1 @@
+In ``maintel/apply_dof.py``, add new configuration parameter to ignore degrees of freedom.

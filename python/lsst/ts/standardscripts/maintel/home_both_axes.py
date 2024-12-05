@@ -107,3 +107,8 @@ class HomeBothAxes(salobj.BaseScript):
         elapsed_time = end_time - start_time
 
         self.log.info(f"Homing both axes took {elapsed_time:.2f} seconds")
+
+        if not self.ignore_m1m3:
+            self.log.info("Enabling M1M3 balance system.")
+            await asyncio.sleep(self.warn_wait)
+            await self.mtcs.enable_m1m3_balance_system()

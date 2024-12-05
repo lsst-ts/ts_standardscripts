@@ -79,6 +79,17 @@ class ApplyDOF(salobj.BaseScript):
             description: Configuration for ApplyDOF Script.
             type: object
             properties:
+              dofs:
+                type: array
+                description: >-
+                  Defines a 50-dimensional vector for all DOFs, combining M2,
+                  Camera, M1M3, and M2 bending modes. This overrides individual DOF inputs.
+                  First 5 elements for M2, next 5 for Camera, next 20 for M1M3 bending modes,
+                  last 20 for M2 bending modes. Units: microns or arcsec.
+                items:
+                  type: number
+                minItems: 50
+                maxItems: 50
               M2_dz:
                   type: number
                   description: >-
@@ -379,6 +390,13 @@ class ApplyDOF(salobj.BaseScript):
                     Defines the offset applied to the M2 bending mode 20.
                     Units in um.
                   default: 0.0
+              ignore:
+                  description: >-
+                      CSCs from the group to ignore in status check. Name must
+                      match those in self.group.components, e.g.; hexapod_1.
+                  type: array
+                  items:
+                      type: string
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -395,9 +413,25 @@ class ApplyDOF(salobj.BaseScript):
         # Configure tcs and camera
         await self.configure_tcs()
 
-        # Loop through properties and assign their values to the vector
-        for key, value in vars(config).items():
-            self.dofs[getattr(DOFName, key)] = value
+        if hasattr(config, "dofs"):
+            self.dofs = config.dofs
+        else:
+            # Loop through properties and assign their values to the vector
+            for key, value in vars(config).items():
+                if hasattr(DOFName, key):
+                    self.dofs[getattr(DOFName, key)] = value
+                else:
+                    self.log.warning(f"{key} is not a DOFName, ignoring.")
+
+        for comp in getattr(config, "ignore", []):
+            if comp not in self.mtcs.components_attr:
+                self.log.warning(
+                    f"Component {comp} not in CSC Group. "
+                    f"Must be one of {self.mtcs.components_attr}. Ignoring."
+                )
+            else:
+                self.log.debug(f"Ignoring component {comp}.")
+                setattr(self.mtcs.check, comp, False)
 
     def set_metadata(self, metadata) -> None:
         """Set script metadata.

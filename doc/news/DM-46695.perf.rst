@@ -1,0 +1,1 @@
+Add note configuration parameter to `close_loop_comcam.py` script

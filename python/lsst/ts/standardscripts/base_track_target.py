@@ -381,6 +381,8 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 else:
                     self.log.debug(f"Ignoring component {comp}.")
                     setattr(self.tcs.check, comp, False)
+        else:
+            self.log.info(f"Not ignoring TCS components: {self.tcs.components_attr}.")
 
         await super().configure(config=config)
 
@@ -445,8 +447,6 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                 el=el,
                 rot_tel=self.config.rot_value,
             )
-            await self.tcs.stop_tracking()
-            await asyncio.sleep(1.0)
             await self.tcs.start_tracking()
 
         elif self.slew_type == SlewType.PLANET:

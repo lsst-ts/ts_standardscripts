@@ -69,6 +69,21 @@ class TestApplyDOF(
 
             assert all(self.script.dofs == dofs)
 
+    async def test_configure_with_dofs_vector(self) -> None:
+        async with self.make_script():
+            dofs = [0] * len(DOFName)
+            config_dofs = {
+                "M2_dz": 0.2,
+                "Cam_dy": 0.3,
+                "M1M3_B1": 0.5,
+                "M2_B14": 0.7,
+                "dofs": dofs,
+            }
+
+            await self.configure_script(**config_dofs)
+
+            assert self.script.dofs == dofs
+
     async def test_run(self) -> None:
         # Start the test itself
         async with self.make_script():

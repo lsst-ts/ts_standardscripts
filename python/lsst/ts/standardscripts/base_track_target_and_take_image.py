@@ -197,11 +197,16 @@ required:
         metadata.position = [radec_icrs.ra.deg, radec_icrs.dec.deg]
         metadata.rotationSystem = MetadataRotSys.SKY
         metadata.cameraAngle = self.config.rot_sky
-        metadata.filters = ",".join(self.config.band_filter)
+        metadata.filters = (
+            self.config.band_filter
+            if isinstance(self.config.band_filter, str)
+            else ",".join(self.config.band_filter)
+        )
         metadata.dome = MetadataDome.OPEN
         metadata.nimages = self.config.num_exp
         metadata.survey = self.config.program
         metadata.totalCheckpoints = 3 if self.config.camera_playlist is None else 4
+        metadata.instrument = self.get_instrument_name()
 
     def get_estimated_time_on_target(self):
         """Get the estimated time on target.
@@ -286,6 +291,16 @@ required:
     async def stop_tracking(self):
         """Implement method to stop tracking."""
         raise RuntimeError()
+
+    @abc.abstractmethod
+    def get_instrument_name(self):
+        """Get instrument name.
+
+        Returns
+        -------
+        instrument_name: `string`
+        """
+        raise NotImplementedError()
 
     async def cleanup(self):
         if self.state.state != ScriptState.ENDING:

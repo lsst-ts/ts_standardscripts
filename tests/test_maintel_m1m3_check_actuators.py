@@ -20,15 +20,16 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
+import logging
 import types
 import unittest
 import warnings
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.MTM1M3 import BumpTest
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
 from lsst.ts.standardscripts.maintel.m1m3 import CheckActuators
+from lsst.ts.xml.enums.MTM1M3 import BumpTest
 
 try:
     from lsst.ts.idl.enums.MTM1M3 import DetailedState
@@ -41,6 +42,10 @@ except ImportError:
 
 
 class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.log = logging.getLogger(cls.__name__)
+
     async def basic_make_script(self, index):
         self.script = CheckActuators(index=index)
 
@@ -73,6 +78,9 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             testState=[BumpTest.NOTTESTED] * len(self.script.m1m3_actuator_ids)
         )
 
+        self.failed_primary_test = set()
+        self.failed_secondary_test = set()
+
         return (self.script,)
 
     async def get_m1m3_detailed_state(self, *args, **kwags):
@@ -82,14 +90,36 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     async def mock_test_bump(self, actuator_id, primary, secondary):
         await asyncio.sleep(0.5)
         actuator_index = self.script.mtcs.get_m1m3_actuator_index(actuator_id)
-        self.bump_test_status.testState[actuator_index] = BumpTest.PASSED
+        self.bump_test_status.testState[actuator_index] = (
+            BumpTest.PASSED
+            if actuator_id not in self.failed_primary_test
+            and actuator_id not in self.failed_secondary_test
+            else BumpTest.FAILED
+        )
+        self.log.info(f"{self.bump_test_status.testState[actuator_index]!r}")
+        if self.bump_test_status.testState[actuator_index] == BumpTest.FAILED:
+            raise RuntimeError(f"Actuator {actuator_id} bump test failed.")
 
     # Create a side effect function for mock_bump_test_status method from mcts
     # object. This function will be called when mock_bump_test_status method is
     # called
     async def mock_get_m1m3_bump_test_status(self, actuator_id):
-        self.m1m3_bump_test_status = BumpTest.PASSED, BumpTest.PASSED
-        return self.m1m3_bump_test_status
+        primary_test_status = (
+            BumpTest.PASSED
+            if actuator_id not in self.failed_primary_test
+            else BumpTest.FAILED
+        )
+        secondary_test_status = (
+            None
+            if actuator_id not in self.script.mtcs.get_m1m3_actuator_secondary_ids()
+            else (
+                BumpTest.PASSED
+                if actuator_id not in self.failed_secondary_test
+                else BumpTest.FAILED
+            )
+        )
+
+        return (primary_test_status, secondary_test_status)
 
     async def test_configure_all(self):
         """Testing a valid configuration: all actuators"""
@@ -100,6 +130,22 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             await self.configure_script(actuators=actuators)
 
+            assert self.script.actuators_to_test == self.script.m1m3_actuator_ids
+            assert self.script.program is None
+            assert self.script.reason is None
+            assert self.script.checkpoint_message is None
+
+    async def test_configure_last_failed(self):
+        """Testing a valid configuration: last failed actuators"""
+
+        # Configure with "last_failed" actuators
+        async with self.make_script():
+            actuators = "last_failed"
+
+            await self.configure_script(actuators=actuators)
+
+            # At configuration stage all actuators are selected
+            # for later filtering
             assert self.script.actuators_to_test == self.script.m1m3_actuator_ids
             assert self.script.program is None
             assert self.script.reason is None
@@ -205,6 +251,104 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             self.script.mtcs.run_m1m3_actuator_bump_test.assert_has_calls(
                 expected_calls
+            )
+
+    async def test_run_with_failed_actuators(self):
+        # Run the script
+        async with self.make_script():
+            actuators = "all"
+            await self.configure_script(actuators=actuators)
+            self.failed_primary_test = {101, 220, 218}
+            self.failed_secondary_test = {220, 330}
+            # Run the script
+            with self.assertRaises(AssertionError, msg="FAILED the bump test"):
+                await self.run_script()
+
+            # Assert all passed on mocked bump test. Had to get indexes.
+            actuators_to_test_index = [
+                self.script.mtcs.get_m1m3_actuator_index(actuator_id)
+                for actuator_id in self.script.actuators_to_test
+                if actuator_id not in self.failed_primary_test
+                and actuator_id not in self.failed_secondary_test
+            ]
+
+            assert all(
+                [
+                    self.bump_test_status.testState[actuator_index] == BumpTest.PASSED
+                    for actuator_index in actuators_to_test_index
+                ]
+            )
+            # Expected awaint for assert_all_enabled method
+            expected_awaits = len(self.script.actuators_to_test) + 1
+
+            # Assert we await once for all mock methods defined above
+            self.script.mtcs.enter_m1m3_engineering_mode.assert_awaited_once()
+            self.script.mtcs.exit_m1m3_engineering_mode.assert_awaited_once()
+            self.script.mtcs.assert_liveliness.assert_awaited_once()
+            self.script.mtcs.assert_m1m3_detailed_state.assert_awaited_once()
+            assert self.script.mtcs.assert_all_enabled.await_count == expected_awaits
+
+            expected_calls = [
+                unittest.mock.call(
+                    actuator_id=actuator_id,
+                    primary=True,
+                    secondary=self.script.has_secondary_actuator(actuator_id),
+                )
+                for actuator_id in self.script.m1m3_actuator_ids
+            ]
+
+            self.script.mtcs.run_m1m3_actuator_bump_test.assert_has_calls(
+                expected_calls
+            )
+
+    async def test_run_last_failed_actuators(self):
+        # Run the script
+        async with self.make_script():
+            await self.configure_script(actuators="last_failed")
+            # Sets up the actuators that will report a failed last bump test
+            self.failed_primary_test = {101, 220, 218}
+            self.failed_secondary_test = {220, 330}
+            # Actuators that must be tested by the script
+            expected_to_test = self.failed_primary_test | self.failed_secondary_test
+            # Run the script
+            # (assertion errors expected, as failed actuators will fail again)
+            with self.assertRaises(AssertionError, msg="FAILED the bump test"):
+                await self.run_script()
+
+            # Expected awaint for assert_all_enabled method
+            expected_awaits = len(self.script.actuators_to_test) + 1
+
+            # Assert we await once for all mock methods defined above
+            self.script.mtcs.enter_m1m3_engineering_mode.assert_awaited_once()
+            self.script.mtcs.exit_m1m3_engineering_mode.assert_awaited_once()
+            self.script.mtcs.assert_liveliness.assert_awaited_once()
+            self.script.mtcs.assert_m1m3_detailed_state.assert_awaited_once()
+            assert self.script.mtcs.assert_all_enabled.await_count == expected_awaits
+
+            # Check that the last failed actuators were tested
+            expected_calls = [
+                unittest.mock.call(
+                    actuator_id=actuator_id,
+                    primary=True,
+                    secondary=self.script.has_secondary_actuator(actuator_id),
+                )
+                for actuator_id in expected_to_test
+            ]
+
+            self.script.mtcs.run_m1m3_actuator_bump_test.assert_has_calls(
+                expected_calls
+            )
+
+            # Check that no other actuators were tested
+            not_expected_to_test_indexes = [
+                self.script.mtcs.get_m1m3_actuator_index(actuator_id)
+                for actuator_id in self.script.m1m3_actuator_ids
+                if actuator_id not in expected_to_test
+            ]
+
+            assert all(
+                self.bump_test_status.testState[actuator_index] == BumpTest.NOTTESTED
+                for actuator_index in not_expected_to_test_indexes
             )
 
     async def test_executable(self):

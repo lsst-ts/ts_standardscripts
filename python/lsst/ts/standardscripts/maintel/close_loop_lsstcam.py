@@ -49,6 +49,10 @@ class CloseLoopLSSTCam(BaseCloseLoop):
 
         self._camera = None
 
+    @property
+    def oods(self):
+        return self._camera.rem.mtoods
+
     async def configure_camera(self) -> None:
         """Handle creating Camera object and waiting for remote to start."""
         if self._camera is None:
