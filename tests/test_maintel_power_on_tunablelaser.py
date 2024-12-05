@@ -169,20 +169,6 @@ class TestPowerOnTunableLaser(
 
             await self.run_script()
 
-            # self.script.laser.cmd_changeWavelength.set_start.assert_awaited_once_with(
-            #     wavelength=self.script.wavelength,
-            # )
-
-            # self.script.laser.cmd_setOpticalConfiguration.start.assert_awaited_once_with(
-            #     configuration=self.script.optical_configuration,
-            # )
-
-            # self.script.laser.cmd_setContinuousMode.assert_awaited_once(
-            # )
-
-            # self.script.laser.cmd_startPropagateLaser.start.assert_awaited_with(
-            # )
-
             # Summary State
             self.script.laser.evt_summaryState.aget.assert_awaited_once_with()
 
