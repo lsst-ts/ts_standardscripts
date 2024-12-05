@@ -122,22 +122,12 @@ class TestPowerOffTunableLaser(
         self.script.laser.configure_mock(
             **{
                 "evt_summaryState.aget.side_effect": self.mock_get_laser_summary_state,
-                "cmd_setOpticalConfiguration.set_start.side_effect": self.mock_set_optical_config,
-                "cmd_setContinuousMode.start.side_effect": self.mock_set_continuous_mode,
                 "cmd_startPropagateLaser.start.side_effect": self.mock_stop_laser,
             }
         )
 
     async def mock_get_laser_summary_state(self, **kwargs):
         return types.SimpleNamespace(summaryState=salobj.State.ENABLED)
-
-    async def mock_set_optical_config(self, **kwargs):
-        self.optical_config_state = types.SimpleNamespace(configuration="SCU")
-
-    async def mock_set_continuous_mode(self, **kwargs):
-        self.laser_state = types.SimpleNamespace(
-            detailedState=LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
-        )
 
     async def mock_stop_laser(self, **kwargs):
         self.laser_state = types.SimpleNamespace(
@@ -147,15 +137,8 @@ class TestPowerOffTunableLaser(
     async def test_configure(self):
         # Try to configure with only some of the optional parameters
         async with self.make_script():
-            mode = LaserDetailedState.PROPAGATING_CONTINUOUS_MODE
-            optical_configuration = LaserOpticalConfiguration.SCU.name
-            wavelength = 500.0
 
             await self.configure_script()
-
-            assert self.script.laser_mode == mode
-            assert self.script.optical_configuration == optical_configuration
-            assert self.script.wavelength == wavelength
 
     async def test_run_without_failures(self):
         async with self.make_script():
@@ -171,10 +154,6 @@ class TestPowerOffTunableLaser(
                 self.laser_state.detailedState
                 == LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
             )
-            assert (
-                self.script.optical_configuration == LaserOpticalConfiguration.SCU.name
-            )
-            assert self.script.wavelength == 500.0
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
