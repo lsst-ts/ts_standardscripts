@@ -1,6 +1,0 @@
-In  ``offset_camera_hexapod.py`` and ``offset_m2_hexapod.py``:
-
-- Added an option to reset hexapod offsets before applying new ones.
-  This ensures that the offsets are first reset to zero before applying the user-provided offsets.
-- Added an option to reset hexapod offsets to zero without performing any additional actions.
-  This allows the user to reset the hexapod offsets to zero without applying new offsets.

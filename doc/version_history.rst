@@ -8,6 +8,126 @@ Version History
 
 .. towncrier release notes start
 
+v1.40.0 (2024-12-05)
+====================
+
+New Features
+------------
+
+- Use the new method ``ATCS.assert_ataos_corrections_enabled`` in auxtel scripts (`DM-38823 <https://rubinobs.atlassian.net/browse/DM-38823>`_)
+- Add ``ParkDome`` SAL Script for ``maintel``. (`DM-45609 <https://rubinobs.atlassian.net/browse/DM-45609>`_)
+- Add ``UnparkDome`` SAL Script for ``maintel``. (`DM-45610 <https://rubinobs.atlassian.net/browse/DM-45610>`_)
+- New SalScript for powering on the Tunable Laser standalone (`DM-45729 <https://rubinobs.atlassian.net/browse/DM-45729>`_)
+- In  ``offset_camera_hexapod.py`` and ``offset_m2_hexapod.py``:
+
+  - Added an option to reset hexapod offsets before applying new ones.
+    This ensures that the offsets are first reset to zero before applying the user-provided offsets.
+  - Added an option to reset hexapod offsets to zero without performing any additional actions.
+    This allows the user to reset the hexapod offsets to zero without applying new offsets. (`DM-45817 <https://rubinobs.atlassian.net/browse/DM-45817>`_)
+- Add SAL script to slew main telescope dome to a desired azimuth. (`DM-45821 <https://rubinobs.atlassian.net/browse/DM-45821>`_)
+- Establish ``µm`` as the unit for hexapod offsets (configuration attributes ``focus_window`` and ``focus_step_sequence``) in ``BaseFocusSweep`` and implement conversion to ``mm`` for AuxTel in ``FocusSweepLatiss``. (`DM-45823 <https://rubinobs.atlassian.net/browse/DM-45823>`_)
+- Extend TCS readiness check to other image types beyond OBJECT, such as:
+  ENGTEST, CWFS and ACQ.
+
+  Configure TCS synchronization to the following script:
+  - auxtel/daytime_checkout/slew_and_take_image_checkout.py
+  - auxtel/take_image_latiss.py
+  - maintel/take_image_comcam.py
+  - maintel/take_image_lsstcam.py
+  - maintel/take_triplet_comcam.py (`DM-46179 <https://rubinobs.atlassian.net/browse/DM-46179>`_)
+- Added expected_final_state argument to run_script method in BaseScriptTestCase
+
+  We use this argument to test the overall state of the script execution.
+  expected_final_state defaults to ScriptState.DONE if not passed. (`DM-46179 <https://rubinobs.atlassian.net/browse/DM-46179>`_)
+- Now maintel/base_close_loop receives the ``wep_config`` attribute as an object. (`DM-46180 <https://rubinobs.atlassian.net/browse/DM-46180>`_)
+- In check_actuators.py, refractor loop to store failures and add unit test. (`DM-46201 <https://rubinobs.atlassian.net/browse/DM-46201>`_)
+- Add open and close mirror covers SAL Scripts for ``maintel``. (`DM-46309 <https://rubinobs.atlassian.net/browse/DM-46309>`_)
+- Add infocus image in closed_loop script. (`DM-46978 <https://rubinobs.atlassian.net/browse/DM-46978>`_)
+- In maintel/base_close_loop, take_intra_extra_focal_images to wait for images to be ingested before returning. (`DM-46978 <https://rubinobs.atlassian.net/browse/DM-46978>`_)
+- Update maintel/take_image_lsstcam to add option to setup Guider ROI. (`DM-46978 <https://rubinobs.atlassian.net/browse/DM-46978>`_)
+- Add SAL scripts to park and unpark the TMA for ``maintel``. (`DM-46979 <https://rubinobs.atlassian.net/browse/DM-46979>`_)
+- Add home dome SAL Script for ``maintel``. (`DM-46980 <https://rubinobs.atlassian.net/browse/DM-46980>`_)
+- Add option to mute watcher alarms when setting CSCs to OFFLINE
+    
+  Added `mute_alarms` and `mute_duration` parameters to the `set_summary_state` script
+  configuration.
+  `mute_alarms` defaults to `False`
+  `mute_duration` defaults to `30 mins`
+    
+  E.g.
+         data:
+           -
+             - MTMount
+             - Offline
+         mute_alarms: true
+    
+       or
+  
+         data:
+           -
+             - MTMount
+             - Offline
+         mute_alarms: true
+         mute_duration: 60.0
+    
+  When `mute_alarms` is enabled and a component is transitioned to OFFLINE, related watcher
+  alarms are temporarily muted for the specified duration, defaulting to 30 minutes.
+    
+  Muting is applied only to components transitioning to OFFLINE state. (`DM-47086 <https://rubinobs.atlassian.net/browse/DM-47086>`_)
+- Add new `set_dof.py`` to set absolute DOF position (`DM-47363 <https://rubinobs.atlassian.net/browse/DM-47363>`_)
+- In ``base_track_target.py``, add log to debug check feature. (`DM-47381 <https://rubinobs.atlassian.net/browse/DM-47381>`_)
+- In ``base_track_target_and_take_image.py``, add instrument name to metadata and propagate to instrument scripts. (`DM-47381 <https://rubinobs.atlassian.net/browse/DM-47381>`_)
+- In ``track_target_and_take_image_comcam.py``, add StateTransition usages to MTCS and ComCam usages. (`DM-47381 <https://rubinobs.atlassian.net/browse/DM-47381>`_)
+- In ``track_target_and_take_iamge_comcam.py``, simplify the _handle_slew_and_change_filter method. (`DM-47381 <https://rubinobs.atlassian.net/browse/DM-47381>`_)
+- In ``base_track-target_and_take_image.py``, add support for single filters or array of filters in metadata. (`DM-47381 <https://rubinobs.atlassian.net/browse/DM-47381>`_)
+- In ``base_close_loop.py``, add gain_sequence. (`DM-47381 <https://rubinobs.atlassian.net/browse/DM-47381>`_)
+- In ``maintel/take_aos_sequence_comcam.py``, use all topics from the camera. (`DM-47381 <https://rubinobs.atlassian.net/browse/DM-47381>`_)
+- Add support for ignoring ``MTCS`` components in open and close mirror covers operation. (`DM-47552 <https://rubinobs.atlassian.net/browse/DM-47552>`_)
+- Add ``last_failed`` option to the ``CheckActuators`` script to run bump tests on actuators that failed their last test. (`DM-47618 <https://rubinobs.atlassian.net/browse/DM-47618>`_)
+- Update HomeBothAxis script to re-enable the force balance system after homing the mount. (`DM-47641 <https://rubinobs.atlassian.net/browse/DM-47641>`_)
+- In base_track_target, update track_azel routine to remove stop_tracking before start_tracking. (`DM-47641 <https://rubinobs.atlassian.net/browse/DM-47641>`_)
+- In maintel/base_close_loop.py, make filter required. (`DM-47641 <https://rubinobs.atlassian.net/browse/DM-47641>`_)
+
+
+Bug Fixes
+---------
+
+- In auxtel/calibrations/run_calibration_sequence.py, update call to ATCalsys.prepare_for_flat use named argument sequence_name instead of config_name. (`DM-46201 <https://rubinobs.atlassian.net/browse/DM-46201>`_)
+- In ``scheduler/add_block.py``, convert override config to str. (`DM-46458 <https://rubinobs.atlassian.net/browse/DM-46458>`_)
+- In ``maintel/offset_camera_hexapod.py``, update ``offsets_to_apply`` to have defaults to 0. (`DM-46636 <https://rubinobs.atlassian.net/browse/DM-46636>`_)
+- In ``maintel/offset_m2_hexapod.py``, update ``offsets_to_apply`` to have defaults to 0. (`DM-46636 <https://rubinobs.atlassian.net/browse/DM-46636>`_)
+- Fix in laser_tracker/align.py comparison for tolerance. (`DM-46978 <https://rubinobs.atlassian.net/browse/DM-46978>`_)
+- In maintel/take_aos_sequence_comcam.py, update take_aos_sequence to wait for images to be ingested in OODS before sending request to the OCPS. (`DM-46978 <https://rubinobs.atlassian.net/browse/DM-46978>`_)
+- Fix use_ocps in wep_config for base_close_loop.py (`DM-46978 <https://rubinobs.atlassian.net/browse/DM-46978>`_)
+- Fix instrument to ComCam in take_aos_sequence.py. (`DM-46978 <https://rubinobs.atlassian.net/browse/DM-46978>`_)
+- Fix take_aos_sequence so intra has negative focusZ and extra positive focusZ. (`DM-46978 <https://rubinobs.atlassian.net/browse/DM-46978>`_)
+- In maintel/focus_sweep_comcam, add StateTransition to ComCam Usages. (`DM-46978 <https://rubinobs.atlassian.net/browse/DM-46978>`_)
+- In maintel/apply_dof, fix configure method to skip parameters that are not DOFName. (`DM-46978 <https://rubinobs.atlassian.net/browse/DM-46978>`_)
+- In ``maintel/take_aos_sequence_comcam.py``, wait for all images to be ingested before starting OCPS process. (`DM-47381 <https://rubinobs.atlassian.net/browse/DM-47381>`_)
+- In ``maintel/base_close_loop.py``, flush evt_degreeOfFreedom. (`DM-47381 <https://rubinobs.atlassian.net/browse/DM-47381>`_)
+- In ``maintel/take_aos_sequence_comcam.py``, fix call to ready_to_take_data. (`DM-47381 <https://rubinobs.atlassian.net/browse/DM-47381>`_)
+- Use supplemented_group_id ``maintel/base_close_loop.py``. (`DM-47641 <https://rubinobs.atlassian.net/browse/DM-47641>`_)
+
+
+Performance Enhancement
+-----------------------
+
+- - Add note configuration parameter to `take_triplet_comcam.py` (`DM-46451 <https://rubinobs.atlassian.net/browse/DM-46451>`_)
+- In ``set_summary_state.py``, increase command timeout from 10 to 60 s. (`DM-46636 <https://rubinobs.atlassian.net/browse/DM-46636>`_)
+- In ``maintel/apply_dof.py``, add new configuration parameter to ignore degrees of freedom. (`DM-46636 <https://rubinobs.atlassian.net/browse/DM-46636>`_)
+- Add note configuration parameter to `close_loop_comcam.py` script (`DM-46695 <https://rubinobs.atlassian.net/browse/DM-46695>`_)
+- Update `take_triplet_comcam` to `take_aos_sequence_comcam.py` to allow for doublets and triplets. (`DM-46864 <https://rubinobs.atlassian.net/browse/DM-46864>`_)
+- Add dofs vector option for `apply_dof.py` script. (`DM-46883 <https://rubinobs.atlassian.net/browse/DM-46883>`_)
+- Improve the ``maintel/m1m3/check_hardpoint.py`` to run tests concurrently. (`DM-47223 <https://rubinobs.atlassian.net/browse/DM-47223>`_)
+- In ``maintel/take_aos_sequence_comcam.py``, allow for only intra and extra focal pair. (`DM-47744 <https://rubinobs.atlassian.net/browse/DM-47744>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- In ``mtdome/crawl_az.py``, fix typo. (`DM-46636 <https://rubinobs.atlassian.net/browse/DM-46636>`_)
+
+
 v1.38.0 (2024-09-03)
 ====================
 

@@ -1,9 +1,0 @@
-Extend TCS readiness check to other image types beyond OBJECT, such as:
-ENGTEST, CWFS and ACQ.
-
-Configure TCS synchronization to the following script:
-- auxtel/daytime_checkout/slew_and_take_image_checkout.py
-- auxtel/take_image_latiss.py
-- maintel/take_image_comcam.py
-- maintel/take_image_lsstcam.py
-- maintel/take_triplet_comcam.py

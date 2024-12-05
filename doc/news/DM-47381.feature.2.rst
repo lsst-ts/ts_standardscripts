@@ -1,1 +1,0 @@
-In ``base_track_target_and_take_image.py``, add instrument name to metadata and propagate to instrument scripts. 

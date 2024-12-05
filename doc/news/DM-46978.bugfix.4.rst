@@ -1,1 +1,0 @@
-Fix take_aos_sequence so intra has negative focusZ and extra positive focusZ.

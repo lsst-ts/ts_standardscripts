@@ -1,1 +1,0 @@
-Update maintel/take_image_lsstcam to add option to setup Guider ROI.

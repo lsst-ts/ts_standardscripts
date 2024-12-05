@@ -1,2 +1,0 @@
-In check_actuators.py, refractor loop to store failures and add unit test.
-

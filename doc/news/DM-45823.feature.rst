@@ -1,1 +1,0 @@
-Establish ``µm`` as the unit for hexapod offsets (configuration attributes ``focus_window`` and ``focus_step_sequence``) in ``BaseFocusSweep`` and implement conversion to ``mm`` for AuxTel in ``FocusSweepLatiss``.

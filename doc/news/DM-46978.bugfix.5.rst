@@ -1,1 +1,0 @@
-In maintel/focus_sweep_comcam, add StateTransition to ComCam Usages.

@@ -1,1 +1,0 @@
-Update HomeBothAxis script to re-enable the force balance system after homing the mount.
