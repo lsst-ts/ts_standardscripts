@@ -28,7 +28,7 @@ from lsst.ts.observatory.control.maintel.mtcalsys import MTCalsys
 
 
 class PowerOffTunableLaser(salobj.BaseScript):
-    """Starts propagating the Tunable Laser for functional
+    """Stope the propagation of the Tunable Laser for functional
     testing.
 
     Parameters
@@ -41,7 +41,7 @@ class PowerOffTunableLaser(salobj.BaseScript):
     def __init__(self, index):
         super().__init__(
             index=index,
-            descr="Power On Tunable Laser",
+            descr="Power Off Tunable Laser",
         )
 
         self.laser = None
