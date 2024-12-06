@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
@@ -19,5 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .power_off_tunablelaser import *
-from .power_on_tunablelaser import *
+import asyncio
+
+from lsst.ts.standardscripts.maintel.calibration import PowerOffTunableLaser
+
+asyncio.run(PowerOffTunableLaser.amain())
