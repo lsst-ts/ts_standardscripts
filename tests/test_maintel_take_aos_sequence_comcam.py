@@ -267,5 +267,10 @@ class TestTakeAOSSequenceComCam(
         await self.check_executable(script_path)
 
 
+class TestTakeAOSSequenceBalancedComCam(TestTakeAOSSequenceComCam):
+    ScriptClass = TakeAOSSequenceBalancedComCam
+    scriptName = "take_aos_sequence_balanced_comcam.py"
+
+
 if __name__ == "__main__":
     unittest.main()
