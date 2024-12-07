@@ -38,7 +38,7 @@ class TestTakeAOSSequenceComCam(
 ):
     ScriptClass = TakeAOSSequenceComCam
     scriptName = "take_aos_sequence_comcam.py"
-    
+
     async def basic_make_script(self, index):
         self.script = self.ScriptClass(index=index)
 

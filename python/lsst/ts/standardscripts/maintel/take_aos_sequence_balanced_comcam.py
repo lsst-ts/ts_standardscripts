@@ -21,7 +21,6 @@
 
 __all__ = ["TakeAOSSequenceBalancedComCam"]
 
-import asyncio
 
 from lsst.ts.standardscripts.maintel import TakeAOSSequenceComCam
 
@@ -57,4 +56,3 @@ class TakeAOSSequenceBalancedComCam(TakeAOSSequenceComCam):
         """
         await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset / 2, u=0, v=0)
         await self.mtcs.offset_m2_hexapod(x=0, y=0, z=z_offset / 2, u=0, v=0)
-                
