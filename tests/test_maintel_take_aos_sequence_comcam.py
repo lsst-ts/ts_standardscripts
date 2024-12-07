@@ -23,16 +23,17 @@ import types
 import unittest
 from unittest.mock import patch
 
-from lsst.ts import standardscripts
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
+from lsst.ts.utils import index_generator
+
+from lsst.ts import standardscripts
 from lsst.ts.standardscripts.maintel import (
     Mode,
-    TakeAOSSequenceComCam,
     TakeAOSSequenceBalancedComCam,
+    TakeAOSSequenceComCam,
 )
-from lsst.ts.utils import index_generator
 
 index_gen = index_generator()
 
