@@ -244,6 +244,16 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         else:
             self.log.debug("MTCS already defined, skipping.")
 
+    async def _apply_z_offset(self, z_offset: float) -> None:
+        """Apply dz offset.
+
+        Parameters
+        ----------
+        z_offset : float
+            dz offset to apply, in microns.
+        """
+        await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
+
     async def take_aos_sequence(self) -> None:
         """Take out-of-focus sequence images."""
         supplemented_group_id = self.next_supplemented_group_id()
@@ -257,7 +267,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
 
             # Move the hexapod to the target z position
             z_offset = -self.dz - self.current_z_position
-            await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
+            self._apply_z_offset(z_offset)
             self.current_z_position = -self.dz
 
             self.log.info("Taking in-focus image")
@@ -281,7 +291,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
 
             # Move the hexapod to the target z position
             z_offset = self.dz - self.current_z_position
-            await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
+            self._apply_z_offset(z_offset)
             self.current_z_position = self.dz
 
             self.log.info("Taking extra-focal image")
@@ -340,7 +350,7 @@ class TakeAOSSequenceComCam(BaseBlockScript):
 
         # Move the hexapod to the target z position
         z_offset = -self.current_z_position
-        await self.mtcs.offset_camera_hexapod(x=0, y=0, z=z_offset, u=0, v=0)
+        self._apply_z_offset(z_offset)
         self.current_z_position = 0
 
         if self.mode != Mode.PAIR:
