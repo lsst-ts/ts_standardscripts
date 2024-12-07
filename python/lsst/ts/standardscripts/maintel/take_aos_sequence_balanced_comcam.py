@@ -22,7 +22,7 @@
 __all__ = ["TakeAOSSequenceBalancedComCam"]
 
 
-from lsst.ts.standardscripts.maintel import TakeAOSSequenceComCam
+from lsst.ts.standardscripts.maintel.take_aos_sequence_comcam import TakeAOSSequenceComCam
 
 
 class TakeAOSSequenceBalancedComCam(TakeAOSSequenceComCam):
