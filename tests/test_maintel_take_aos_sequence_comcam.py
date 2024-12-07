@@ -36,8 +36,11 @@ index_gen = index_generator()
 class TestTakeAOSSequenceComCam(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
+    ScriptClass = TakeAOSSequenceComCam
+    scriptName = "take_aos_sequence_comcam.py"
+    
     async def basic_make_script(self, index):
-        self.script = TakeAOSSequenceComCam(index=index)
+        self.script = self.ScriptClass(index=index)
 
         self.script.mtcs = MTCS(
             domain=self.script.domain,
@@ -260,7 +263,7 @@ class TestTakeAOSSequenceComCam(
     async def test_executable_lsstcam(self) -> None:
         """Test that the script is executable."""
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "take_aos_sequence_comcam.py"
+        script_path = scripts_dir / "maintel" / self.scriptName
         await self.check_executable(script_path)
 
 
