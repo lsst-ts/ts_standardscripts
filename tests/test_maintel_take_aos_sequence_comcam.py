@@ -23,12 +23,17 @@ import types
 import unittest
 from unittest.mock import patch
 
-from lsst.ts import standardscripts
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-from lsst.ts.standardscripts.maintel import Mode, TakeAOSSequenceComCam
 from lsst.ts.utils import index_generator
+
+from lsst.ts import standardscripts
+from lsst.ts.standardscripts.maintel import (
+    Mode,
+    TakeAOSSequenceBalancedComCam,
+    TakeAOSSequenceComCam,
+)
 
 index_gen = index_generator()
 
@@ -36,8 +41,11 @@ index_gen = index_generator()
 class TestTakeAOSSequenceComCam(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
+    ScriptClass = TakeAOSSequenceComCam
+    scriptName = "take_aos_sequence_comcam.py"
+
     async def basic_make_script(self, index):
-        self.script = TakeAOSSequenceComCam(index=index)
+        self.script = self.ScriptClass(index=index)
 
         self.script.mtcs = MTCS(
             domain=self.script.domain,
@@ -260,8 +268,13 @@ class TestTakeAOSSequenceComCam(
     async def test_executable_lsstcam(self) -> None:
         """Test that the script is executable."""
         scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "take_aos_sequence_comcam.py"
+        script_path = scripts_dir / "maintel" / self.scriptName
         await self.check_executable(script_path)
+
+
+class TestTakeAOSSequenceBalancedComCam(TestTakeAOSSequenceComCam):
+    ScriptClass = TakeAOSSequenceBalancedComCam
+    scriptName = "take_aos_sequence_balanced_comcam.py"
 
 
 if __name__ == "__main__":

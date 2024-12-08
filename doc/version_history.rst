@@ -87,6 +87,7 @@ New Features
 - Update HomeBothAxis script to re-enable the force balance system after homing the mount. (`DM-47641 <https://rubinobs.atlassian.net/browse/DM-47641>`_)
 - In base_track_target, update track_azel routine to remove stop_tracking before start_tracking. (`DM-47641 <https://rubinobs.atlassian.net/browse/DM-47641>`_)
 - In maintel/base_close_loop.py, make filter required. (`DM-47641 <https://rubinobs.atlassian.net/browse/DM-47641>`_)
+- Add ``maintel/take_aos_sequence_balanced_comcam.py``, which takes AOS triplets while evenly dividing dz offsets between the camera and M2 hexapods. (`DM-48018 <https://rubinobs.atlassian.net/browse/DM-48018>`_)
 
 
 Bug Fixes
