@@ -58,7 +58,6 @@ class HomeBothAxes(salobj.BaseScript):
 
         self.home_both_axes_timeout = 300.0  # timeout to home both MTMount axes.
 
-        self.ignore_m1m3 = False
         self.warn_wait = 10.0
         self.mtcs = None
 
@@ -70,11 +69,6 @@ class HomeBothAxes(salobj.BaseScript):
             title: HomeBothAxes v1
             description: Configuration for HomeBothAxes.
             type: object
-            properties:
-                ignore_m1m3:
-                    description: Ignore the m1m3 component?
-                    type: boolean
-                    default: false
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -83,21 +77,11 @@ class HomeBothAxes(salobj.BaseScript):
         if self.mtcs is None:
             self.mtcs = MTCS(domain=self.domain, log=self.log)
             await self.mtcs.start_task
-        self.ignore_m1m3 = config.ignore_m1m3
 
     def set_metadata(self, metadata):
         metadata.duration = self.home_both_axes_timeout
 
     async def run(self):
-
-        if not self.ignore_m1m3:
-            await self.checkpoint("Disable M1M3 balance system.")
-            await self.mtcs.disable_m1m3_balance_system()
-        else:
-            self.log.warning(
-                "Ignoring M1M3. Make sure m1m3 balance system is disabled!"
-            )
-            await asyncio.sleep(self.warn_wait)
         await self.checkpoint("Homing Both Axes")
         start_time = time.time()
         await self.mtcs.rem.mtmount.cmd_homeBothAxes.start(
@@ -107,8 +91,3 @@ class HomeBothAxes(salobj.BaseScript):
         elapsed_time = end_time - start_time
 
         self.log.info(f"Homing both axes took {elapsed_time:.2f} seconds")
-
-        if not self.ignore_m1m3:
-            self.log.info("Enabling M1M3 balance system.")
-            await asyncio.sleep(self.warn_wait)
-            await self.mtcs.enable_m1m3_balance_system()
