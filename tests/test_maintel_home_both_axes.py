@@ -50,7 +50,38 @@ class TestHomeBothAxes(
 
             await self.run_script()
 
+            self.script.mtcs.disable_m1m3_balance_system.assert_not_called()
+            self.script.mtcs.rem.mtmount.cmd_homeBothAxes.start.assert_awaited_once_with(
+                timeout=self.script.home_both_axes_timeout
+            )
+
+    async def test_run_with_balance_disabled(self):
+        async with self.make_script():
+            await self.configure_script(disable_m1m3_force_balance=True)
+
+            await self.run_script()
+
             self.script.mtcs.disable_m1m3_balance_system.assert_awaited_once()
+
+            self.script.mtcs.rem.mtmount.cmd_homeBothAxes.start.assert_awaited_once_with(
+                timeout=self.script.home_both_axes_timeout
+            )
+
+    async def test_deprecated_ignore_m1m3_usage(self):
+        async with self.make_script():
+
+            with self.assertWarns(DeprecationWarning) as cm:
+                await self.configure_script(ignore_m1m3=True)
+
+            self.assertIn(
+                "The 'ignore_m1m3' configuration property is deprecated and will be removed"
+                " in future releases. Please use 'disable_m1m3_force_balance' instead.",
+                str(cm.warning),
+            )
+
+            await self.run_script()
+
+            # Assert that homeBothAxes command was called
             self.script.mtcs.rem.mtmount.cmd_homeBothAxes.start.assert_awaited_once_with(
                 timeout=self.script.home_both_axes_timeout
             )

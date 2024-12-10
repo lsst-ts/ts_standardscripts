@@ -21,8 +21,8 @@
 
 __all__ = ["HomeBothAxes"]
 
-import asyncio
 import time
+import warnings
 
 import yaml
 from lsst.ts import salobj
@@ -56,6 +56,7 @@ class HomeBothAxes(salobj.BaseScript):
     def __init__(self, index, add_remotes: bool = True):
         super().__init__(index=index, descr="Home both TMA axis.")
 
+        self.disable_m1m3_force_balance = False
         self.home_both_axes_timeout = 300.0  # timeout to home both MTMount axes.
 
         self.warn_wait = 10.0
@@ -69,6 +70,15 @@ class HomeBothAxes(salobj.BaseScript):
             title: HomeBothAxes v1
             description: Configuration for HomeBothAxes.
             type: object
+            properties:
+                ignore_m1m3:
+                    description: Ignore the m1m3 component?
+                    type: boolean
+                    default: false
+                disable_m1m3_force_balance:
+                    description: Disable m1m3 force balance?
+                    type: boolean
+                    default: false
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -78,10 +88,24 @@ class HomeBothAxes(salobj.BaseScript):
             self.mtcs = MTCS(domain=self.domain, log=self.log)
             await self.mtcs.start_task
 
+        if hasattr(config, "ignore_m1m3"):
+            warnings.warn(
+                "The 'ignore_m1m3' configuration property is deprecated and will be removed"
+                " in future releases. Please use 'disable_m1m3_force_balance' instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        self.disable_m1m3_force_balance = config.disable_m1m3_force_balance
+
     def set_metadata(self, metadata):
         metadata.duration = self.home_both_axes_timeout
 
     async def run(self):
+
+        if self.disable_m1m3_force_balance:
+            await self.checkpoint("Disable M1M3 balance system.")
+            await self.mtcs.disable_m1m3_balance_system()
+
         await self.checkpoint("Homing Both Axes")
         start_time = time.time()
         await self.mtcs.rem.mtmount.cmd_homeBothAxes.start(
