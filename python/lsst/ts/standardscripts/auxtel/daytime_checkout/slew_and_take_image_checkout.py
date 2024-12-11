@@ -84,7 +84,7 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
         # published to the efd.
         self.atcs = ATCS(domain=self.domain, intended_usage=atcs_usage, log=self.log)
 
-        tcs_ready_to_take_data = self.atcs if add_remotes else None
+        tcs_ready_to_take_data = self.atcs.ready_to_take_data if add_remotes else None
         self.latiss = LATISS(
             domain=self.domain,
             intended_usage=latiss_usage,
