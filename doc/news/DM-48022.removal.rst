@@ -1,0 +1,1 @@
+Deprecate `ignore_m1m3` property.

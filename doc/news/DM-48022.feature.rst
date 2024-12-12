@@ -1,0 +1,5 @@
+Added new property `disable_m1m3_force_balance` with default `false`.
+Maintains the ability to disable the M1M3 balance system, in case
+the coupling effect between the elevation axis and m1m3
+support system, repeats again, driving the system to a huge
+oscillation
