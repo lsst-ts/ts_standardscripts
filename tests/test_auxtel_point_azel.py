@@ -43,6 +43,7 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             self.script.atcs.assert_all_enabled = unittest.mock.AsyncMock()
             self.script.atcs.point_azel = unittest.mock.AsyncMock()
             self.script.atcs.stop_tracking = unittest.mock.AsyncMock()
+            self.script.atcs.disable_checks_for_components = unittest.mock.Mock()
             self.script.configure_tcs = unittest.mock.AsyncMock()
 
             yield
@@ -94,8 +95,11 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             ignore = ["athexapod", "no_comp"]
 
             await self.configure_script(az=az, el=el, ignore=ignore)
-            assert self.script.atcs.check.athexapod is False
-            self.script.atcs.check.no_comp.assert_not_called()
+
+            self.script.atcs.disable_checks_for_components.assert_called_once_with(
+                components=ignore
+            )
+
             self.script.configure_tcs.assert_awaited_once()
 
     @unittest.mock.patch(
