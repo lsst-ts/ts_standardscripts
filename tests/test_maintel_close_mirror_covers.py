@@ -23,7 +23,7 @@ import contextlib
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.maintel import CloseMirrorCovers
+from lsst.ts.maintel.standardscripts import CloseMirrorCovers
 
 
 class TestCloseMirrorCovers(

@@ -30,10 +30,10 @@ import unittest
 import numpy
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.observatory.control.utils import RotType
-from lsst.ts.standardscripts.maintel.track_target_and_take_image_comcam import (
+from lsst.ts.maintel.standardscripts.track_target_and_take_image_comcam import (
     TrackTargetAndTakeImageComCam,
 )
+from lsst.ts.observatory.control.utils import RotType
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 

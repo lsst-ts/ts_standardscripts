@@ -22,8 +22,8 @@
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.maintel.standardscripts.m1m3 import EnableM1M3BalanceSystem
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-from lsst.ts.standardscripts.maintel.m1m3 import EnableM1M3BalanceSystem
 
 
 class TestEnableM1M3BalanceSystem(

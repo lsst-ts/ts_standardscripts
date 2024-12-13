@@ -22,8 +22,8 @@
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.maintel.standardscripts.mtrotator import MoveRotator
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-from lsst.ts.standardscripts.maintel.mtrotator import MoveRotator
 
 
 class TestMoveRotator(

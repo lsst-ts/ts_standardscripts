@@ -23,7 +23,7 @@ import contextlib
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.maintel.mtmount import UnparkMount
+from lsst.ts.maintel.standardscripts.mtmount import UnparkMount
 
 
 class TestUnparkMount(

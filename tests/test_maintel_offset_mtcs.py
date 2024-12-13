@@ -24,8 +24,8 @@ import unittest
 import pytest
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts.maintel.standardscripts import OffsetMTCS
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.maintel import OffsetMTCS
 
 
 class TestOffsetMTCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):

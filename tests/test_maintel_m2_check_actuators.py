@@ -24,8 +24,8 @@ import unittest
 
 import numpy as np
 from lsst.ts import salobj
+from lsst.ts.maintel.standardscripts.m2 import CheckActuators
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.maintel.m2 import CheckActuators
 
 # TODO: DM-41592 move constants from lsst.ts.m2com to ts-xml
 NUM_ACTUATOR = 78

@@ -1,6 +1,6 @@
 {% set data= load_setup_py_data() %}
 package:
-  name: ts-standardscripts
+  name: ts-maintel-standardscripts
   version: {{ data.get('version') }}
 
 source:
@@ -18,13 +18,14 @@ test:
     - ts-idl {{ idl_version }}
     - ts-salobj {{ salobj_version }}
     - ts-observatory-control
+    - ts-standardscripts
   source_files:
     - python
     - tests
     - setup.cfg
     - pyproject.toml
   imports:
-    - lsst.ts.standardscripts
+    - lsst.ts.maintel.standardscripts
 
 requirements:
   host:
@@ -40,6 +41,7 @@ requirements:
     - astroquery
     - astroplan
     - ts-observatory-control
+    - ts-standardscripts
   run:
     - python {{ python }}
     - setuptools
@@ -49,3 +51,4 @@ requirements:
     - astroquery
     - astroplan
     - ts-observatory-control
+    - ts-standardscripts

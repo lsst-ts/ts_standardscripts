@@ -25,8 +25,8 @@ import unittest
 import pytest
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts.maintel.standardscripts import OffsetM2Hexapod
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.maintel import OffsetM2Hexapod
 
 
 class TestOffsetM2Hexapod(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):

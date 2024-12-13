@@ -24,8 +24,8 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
+from lsst.ts.maintel.standardscripts import PointAzEl
 from lsst.ts.standardscripts import BaseScriptTestCase
-from lsst.ts.standardscripts.maintel import PointAzEl
 
 
 class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):

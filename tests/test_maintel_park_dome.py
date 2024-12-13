@@ -22,7 +22,7 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.maintel.mtdome import ParkDome
+from lsst.ts.maintel.standardscripts.mtdome import ParkDome
 
 
 class TestParkDome(

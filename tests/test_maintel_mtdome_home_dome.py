@@ -25,7 +25,7 @@ import unittest
 import pytest
 from lsst.ts import salobj, standardscripts
 from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.standardscripts.maintel.mtdome import HomeDome
+from lsst.ts.maintel.standardscripts.mtdome import HomeDome
 
 
 class TestHomeDome(

@@ -25,7 +25,7 @@ from types import SimpleNamespace
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.standardscripts.maintel.mtdome import CrawlAz, Direction
+from lsst.ts.maintel.standardscripts.mtdome import CrawlAz, Direction
 from lsst.ts.xml.enums.MTDome import SubSystemId
 
 

@@ -22,7 +22,7 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.maintel import StandbyMTCS
+from lsst.ts.maintel.standardscripts import StandbyMTCS
 
 
 class TestStandbyMTCS(

@@ -23,7 +23,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.standardscripts.maintel import CameraSetup, TakeImageAnyCam
+from lsst.ts.maintel.standardscripts import CameraSetup, TakeImageAnyCam
 
 
 class TestTakeImageAnyCam(

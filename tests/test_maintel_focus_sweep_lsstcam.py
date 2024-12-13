@@ -24,7 +24,7 @@ import unittest.mock as mock
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.standardscripts.maintel.focus_sweep_lsstcam import FocusSweepLSSTCam
+from lsst.ts.maintel.standardscripts.focus_sweep_lsstcam import FocusSweepLSSTCam
 
 
 class TestFocusSweepLSSTCam(

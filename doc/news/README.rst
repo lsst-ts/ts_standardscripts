@@ -22,7 +22,7 @@ instead of adding them to the release notes directly.
 The news fragments are then automatically integrated into the release notes by the ``towncrier`` tool.
 
 You can test how the content will be integrated into the release notes by running ``towncrier build --draft --version=v<X.XX.X>``. 
-Note that you have to run it from the root repository directory (i.e. the ``ts_standardscripts``).
+Note that you have to run it from the root repository directory (i.e. the ``ts_maintel_standardscripts``).
 
 In order to update the release notes file for real, the person responsible for the releasing the notes should run:
 
@@ -33,7 +33,7 @@ In order to update the release notes file for real, the person responsible for t
 
 .. note::
 
-   When running towncrier to build the changelog, you may be prompted to confirm the deletion of fragments. 
+   When running towncrier to build the changelog, you may be prompted to confirm the deletion of fragments.
    If you would like to retain the fragments in the doc/news directory do not confirm the deletion.
    
 Note also that ``towncrier`` can be installed from PyPI or conda-forge. 

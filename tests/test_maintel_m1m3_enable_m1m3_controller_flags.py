@@ -24,7 +24,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.standardscripts.maintel.m1m3 import EnableM1M3SlewControllerFlags
+from lsst.ts.maintel.standardscripts.m1m3 import EnableM1M3SlewControllerFlags
 
 
 class TestEnableM1M3SlewControllerFlags(
