@@ -23,7 +23,7 @@ import contextlib
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.maintel.mtmount import ParkMount
+from lsst.ts.maintel.standardscripts.mtmount import ParkMount
 from lsst.ts.xml.enums import MTMount
 
 

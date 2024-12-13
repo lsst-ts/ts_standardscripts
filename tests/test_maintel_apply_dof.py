@@ -25,9 +25,9 @@ import unittest
 
 import numpy as np
 from lsst.ts import standardscripts
+from lsst.ts.maintel.standardscripts import ApplyDOF
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.observatory.control.utils.enums import DOFName
-from lsst.ts.standardscripts.maintel import ApplyDOF
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 

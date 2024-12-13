@@ -24,8 +24,8 @@ import random
 import unittest
 
 from lsst.ts import salobj, standardscripts
+from lsst.ts.maintel.standardscripts import StandbyComCam
 from lsst.ts.observatory.control.mock import ComCamMock
-from lsst.ts.standardscripts.maintel import StandbyComCam
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 

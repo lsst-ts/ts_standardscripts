@@ -23,7 +23,7 @@ import contextlib
 import unittest
 
 from lsst.ts import standardscripts, utils
-from lsst.ts.standardscripts.maintel.m2.disable_closed_loop import DisableM2ClosedLoop
+from lsst.ts.maintel.standardscripts.m2.disable_closed_loop import DisableM2ClosedLoop
 
 
 class TestDisableM2ClosedLoop(

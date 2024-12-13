@@ -26,8 +26,8 @@ import unittest
 
 from lsst.ts import standardscripts
 from lsst.ts.idl.enums.MTM1M3 import HardpointTest
+from lsst.ts.maintel.standardscripts.m1m3 import CheckHardpoint
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-from lsst.ts.standardscripts.maintel.m1m3 import CheckHardpoint
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 

@@ -23,7 +23,7 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.maintel import TakeStutteredLSSTCam
+from lsst.ts.maintel.standardscripts import TakeStutteredLSSTCam
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 

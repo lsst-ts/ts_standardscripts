@@ -24,7 +24,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.standardscripts.maintel import MoveP2P
+from lsst.ts.maintel.standardscripts import MoveP2P
 
 
 class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):

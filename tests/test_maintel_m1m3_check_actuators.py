@@ -26,9 +26,9 @@ import unittest
 import warnings
 
 from lsst.ts import salobj
+from lsst.ts.maintel.standardscripts.m1m3 import CheckActuators
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.maintel.m1m3 import CheckActuators
 from lsst.ts.xml.enums.MTM1M3 import BumpTest
 
 try:

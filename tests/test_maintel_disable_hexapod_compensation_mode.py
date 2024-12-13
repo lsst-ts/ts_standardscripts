@@ -24,7 +24,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.standardscripts.maintel.disable_hexapod_compensation_mode import (
+from lsst.ts.maintel.standardscripts.disable_hexapod_compensation_mode import (
     DisableHexapodCompensationMode,
 )
 

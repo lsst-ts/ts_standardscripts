@@ -22,7 +22,7 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.maintel import OfflineMTCS
+from lsst.ts.maintel.standardscripts import OfflineMTCS
 
 
 class TestOfflineMTCS(

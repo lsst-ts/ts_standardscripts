@@ -27,10 +27,10 @@ import unittest
 import numpy as np
 import yaml
 from lsst.ts import standardscripts
+from lsst.ts.maintel.standardscripts import CloseLoopLSSTCam
 from lsst.ts.observatory.control.maintel.lsstcam import LSSTCam, LSSTCamUsages
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.observatory.control.utils.enums import ClosedLoopMode
-from lsst.ts.standardscripts.maintel import CloseLoopLSSTCam
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 

@@ -27,7 +27,7 @@ import unittest
 import warnings
 
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.standardscripts.maintel.calibration import PowerOnTunableLaser
+from lsst.ts.maintel.standardscripts.calibration import PowerOnTunableLaser
 from lsst.ts.xml.enums.TunableLaser import LaserDetailedState
 
 # TODO: (DM-46168) Revert workaround for TunableLaser XML changes
