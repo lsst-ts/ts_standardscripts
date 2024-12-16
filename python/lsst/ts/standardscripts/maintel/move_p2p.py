@@ -147,15 +147,8 @@ class MoveP2P(BaseBlockScript):
 
         await self.configure_tcs()
 
-        for comp in getattr(config, "ignore", []):
-            if comp not in self.mtcs.components_attr:
-                self.log.warning(
-                    f"Component {comp} not in CSC Group. "
-                    f"Must be one of {self.mtcs.components_attr}. Ignoring."
-                )
-            else:
-                self.log.debug(f"Ignoring component {comp}.")
-                setattr(self.mtcs.check, comp, False)
+        if hasattr(config, "ignore"):
+            self.mtcs.disable_checks_for_components(components=config.ignore)
 
         await super().configure(config=config)
 
