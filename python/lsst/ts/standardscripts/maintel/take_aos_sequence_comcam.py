@@ -145,19 +145,8 @@ class TakeAOSSequenceComCam(BaseBlockScript):
         await self.configure_camera()
 
         if hasattr(config, "ignore"):
-            for comp in config.ignore:
-                if comp in self.mtcs.components_attr:
-                    self.log.debug(f"Ignoring MTCS component {comp}.")
-                    setattr(self.mtcs.check, comp, False)
-                elif comp in self.camera.components_attr:
-                    self.log.debug(f"Ignoring Camera component {comp}.")
-                    setattr(self.camera.check, comp, False)
-                else:
-                    self.log.warning(
-                        f"Component {comp} not in CSC Groups. "
-                        f"Must be one of {self.mtcs.components_attr} or "
-                        f"{self.camera.components_attr}. Ignoring."
-                    )
+            self.mtcs.disable_checks_for_components(components=config.ignore)
+            self.camera.disable_checks_for_components(components=config.ignore)
 
         # Set filter
         self.filter = config.filter
