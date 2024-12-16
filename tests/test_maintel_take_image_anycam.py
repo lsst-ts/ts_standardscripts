@@ -134,8 +134,9 @@ class TestTakeImageAnyCam(
             await self.configure_script(**config)
 
             # Asserting that component were ignored
-            assert self.script.mtcs.check.mtm1m3 is False
-            self.script.mtcs.check.no_comp.assert_not_called()
+            self.script.mtcs.disable_checks_for_components.assert_called_once_with(
+                components=config["ignore"]
+            )
 
     async def test_invalid_program_name(self):
         # Testing invalid program name
