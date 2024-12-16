@@ -56,19 +56,13 @@ class TestCloseMirrorCovers(
         await self.check_executable(script_path)
 
     async def test_configure_ignore(self):
-        async with self.make_script():
+        async with self.make_dry_script():
             components = ["mtptg"]
             await self.configure_script(ignore=components)
 
-            assert self.script.mtcs.check.mtptg is False
-
-    async def test_configure_ignore_not_csc_component(self):
-        async with self.make_script():
-            components = ["not_csc_comp", "mtptg"]
-            await self.configure_script(ignore=components)
-
-            assert hasattr(self.script.mtcs, "not_csc_comp") is False
-            assert self.script.mtcs.check.mtptg is False
+            self.script.mtcs.disable_checks_for_components.assert_called_once_with(
+                components=components
+            )
 
 
 if __name__ == "__main__":
