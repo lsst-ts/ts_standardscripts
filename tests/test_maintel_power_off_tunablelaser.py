@@ -27,7 +27,7 @@ import unittest
 import warnings
 
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.standardscripts.maintel.calibration import PowerOnTunableLaser
+from lsst.ts.standardscripts.maintel.calibration import PowerOffTunableLaser
 from lsst.ts.xml.enums.TunableLaser import LaserDetailedState
 
 # TODO: (DM-46168) Revert workaround for TunableLaser XML changes
@@ -46,14 +46,14 @@ random.seed(47)  # for set_random_lsst_dds_partition_prefix
 logging.basicConfig()
 
 
-class TestPowerOnTunableLaser(
+class TestPowerOffTunableLaser(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
     async def basic_make_script(self, index):
-        self.script = PowerOnTunableLaser(index=index)
+        self.script = PowerOffTunableLaser(index=index)
 
         self.laser_state = types.SimpleNamespace(
-            detailedState=LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
+            detailedState=LaserDetailedState.PROPAGATING_CONTINUOUS_MODE
         )
         self.optical_config_state = types.SimpleNamespace(
             configuration=LaserOpticalConfiguration.NO_SCU
@@ -75,9 +75,9 @@ class TestPowerOnTunableLaser(
         self.script.optical_configuration = optical_configuration
         self.script.wavelength = wavelength
 
-    async def mock_laser_start_propagate(self, *args, **kwargs):
+    async def mock_laser_stop_propagate(self, *args, **kwargs):
         self.laser_state = types.SimpleNamespace(
-            detailedState=LaserDetailedState.PROPAGATING_CONTINUOUS_MODE
+            detailedState=LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
         )
 
     async def configure_mocks(self):
@@ -98,7 +98,7 @@ class TestPowerOnTunableLaser(
         )
         self.script.mtcalsys.get_calibration_configuration = unittest.mock.MagicMock(
             return_value={
-                "laser_mode": LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE,
+                "laser_mode": LaserDetailedState.PROPAGATING_CONTINUOUS_MODE,
                 "optical_configuration": LaserOpticalConfiguration.SCU.name,
                 "wavelength": 500.0,
             }
@@ -115,53 +115,30 @@ class TestPowerOnTunableLaser(
                 "cont_mode",
             ]
         )
-        self.script.mtcalsys.laser_start_propagate = unittest.mock.AsyncMock(
-            side_effect=self.mock_laser_start_propagate
+        self.script.mtcalsys.laser_stop_propagate = unittest.mock.AsyncMock(
+            side_effect=self.mock_laser_stop_propagate
         )
-
-        # async def configure_mocks(self):
-        #     self.script.laser = unittest.mock.AsyncMock()
-        #     self.script.laser.start_task = utils.make_done_future()
-
-        #     # Configure mocks
 
         self.script.laser.configure_mock(
             **{
                 "evt_summaryState.aget.side_effect": self.mock_get_laser_summary_state,
-                "cmd_setOpticalConfiguration.set_start.side_effect": self.mock_set_optical_config,
-                "cmd_setContinuousMode.start.side_effect": self.mock_set_continuous_mode,
-                "cmd_startPropagateLaser.start.side_effect": self.mock_start_laser,
+                "cmd_startPropagateLaser.start.side_effect": self.mock_stop_laser,
             }
         )
 
     async def mock_get_laser_summary_state(self, **kwargs):
         return types.SimpleNamespace(summaryState=salobj.State.ENABLED)
 
-    async def mock_set_optical_config(self, **kwargs):
-        self.optical_config_state = types.SimpleNamespace(configuration="SCU")
-
-    async def mock_set_continuous_mode(self, **kwargs):
+    async def mock_stop_laser(self, **kwargs):
         self.laser_state = types.SimpleNamespace(
-            detailedState=LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
-        )
-
-    async def mock_start_laser(self, **kwargs):
-        self.laser_state = types.SimpleNamespace(
-            detailedState=LaserDetailedState.PROPAGATING_CONTINUOUS_MODE
+            detailedState=LaserDetailedState.NONROPAGATING_CONTINUOUS_MODE
         )
 
     async def test_configure(self):
         # Try to configure with only some of the optional parameters
         async with self.make_script():
-            mode = LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
-            optical_configuration = LaserOpticalConfiguration.SCU.name
-            wavelength = 500.0
 
             await self.configure_script()
-
-            assert self.script.laser_mode == mode
-            assert self.script.optical_configuration == optical_configuration
-            assert self.script.wavelength == wavelength
 
     async def test_run_without_failures(self):
         async with self.make_script():
@@ -175,17 +152,13 @@ class TestPowerOnTunableLaser(
             # Assert states are OK
             assert (
                 self.laser_state.detailedState
-                == LaserDetailedState.PROPAGATING_CONTINUOUS_MODE
+                == LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
             )
-            assert (
-                self.script.optical_configuration == LaserOpticalConfiguration.SCU.name
-            )
-            assert self.script.wavelength == 500.0
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()
         script_path = os.path.join(
-            scripts_dir, "maintel", "calibration", "power_on_tunablelaser.py"
+            scripts_dir, "maintel", "calibration", "power_off_tunablelaser.py"
         )
         await self.check_executable(script_path)
 
