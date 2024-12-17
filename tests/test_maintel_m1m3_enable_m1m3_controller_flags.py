@@ -35,8 +35,15 @@ class TestEnableM1M3SlewControllerFlags(
         self.script.mtcs = unittest.mock.AsyncMock()
         self.script.mtcs.start_task = utils.make_done_future()
         self.script.mtcs.set_m1m3_slew_controller_settings = unittest.mock.AsyncMock()
+        self.script.mtcs.configure_mock(
+            m1m3_in_engineering_mode=self.mock_m1m3_in_engineering_mode
+        )
 
         return (self.script,)
+
+    @contextlib.asynccontextmanager
+    async def mock_m1m3_in_engineering_mode(self):
+        yield
 
     @contextlib.asynccontextmanager
     async def make_dry_script(self):
