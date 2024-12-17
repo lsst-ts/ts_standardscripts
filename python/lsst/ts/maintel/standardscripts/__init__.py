@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -54,6 +54,7 @@ from .take_stuttered_lsstcam import *
 from .track_target import *
 from .track_target_and_take_image_comcam import *
 from .track_target_and_take_image_gencam import *
+from .utils import *
 
 try:
     from .version import *

@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the Vera Rubin Observatory.
 # This product includes software developed by the LSST Project

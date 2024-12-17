@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -26,6 +26,7 @@ import unittest
 
 from lsst.ts import standardscripts
 from lsst.ts.idl.enums.LaserTracker import LaserStatus
+from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.laser_tracker import ShutDown
 from lsst.ts.salobj import State
 
@@ -77,8 +78,8 @@ class TestShutDown(
             assert self.laser_status.status == LaserStatus.OFF
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "laser_tracker" / "shut_down.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "laser_tracker" / "shut_down.py"
         await self.check_executable(script_path)
 
 

@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -23,6 +23,7 @@ import contextlib
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.mtmount import UnparkMount
 
 
@@ -42,8 +43,8 @@ class TestUnparkMount(
             yield
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "mtmount" / "unpark_mount.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "mtmount" / "unpark_mount.py"
         await self.check_executable(script_path)
 
     async def test_configure_ignore(self):

@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -26,7 +26,7 @@ import unittest
 import pytest
 from lsst.ts import salobj, standardscripts, utils
 from lsst.ts.idl.enums.MTPtg import WrapStrategy
-from lsst.ts.maintel.standardscripts import TrackTarget
+from lsst.ts.maintel.standardscripts import TrackTarget, get_scripts_dir
 from lsst.ts.observatory.control import RotType
 from lsst.ts.xml.enums.MTPtg import Planets
 
@@ -339,8 +339,8 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
             self.assert_slew_fails()
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "track_target.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "track_target.py"
         await self.check_executable(script_path)
 
     def assert_slew_radec(self):

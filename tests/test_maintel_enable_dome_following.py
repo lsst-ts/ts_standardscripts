@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -22,6 +22,7 @@
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.mtdome import EnableDomeFollowing
 
 
@@ -33,6 +34,6 @@ class TestEnableDomeFollowing(
         return self.script
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "mtdome" / "enable_dome_following.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "mtdome" / "enable_dome_following.py"
         await self.check_executable(script_path)

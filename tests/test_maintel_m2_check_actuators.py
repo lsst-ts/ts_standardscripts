@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,8 +24,9 @@ import unittest
 
 import numpy as np
 from lsst.ts import salobj
+from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.m2 import CheckActuators
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
+from lsst.ts.standardscripts import BaseScriptTestCase
 
 # TODO: DM-41592 move constants from lsst.ts.m2com to ts-xml
 NUM_ACTUATOR = 78
@@ -204,7 +205,7 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
     async def test_executable(self):
         scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "m2" / "check_actuators.py"
+        script_path = scripts_dir / "m2" / "check_actuators.py"
         await self.check_executable(script_path)
 
 

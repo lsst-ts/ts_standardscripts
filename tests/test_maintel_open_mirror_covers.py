@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -23,7 +23,7 @@ import contextlib
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import OpenMirrorCovers
+from lsst.ts.maintel.standardscripts import OpenMirrorCovers, get_scripts_dir
 
 
 class TestOpenMirrorCovers(
@@ -51,8 +51,8 @@ class TestOpenMirrorCovers(
             self.script.mtcs.open_m1_cover.assert_awaited_once()
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "open_mirror_covers.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "open_mirror_covers.py"
         await self.check_executable(script_path)
 
     async def test_configure_ignore(self):

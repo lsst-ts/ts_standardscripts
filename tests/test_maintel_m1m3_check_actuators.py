@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -26,9 +26,10 @@ import unittest
 import warnings
 
 from lsst.ts import salobj
+from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.m1m3 import CheckActuators
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
+from lsst.ts.standardscripts import BaseScriptTestCase
 from lsst.ts.xml.enums.MTM1M3 import BumpTest
 
 try:
@@ -353,7 +354,7 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
     async def test_executable(self):
         scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "m1m3" / "check_actuators.py"
+        script_path = scripts_dir / "m1m3" / "check_actuators.py"
         await self.check_executable(script_path)
 
 

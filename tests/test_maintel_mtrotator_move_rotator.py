@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -22,6 +22,7 @@
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.mtrotator import MoveRotator
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
@@ -111,8 +112,8 @@ class TestMoveRotator(
             )
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "mtrotator" / "move_rotator.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "mtrotator" / "move_rotator.py"
         print(script_path)
         await self.check_executable(script_path)
 
