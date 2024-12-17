@@ -1,0 +1,2 @@
+fix unittest test_maintel_track_target_and_take_image_comcam.py
+to point to comcam script rather than auxtel one.
