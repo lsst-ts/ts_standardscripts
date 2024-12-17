@@ -23,10 +23,11 @@ import unittest
 
 import pytest
 from lsst.ts import salobj
+from lsst.ts.auxtel.standardscripts import get_scripts_dir
+from lsst.ts.auxtel.standardscripts.calibrations import RunCalibrationSequence
 from lsst.ts.observatory.control.auxtel.atcalsys import ATCalsys, ATCalsysUsages
 from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.auxtel.calibrations import RunCalibrationSequence
+from lsst.ts.standardscripts import BaseScriptTestCase
 
 
 class TestRunCalibrationSequence(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
@@ -60,7 +61,5 @@ class TestRunCalibrationSequence(BaseScriptTestCase, unittest.IsolatedAsyncioTes
 
     async def test_executable(self):
         scripts_dir = get_scripts_dir()
-        script_path = (
-            scripts_dir / "auxtel" / "calibrations" / "run_calibration_sequence.py"
-        )
+        script_path = scripts_dir / "calibrations" / "run_calibration_sequence.py"
         await self.check_executable(script_path)

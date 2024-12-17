@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -26,8 +26,9 @@ import types
 import unittest
 
 import pytest
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.auxtel.daytime_checkout import LatissCheckout
+from lsst.ts.auxtel.standardscripts import get_scripts_dir
+from lsst.ts.auxtel.standardscripts.daytime_checkout import LatissCheckout
+from lsst.ts.standardscripts import BaseScriptTestCase
 
 
 class TestLatissCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
@@ -46,7 +47,7 @@ class TestLatissCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
     async def test_executable(self):
         scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "daytime_checkout" / "latiss_checkout.py"
+        script_path = scripts_dir / "daytime_checkout" / "latiss_checkout.py"
         print(script_path)
         await self.check_executable(script_path)
 

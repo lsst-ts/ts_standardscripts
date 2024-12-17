@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -26,9 +26,10 @@ import types
 import unittest
 
 import pytest
+from lsst.ts.auxtel.standardscripts import get_scripts_dir
+from lsst.ts.auxtel.standardscripts.daytime_checkout import SlewAndTakeImageCheckout
 from lsst.ts.idl.enums.ATMCS import M3State
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.auxtel.daytime_checkout import SlewAndTakeImageCheckout
+from lsst.ts.standardscripts import BaseScriptTestCase
 
 
 class TestSlewAndTakeImageCheckout(
@@ -113,10 +114,7 @@ class TestSlewAndTakeImageCheckout(
     async def test_executable(self):
         scripts_dir = get_scripts_dir()
         script_path = (
-            scripts_dir
-            / "auxtel"
-            / "daytime_checkout"
-            / "slew_and_take_image_checkout.py"
+            scripts_dir / "daytime_checkout" / "slew_and_take_image_checkout.py"
         )
         print(script_path)
         await self.check_executable(script_path)

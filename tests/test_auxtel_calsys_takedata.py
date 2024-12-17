@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -27,8 +27,8 @@ import unittest
 import numpy as np
 import pytest
 from lsst.ts import salobj, standardscripts
+from lsst.ts.auxtel.standardscripts import CalSysTakeData, get_scripts_dir
 from lsst.ts.idl.enums import ATMonochromator, Script
-from lsst.ts.standardscripts.auxtel import CalSysTakeData
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -199,8 +199,8 @@ class TestATCalSysTakeData(
             assert self.grating_types == config.grating_types
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "calsys_takedata.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "calsys_takedata.py"
         await self.check_executable(script_path)
 
 

@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,8 +24,9 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.auxtel.standardscripts import get_scripts_dir
+from lsst.ts.auxtel.standardscripts.prepare_for import PrepareForOnSky
 from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
-from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForOnSky
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -79,8 +80,8 @@ class TestPrepareForOnSky(
             assert expected_warning_msg in script_logs.output
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "prepare_for" / "onsky.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "prepare_for" / "onsky.py"
         await self.check_executable(script_path)
 
 
