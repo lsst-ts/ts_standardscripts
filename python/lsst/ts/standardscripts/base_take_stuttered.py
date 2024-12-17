@@ -89,6 +89,16 @@ class BaseTakeStuttered(salobj.BaseScript, metaclass=abc.ABCMeta):
                 minimum: 1
                 type: integer
                 default: 100
+              change_focus:
+                description: Whether or not to change focus between shifts.
+                minimum: 0
+                type: boolean
+                default: False
+              focus_step:
+                description: Amount to shift focus if shift_focus is True.
+                minimum: 0
+                type: number
+                default: 0.025
               exp_time:
                 description: The exposure time (sec).
                 type: number
@@ -124,6 +134,9 @@ class BaseTakeStuttered(salobj.BaseScript, metaclass=abc.ABCMeta):
             * self.config.n_images
             * self.config.exp_time
         )
+    async def offset_hexapod(self, msg):
+        await self.checkpoint(msg)
+        await self.atcs.rem.ataos.cmd_offset.set_start(z=self.config.focus_step)
 
     async def run(self):
         note = getattr(self.config, "note", None)
@@ -134,13 +147,29 @@ class BaseTakeStuttered(salobj.BaseScript, metaclass=abc.ABCMeta):
         await self.camera.setup_instrument(**self.get_instrument_configuration())
 
         await self.checkpoint("Take stuttered")
+        if self.config.change_focus:
+            # Change moveWhileWhileExposing parameter to allow hexapod
+            # to move while shutter is open
+            await self.atcs.rem.ataos.cmd_disableCorrection.set_start(hexapod=True)
+            await atcs.rem.ataos.cmd_enableCorrection.set_start(hexapod=True, moveWhileExposing=True)
+
+        if self.config.change_focus:
+            checkpoint=self.offset_hexapod
+        else:
+            checkpoint=None
+
         await self.camera.take_stuttered(
             exptime=self.config.exp_time,
             n_shift=self.config.n_shift,
             row_shift=self.config.row_shift,
             n=self.config.n_images,
+            checkpoint=checkpoint,
             reason=reason,
             program=program,
             group_id=self.group_id,
             note=note,
         )
+        if self.config.change_focus:
+            # Put moveWhileExposing back to False
+            await self.atcs.rem.ataos.cmd_disableCorrection.set_start(hexapod=True)
+            await atcs.rem.ataos.cmd_enableCorrection.set_start(hexapod=True, moveWhileExposing=False)
