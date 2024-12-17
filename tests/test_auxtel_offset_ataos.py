@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,9 +24,9 @@ import unittest
 
 import pytest
 from lsst.ts import salobj
+from lsst.ts.auxtel.standardscripts import OffsetATAOS, get_scripts_dir
 from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.auxtel import OffsetATAOS
+from lsst.ts.standardscripts import BaseScriptTestCase
 
 
 class TestOffsetATAOS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
@@ -48,7 +48,7 @@ class TestOffsetATAOS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
     async def test_executable(self):
         scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "offset_ataos.py"
+        script_path = scripts_dir / "offset_ataos.py"
         self.log.debug(f"Checking for script in {script_path}")
         await self.check_executable(script_path)
 

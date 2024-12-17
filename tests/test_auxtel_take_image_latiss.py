@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -26,7 +26,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.standardscripts.auxtel import TakeImageLatiss
+from lsst.ts.auxtel.standardscripts import TakeImageLatiss, get_scripts_dir
 from lsst.ts.xml.enums import Script
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -224,8 +224,8 @@ class TestATCamTakeImage(
         )
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "take_image_latiss.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "take_image_latiss.py"
         await self.check_executable(script_path)
 
 

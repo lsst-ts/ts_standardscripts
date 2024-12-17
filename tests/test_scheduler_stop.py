@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -19,9 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from lsst.ts import salobj
+from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.idl.enums.Scheduler import SalIndex
-from lsst.ts.standardscripts import get_scripts_dir
 from lsst.ts.standardscripts.scheduler.stop import Stop
 from lsst.ts.standardscripts.scheduler.testutils import BaseSchedulerTestCase
 
@@ -34,42 +33,7 @@ class TestSchedulerBaseStop(BaseSchedulerTestCase):
         )
         return [self.script]
 
-    async def test_no_stop_default(self) -> None:
-        async with self.make_script(), self.make_controller(
-            initial_state=salobj.State.ENABLED, publish_initial_state=True
-        ):
-            await self.configure_script()
-            await self.run_script()
-
-            assert len(self.controller.abort_observations) == 1
-            assert not self.controller.abort_observations[0]
-
-    async def test_no_stop_explicit(self) -> None:
-        async with self.make_script(), self.make_controller(
-            initial_state=salobj.State.ENABLED, publish_initial_state=True
-        ):
-            await self.configure_script(stop=False)
-            await self.run_script()
-
-            assert len(self.controller.abort_observations) == 1
-            assert not self.controller.abort_observations[0]
-
-    async def test_stop(self) -> None:
-        async with self.make_script(), self.make_controller(
-            initial_state=salobj.State.ENABLED, publish_initial_state=True
-        ):
-            await self.configure_script(stop=True)
-            await self.run_script()
-
-            assert len(self.controller.abort_observations) == 1
-            assert self.controller.abort_observations[0]
-
-    async def test_auxtel_executable(self):
+    async def test_executable(self):
         scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "scheduler" / "stop.py"
-        await self.check_executable(script_path)
-
-    async def test_ocs_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "ocs" / "scheduler" / "stop.py"
+        script_path = scripts_dir / "scheduler" / "stop.py"
         await self.check_executable(script_path)

@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,8 +24,8 @@ import random
 import unittest
 
 from lsst.ts import salobj, standardscripts
+from lsst.ts.auxtel.standardscripts import EnableLATISS, get_scripts_dir
 from lsst.ts.observatory.control.mock import LATISSMock
-from lsst.ts.standardscripts.auxtel import EnableLATISS
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -64,8 +64,8 @@ class TestEnableLATISS(
                     )
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "enable_latiss.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "enable_latiss.py"
         await self.check_executable(script_path)
 
 

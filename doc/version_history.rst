@@ -1,6 +1,6 @@
-.. py:currentmodule:: lsst.ts.standardscripts
+.. py:currentmodule:: lsst.ts.auxtel.standardscripts
 
-.. _lsst.ts.standardscripts.version_history:
+.. _lsst.ts.auxtel.standardscripts.version_history:
 
 ===============
 Version History

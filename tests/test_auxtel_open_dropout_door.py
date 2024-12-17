@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -25,7 +25,8 @@ import unittest
 
 import pytest
 from lsst.ts import standardscripts
-from lsst.ts.standardscripts.auxtel.atdome import OpenDropoutDoor
+from lsst.ts.auxtel.standardscripts import get_scripts_dir
+from lsst.ts.auxtel.standardscripts.atdome import OpenDropoutDoor
 
 
 class TestOpenDropoutDoor(
@@ -110,6 +111,6 @@ class TestOpenDropoutDoor(
             self.script.atcs.open_dropout_door.assert_awaited_once()
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "atdome" / "open_dropout_door.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "atdome" / "open_dropout_door.py"
         await self.check_executable(script_path)

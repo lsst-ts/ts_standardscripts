@@ -1,6 +1,0 @@
-setupRequired(sconsUtils)
-setupRequired(ts_salobj)
-setupRequired(ts_utils)
-setupRequired(ts_observatory_control)
-
-envPrepend(PYTHONPATH, ${PRODUCT_DIR}/python)
