@@ -22,47 +22,35 @@
 import asyncio
 
 import yaml
-from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.observatory.control.maintel import MTCS
 from lsst.ts.salobj import type_hints
+from lsst.ts.standardscripts import BaseBlockScript
+from lsst.ts.standardscripts.utils import format_grid
 
-from ..base_block_script import BaseBlockScript
-from ..utils import format_grid
 
+class DummyBlockScript(BaseBlockScript):
+    """This script replaces the maintel MoveP2P, which was used
+     a test bed to extend BaseBlockScript.
+       minimal stand-in for MoveP2P that extends BaseBlockScript.
 
-class MoveP2P(BaseBlockScript):
-    """Move Telescope using point to point trajectory instead of traditional
-    slew/tracking.
+    This script mimics the essential interface needed by the
+    core tests, such as `move_p2p_radec` used in MoveP2P. Which
+    now lives in ts_maintel_standardscripts
     """
 
-    def __init__(self, index: int) -> None:
-        super().__init__(index, descr="Move Telescope using point to point trajectory.")
-
-        self.mtcs = None
+    def __init__(self, index=None):
+        super().__init__(index=index, descr="Dummy block script")
+        self.mtcs = None  # Will be mocked in the tests
         self.grid = dict()
         self.pause_for = 0.0
-        # A guess to average slew time.
         self.slew_time_average_guess = 15.0
         self.move_timeout = 120.0
-
-    async def configure_tcs(self) -> None:
-        """Handle creating MTCS object and waiting for remote to start."""
-        if self.mtcs is None:
-            self.log.debug("Creating MTCS.")
-            self.mtcs = MTCS(
-                domain=self.domain,
-                log=self.log,
-            )
-            await self.mtcs.start_task
-        else:
-            self.log.debug("MTCS already defined, skipping.")
 
     @classmethod
     def get_schema(cls):
         schema_yaml = """
         $schema: http://json-schema.org/draft-07/schema#
-        $id: https://github.com/lsst-ts/ts_standardscripts/maintel/move_p2p.py
-        title: MoveP2P v1
+        $id: https://github.com/lsst-ts/ts_standardscripts/dummy_block_script.py
+        title: DummyBlockScript v1
         description: Configuration for BaseTrackTarget.
         type: object
         additionalProperties: false
@@ -101,13 +89,6 @@ class MoveP2P(BaseBlockScript):
                     between positions (in seconds).
                 type: number
                 default: 0.0
-            ignore:
-                description: >-
-                    CSCs from the group to ignore in status check. Name must
-                    match those in self.group.components, e.g.; hexapod_1.
-                type: array
-                items:
-                    type: string
             move_timeout:
                 description: Timeout for move command.
                 type: number
@@ -145,18 +126,6 @@ class MoveP2P(BaseBlockScript):
         self.pause_for = config.pause_for
         self.move_timeout = config.move_timeout
 
-        await self.configure_tcs()
-
-        for comp in getattr(config, "ignore", []):
-            if comp not in self.mtcs.components_attr:
-                self.log.warning(
-                    f"Component {comp} not in CSC Group. "
-                    f"Must be one of {self.mtcs.components_attr}. Ignoring."
-                )
-            else:
-                self.log.debug(f"Ignoring component {comp}.")
-                setattr(self.mtcs.check, comp, False)
-
         await super().configure(config=config)
 
     def set_metadata(self, metadata: type_hints.BaseMsgType) -> None:
@@ -167,55 +136,23 @@ class MoveP2P(BaseBlockScript):
         )
 
     async def run_block(self):
-        """Execute script operations."""
-
-        if "azel" in self.grid:
-            grid_size = len(self.grid["azel"]["az"])
-            for i, az, el in zip(
-                range(grid_size), self.grid["azel"]["az"], self.grid["azel"]["el"]
-            ):
-                await self.checkpoint(
-                    f"{self.checkpoint_message}: azel grid {az}/{el} {i+1}/{grid_size}"
-                )
-                self.log.info(f"Moving telescope to {az=},{el=}.")
-                async with self.test_case_step():
-                    await self.mtcs.move_p2p_azel(
-                        az=az,
-                        el=el,
-                        timeout=self.move_timeout,
-                    )
-                self.log.info(f"Pausing for {self.pause_for}s.")
-                await asyncio.sleep(self.pause_for)
-
+        """Implement the abstract method to mimic movement calls."""
+        # For the dummy script, we'll mimic RA/Dec moves if defined
         if "radec" in self.grid:
-            grid_size = len(self.grid["radec"]["ra"])
-            for i, ra, dec in zip(
-                range(grid_size), self.grid["radec"]["ra"], self.grid["radec"]["dec"]
-            ):
+            ra_list = self.grid["radec"]["ra"]
+            dec_list = self.grid["radec"]["dec"]
+            grid_size = len(ra_list)
+            for i, (ra_val, dec_val) in enumerate(zip(ra_list, dec_list), start=1):
                 await self.checkpoint(
-                    f"{self.checkpoint_message}: radec grid {ra}/{dec} {i+1}/{grid_size}"
+                    f"{self.checkpoint_message}: radec grid {ra_val}/{dec_val} {i}/{grid_size}"
                 )
-                self.log.info(f"Moving telescope to {ra=},{dec=}.")
+                # We'll call the dummy movement method
                 async with self.test_case_step():
-                    await self.mtcs.move_p2p_radec(
-                        ra=ra,
-                        dec=dec,
-                        timeout=self.move_timeout,
+                    await self.dummy_move_radec(
+                        ra=ra_val, dec=dec_val, timeout=self.move_timeout
                     )
-                self.log.info(f"Pausing for {self.pause_for}s.")
                 await asyncio.sleep(self.pause_for)
 
-    async def cleanup(self):
-        if self.state.state != ScriptState.ENDING:
-            # abnormal termination
-            self.log.warning(
-                f"Terminating with state={self.state.state}: stop telescope."
-            )
-            try:
-                await self.mtcs.rem.mtmount.cmd_stop.start(
-                    timeout=self.mtcs.long_timeout
-                )
-            except asyncio.TimeoutError:
-                self.log.exception("Stop command timed out during cleanup procedure.")
-            except Exception:
-                self.log.exception("Unexpected exception while stopping telescope.")
+    async def dummy_move_radec(self, *, ra, dec, timeout=None):
+        """A dummy method to simulate a RA/Dec move for testing."""
+        await self.mtcs.dummy_move_radec(ra=ra, dec=dec, timeout=timeout)

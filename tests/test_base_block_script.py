@@ -25,17 +25,17 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.standardscripts.maintel import MoveP2P
+from lsst.ts.standardscripts.dummy_block_script import DummyBlockScript
 from lsst.ts.utils import ImageNameServiceClient
 
 
 class TestBaseBlockScript(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
-    """Test BaseBlockScript using the MoveP2P script."""
+    """Test BaseBlockScript using the DummyBlockScript script."""
 
     async def basic_make_script(self, index):
-        self.script = MoveP2P(index=index)
+        self.script = DummyBlockScript(index=index)
 
         return (self.script,)
 
@@ -235,7 +235,7 @@ class TestBaseBlockScript(
             assert self.script.test_case is None
             assert (
                 self.script.checkpoint_message
-                == "MoveP2P BLOCK-123 202306060001 SITCOM-321"
+                == "DummyBlockScript BLOCK-123 202306060001 SITCOM-321"
             )
 
     @unittest.mock.patch(
@@ -272,7 +272,7 @@ class TestBaseBlockScript(
             assert "project" not in self.script.test_case
             assert (
                 self.script.checkpoint_message
-                == "MoveP2P BLOCK-123 202306060001 SITCOM-321"
+                == "DummyBlockScript BLOCK-123 202306060001 SITCOM-321"
             )
 
     @unittest.mock.patch(
@@ -311,7 +311,7 @@ class TestBaseBlockScript(
             assert "project" not in self.script.test_case
             assert (
                 self.script.checkpoint_message
-                == "MoveP2P BLOCK-123 202306060001 SITCOM-321"
+                == "DummyBlockScript BLOCK-123 202306060001 SITCOM-321"
             )
 
     @unittest.mock.patch(
@@ -350,7 +350,7 @@ class TestBaseBlockScript(
             assert self.script.test_case["project"] == test_case["project"]
             assert (
                 self.script.checkpoint_message
-                == "MoveP2P BLOCK-123 202306060001 SITCOM-321"
+                == "DummyBlockScript BLOCK-123 202306060001 SITCOM-321"
             )
 
     @unittest.mock.patch.dict(os.environ, {"LSST_SITE": "summit"})
@@ -423,7 +423,7 @@ class TestBaseBlockScript(
             assert self.script.test_case["project"] == test_case["project"]
             assert (
                 self.script.checkpoint_message
-                == "MoveP2P BLOCK-T123 202306060001 SITCOM-321"
+                == "DummyBlockScript BLOCK-T123 202306060001 SITCOM-321"
             )
 
     async def test_run_no_test_case(self):
@@ -452,7 +452,7 @@ class TestBaseBlockScript(
                 unittest.mock.call(ra=_ra, dec=_dec, timeout=timeout)
                 for _ra, _dec in zip(ra, dec)
             ]
-            self.script.mtcs.move_p2p_radec.assert_has_awaits(expected_calls)
+            self.script.mtcs.dummy_move_radec.assert_has_awaits(expected_calls)
 
             assert not self.script.evt_largeFileObjectAvailable.has_data
 
@@ -492,7 +492,7 @@ class TestBaseBlockScript(
                 unittest.mock.call(ra=_ra, dec=_dec, timeout=timeout)
                 for _ra, _dec in zip(ra, dec)
             ]
-            self.script.mtcs.move_p2p_radec.assert_has_awaits(expected_calls)
+            self.script.mtcs.dummy_move_radec.assert_has_awaits(expected_calls)
 
             assert len(self.script.step_results) == len(ra)
             assert self.script.evt_largeFileObjectAvailable.has_data
@@ -520,7 +520,7 @@ class TestBaseBlockScript(
             )
             self.script.mtcs.configure_mock(
                 **{
-                    "move_p2p_radec.side_effect": [
+                    "dummy_move_radec.side_effect": [
                         None,
                         RuntimeError("Something went wrong."),
                     ]
@@ -553,7 +553,7 @@ class TestBaseBlockScript(
                 for _ra, _dec in zip(ra, dec)
             ]
             expected_calls.pop(-1)
-            self.script.mtcs.move_p2p_radec.assert_has_awaits(expected_calls)
+            self.script.mtcs.dummy_move_radec.assert_has_awaits(expected_calls)
 
             assert len(self.script.step_results) == len(ra) - 1
             assert self.script.evt_largeFileObjectAvailable.has_data

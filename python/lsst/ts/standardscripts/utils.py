@@ -33,6 +33,7 @@ import os
 import pathlib
 import re
 import warnings
+from typing import Optional
 
 import numpy as np
 from lsst.ts import salobj
@@ -46,7 +47,7 @@ S3_INSTANCES = dict(
 )
 
 
-def get_scripts_dir():
+def get_scripts_dir(file_path: Optional[str] = None):
     """Get the absolute path to the scripts directory.
 
     Returns
@@ -55,7 +56,10 @@ def get_scripts_dir():
         Absolute path to the specified scripts directory.
 
     """
-    return pathlib.Path(__file__).resolve().parent / "data" / "scripts"
+    if file_path is None:
+        return pathlib.Path(__file__).resolve().parent / "data" / "scripts"
+    else:
+        return pathlib.Path(file_path).resolve().parent / "data" / "scripts"
 
 
 def get_s3_bucket() -> salobj.AsyncS3Bucket:
