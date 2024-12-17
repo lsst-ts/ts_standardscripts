@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -22,6 +22,7 @@
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.m1m3 import RaiseM1M3
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
@@ -72,8 +73,8 @@ class TestRaiseM1M3(
             )
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "m1m3" / "raise_m1m3.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "m1m3" / "raise_m1m3.py"
         print(script_path)
         await self.check_executable(script_path)
 

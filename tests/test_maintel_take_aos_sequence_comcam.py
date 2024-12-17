@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -25,7 +25,7 @@ from unittest.mock import patch
 
 from lsst.ts import standardscripts
 from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.maintel.standardscripts import Mode, TakeAOSSequenceComCam
+from lsst.ts.maintel.standardscripts import Mode, TakeAOSSequenceComCam, get_scripts_dir
 from lsst.ts.observatory.control.maintel.comcam import ComCam, ComCamUsages
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.utils import index_generator
@@ -259,8 +259,8 @@ class TestTakeAOSSequenceComCam(
 
     async def test_executable_lsstcam(self) -> None:
         """Test that the script is executable."""
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "take_aos_sequence_comcam.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "take_aos_sequence_comcam.py"
         await self.check_executable(script_path)
 
 

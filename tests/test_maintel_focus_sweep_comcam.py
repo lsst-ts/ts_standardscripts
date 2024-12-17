@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,6 +24,7 @@ import unittest.mock as mock
 
 import pytest
 from lsst.ts import salobj, standardscripts
+from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.focus_sweep_comcam import FocusSweepComCam
 
 
@@ -297,6 +298,6 @@ class TestFocusSweepComCam(
             )
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "focus_sweep_comcam.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "focus_sweep_comcam.py"
         await self.check_executable(script_path)

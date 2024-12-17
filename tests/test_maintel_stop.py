@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -25,7 +25,7 @@ import unittest
 
 import pytest
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import Stop
+from lsst.ts.maintel.standardscripts import Stop, get_scripts_dir
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -48,8 +48,8 @@ class TestStartup(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
                 await self.run_script()
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "stop.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "stop.py"
         await self.check_executable(script_path)
 
 

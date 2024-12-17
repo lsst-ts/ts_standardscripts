@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,7 +24,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.maintel.standardscripts import MoveP2P
+from lsst.ts.maintel.standardscripts import MoveP2P, get_scripts_dir
 
 
 class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
@@ -359,6 +359,6 @@ class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
             self.script.mtcs.move_p2p_radec.assert_has_awaits(expected_calls)
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "move_p2p.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "move_p2p.py"
         await self.check_executable(script_path)

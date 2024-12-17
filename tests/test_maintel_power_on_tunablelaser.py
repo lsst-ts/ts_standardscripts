@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -27,6 +27,7 @@ import unittest
 import warnings
 
 from lsst.ts import salobj, standardscripts, utils
+from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.calibration import PowerOnTunableLaser
 from lsst.ts.xml.enums.TunableLaser import LaserDetailedState
 
@@ -197,9 +198,9 @@ class TestPowerOnTunableLaser(
             assert self.script.wavelength == 500.0
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
+        scripts_dir = get_scripts_dir()
         script_path = os.path.join(
-            scripts_dir, "maintel", "calibration", "power_on_tunablelaser.py"
+            scripts_dir, "calibration", "power_on_tunablelaser.py"
         )
         await self.check_executable(script_path)
 

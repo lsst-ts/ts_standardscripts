@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -23,7 +23,11 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.maintel.standardscripts import CameraSetup, TakeImageAnyCam
+from lsst.ts.maintel.standardscripts import (
+    CameraSetup,
+    TakeImageAnyCam,
+    get_scripts_dir,
+)
 
 
 class TestTakeImageAnyCam(
@@ -418,6 +422,6 @@ class TestTakeImageAnyCam(
                     await self.validate_camera_configuration(cam_config, cam_key)
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "take_image_anycam.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "take_image_anycam.py"
         await self.check_executable(script_path)

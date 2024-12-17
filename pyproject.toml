@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ts_maintel_standardscripts"
-description = "Auxiliary telescope specific standard SAL scripts for LSST observing with the script queue."
+description = "Main telescope specific standard SAL scripts for LSST observing with the script queue."
 license = { text = "GPL" }
 classifiers = [ "Programming Language :: Python :: 3" ]
 urls = { documentation = "https://ts-maintel-standardscripts.lsst.io", repository = "https://github.com/lsst-ts/ts_maintel_standardscripts" }

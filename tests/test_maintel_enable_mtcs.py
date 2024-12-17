@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -22,7 +22,7 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import EnableMTCS
+from lsst.ts.maintel.standardscripts import EnableMTCS, get_scripts_dir
 
 
 class TestEnableMTCS(
@@ -34,8 +34,8 @@ class TestEnableMTCS(
         return (self.script,)
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "enable_mtcs.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "enable_mtcs.py"
         await self.check_executable(script_path)
 
 

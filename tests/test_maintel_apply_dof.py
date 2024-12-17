@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -25,7 +25,7 @@ import unittest
 
 import numpy as np
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import ApplyDOF
+from lsst.ts.maintel.standardscripts import ApplyDOF, get_scripts_dir
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.observatory.control.utils.enums import DOFName
 
@@ -98,8 +98,8 @@ class TestApplyDOF(
             self.script.mtcs.rem.mtaos.cmd_offsetDOF.start.assert_awaited_once()
 
     async def test_executable(self) -> None:
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "apply_dof.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "apply_dof.py"
         await self.check_executable(script_path)
 
 

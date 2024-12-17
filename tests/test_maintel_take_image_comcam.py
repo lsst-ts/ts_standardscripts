@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,7 +24,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.maintel.standardscripts import TakeImageComCam
+from lsst.ts.maintel.standardscripts import TakeImageComCam, get_scripts_dir
 from lsst.ts.xml.enums import Script
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -181,14 +181,14 @@ class TestTakeImageComCam(
 
     async def test_executable_comcam(self):
         """Test that the script is executable for ComCam."""
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "take_image_comcam.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "take_image_comcam.py"
         await self.check_executable(script_path)
 
     async def test_executable_lsstcam(self) -> None:
         """Test that the script is executable for LSSTCam."""
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "take_image_lsstcam.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "take_image_lsstcam.py"
         await self.check_executable(script_path)
 
 

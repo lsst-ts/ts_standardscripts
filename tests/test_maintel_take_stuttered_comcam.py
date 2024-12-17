@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -23,7 +23,7 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import TakeStutteredComCam
+from lsst.ts.maintel.standardscripts import TakeStutteredComCam, get_scripts_dir
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -36,8 +36,8 @@ class TestTakeStutteredComCam(
         return self.script
 
     async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "take_stuttered_comcam.py"
+        scripts_dir = get_scripts_dir()
+        script_path = scripts_dir / "take_stuttered_comcam.py"
         await self.check_executable(script_path)
 
 

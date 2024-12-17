@@ -2,7 +2,7 @@
 ts_maintel_standardscripts
 ##################
 
-Standard SAL scripts for operating the LSST via the `lsst.ts.scriptqueue.ScriptQueue`.
+Main Telescope Standard SAL scripts for operating the LSST via the `lsst.ts.scriptqueue.ScriptQueue`.
 Each script is a subclass of `lsst.ts.scriptqueue.ScriptBase`.
 
 `Documentation <https://ts-maintel-standardscripts.lsst.io>`_
