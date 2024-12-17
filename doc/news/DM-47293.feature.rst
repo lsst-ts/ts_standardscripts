@@ -1,0 +1,4 @@
+`ts_standard_scripts` updated to retain only core
+functionality, with maintel and auxiliary telescope
+logic split out to `ts_maintel_standardscripts` and
+`ts_auxtel_standardscripts` repos respectively.
