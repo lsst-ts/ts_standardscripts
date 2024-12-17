@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.detector_characterization import ATGetStdFlatDataset
+from lsst.ts.auxtel.standardscripts.detector_characterization import ATGetStdFlatDataset
 
 asyncio.run(ATGetStdFlatDataset.amain())

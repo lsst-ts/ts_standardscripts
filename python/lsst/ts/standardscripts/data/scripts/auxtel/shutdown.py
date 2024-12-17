@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import Shutdown
+from lsst.ts.auxtel.standardscripts import Shutdown
 
 asyncio.run(Shutdown.amain())

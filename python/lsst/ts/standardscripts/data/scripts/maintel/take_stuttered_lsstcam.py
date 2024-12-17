@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import TakeStutteredLSSTCam
+from lsst.ts.maintel.standardscripts import TakeStutteredLSSTCam
 
 asyncio.run(TakeStutteredLSSTCam.amain())

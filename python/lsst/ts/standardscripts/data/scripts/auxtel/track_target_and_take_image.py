@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import TrackTargetAndTakeImage
+from lsst.ts.auxtel.standardscripts import TrackTargetAndTakeImage
 
 asyncio.run(TrackTargetAndTakeImage.amain())

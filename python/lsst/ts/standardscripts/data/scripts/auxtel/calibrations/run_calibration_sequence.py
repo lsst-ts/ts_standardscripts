@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.calibrations.run_calibration_sequence import (
+from lsst.ts.auxtel.standardscripts.calibrations.run_calibration_sequence import (
     RunCalibrationSequence,
 )
 

@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import TakeImageAnyCam
+from lsst.ts.maintel.standardscripts import TakeImageAnyCam
 
 asyncio.run(TakeImageAnyCam.amain())

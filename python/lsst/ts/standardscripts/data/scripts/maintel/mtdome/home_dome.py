@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.mtdome import HomeDome
+from lsst.ts.maintel.standardscripts.mtdome import HomeDome
 
 asyncio.run(HomeDome.amain())

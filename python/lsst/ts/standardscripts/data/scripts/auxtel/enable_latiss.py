@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import EnableLATISS
+from lsst.ts.auxtel.standardscripts import EnableLATISS
 
 asyncio.run(EnableLATISS.amain())

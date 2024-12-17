@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.mtdome import SlewDome
+from lsst.ts.maintel.standardscripts.mtdome import SlewDome
 
 asyncio.run(SlewDome.amain())

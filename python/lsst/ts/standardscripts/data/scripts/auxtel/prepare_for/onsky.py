@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForOnSky
+from lsst.ts.auxtel.standardscripts.prepare_for import PrepareForOnSky
 
 asyncio.run(PrepareForOnSky.amain())

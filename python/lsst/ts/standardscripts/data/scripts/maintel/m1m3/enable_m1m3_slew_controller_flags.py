@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.m1m3 import EnableM1M3SlewControllerFlags
+from lsst.ts.maintel.standardscripts.m1m3 import EnableM1M3SlewControllerFlags
 
 asyncio.run(EnableM1M3SlewControllerFlags.amain())

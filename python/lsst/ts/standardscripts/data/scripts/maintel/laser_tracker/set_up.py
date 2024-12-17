@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.laser_tracker import SetUp
+from lsst.ts.maintel.standardscripts.laser_tracker import SetUp
 
 asyncio.run(SetUp.amain())

@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.daytime_checkout import SlewAndTakeImageCheckout
+from lsst.ts.auxtel.standardscripts.daytime_checkout import SlewAndTakeImageCheckout
 
 asyncio.run(SlewAndTakeImageCheckout.amain())

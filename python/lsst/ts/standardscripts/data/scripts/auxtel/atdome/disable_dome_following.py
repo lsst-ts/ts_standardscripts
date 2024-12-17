@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.atdome import DisableDomeFollowing
+from lsst.ts.auxtel.standardscripts.atdome import DisableDomeFollowing
 
 asyncio.run(DisableDomeFollowing.amain())

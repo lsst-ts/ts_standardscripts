@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.calibration import PowerOffTunableLaser
+from lsst.ts.maintel.standardscripts.calibration import PowerOffTunableLaser
 
 asyncio.run(PowerOffTunableLaser.amain())

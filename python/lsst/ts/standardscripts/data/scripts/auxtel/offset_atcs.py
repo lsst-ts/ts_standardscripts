@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import OffsetATCS
+from lsst.ts.auxtel.standardscripts import OffsetATCS
 
 asyncio.run(OffsetATCS.amain())

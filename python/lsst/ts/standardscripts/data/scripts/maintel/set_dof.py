@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import SetDOF
+from lsst.ts.maintel.standardscripts import SetDOF
 
 asyncio.run(SetDOF.amain())

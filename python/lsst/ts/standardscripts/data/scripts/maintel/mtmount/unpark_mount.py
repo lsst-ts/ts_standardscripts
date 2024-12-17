@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.mtmount import UnparkMount
+from lsst.ts.maintel.standardscripts.mtmount import UnparkMount
 
 asyncio.run(UnparkMount.amain())

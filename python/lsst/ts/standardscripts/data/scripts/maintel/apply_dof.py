@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import ApplyDOF
+from lsst.ts.maintel.standardscripts import ApplyDOF
 
 asyncio.run(ApplyDOF.amain())

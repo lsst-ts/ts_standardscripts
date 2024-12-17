@@ -21,6 +21,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.m2 import CheckActuators
+from lsst.ts.maintel.standardscripts.m2 import CheckActuators
 
 asyncio.run(CheckActuators.amain())

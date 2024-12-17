@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import OfflineLATISS
+from lsst.ts.auxtel.standardscripts import OfflineLATISS
 
 asyncio.run(OfflineLATISS.amain())

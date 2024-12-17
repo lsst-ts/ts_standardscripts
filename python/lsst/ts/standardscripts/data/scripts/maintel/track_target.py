@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import TrackTarget
+from lsst.ts.maintel.standardscripts import TrackTarget
 
 asyncio.run(TrackTarget.amain())

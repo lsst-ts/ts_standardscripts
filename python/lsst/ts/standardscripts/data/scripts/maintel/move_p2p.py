@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import MoveP2P
+from lsst.ts.maintel.standardscripts import MoveP2P
 
 asyncio.run(MoveP2P.amain())

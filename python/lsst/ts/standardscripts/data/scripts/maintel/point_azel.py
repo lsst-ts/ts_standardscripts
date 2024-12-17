@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import PointAzEl
+from lsst.ts.maintel.standardscripts import PointAzEl
 
 asyncio.run(PointAzEl.amain())

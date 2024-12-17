@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.atdome import OpenDropoutDoor
+from lsst.ts.auxtel.standardscripts.atdome import OpenDropoutDoor
 
 asyncio.run(OpenDropoutDoor.amain())

@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.mtdome import ParkDome
+from lsst.ts.maintel.standardscripts.mtdome import ParkDome
 
 asyncio.run(ParkDome.amain())

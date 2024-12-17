@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.stop_tracking import StopTracking
+from lsst.ts.maintel.standardscripts.stop_tracking import StopTracking
 
 asyncio.run(StopTracking.amain())

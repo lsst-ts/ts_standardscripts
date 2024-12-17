@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import TakeAOSSequenceComCam
+from lsst.ts.maintel.standardscripts import TakeAOSSequenceComCam
 
 asyncio.run(TakeAOSSequenceComCam.amain())

@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import EnableComCam
+from lsst.ts.maintel.standardscripts import EnableComCam
 
 asyncio.run(EnableComCam.amain())

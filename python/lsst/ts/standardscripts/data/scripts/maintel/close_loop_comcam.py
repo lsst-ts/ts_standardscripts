@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import CloseLoopComCam
+from lsst.ts.maintel.standardscripts import CloseLoopComCam
 
 asyncio.run(CloseLoopComCam.amain())

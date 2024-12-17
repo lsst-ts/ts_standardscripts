@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import FocusSweepLatiss
+from lsst.ts.auxtel.standardscripts import FocusSweepLatiss
 
 asyncio.run(FocusSweepLatiss.amain())

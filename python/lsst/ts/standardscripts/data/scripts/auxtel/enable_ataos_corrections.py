@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import EnableATAOSCorrections
+from lsst.ts.auxtel.standardscripts import EnableATAOSCorrections
 
 asyncio.run(EnableATAOSCorrections.amain())

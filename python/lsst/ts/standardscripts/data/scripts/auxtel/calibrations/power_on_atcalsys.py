@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.calibrations import PowerOnATCalSys
+from lsst.ts.auxtel.standardscripts.calibrations import PowerOnATCalSys
 
 asyncio.run(PowerOnATCalSys.amain())

@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import EnableHexapodCompensationMode
+from lsst.ts.maintel.standardscripts import EnableHexapodCompensationMode
 
 asyncio.run(EnableHexapodCompensationMode.amain())

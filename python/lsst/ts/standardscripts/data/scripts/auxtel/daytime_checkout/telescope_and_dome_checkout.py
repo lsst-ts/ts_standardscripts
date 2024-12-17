@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.daytime_checkout import TelescopeAndDomeCheckout
+from lsst.ts.auxtel.standardscripts.daytime_checkout import TelescopeAndDomeCheckout
 
 asyncio.run(TelescopeAndDomeCheckout.amain())

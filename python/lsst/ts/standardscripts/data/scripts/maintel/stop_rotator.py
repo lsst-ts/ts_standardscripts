@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.stop_rotator import StopRotator
+from lsst.ts.maintel.standardscripts.stop_rotator import StopRotator
 
 asyncio.run(StopRotator.amain())

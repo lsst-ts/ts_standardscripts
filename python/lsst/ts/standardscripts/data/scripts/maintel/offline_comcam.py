@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import OfflineComCam
+from lsst.ts.maintel.standardscripts import OfflineComCam
 
 asyncio.run(OfflineComCam.amain())

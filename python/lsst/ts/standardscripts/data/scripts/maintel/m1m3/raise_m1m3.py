@@ -22,6 +22,6 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.m1m3 import RaiseM1M3
+from lsst.ts.maintel.standardscripts.m1m3 import RaiseM1M3
 
 asyncio.run(RaiseM1M3.amain())
