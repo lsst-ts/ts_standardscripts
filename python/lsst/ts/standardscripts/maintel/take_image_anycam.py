@@ -296,33 +296,17 @@ class TakeImageAnyCam(BaseBlockScript):
 
         # Initialize MTCS if not already done
         if self.mtcs is None:
-            self.log.debug("Creating MTCS.")
             self.mtcs = MTCS(domain=self.domain, log=self.log)
-            if hasattr(self.config, "ignore"):
-                self.ignore_components(config)
             await self.mtcs.start_task
-        else:
-            # Ignoring components if already defined (for unit test)
-            if hasattr(self.config, "ignore"):
-                self.ignore_components(config)
-            self.log.debug("MTCS already defined, skipping.")
+
+        # Ignoring components
+        if hasattr(self.config, "ignore"):
+            self.mtcs.disable_checks_for_components(components=config.ignore)
 
         # Initialize cameras and set configuration
         await self.configure_cameras(config)
 
         await super().configure(config=config)
-
-    def ignore_components(self, config):
-
-        for comp in self.config.ignore:
-            if comp not in self.mtcs.components_attr:
-                self.log.warning(
-                    f"Component {comp} not in CSC Group. "
-                    f"Must be one of {self.mtcs.components_attr}. "
-                )
-            else:
-                self.log.debug(f"Ignoring component {comp}.")
-                setattr(self.mtcs.check, comp, False)
 
     async def configure_cameras(self, config):
         """Configure all cameras based on the script configuration,

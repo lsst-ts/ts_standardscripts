@@ -47,7 +47,7 @@ class PrepareForOnSky(salobj.BaseScript):
 
         self.config = None
 
-        self.attcs = None
+        self.atcs = None
         self.latiss = None
 
     @classmethod
@@ -72,11 +72,11 @@ class PrepareForOnSky(salobj.BaseScript):
     async def configure(self, config):
         # This script does not require any configuration
 
-        if self.attcs is None:
-            self.attcs = ATCS(
+        if self.atcs is None:
+            self.atcs = ATCS(
                 self.domain, intended_usage=ATCSUsages.StartUp, log=self.log
             )
-            await self.attcs.start_task
+            await self.atcs.start_task
 
         if self.latiss is None:
             self.latiss = LATISS(
@@ -85,31 +85,17 @@ class PrepareForOnSky(salobj.BaseScript):
             await self.latiss.start_task
 
         if hasattr(config, "ignore"):
-            for comp in config.ignore:
-                if (
-                    comp not in self.attcs.components_attr
-                    and comp not in self.latiss.components_attr
-                ):
-                    self.log.warning(
-                        f"Component {comp} not in CSC Group. "
-                        f"Must be one of {self.attcs.components_attr} or "
-                        f"{self.latiss.components_attr}. Ignoring."
-                    )
-                elif comp in self.attcs.components_attr:
-                    self.log.debug(f"Ignoring component {comp} from ATCS.")
-                    setattr(self.attcs.check, comp, False)
-                else:
-                    self.log.debug(f"Ignoring component {comp} from LATISS.")
-                    setattr(self.latiss.check, comp, False)
+            self.atcs.disable_checks_for_components(components=config.ignore)
+            self.latiss.disable_checks_for_components(components=config.ignore)
 
     def set_metadata(self, metadata):
         metadata.duration = 600.0
 
     async def run(self):
-        await self.attcs.assert_all_enabled(
+        await self.atcs.assert_all_enabled(
             message="All ATCS components need to be enabled to prepare for sky observations."
         )
         await self.latiss.assert_all_enabled(
             message="All LATISS components need to be enabled to prepare for sky observations."
         )
-        await self.attcs.prepare_for_onsky()
+        await self.atcs.prepare_for_onsky()

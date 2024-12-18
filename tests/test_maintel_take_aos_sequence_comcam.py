@@ -54,6 +54,7 @@ class TestTakeAOSSequenceComCam(
         self.script.ocps = unittest.mock.AsyncMock()
 
         self.script.mtcs.offset_camera_hexapod = unittest.mock.AsyncMock()
+        self.script.mtcs.disable_checks_for_components = unittest.mock.AsyncMock()
         self.script.camera.expose = unittest.mock.AsyncMock(
             side_effect=self._get_visit_id
         )
@@ -129,10 +130,10 @@ class TestTakeAOSSequenceComCam(
             assert self.script.dz == 2000.0
             assert self.script.n_sequences == n_sequences
             assert self.script.mode == Mode.INTRA
-            assert self.script.mtcs.check.mtmount
-            assert not self.script.mtcs.check.mtrotator
-            assert not self.script.mtcs.check.mtm2
-            assert not self.script.camera.check.ccoods
+
+            self.script.mtcs.disable_checks_for_components.assert_called_once_with(
+                components=ignore
+            )
 
     async def run_take_triplets_test(
         self, mock_ready_to_take_data=None, expect_exception=None

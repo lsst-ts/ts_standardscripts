@@ -48,18 +48,13 @@ class TestParkMount(
         await self.check_executable(script_path)
 
     async def test_configure_ignore(self):
-        async with self.make_script():
+        async with self.make_dry_script():
             components = ["mtptg"]
             await self.configure_script(position="ZENITH", ignore=components)
-            assert self.script.mtcs.check.mtptg is False
 
-    async def test_configure_ignore_not_mtcs_component(self):
-        async with self.make_script():
-            # Test the ignore feature with one non-MTCS component.
-            components = ["not_mtcs_comp", "mtptg"]
-            await self.configure_script(position="ZENITH", ignore=components)
-            assert not hasattr(self.script.mtcs.check, "not_mtcs_comp")
-            assert self.script.mtcs.check.mtptg is False
+            self.script.mtcs.disable_checks_for_components.assert_called_once_with(
+                components=components
+            )
 
     async def test_park_zenith(self):
         async with self.make_dry_script():

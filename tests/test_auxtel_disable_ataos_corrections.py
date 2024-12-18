@@ -24,6 +24,7 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 from lsst.ts.observatory.control.mock import ATCSMock
 from lsst.ts.standardscripts.auxtel import DisableATAOSCorrections
 
@@ -40,24 +41,24 @@ class TestDisableATAOSCorrections(
         self.script = DisableATAOSCorrections(index=index)
         self.atcs_mock = ATCSMock()
 
+        self.script.atcs = ATCS(
+            domain=self.script.domain,
+            intended_usage=ATCSUsages.All,
+            log=self.script.log,
+        )
+
+        self.script.atcs.disable_checks_for_components = unittest.mock.Mock()
+
         return (self.script, self.atcs_mock)
 
     async def test_configure_ignore(self):
         async with self.make_script():
-            # Test ignore feature.
-            await self.configure_script(ignore=["atmcs", "atpneumatics"])
-
-            assert not self.script.atcs.check.atmcs
-            assert not self.script.atcs.check.atpneumatics
-
-    async def test_configure_ignore_not_atcs_component(self):
-        async with self.make_script():
-            # Test the ignore feature with one non-ATCS component.
-            components = ["not_atcs_comp", "atmcs"]
+            components = ["atmcs", "notcomp", "athexapod"]
             await self.configure_script(ignore=components)
 
-            assert not hasattr(self.script.atcs.check, "not_atcs_comp")
-            assert self.script.atcs.check.atmcs is False
+            self.script.atcs.disable_checks_for_components.assert_called_once_with(
+                components=components
+            )
 
     async def test_configure_ignore_fail(self):
         # Test the ignore_fail configuration.

@@ -169,9 +169,13 @@ class TestFocusSweepLatiss(
             assert self.script.config.grating == "blue300lpmm_qn1"
             assert self.script.config.n_images_per_step == 1
 
-            # Verify that the ignored components are correctly set to False
-            assert not self.script.atcs.check.atdome
-            assert not self.script.atcs.check.atdometrajectory
+            # Verify ignoring components
+            self.script.atcs.disable_checks_for_components.assert_called_once_with(
+                components=config["ignore"]
+            )
+            self.script.camera.disable_checks_for_components.assert_called_once_with(
+                components=config["ignore"]
+            )
 
     async def test_invalid_configuration(self):
         bad_configs = [

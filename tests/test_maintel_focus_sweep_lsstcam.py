@@ -156,9 +156,13 @@ class TestFocusSweepLSSTCam(
             assert self.script.config.n_images_per_step == 1
             assert self.script.hexapod == "Camera"
 
-            # Verify that the ignored components are correctly set to False
-            assert not self.script.mtcs.check.mtm1m3
-            assert not self.script.mtcs.check.mtrotator
+            # Verify ignoring components
+            self.script.mtcs.disable_checks_for_components.assert_called_once_with(
+                components=config["ignore"]
+            )
+            self.script.camera.disable_checks_for_components.assert_called_once_with(
+                components=config["ignore"]
+            )
 
     async def test_invalid_configuration(self):
         bad_configs = [

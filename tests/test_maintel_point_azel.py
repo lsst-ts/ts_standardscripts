@@ -43,6 +43,7 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             self.script.mtcs.assert_all_enabled = unittest.mock.AsyncMock()
             self.script.mtcs.point_azel = unittest.mock.AsyncMock()
             self.script.mtcs.stop_tracking = unittest.mock.AsyncMock()
+            self.script.mtcs.disable_checks_for_components = unittest.mock.Mock()
 
             yield
 
@@ -86,8 +87,10 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             ignore = ["mtdometrajectory", "no_comp"]
 
             await self.configure_script(az=az, el=el, ignore=ignore)
-            assert self.script.mtcs.check.mtdometrajectory is False
-            self.script.mtcs.check.no_comp.assert_not_called()
+
+            self.script.mtcs.disable_checks_for_components.assert_called_once_with(
+                components=ignore
+            )
 
     @unittest.mock.patch(
         "lsst.ts.standardscripts.BaseBlockScript.obs_id", "202306060001"
