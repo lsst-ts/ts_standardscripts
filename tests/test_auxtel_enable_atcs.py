@@ -38,8 +38,18 @@ class TestEnableATTCS(
     async def basic_make_script(self, index):
         self.script = EnableATTCS(index=index)
         self.atcs_mock = ATCSMock()
+        self.script._attcs.disable_checks_for_components = unittest.mock.Mock()
 
         return (self.script, self.atcs_mock)
+
+    async def test_configure_ignore(self):
+        async with self.make_script():
+            components = ["atmcs", "notcomp", "athexapod"]
+            await self.configure_script(ignore=components)
+
+            self.script._attcs.disable_checks_for_components.assert_called_once_with(
+                components=components
+            )
 
     async def test_run(self):
         async with self.make_script():
