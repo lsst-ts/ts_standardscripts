@@ -53,6 +53,7 @@ class TestApplyDOF(
         )
 
         self.script.mtcs.assert_all_enabled = unittest.mock.AsyncMock()
+        self.script.mtcs.disable_checks_for_components = unittest.mock.Mock()
 
         return (self.script,)
 
@@ -83,6 +84,16 @@ class TestApplyDOF(
             await self.configure_script(**config_dofs)
 
             assert self.script.dofs == dofs
+
+    async def test_configure_ignore(self) -> None:
+        # Try configure with minimum set of parameters declared
+        async with self.make_script():
+            components = ["mtm1m3", "no_comp"]
+            await self.configure_script(ignore=components)
+
+            self.script.mtcs.disable_checks_for_components.assert_called_once_with(
+                components=components
+            )
 
     async def test_run(self) -> None:
         # Start the test itself

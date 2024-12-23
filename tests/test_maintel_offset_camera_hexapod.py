@@ -43,6 +43,7 @@ class TestOffsetCameraHexapod(BaseScriptTestCase, unittest.IsolatedAsyncioTestCa
     async def setup_mocks(self):
         self.script.mtcs.offset_camera_hexapod = unittest.mock.AsyncMock()
         self.script.mtcs.move_camera_hexapod = unittest.mock.AsyncMock()
+        self.script.mtcs.disable_checks_for_components = unittest.mock.Mock()
         yield
 
     async def test_executable(self):
@@ -131,6 +132,20 @@ class TestOffsetCameraHexapod(BaseScriptTestCase, unittest.IsolatedAsyncioTestCa
                     )
 
                 assert expected_value == configured_values[parameter]
+
+    async def test_configure_ignore(self):
+        async with self.make_script(), self.setup_mocks():
+            components = ["mtm1m3", "no_comp"]
+            config = dict(
+                reset_axes=["x", "z"],
+                ignore=components,
+            )
+
+            await self.configure_script(**config)
+
+            self.script.mtcs.disable_checks_for_components.assert_called_once_with(
+                components=components
+            )
 
     async def test_offset_camera_hexapod(self):
         async with self.make_script(), self.setup_mocks():
