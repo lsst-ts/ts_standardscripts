@@ -1,0 +1,26 @@
+Update the implementation of the ignore feature in all scripts to use the ``RemoteGroup.disable_checks_for_components`` method.
+
+Updated scripts:
+- ``enable_group.py``
+- ``offline_group.py``
+- ``auxtel/disable_ataos_corrections.py``
+- ``auxtel/prepare_for/onsky.py``
+- ``auxtel/prepare_for/co2_cleanup.py``
+- ``auxtel/enable_ataos_corrections.py``
+- ``standby_group.py``
+- ``base_point_azel.py``
+- ``base_track_target.py``
+- ``base_focus_sweep.py``
+- ``maintel/apply_dof.py``
+- ``maintel/offset_camera_hexapod.py``
+- ``maintel/offset_m2_hexapod.py``
+- ``maintel/close_mirror_covers.py``
+- ``maintel/mtmount/unpark_mount.py``
+- ``maintel/mtmount/park_mount.py``
+- ``maintel/base_close_loop.py``
+- ``maintel/open_mirror_covers.py``
+- ``maintel/move_p2p.py``
+- ``maintel/mtdome/slew_dome.py``
+- ``maintel/mtdome/home_dome.py``
+- ``maintel/take_image_anycam.py``
+- ``maintel/take_aos_sequence_comcam.py``
