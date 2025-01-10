@@ -72,9 +72,16 @@ class TestATGetStdFlatDataset(
             one_exp_time = data.expTime
             if data.shutter:
                 one_exp_time += self.shutter_time
+            date_id = astropy.time.Time.now().tai.isot.split("T")[0].replace("-", "")
+            image_name = f"test_latiss_{date_id}_{next(index_gen)}"
+
+            await self.at_cam.evt_startIntegration.set_write(imageName=image_name)
+
             await asyncio.sleep(one_exp_time)
 
-            self.end_readout_tasks.append(asyncio.create_task(self.end_readout()))
+            self.end_readout_tasks.append(
+                asyncio.create_task(self.end_readout(image_name=image_name))
+            )
 
             if "bias" in parsed_data["imageType"].lower():
                 self.n_bias += 1
@@ -89,11 +96,8 @@ class TestATGetStdFlatDataset(
         # should end last, so we only need wait for the last one to complete.
         await self.end_readout_tasks[-1]
 
-    async def end_readout(self):
+    async def end_readout(self, image_name):
         await asyncio.sleep(self.script.read_out_time)
-
-        date_id = astropy.time.Time.now().tai.isot.split("T")[0].replace("-", "")
-        image_name = f"test_latiss_{date_id}_{next(index_gen)}"
 
         await self.at_cam.evt_endReadout.set_write(imageName=image_name)
 

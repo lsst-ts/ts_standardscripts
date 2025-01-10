@@ -44,6 +44,7 @@ class TestATCamTakeImage(
         self.atheaderservice = salobj.Controller(name="ATHeaderService")
 
         self.nimages = 0
+        self.image_index = 1
         self.selected_filter = []
         self.selected_disperser = []
         self.selected_linear_stage = []
@@ -67,13 +68,18 @@ class TestATCamTakeImage(
             + self.script.camera.read_out_time
             + self.script.camera.shutter_time
         )
+        image_name = f"AT_image_2020_{self.image_index:04d}"
+        self.image_index += 1
+        await self.atcam.evt_startIntegration.set_write(imageName=image_name)
         await asyncio.sleep(one_exp_time * data.numImages)
         self.nimages += 1
-        self.end_image_tasks.append(asyncio.create_task(self.finish_take_images()))
+        self.end_image_tasks.append(
+            asyncio.create_task(self.finish_take_images(image_name=image_name))
+        )
 
-    async def finish_take_images(self):
+    async def finish_take_images(self, image_name):
         await asyncio.sleep(0.5)
-        await self.atcam.evt_endReadout.set_write(imageName="AT_image_2020_001")
+        await self.atcam.evt_endReadout.set_write(imageName=image_name)
         await asyncio.sleep(0.5)
         await self.atheaderservice.evt_largeFileObjectAvailable.write()
 
