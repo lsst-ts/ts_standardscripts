@@ -37,7 +37,7 @@ class TestPrepareForOnSky(
 ):
     async def basic_make_script(self, index):
         self.script = PrepareForOnSky(index=index)
-        self.script.atcs = ATCS(
+        self.script.attcs = ATCS(
             domain=self.script.domain,
             log=self.script.log,
             intended_usage=ATCSUsages.DryTest,
@@ -47,8 +47,6 @@ class TestPrepareForOnSky(
             log=self.script.log,
             intended_usage=LATISSUsages.DryTest,
         )
-        self.script.atcs.disable_checks_for_components = unittest.mock.Mock()
-        self.script.latiss.disable_checks_for_components = unittest.mock.Mock()
 
         return (self.script,)
 
@@ -59,16 +57,19 @@ class TestPrepareForOnSky(
 
     async def test_configure_ignore(self):
         async with self.make_script():
-            components = ["atpneumatics", "ataos", "atspectrograph"]
-            await self.configure_script(ignore=components)
-
-            self.script.atcs.disable_checks_for_components.assert_called_once_with(
-                components=components
+            await self.configure_script(
+                ignore=["atpneumatics", "ataos", "atspectrograph"]
             )
 
-            self.script.latiss.disable_checks_for_components.assert_called_once_with(
-                components=components
-            )
+            assert not self.script.attcs.check.atpneumatics
+            assert not self.script.attcs.check.ataos
+            assert not self.script.latiss.check.atspectrograph
+
+    async def test_configure_ignore_inexistent(self):
+        async with self.make_script():
+            await self.configure_script(ignore=["inexistent"])
+
+            assert not hasattr(self.script.latiss.check, "inexistent")
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()

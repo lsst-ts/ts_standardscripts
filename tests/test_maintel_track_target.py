@@ -209,15 +209,12 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
     async def test_configure_with_ignore(self):
         async with self.make_script():
             # Test ignore feature.
-            ignore = ["mtdometrajectory", "mthexapod_1"]
-            self.script._mtcs = unittest.mock.AsyncMock()
-            self.script._mtcs.start_task = utils.make_done_future()
-
-            await self.configure_script(target_name="eta Car", ignore=ignore)
-
-            self.script._mtcs.disable_checks_for_components.assert_called_once_with(
-                components=ignore
+            await self.configure_script(
+                target_name="eta Car", ignore=["mtdometrajectory", "mthexapod_1"]
             )
+
+            assert not self.script.tcs.check.mtdometrajectory
+            assert not self.script.tcs.check.mthexapod_1
 
     async def test_configure_with_az_wrap_strategy(self):
         # Configure passing az_wrap_strategy

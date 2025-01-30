@@ -24,7 +24,6 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 from lsst.ts.observatory.control.mock import ATCSMock
 from lsst.ts.standardscripts.auxtel import EnableATAOSCorrections
 
@@ -39,14 +38,6 @@ class TestEnableATAOSCorrections(
     async def basic_make_script(self, index):
         self.script = EnableATAOSCorrections(index=index)
         self.atcs_mock = ATCSMock()
-
-        self.script.atcs = ATCS(
-            domain=self.script.domain,
-            intended_usage=ATCSUsages.All,
-            log=self.script.log,
-        )
-
-        self.script.atcs.disable_checks_for_components = unittest.mock.Mock()
 
         return (self.script, self.atcs_mock)
 
@@ -69,12 +60,18 @@ class TestEnableATAOSCorrections(
 
     async def test_configure_ignore(self):
         async with self.make_script():
-            components = ["atmcs", "notcomp", "athexapod"]
+            components = ["atmcs"]
             await self.configure_script(ignore=components)
 
-            self.script.atcs.disable_checks_for_components.assert_called_once_with(
-                components=components
-            )
+            assert self.script.atcs.check.atmcs is False
+
+    async def test_configure_ignore_not_atcs_component(self):
+        async with self.make_script():
+            components = ["not_atcs_comp", "atmcs"]
+            await self.configure_script(ignore=components)
+
+            assert hasattr(self.script.atcs, "not_atcs_comp") is False
+            assert self.script.atcs.check.atmcs is False
 
 
 if __name__ == "__main__":

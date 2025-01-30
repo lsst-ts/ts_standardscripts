@@ -50,7 +50,6 @@ class TestPrepareForCO2Cleanup(
             self.script.atcs.enable_ataos_corrections = unittest.mock.AsyncMock()
             self.script.atcs.point_azel = unittest.mock.AsyncMock()
             self.script.atcs.disable_ataos_corrections = unittest.mock.AsyncMock()
-            self.script.atcs.disable_checks_for_components = unittest.mock.Mock()
             yield
 
     async def test_run(self):
@@ -121,13 +120,19 @@ class TestPrepareForCO2Cleanup(
                 await self.configure_script(el=el)
 
     async def test_configure_ignore(self):
-        async with self.make_dry_script():
-            components = ["atmcs", "notcomp", "athexapod"]
+        async with self.make_script():
+            components = ["atmcs"]
             await self.configure_script(ignore=components)
 
-            self.script.atcs.disable_checks_for_components.assert_called_once_with(
-                components=components
-            )
+            assert self.script.atcs.check.atmcs is False
+
+    async def test_configure_ignore_not_atcs_component(self):
+        async with self.make_script():
+            components = ["not_atcs_comp", "atmcs"]
+            await self.configure_script(ignore=components)
+
+            assert hasattr(self.script.atcs, "not_atcs_comp") is False
+            assert self.script.atcs.check.atmcs is False
 
 
 if __name__ == "__main__":
