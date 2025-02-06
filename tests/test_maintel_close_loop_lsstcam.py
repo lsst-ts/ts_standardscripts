@@ -56,6 +56,7 @@ class TestCloseLoopLSSTCam(
         # MTCS mocks
         self.script.mtcs.assert_all_enabled = unittest.mock.AsyncMock()
         self.script.mtcs.offset_camera_hexapod = unittest.mock.AsyncMock()
+        self.script.mtcs.disable_checks_for_components = unittest.mock.Mock()
         self.script.mtcs.rem.mtrotator = unittest.mock.AsyncMock()
         self.script.mtcs.rem.mtrotator.configure_mock(
             **{
@@ -147,6 +148,16 @@ class TestCloseLoopLSSTCam(
             wep_config_dic = {"field1": "val1", "field2": "val2"}
             await self.configure_script(wep_config=wep_config_dic, filter="r")
             assert self.script.wep_config == yaml.dump(wep_config_dic)
+
+    async def test_configure_ignore(self):
+        async with self.make_script():
+            ignore = ["mtdometrajectory", "no_comp"]
+
+            await self.configure_script(filter="r", ignore=ignore)
+
+            self.script.mtcs.disable_checks_for_components.assert_called_once_with(
+                components=ignore
+            )
 
     async def test_run(self):
         # Start the test itself

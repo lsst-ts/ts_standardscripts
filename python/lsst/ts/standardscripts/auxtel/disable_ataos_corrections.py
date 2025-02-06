@@ -80,15 +80,7 @@ class DisableATAOSCorrections(salobj.BaseScript):
             await self.atcs.start_task
 
         if hasattr(self.config, "ignore"):
-            for comp in self.config.ignore:
-                if comp not in self.atcs.components_attr:
-                    self.log.warning(
-                        f"Component {comp} not in CSC Group. "
-                        f"Must be one of {self.atcs.components_attr}. Ignoring."
-                    )
-                else:
-                    self.log.debug(f"Ignoring component {comp}.")
-                    setattr(self.atcs.check, comp, False)
+            self.atcs.disable_checks_for_components(components=self.config.ignore)
 
     def set_metadata(self, metadata):
         pass

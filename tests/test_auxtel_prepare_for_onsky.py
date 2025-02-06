@@ -67,16 +67,9 @@ class TestPrepareForOnSky(
 
     async def test_configure_ignore_inexistent(self):
         async with self.make_script():
-            with self.assertLogs(self.script.log, level=logging.WARNING) as script_logs:
-                await self.configure_script(ignore=["nonono"])
+            await self.configure_script(ignore=["inexistent"])
 
-            expected_warning_msg = (
-                f"WARNING:Script:Component nonono not in CSC Group. "
-                f"Must be one of {self.script.attcs.components_attr} or "
-                f"{self.script.latiss.components_attr}. Ignoring."
-            )
-
-            assert expected_warning_msg in script_logs.output
+            assert not hasattr(self.script.latiss.check, "inexistent")
 
     async def test_executable(self):
         scripts_dir = standardscripts.get_scripts_dir()

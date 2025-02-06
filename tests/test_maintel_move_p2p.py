@@ -125,10 +125,12 @@ class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
         async with self.make_dry_script():
             az = 0.0
             el = 80.0
+            components = ["mtm1m3", "no_comp"]
+            await self.configure_script(az=az, el=el, ignore=components)
 
-            await self.configure_script(az=az, el=el, ignore=["mtm1m3", "no_comp"])
-            assert self.script.mtcs.check.mtm1m3 is False
-            self.script.mtcs.check.no_comp.assert_not_called()
+            self.script.mtcs.disable_checks_for_components.assert_called_once_with(
+                components=components
+            )
 
     async def test_config_az_el_arrays(self) -> None:
         async with self.make_dry_script():
