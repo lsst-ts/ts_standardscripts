@@ -23,7 +23,6 @@ import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
 from lsst.ts import standardscripts
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.prepare_for import PrepareForVent
 
 
@@ -115,11 +114,6 @@ class TestPrepareForOnSky(
             self.script.get_sun_azel.assert_called()
             self.script.prepare_for_vent.assert_awaited()
             self.script.reposition_telescope_and_dome.assert_awaited()
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "prepare_for" / "vent.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

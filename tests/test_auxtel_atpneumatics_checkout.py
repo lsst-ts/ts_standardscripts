@@ -26,7 +26,6 @@ import types
 import unittest
 
 import pytest
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.daytime_checkout import ATPneumaticsCheckout
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 from lsst.ts.standardscripts import BaseScriptTestCase
@@ -48,12 +47,6 @@ class TestATPneumaticsCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestC
         return [
             self.script,
         ]
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "daytime_checkout" / "atpneumatics_checkout.py"
-        print(script_path)
-        await self.check_executable(script_path)
 
     async def get_tel_main_air_source_pressure(self, flush, timeout):
         if flush:

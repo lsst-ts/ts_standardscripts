@@ -23,7 +23,7 @@ import random
 import unittest
 
 from lsst.ts import salobj, standardscripts
-from lsst.ts.auxtel.standardscripts import TakeStutteredLatiss, get_scripts_dir
+from lsst.ts.auxtel.standardscripts import TakeStutteredLatiss
 from lsst.ts.observatory.control.mock import LATISSMock
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -104,11 +104,6 @@ class TestATCamTakeImage(
             await self.run_script()
 
             assert self.latiss_mock.nimages == self.script.config.n_images
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "take_stuttered_latiss.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

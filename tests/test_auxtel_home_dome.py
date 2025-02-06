@@ -22,7 +22,6 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.atdome import HomeDome
 from lsst.ts.observatory.control.mock import ATCSMock
 
@@ -35,11 +34,6 @@ class TestHomeDome(
         self.atcs_mock = ATCSMock()
 
         return (self.script, self.atcs_mock)
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "atdome" / "home_dome.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

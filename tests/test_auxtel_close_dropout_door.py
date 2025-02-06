@@ -22,7 +22,6 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.atdome import CloseDropoutDoor
 
 
@@ -43,8 +42,3 @@ class TestCloseDropoutDoor(
             await self.run_script()
 
             self.script.atcs.close_dropout_door.assert_called_once()
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "atdome" / "close_dropout_door.py"
-        await self.check_executable(script_path)

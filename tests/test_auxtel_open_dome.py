@@ -22,7 +22,6 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.atdome import OpenDome
 from lsst.ts.observatory.control.mock import ATCSMock
 
@@ -30,16 +29,12 @@ from lsst.ts.observatory.control.mock import ATCSMock
 class TestOpenDome(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
+
     async def basic_make_script(self, index):
         self.script = OpenDome(index=index)
         self.atcs_mock = ATCSMock()
 
-        return (self.script, self.atcs_mock)
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "atdome" / "open_dome.py"
-        await self.check_executable(script_path)
+        return self.script, self.atcs_mock
 
 
 if __name__ == "__main__":

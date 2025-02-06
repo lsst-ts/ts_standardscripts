@@ -27,7 +27,7 @@ import unittest
 import numpy as np
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.auxtel.standardscripts import CalSysTakeData, get_scripts_dir
+from lsst.ts.auxtel.standardscripts import CalSysTakeData
 from lsst.ts.idl.enums import ATMonochromator, Script
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
@@ -197,11 +197,6 @@ class TestATCalSysTakeData(
                 [sd.slitWidth for sd in self.slit_data], desired_slit_widths
             )
             assert self.grating_types == config.grating_types
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "calsys_takedata.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

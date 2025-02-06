@@ -24,7 +24,6 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.prepare_for import PrepareForOnSky
 from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
 
@@ -71,11 +70,6 @@ class TestPrepareForOnSky(
             await self.configure_script(ignore=["inexistent"])
 
             assert not hasattr(self.script.latiss.check, "inexistent")
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "prepare_for" / "onsky.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

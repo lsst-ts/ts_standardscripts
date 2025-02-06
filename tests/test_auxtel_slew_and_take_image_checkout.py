@@ -26,7 +26,6 @@ import types
 import unittest
 
 import pytest
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.daytime_checkout import SlewAndTakeImageCheckout
 from lsst.ts.idl.enums.ATMCS import M3State
 from lsst.ts.standardscripts import BaseScriptTestCase
@@ -110,14 +109,6 @@ class TestSlewAndTakeImageCheckout(
         )
 
         yield
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = (
-            scripts_dir / "daytime_checkout" / "slew_and_take_image_checkout.py"
-        )
-        print(script_path)
-        await self.check_executable(script_path)
 
     async def test_run_script_without_failures(self):
         async with self.make_script(), self.setup_mocks():

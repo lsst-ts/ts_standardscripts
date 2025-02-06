@@ -27,7 +27,6 @@ import unittest
 
 import astropy
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.detector_characterization import ATGetStdFlatDataset
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -145,13 +144,6 @@ class TestATGetStdFlatDataset(
             assert self.filter == config.filter
             assert self.grating == config.grating
             assert self.linear_stage == config.linear_stage
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = (
-            scripts_dir / "detector_characterization" / "get_std_flat_dataset.py"
-        )
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

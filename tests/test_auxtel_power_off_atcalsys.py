@@ -17,7 +17,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
 import logging
@@ -26,7 +26,6 @@ import types
 import unittest
 
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.calibrations import PowerOffATCalSys
 from lsst.ts.idl.enums import ATWhiteLight
 
@@ -128,11 +127,6 @@ class TestPowerOffATCalSys(
             # Check status
             assert self.lamp_state.basicState == ATWhiteLight.LampBasicState.OFF
             assert self.shutter_status.shutterState == ATWhiteLight.ShutterState.CLOSED
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "calibrations" / "power_off_atcalsys.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

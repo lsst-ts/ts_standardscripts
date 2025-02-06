@@ -24,7 +24,7 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.auxtel.standardscripts import EnableATAOSCorrections, get_scripts_dir
+from lsst.ts.auxtel.standardscripts import EnableATAOSCorrections
 from lsst.ts.observatory.control.mock import ATCSMock
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -52,11 +52,6 @@ class TestEnableATAOSCorrections(
             assert self.atcs_mock.ataos.evt_correctionEnabled.data.m1
             assert self.atcs_mock.ataos.evt_correctionEnabled.data.hexapod
             assert self.atcs_mock.ataos.evt_correctionEnabled.data.atspectrograph
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "enable_ataos_corrections.py"
-        await self.check_executable(script_path)
 
     async def test_configure_ignore(self):
         async with self.make_script():

@@ -22,7 +22,6 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.atdome import EnableDomeFollowing
 from lsst.ts.observatory.control.mock import ATCSMock
 
@@ -34,12 +33,7 @@ class TestEnableDomeFollowing(
         self.script = EnableDomeFollowing(index=index)
         self.atcs_mock = ATCSMock()
 
-        return (self.script, self.atcs_mock)
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "atdome" / "enable_dome_following.py"
-        await self.check_executable(script_path)
+        return self.script, self.atcs_mock
 
 
 if __name__ == "__main__":

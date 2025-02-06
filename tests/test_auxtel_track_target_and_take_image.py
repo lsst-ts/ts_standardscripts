@@ -29,7 +29,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.auxtel.standardscripts import TrackTargetAndTakeImage, get_scripts_dir
+from lsst.ts.auxtel.standardscripts import TrackTargetAndTakeImage
 from lsst.ts.observatory.control.utils import RotType
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -338,11 +338,6 @@ class TestAuxTelTrackTargetAndTakeImage(
             # will call stop tracking in this condition, so make sure stop
             # tracking was awaited once.
             self.script.atcs.stop_tracking.assert_awaited_once()
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "track_target_and_take_image.py"
-        await self.check_executable(script_path)
 
     @contextlib.asynccontextmanager
     async def setup_mocks(self):

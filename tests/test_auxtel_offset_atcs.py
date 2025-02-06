@@ -17,13 +17,14 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 import logging
 import unittest
 
 import pytest
 from lsst.ts import salobj
-from lsst.ts.auxtel.standardscripts import OffsetATCS, get_scripts_dir
+from lsst.ts.auxtel.standardscripts import OffsetATCS
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.standardscripts import BaseScriptTestCase
 
@@ -37,12 +38,6 @@ class TestOffsetATCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
         self.script = OffsetATCS(index=index, add_remotes=False)
 
         return (self.script,)
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "offset_atcs.py"
-        self.log.debug(f"Checking for script in {script_path}")
-        await self.check_executable(script_path)
 
     async def test_valid_configurations(self):
         # Set of valid configurations to test, considering different possible

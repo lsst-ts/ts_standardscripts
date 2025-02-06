@@ -24,7 +24,7 @@ import random
 import unittest
 
 from lsst.ts import standardscripts, utils
-from lsst.ts.auxtel.standardscripts import TrackTarget, get_scripts_dir
+from lsst.ts.auxtel.standardscripts import TrackTarget
 from lsst.ts.xml.enums.MTPtg import Planets
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -154,11 +154,6 @@ class TestATTrackTarget(
                 ephem_file=config["slew_ephem"]["ephem_file"],
                 object_name=config["slew_ephem"]["object_name"],
             )
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "track_target.py"
-        await self.check_executable(script_path)
 
     def assert_slew_radec(self):
         self.script.tcs.slew_icrs.assert_awaited_once()

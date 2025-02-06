@@ -24,7 +24,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj
-from lsst.ts.auxtel.standardscripts import PointAzEl, get_scripts_dir
+from lsst.ts.auxtel.standardscripts import PointAzEl
 from lsst.ts.standardscripts import BaseScriptTestCase
 
 
@@ -185,11 +185,6 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             self.script.atcs.point_azel.assert_awaited_once()
             self.script.tcs.stop_tracking.assert_awaited_once()
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "point_azel.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

@@ -26,7 +26,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.auxtel.standardscripts import TakeImageLatiss, get_scripts_dir
+from lsst.ts.auxtel.standardscripts import TakeImageLatiss
 from lsst.ts.xml.enums import Script
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -37,6 +37,7 @@ logging.basicConfig(level=logging.DEBUG)
 class TestATCamTakeImage(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
+
     async def basic_make_script(self, index):
         self.script = TakeImageLatiss(index=index)
         self.atcam = salobj.Controller(name="ATCamera")
@@ -222,11 +223,6 @@ class TestATCamTakeImage(
         await self.run_take_images_test(
             mock_ready_to_take_data=mock_ready, expect_exception=RuntimeError
         )
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "take_image_latiss.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

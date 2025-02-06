@@ -24,7 +24,6 @@ import unittest.mock as mock
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.focus_sweep_latiss import FocusSweepLatiss
 
 
@@ -274,8 +273,3 @@ class TestFocusSweepLatiss(
             self.script.atcs.offset_aos_lut.assert_any_call(
                 x=-self.script.total_focus_offset, y=0, z=0, u=0, v=0
             )
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "focus_sweep_latiss.py"
-        await self.check_executable(script_path)

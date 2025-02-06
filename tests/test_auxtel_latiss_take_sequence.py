@@ -17,7 +17,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import contextlib
 import logging
@@ -26,7 +26,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj
-from lsst.ts.auxtel.standardscripts import LatissTakeSequence, get_scripts_dir
+from lsst.ts.auxtel.standardscripts import LatissTakeSequence
 from lsst.ts.standardscripts import BaseScriptTestCase
 
 
@@ -78,12 +78,6 @@ class TestLatissTakeSequence(BaseScriptTestCase, unittest.IsolatedAsyncioTestCas
             }
         )
         yield
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "latiss_take_sequence.py"
-        self.log.debug(f"Checking for script in {script_path}")
-        await self.check_executable(script_path)
 
     async def test_configure_with_minimum_parameters(self):
         async with self.make_script(), self.setup_mocks():

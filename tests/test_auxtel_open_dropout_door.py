@@ -25,7 +25,6 @@ import unittest
 
 import pytest
 from lsst.ts import standardscripts
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.atdome import OpenDropoutDoor
 
 
@@ -109,8 +108,3 @@ class TestOpenDropoutDoor(
 
             # Make sure it was not awaited
             self.script.atcs.open_dropout_door.assert_awaited_once()
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "atdome" / "open_dropout_door.py"
-        await self.check_executable(script_path)

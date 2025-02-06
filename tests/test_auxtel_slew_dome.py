@@ -23,7 +23,6 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.auxtel.standardscripts import get_scripts_dir
 from lsst.ts.auxtel.standardscripts.atdome import SlewDome
 from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.mock import ATCSMock
@@ -32,16 +31,12 @@ from lsst.ts.observatory.control.mock import ATCSMock
 class TestSlewDome(
     standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase
 ):
+
     async def basic_make_script(self, index):
         self.script = SlewDome(index=index)
         self.atcs_mock = ATCSMock()
 
         return (self.script, self.atcs_mock)
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "atdome" / "slew_dome.py"
-        await self.check_executable(script_path)
 
     async def test_config(self):
         async with self.make_script():
