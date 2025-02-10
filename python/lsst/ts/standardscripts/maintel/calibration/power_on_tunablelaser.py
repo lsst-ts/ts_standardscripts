@@ -79,6 +79,7 @@ class PowerOnTunableLaser(salobj.BaseScript):
 
         """
         self.log.info("Configure started")
+        self.log.debug(f"Trying to create mtcalsys, {self.mtcalsys}")
         if self.mtcalsys is None:
             self.log.debug("Creating MTCalSys.")
             self.mtcalsys = MTCalsys(domain=self.domain, log=self.log)
@@ -87,7 +88,7 @@ class PowerOnTunableLaser(salobj.BaseScript):
         self.sequence_name = config.sequence_name
         self.mtcalsys.load_calibration_config_file()
         self.mtcalsys.assert_valid_configuration_option(name=self.sequence_name)
-
+        self.log.debug(f"Sequence name: {self.sequence_name}")
         self.config_data = self.mtcalsys.get_calibration_configuration(
             self.sequence_name
         )
@@ -95,8 +96,13 @@ class PowerOnTunableLaser(salobj.BaseScript):
         self.laser_mode = self.config_data["laser_mode"]
         self.optical_configuration = self.config_data["optical_configuration"]
         self.wavelength = self.config_data["wavelength"]
+        self.log.debug(
+            f"Laser mode, optical config: {self.laser_mode, self.optical_configuration}"
+        )
+        self.log.debug(f"wavelength: {self.wavelength}")
 
         if self.laser is None:
+            self.log.debug("Creating a Laser Remote Object")
             self.laser = salobj.Remote(
                 domain=self.domain,
                 name="TunableLaser",
@@ -111,6 +117,7 @@ class PowerOnTunableLaser(salobj.BaseScript):
         await self.assert_components_enabled()
 
         await self.checkpoint("Configuring TunableLaser")
+        self.log.debug("Configuring TunableLaser")
         await self.mtcalsys.setup_laser(
             mode=self.laser_mode,
             wavelength=self.wavelength,
