@@ -81,7 +81,6 @@ class PowerOnTunableLaser(salobj.BaseScript):
         # self.log.info("Configure started")
         self.log.debug(f"Trying to create mtcalsys, {self.mtcalsys}")
         if self.mtcalsys is None:
-            self.log.debug("Creating MTCalSys.")
             self.mtcalsys = MTCalsys(domain=self.domain, log=self.log)
             await self.mtcalsys.start_task
 
@@ -96,10 +95,6 @@ class PowerOnTunableLaser(salobj.BaseScript):
         self.laser_mode = self.config_data["laser_mode"]
         self.optical_configuration = self.config_data["optical_configuration"]
         self.wavelength = self.config_data["wavelength"]
-        self.log.debug(
-            f"Laser mode, optical config: {self.laser_mode, self.optical_configuration}"
-        )
-        self.log.debug(f"wavelength: {self.wavelength}")
 
         if self.laser is None:
             self.log.debug("Creating a Laser Remote Object")
@@ -107,10 +102,9 @@ class PowerOnTunableLaser(salobj.BaseScript):
                 domain=self.domain,
                 name="TunableLaser",
             )
+            await self.laser.start_task
 
-        self.laser.start_task
-
-        self.log.info("Configure completed")
+        self.log.info(f"Configure completed,wavelength: {self.wavelength}")
 
     async def run(self):
         """Run script."""
@@ -118,7 +112,7 @@ class PowerOnTunableLaser(salobj.BaseScript):
 
         await self.checkpoint("Configuring TunableLaser")
         self.log.debug("Configuring TunableLaser")
-        self.log.debug(f"MTCalsys is {self.mtcalsys}")
+
         await self.mtcalsys.setup_laser(
             mode=self.laser_mode,
             wavelength=self.wavelength,
