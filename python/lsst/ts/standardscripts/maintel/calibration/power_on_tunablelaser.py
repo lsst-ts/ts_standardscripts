@@ -78,7 +78,7 @@ class PowerOnTunableLaser(salobj.BaseScript):
         config : ``self.cmd_configure.DataType``
 
         """
-        self.log.info("Configure started")
+        # self.log.info("Configure started")
         self.log.debug(f"Trying to create mtcalsys, {self.mtcalsys}")
         if self.mtcalsys is None:
             self.log.debug("Creating MTCalSys.")
@@ -118,13 +118,14 @@ class PowerOnTunableLaser(salobj.BaseScript):
 
         await self.checkpoint("Configuring TunableLaser")
         self.log.debug("Configuring TunableLaser")
+        self.log.debug(f"MTCalsys is {self.mtcalsys}")
         await self.mtcalsys.setup_laser(
             mode=self.laser_mode,
             wavelength=self.wavelength,
             optical_configuration=self.optical_configuration,
             use_projector=False,
         )
-
+        self.log.debug("Laser is setup")
         params = await self.mtcalsys.get_laser_parameters()
 
         self.log.info(
