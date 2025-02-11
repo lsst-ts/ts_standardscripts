@@ -111,7 +111,9 @@ class PowerOnTunableLaser(salobj.BaseScript):
         await self.assert_components_enabled()
 
         await self.checkpoint("Configuring TunableLaser")
-        self.log.debug("Configuring TunableLaser")
+        self.log.debug(
+            f"Configuring TunableLaser, wavelength type: {type(self.wavelength)}"
+        )
 
         await self.mtcalsys.setup_laser(
             mode=self.laser_mode,
