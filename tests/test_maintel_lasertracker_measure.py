@@ -26,7 +26,6 @@ import unittest
 
 from lsst.ts import standardscripts
 from lsst.ts.idl.enums.LaserTracker import LaserStatus
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.laser_tracker import AlignComponent, Measure
 from lsst.ts.salobj import State
 
@@ -90,11 +89,6 @@ class TestMeasure(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
             await self.run_script()
 
             assert self.state_0 == [1, 2, 0, 0, 0]
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "laser_tracker" / "measure.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

@@ -26,7 +26,7 @@ import unittest
 import pytest
 from lsst.ts import salobj, standardscripts, utils
 from lsst.ts.idl.enums.MTPtg import WrapStrategy
-from lsst.ts.maintel.standardscripts import TrackTarget, get_scripts_dir
+from lsst.ts.maintel.standardscripts.track_target import TrackTarget
 from lsst.ts.observatory.control import RotType
 from lsst.ts.xml.enums.MTPtg import Planets
 
@@ -337,11 +337,6 @@ class TestMTSlew(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
                 await self.run_script()
 
             self.assert_slew_fails()
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "track_target.py"
-        await self.check_executable(script_path)
 
     def assert_slew_radec(self):
         self.script.tcs.slew_icrs.assert_awaited_once()

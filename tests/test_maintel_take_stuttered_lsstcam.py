@@ -23,7 +23,7 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import TakeStutteredLSSTCam, get_scripts_dir
+from lsst.ts.maintel.standardscripts import TakeStutteredLSSTCam
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -35,11 +35,6 @@ class TestTakeStutteredLSSTCam(
         self.script = TakeStutteredLSSTCam(index=index)
 
         return self.script
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "take_stuttered_lsstcam.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

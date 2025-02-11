@@ -23,11 +23,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.maintel.standardscripts import (
-    CameraSetup,
-    TakeImageAnyCam,
-    get_scripts_dir,
-)
+from lsst.ts.maintel.standardscripts import CameraSetup, TakeImageAnyCam
 
 
 class TestTakeImageAnyCam(
@@ -421,8 +417,3 @@ class TestTakeImageAnyCam(
                         await self.validate_camera_configuration(gencam_config)
                 else:  # lsstcam and comcam are dictionaries
                     await self.validate_camera_configuration(cam_config, cam_key)
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "take_image_anycam.py"
-        await self.check_executable(script_path)

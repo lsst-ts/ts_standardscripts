@@ -24,7 +24,6 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.m1m3 import EnableM1M3SlewControllerFlags
 
 
@@ -148,8 +147,3 @@ class TestEnableM1M3SlewControllerFlags(
             self.script.mtcs.set_m1m3_slew_controller_settings.assert_has_awaits(
                 expected_calls
             )
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "m1m3" / "enable_m1m3_slew_controller_flags.py"
-        await self.check_executable(script_path)

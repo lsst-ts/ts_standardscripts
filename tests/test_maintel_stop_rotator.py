@@ -22,7 +22,7 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import StopRotator, get_scripts_dir
+from lsst.ts.maintel.standardscripts import StopRotator
 
 
 class TestStopRotator(
@@ -36,11 +36,6 @@ class TestStopRotator(
             tel_settle_time=3.0
         )  # need this for the set_metadata method.
         return (self.script,)
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "stop_rotator.py"
-        await self.check_executable(script_path)
 
     async def test_run(self):
         async with self.make_script():

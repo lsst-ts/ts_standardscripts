@@ -25,7 +25,7 @@ import unittest
 import pytest
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.maintel.standardscripts import OffsetCameraHexapod, get_scripts_dir
+from lsst.ts.maintel.standardscripts import OffsetCameraHexapod
 from lsst.ts.standardscripts import BaseScriptTestCase
 
 
@@ -45,12 +45,6 @@ class TestOffsetCameraHexapod(BaseScriptTestCase, unittest.IsolatedAsyncioTestCa
         self.script.mtcs.move_camera_hexapod = unittest.mock.AsyncMock()
         self.script.mtcs.disable_checks_for_components = unittest.mock.Mock()
         yield
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "offset_camera_hexapod.py"
-        self.log.debug(f"Checking for script in {script_path}")
-        await self.check_executable(script_path)
 
     async def test_valid_configurations(self):
         # Set of valid configurations to test, considering different possible

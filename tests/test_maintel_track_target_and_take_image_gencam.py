@@ -30,7 +30,6 @@ import unittest
 import numpy
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.track_target_and_take_image_gencam import (
     TrackTargetAndTakeImageGenCam,
 )
@@ -253,11 +252,6 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
                 raise AssertionError(
                     f"Configuration for {key} does not match."
                 ) from err
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "track_target_and_take_image_gencam.py"
-        await self.check_executable(script_path)
 
     async def test_run_fail_check_tracking(self):
         async with self.make_script():

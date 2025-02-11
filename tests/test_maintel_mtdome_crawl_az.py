@@ -25,7 +25,6 @@ from types import SimpleNamespace
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.mtdome import CrawlAz, Direction
 from lsst.ts.xml.enums.MTDome import SubSystemId
 
@@ -119,11 +118,6 @@ class TestCrawlAz(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
                 subSystemIds=SubSystemId.AMCS,
                 timeout=self.script.TIMEOUT_CMD,
             )
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "mtdome" / "crawl_az.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

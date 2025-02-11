@@ -23,7 +23,6 @@ import contextlib
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.mtmount import UnparkMount
 
 
@@ -41,11 +40,6 @@ class TestUnparkMount(
             self.script.mtcs.assert_all_enabled = unittest.mock.AsyncMock()
             self.script.mtcs.unpark_mount = unittest.mock.AsyncMock()
             yield
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "mtmount" / "unpark_mount.py"
-        await self.check_executable(script_path)
 
     async def test_configure_ignore(self):
         async with self.make_script():

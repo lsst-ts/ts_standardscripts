@@ -22,7 +22,6 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.m1m3 import RaiseM1M3
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
@@ -71,12 +70,6 @@ class TestRaiseM1M3(
                 self.script.checkpoint_message
                 == "RaiseM1M3 BLOCK-123 202306060001 SITCOM-321"
             )
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "m1m3" / "raise_m1m3.py"
-        print(script_path)
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ import contextlib
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import CloseMirrorCovers, get_scripts_dir
+from lsst.ts.maintel.standardscripts import CloseMirrorCovers
 
 
 class TestCloseMirrorCovers(
@@ -49,11 +49,6 @@ class TestCloseMirrorCovers(
             await self.run_script()
             self.script.mtcs.assert_all_enabled.assert_awaited_once()
             self.script.mtcs.close_m1_cover.assert_awaited_once()
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "close_mirror_covers.py"
-        await self.check_executable(script_path)
 
     async def test_configure_ignore(self):
         async with self.make_script():

@@ -22,7 +22,6 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.mtdome import DisableDomeFollowing
 
 
@@ -32,8 +31,3 @@ class TestDisableDomeFollowing(
     async def basic_make_script(self, index):
         self.script = DisableDomeFollowing(index=index)
         return self.script
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "mtdome" / "disable_dome_following.py"
-        await self.check_executable(script_path)

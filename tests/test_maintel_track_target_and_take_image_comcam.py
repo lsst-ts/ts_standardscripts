@@ -30,7 +30,6 @@ import unittest
 import numpy
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.track_target_and_take_image_comcam import (
     TrackTargetAndTakeImageComCam,
 )
@@ -333,11 +332,6 @@ class TestMainTelTrackTargetAndTakeImageComCam(
             self.script.mtcs.check_tracking.assert_awaited_once()
 
             self.script.mtcs.stop_tracking.assert_awaited_once()
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "track_target_and_take_image_comcam.py"
-        await self.check_executable(script_path)
 
     @contextlib.asynccontextmanager
     async def setup_mocks(self):

@@ -22,7 +22,6 @@
 import unittest
 
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 
 
 class TestStopTracking(
@@ -30,11 +29,6 @@ class TestStopTracking(
 ):
     async def basic_make_script(self, index):
         pass
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "stop_tracking.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

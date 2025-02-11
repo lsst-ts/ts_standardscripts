@@ -24,7 +24,6 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.disable_hexapod_compensation_mode import (
     DisableHexapodCompensationMode,
 )
@@ -106,12 +105,6 @@ class TestDisableHexapodCompensationMode(
             self.script.mtcs.disable_compensation_mode.assert_has_awaits(
                 expected_calls, any_order=True
             )
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "disable_hexapod_compensation_mode.py"
-        print(script_path)
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

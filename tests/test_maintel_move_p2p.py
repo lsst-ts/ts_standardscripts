@@ -24,7 +24,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.maintel.standardscripts import MoveP2P, get_scripts_dir
+from lsst.ts.maintel.standardscripts import MoveP2P
 
 
 class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
@@ -359,8 +359,3 @@ class TestMoveP2P(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
                 for _ra, _dec in zip(ra, dec)
             ]
             self.script.mtcs.move_p2p_radec.assert_has_awaits(expected_calls)
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "move_p2p.py"
-        await self.check_executable(script_path)

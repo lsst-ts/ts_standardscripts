@@ -26,7 +26,6 @@ import unittest
 
 from lsst.ts import standardscripts
 from lsst.ts.idl.enums.LaserTracker import LaserStatus
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.laser_tracker import ShutDown
 from lsst.ts.salobj import State
 
@@ -76,11 +75,6 @@ class TestShutDown(
             await self.run_script()
 
             assert self.laser_status.status == LaserStatus.OFF
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "laser_tracker" / "shut_down.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

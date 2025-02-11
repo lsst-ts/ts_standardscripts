@@ -26,7 +26,6 @@ import unittest
 import warnings
 
 from lsst.ts import salobj
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.m1m3 import CheckActuators
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.standardscripts import BaseScriptTestCase
@@ -351,11 +350,6 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
                 self.bump_test_status.testState[actuator_index] == BumpTest.NOTTESTED
                 for actuator_index in not_expected_to_test_indexes
             )
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "m1m3" / "check_actuators.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

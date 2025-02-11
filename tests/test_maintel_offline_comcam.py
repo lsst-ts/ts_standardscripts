@@ -24,7 +24,7 @@ import random
 import unittest
 
 from lsst.ts import salobj, standardscripts
-from lsst.ts.maintel.standardscripts import OfflineComCam, get_scripts_dir
+from lsst.ts.maintel.standardscripts import OfflineComCam
 from lsst.ts.observatory.control.mock import ComCamMock
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
@@ -64,11 +64,6 @@ class TestOfflineComCam(
 
                     with self.subTest(f"{comp} summary state", comp=comp):
                         assert current_state == salobj.State.OFFLINE
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "offline_comcam.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

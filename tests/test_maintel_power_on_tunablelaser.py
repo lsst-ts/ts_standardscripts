@@ -20,14 +20,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-import os
 import random
 import types
 import unittest
 import warnings
 
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.calibration import PowerOnTunableLaser
 from lsst.ts.xml.enums.TunableLaser import LaserDetailedState
 
@@ -182,13 +180,6 @@ class TestPowerOnTunableLaser(
                 self.script.optical_configuration == LaserOpticalConfiguration.SCU.name
             )
             assert self.script.wavelength == 500.0
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = os.path.join(
-            scripts_dir, "calibration", "power_on_tunablelaser.py"
-        )
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

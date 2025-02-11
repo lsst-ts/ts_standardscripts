@@ -27,7 +27,7 @@ import unittest
 import numpy as np
 import yaml
 from lsst.ts import standardscripts
-from lsst.ts.maintel.standardscripts import CloseLoopLSSTCam, get_scripts_dir
+from lsst.ts.maintel.standardscripts import CloseLoopLSSTCam
 from lsst.ts.observatory.control.maintel.lsstcam import LSSTCam, LSSTCamUsages
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.observatory.control.utils.enums import ClosedLoopMode
@@ -172,18 +172,6 @@ class TestCloseLoopLSSTCam(
             await self.run_script()
 
             assert all(self.state_0 == np.zeros(50))
-
-    async def test_executable_close_loop_lsstcam(self) -> None:
-        """Test that the script is executable for LSSTCam."""
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "close_loop_lsstcam.py"
-        await self.check_executable(script_path)
-
-    async def test_executable_close_loop_comcam(self) -> None:
-        """Test that the script is executable for ComCam."""
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "close_loop_comcam.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

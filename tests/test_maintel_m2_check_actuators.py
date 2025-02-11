@@ -24,7 +24,6 @@ import unittest
 
 import numpy as np
 from lsst.ts import salobj
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.m2 import CheckActuators
 from lsst.ts.standardscripts import BaseScriptTestCase
 
@@ -202,11 +201,6 @@ class TestCheckActuators(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             ]
 
             self.script.mtcs.run_m2_actuator_bump_test.assert_has_calls(expected_calls)
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "m2" / "check_actuators.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

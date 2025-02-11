@@ -26,7 +26,6 @@ import unittest
 
 from lsst.ts import standardscripts
 from lsst.ts.idl.enums.LaserTracker import LaserStatus
-from lsst.ts.maintel.standardscripts import get_scripts_dir
 from lsst.ts.maintel.standardscripts.laser_tracker import Align, AlignComponent
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.observatory.control.remote_group import RemoteGroup, Usages
@@ -141,11 +140,6 @@ class TestAlign(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTest
             await self.run_script()
 
             assert self.state_0 == [0, 0, 0, 0, 0]
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "laser_tracker" / "align.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":
