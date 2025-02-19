@@ -24,6 +24,7 @@ import types
 import unittest
 
 import numpy as np
+import pandas as pd
 from lsst.ts import standardscripts
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 from lsst.ts.observatory.control.utils.enums import DOFName
@@ -55,7 +56,31 @@ class TestSetDOF(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTes
 
         self.script.mtcs.assert_all_enabled = unittest.mock.AsyncMock()
 
+        self.script.get_efd_client = self.mock_get_efd_client()
+
         return (self.script,)
+
+    async def mock_get_efd_client(self):
+        mock_efd_client = unittest.mock.AsyncMock()
+
+        mock_efd_client.configure_mock(
+            **{
+                "select_time_series.side_effect": self.mock_select_time_series,
+                "influx_client.query.side_effect": self.mock_query,
+            },
+        )
+
+        return mock_efd_client
+
+    async def mock_query():
+        return pd.DataFrame(index=[pd.Timestamp("2024-01-01T00:00:00Z")])
+
+    async def mock_select_time_series():
+        return pd.DataFrame(
+            data=[np.arange(50)],  # A row with 50 sequential values (0 to 49)
+            columns=[f"value_{i}" for i in range(50)],
+            index=[pd.Timestamp("2024-01-01T00:00:00Z")],
+        )
 
     async def mock_get_degrees_of_freedom(self, **kwargs):
         return types.SimpleNamespace(aggregatedDoF=np.zeros(len(DOFName)))
