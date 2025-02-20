@@ -120,13 +120,13 @@ class CheckActuators(BaseBlockScript):
 
         url = "https://github.com/lsst-ts/"
         path = (
-            "ts_externalscripts/blob/main/python/lsst/ts/standardscripts/"
+            "ts_standardscripts/blob/main/python/lsst/ts/standardscripts/"
             "maintel/m1m3/check_actuators.py"
         )
         schema_yaml = f"""
         $schema: http://json-schema.org/draft-07/schema#
         $id: {url}{path}
-        title: CheckAcutators v1
+        title: CheckActuators v1
         description: Configuration for Maintel bump test SAL Script.
         type: object
         properties:
