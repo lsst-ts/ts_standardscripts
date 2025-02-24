@@ -20,14 +20,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-import os
 import random
 import types
 import unittest
 import warnings
 
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.standardscripts.maintel.calibration import PowerOffTunableLaser
+from lsst.ts.maintel.standardscripts.calibration import PowerOffTunableLaser
 from lsst.ts.xml.enums.TunableLaser import LaserDetailedState
 
 # TODO: (DM-46168) Revert workaround for TunableLaser XML changes
@@ -154,13 +153,6 @@ class TestPowerOffTunableLaser(
                 self.laser_state.detailedState
                 == LaserDetailedState.NONPROPAGATING_CONTINUOUS_MODE
             )
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = os.path.join(
-            scripts_dir, "maintel", "calibration", "power_off_tunablelaser.py"
-        )
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

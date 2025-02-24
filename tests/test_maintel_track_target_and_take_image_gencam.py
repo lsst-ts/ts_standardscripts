@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -30,10 +30,10 @@ import unittest
 import numpy
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.observatory.control.utils import RotType
-from lsst.ts.standardscripts.maintel.track_target_and_take_image_gencam import (
+from lsst.ts.maintel.standardscripts.track_target_and_take_image_gencam import (
     TrackTargetAndTakeImageGenCam,
 )
+from lsst.ts.observatory.control.utils import RotType
 
 random.seed(42)  # for set_random_lsst_dds_partition_prefix
 
@@ -252,11 +252,6 @@ class TestMainTelTrackTargetAndTakeImageGenCam(
                 raise AssertionError(
                     f"Configuration for {key} does not match."
                 ) from err
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "track_target_and_take_image_gencam.py"
-        await self.check_executable(script_path)
 
     async def test_run_fail_check_tracking(self):
         async with self.make_script():

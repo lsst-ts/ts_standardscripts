@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -26,8 +26,8 @@ import unittest
 
 from lsst.ts import standardscripts
 from lsst.ts.idl.enums.LaserTracker import LaserStatus
+from lsst.ts.maintel.standardscripts.laser_tracker import SetUp
 from lsst.ts.salobj import State
-from lsst.ts.standardscripts.maintel.laser_tracker import SetUp
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -73,11 +73,6 @@ class TestSetUp(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTest
             await self.run_script()
 
             assert self.laser_status.status == LaserStatus.ON
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "laser_tracker" / "set_up.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

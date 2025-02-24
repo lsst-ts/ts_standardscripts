@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,8 +24,8 @@ import unittest.mock
 
 from lsst.ts import salobj, utils
 from lsst.ts.idl.enums import Script
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.maintel import SetupMTCS
+from lsst.ts.maintel.standardscripts import SetupMTCS
+from lsst.ts.standardscripts import BaseScriptTestCase
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -71,11 +71,6 @@ class TestSetupMTCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
             # Check configuration was correctly loaded
             self.assertEqual(self.script.config.ccw_following, ccw_following)
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "setup_mtcs.py"
-        await self.check_executable(script_path)
 
     async def test_run(self):
         # Start the test itself

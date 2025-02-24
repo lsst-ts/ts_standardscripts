@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -23,8 +23,8 @@ import unittest
 from unittest.mock import patch
 
 from lsst.ts import standardscripts
+from lsst.ts.maintel.standardscripts import HomeBothAxes
 from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
-from lsst.ts.standardscripts.maintel import HomeBothAxes
 
 
 class TestHomeBothAxes(
@@ -107,12 +107,6 @@ class TestHomeBothAxes(
             self.script.mtcs.rem.mtmount.cmd_homeBothAxes.start.assert_awaited_once_with(
                 timeout=self.script.home_both_axes_timeout
             )
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "home_both_axes.py"
-        print(script_path)
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

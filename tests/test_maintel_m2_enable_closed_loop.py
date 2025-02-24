@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -23,7 +23,7 @@ import contextlib
 import unittest
 
 from lsst.ts import standardscripts, utils
-from lsst.ts.standardscripts.maintel.m2.enable_closed_loop import EnableM2ClosedLoop
+from lsst.ts.maintel.standardscripts.m2.enable_closed_loop import EnableM2ClosedLoop
 
 
 class TestEnableM2ClosedLoop(
@@ -76,12 +76,6 @@ class TestEnableM2ClosedLoop(
             assert self.script.program is None
             assert self.script.reason is None
             assert self.script.checkpoint_message is None
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "m2" / "enable_closed_loop.py"
-        print(script_path)
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

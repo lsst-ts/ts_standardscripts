@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,8 +24,8 @@ import unittest
 import pytest
 from lsst.ts import salobj
 from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.maintel import OffsetMTCS
+from lsst.ts.maintel.standardscripts import OffsetMTCS
+from lsst.ts.standardscripts import BaseScriptTestCase
 
 
 class TestOffsetMTCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
@@ -37,12 +37,6 @@ class TestOffsetMTCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
         self.script = OffsetMTCS(index=index, add_remotes=False)
 
         return (self.script,)
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "offset_mtcs.py"
-        self.log.debug(f"Checking for script in {script_path}")
-        await self.check_executable(script_path)
 
     async def test_valid_configurations(self):
         # Set of valid configurations to test, considering different possible

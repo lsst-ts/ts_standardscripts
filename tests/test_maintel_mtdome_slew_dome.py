@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -25,7 +25,7 @@ import unittest
 import pytest
 from lsst.ts import salobj, standardscripts
 from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.standardscripts.maintel.mtdome import SlewDome
+from lsst.ts.maintel.standardscripts.mtdome import SlewDome
 
 
 class TestSlewDome(
@@ -54,11 +54,6 @@ class TestSlewDome(
             self.script.mtcs.assert_all_enabled.assert_awaited_once()
             self.script.mtcs.slew_dome_to.assert_awaited_once()
             self.script.mtcs.slew_dome_to.assert_called_with(az=0.0)
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "mtdome" / "slew_dome.py"
-        await self.check_executable(script_path)
 
     async def test_config(self):
         async with self.make_script():

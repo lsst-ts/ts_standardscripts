@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,7 +24,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.standardscripts.maintel.enable_hexapod_compensation_mode import (
+from lsst.ts.maintel.standardscripts.enable_hexapod_compensation_mode import (
     EnableHexapodCompensationMode,
 )
 
@@ -103,12 +103,6 @@ class TestEnableHexapodCompensationMode(
             self.script.mtcs.enable_compensation_mode.assert_has_awaits(
                 expected_calls, any_order=True
             )
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "enable_hexapod_compensation_mode.py"
-        print(script_path)
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

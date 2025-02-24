@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_maintel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,7 +24,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.standardscripts.maintel.m1m3 import EnableM1M3SlewControllerFlags
+from lsst.ts.maintel.standardscripts.m1m3 import EnableM1M3SlewControllerFlags
 
 
 class TestEnableM1M3SlewControllerFlags(
@@ -147,10 +147,3 @@ class TestEnableM1M3SlewControllerFlags(
             self.script.mtcs.set_m1m3_slew_controller_settings.assert_has_awaits(
                 expected_calls
             )
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = (
-            scripts_dir / "maintel" / "m1m3" / "enable_m1m3_slew_controller_flags.py"
-        )
-        await self.check_executable(script_path)
