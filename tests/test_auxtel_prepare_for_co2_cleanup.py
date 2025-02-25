@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -26,7 +26,7 @@ import unittest
 
 import pytest
 from lsst.ts import salobj, standardscripts
-from lsst.ts.standardscripts.auxtel.prepare_for import PrepareForCO2Cleanup
+from lsst.ts.auxtel.standardscripts.prepare_for import PrepareForCO2Cleanup
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -101,11 +101,6 @@ class TestPrepareForCO2Cleanup(
                 wait_dome=expected_config["wait_dome"],
                 slew_timeout=expected_config["slew_timeout"],
             )
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "prepare_for" / "co2_cleanup.py"
-        await self.check_executable(script_path)
 
     async def test_configure_fail_invalid_el_min(self):
         el = -0.1

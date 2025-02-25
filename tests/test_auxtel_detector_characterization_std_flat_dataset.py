@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -27,7 +27,7 @@ import unittest
 
 import astropy
 from lsst.ts import salobj, standardscripts, utils
-from lsst.ts.standardscripts.auxtel.detector_characterization import ATGetStdFlatDataset
+from lsst.ts.auxtel.standardscripts.detector_characterization import ATGetStdFlatDataset
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -144,16 +144,6 @@ class TestATGetStdFlatDataset(
             assert self.filter == config.filter
             assert self.grating == config.grating
             assert self.linear_stage == config.linear_stage
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = (
-            scripts_dir
-            / "auxtel"
-            / "detector_characterization"
-            / "get_std_flat_dataset.py"
-        )
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

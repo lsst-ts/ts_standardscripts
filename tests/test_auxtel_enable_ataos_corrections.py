@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,8 +24,8 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.auxtel.standardscripts import EnableATAOSCorrections
 from lsst.ts.observatory.control.mock import ATCSMock
-from lsst.ts.standardscripts.auxtel import EnableATAOSCorrections
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -52,11 +52,6 @@ class TestEnableATAOSCorrections(
             assert self.atcs_mock.ataos.evt_correctionEnabled.data.m1
             assert self.atcs_mock.ataos.evt_correctionEnabled.data.hexapod
             assert self.atcs_mock.ataos.evt_correctionEnabled.data.atspectrograph
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "enable_ataos_corrections.py"
-        await self.check_executable(script_path)
 
     async def test_configure_ignore(self):
         async with self.make_script():

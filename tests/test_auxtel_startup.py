@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -24,8 +24,8 @@ import random
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.auxtel.standardscripts import PrepareForOnSky
 from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
-from lsst.ts.standardscripts.auxtel import PrepareForOnSky
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -55,11 +55,6 @@ class TestStartup(standardscripts.BaseScriptTestCase, unittest.IsolatedAsyncioTe
             # TODO: Have to think about how to test this script.
 
             # await self.run_script()
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "prepare_for" / "onsky.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":

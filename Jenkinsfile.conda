@@ -1,2 +1,2 @@
 @Library('JenkinsShared')_
-CondaPipeline(["ts_config_ocs","ts_config_attcs"], "ts-standardscripts", "lsst.ts.standardscripts", "noarch")
+CondaPipeline(["ts_config_ocs","ts_config_attcs"], "ts-auxtel-standardscripts", "lsst.ts.auxtel.standardscripts", "noarch")

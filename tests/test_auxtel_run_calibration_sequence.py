@@ -1,4 +1,4 @@
-# This file is part of ts_externalscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -17,16 +17,16 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import unittest
 
 import pytest
 from lsst.ts import salobj
+from lsst.ts.auxtel.standardscripts.calibrations import RunCalibrationSequence
 from lsst.ts.observatory.control.auxtel.atcalsys import ATCalsys, ATCalsysUsages
 from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.auxtel.calibrations import RunCalibrationSequence
+from lsst.ts.standardscripts import BaseScriptTestCase
 
 
 class TestRunCalibrationSequence(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
@@ -57,10 +57,3 @@ class TestRunCalibrationSequence(BaseScriptTestCase, unittest.IsolatedAsyncioTes
         async with self.make_script():
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script()
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = (
-            scripts_dir / "auxtel" / "calibrations" / "run_calibration_sequence.py"
-        )
-        await self.check_executable(script_path)

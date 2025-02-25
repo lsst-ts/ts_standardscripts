@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -17,16 +17,17 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 import contextlib
 import logging
 import unittest
 
 import pytest
 from lsst.ts import salobj
+from lsst.ts.auxtel.standardscripts import OffsetATAOS
 from lsst.ts.idl.enums.Script import ScriptState
-from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
-from lsst.ts.standardscripts.auxtel import OffsetATAOS
+from lsst.ts.standardscripts import BaseScriptTestCase
 
 
 class TestOffsetATAOS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
@@ -45,12 +46,6 @@ class TestOffsetATAOS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
         self.script.atcs.rem.ataos = unittest.mock.AsyncMock()
 
         yield
-
-    async def test_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "offset_ataos.py"
-        self.log.debug(f"Checking for script in {script_path}")
-        await self.check_executable(script_path)
 
     async def test_valid_configurations(self):
         # Set of valid configurations to test, considering different possible

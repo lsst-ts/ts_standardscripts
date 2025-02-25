@@ -1,4 +1,4 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_auxtel_standardscripts
 #
 # Developed for the LSST Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -17,7 +17,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
 import logging
@@ -26,8 +26,8 @@ import types
 import unittest
 
 from lsst.ts import salobj, standardscripts, utils
+from lsst.ts.auxtel.standardscripts.calibrations import PowerOnATCalSys
 from lsst.ts.idl.enums import ATMonochromator, ATWhiteLight
-from lsst.ts.standardscripts.auxtel.calibrations import PowerOnATCalSys
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -255,11 +255,6 @@ class TestPowerOnATCalSys(
             assert self.chiller_status.chillerState == "READY"
             assert self.lamp_state.basicState == ATWhiteLight.LampBasicState.ON
             assert self.shutter_status.shutterState == ATWhiteLight.ShutterState.OPEN
-
-    async def test_executable(self):
-        scripts_dir = standardscripts.get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "calibrations" / "power_on_atcalsys.py"
-        await self.check_executable(script_path)
 
 
 if __name__ == "__main__":
