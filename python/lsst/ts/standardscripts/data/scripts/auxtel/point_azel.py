@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.auxtel.standardscripts import PointAzEl
 
-asyncio.run(PointAzEl.amain())
+if __name__ == "__main__":
+    asyncio.run(PointAzEl.amain())

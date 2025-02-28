@@ -26,4 +26,5 @@ from lsst.ts.auxtel.standardscripts.calibrations.run_calibration_sequence import
     RunCalibrationSequence,
 )
 
-asyncio.run(RunCalibrationSequence.amain())
+if __name__ == "__main__":
+    asyncio.run(RunCalibrationSequence.amain())

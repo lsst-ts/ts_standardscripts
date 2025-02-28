@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.auxtel.standardscripts import OffsetATCS
 
-asyncio.run(OffsetATCS.amain())
+if __name__ == "__main__":
+    asyncio.run(OffsetATCS.amain())

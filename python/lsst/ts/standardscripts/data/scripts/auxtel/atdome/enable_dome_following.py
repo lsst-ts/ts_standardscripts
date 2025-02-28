@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.auxtel.standardscripts.atdome import EnableDomeFollowing
 
-asyncio.run(EnableDomeFollowing.amain())
+if __name__ == "__main__":
+    asyncio.run(EnableDomeFollowing.amain())

@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts import OffsetM2Hexapod
 
-asyncio.run(OffsetM2Hexapod.amain())
+if __name__ == "__main__":
+    asyncio.run(OffsetM2Hexapod.amain())

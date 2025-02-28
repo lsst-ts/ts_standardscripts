@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts import StandbyMTCS
 
-asyncio.run(StandbyMTCS.amain())
+if __name__ == "__main__":
+    asyncio.run(StandbyMTCS.amain())

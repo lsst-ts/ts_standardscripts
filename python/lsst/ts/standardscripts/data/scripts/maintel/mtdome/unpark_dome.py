@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts.mtdome import UnparkDome
 
-asyncio.run(UnparkDome.amain())
+if __name__ == "__main__":
+    asyncio.run(UnparkDome.amain())

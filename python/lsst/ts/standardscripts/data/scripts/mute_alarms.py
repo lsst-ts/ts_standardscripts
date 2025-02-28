@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.standardscripts import MuteAlarms
 
-asyncio.run(MuteAlarms.amain())
+if __name__ == "__main__":
+    asyncio.run(MuteAlarms.amain())

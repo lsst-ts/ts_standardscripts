@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts.mtdome import SlewDome
 
-asyncio.run(SlewDome.amain())
+if __name__ == "__main__":
+    asyncio.run(SlewDome.amain())

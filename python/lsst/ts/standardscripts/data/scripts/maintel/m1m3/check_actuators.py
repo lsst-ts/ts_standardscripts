@@ -23,4 +23,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts.m1m3 import CheckActuators
 
-asyncio.run(CheckActuators.amain())
+if __name__ == "__main__":
+    asyncio.run(CheckActuators.amain())

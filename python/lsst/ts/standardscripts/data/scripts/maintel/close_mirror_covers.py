@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts import CloseMirrorCovers
 
-asyncio.run(CloseMirrorCovers.amain())
+if __name__ == "__main__":
+    asyncio.run(CloseMirrorCovers.amain())

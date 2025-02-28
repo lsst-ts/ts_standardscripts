@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts import CloseLoopLSSTCam
 
-asyncio.run(CloseLoopLSSTCam.amain())
+if __name__ == "__main__":
+    asyncio.run(CloseLoopLSSTCam.amain())

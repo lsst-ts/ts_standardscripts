@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.auxtel.standardscripts import TrackTarget
 
-asyncio.run(TrackTarget.amain())
+if __name__ == "__main__":
+    asyncio.run(TrackTarget.amain())

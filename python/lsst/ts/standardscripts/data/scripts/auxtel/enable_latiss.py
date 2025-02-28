@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.auxtel.standardscripts import EnableLATISS
 
-asyncio.run(EnableLATISS.amain())
+if __name__ == "__main__":
+    asyncio.run(EnableLATISS.amain())

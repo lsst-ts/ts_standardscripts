@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.auxtel.standardscripts.prepare_for import PrepareForVent
 
-asyncio.run(PrepareForVent.amain())
+if __name__ == "__main__":
+    asyncio.run(PrepareForVent.amain())

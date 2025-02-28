@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts.laser_tracker import Align
 
-asyncio.run(Align.amain())
+if __name__ == "__main__":
+    asyncio.run(Align.amain())

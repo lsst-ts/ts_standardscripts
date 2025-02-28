@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.standardscripts import RunCommand
 
-asyncio.run(RunCommand.amain())
+if __name__ == "__main__":
+    asyncio.run(RunCommand.amain())

@@ -23,4 +23,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts.m2 import EnableM2ClosedLoop
 
-asyncio.run(EnableM2ClosedLoop.amain())
+if __name__ == "__main__":
+    asyncio.run(EnableM2ClosedLoop.amain())

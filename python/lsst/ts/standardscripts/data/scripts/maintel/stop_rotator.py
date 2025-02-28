@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts.stop_rotator import StopRotator
 
-asyncio.run(StopRotator.amain())
+if __name__ == "__main__":
+    asyncio.run(StopRotator.amain())

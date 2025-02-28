@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts.m1m3 import RaiseM1M3
 
-asyncio.run(RaiseM1M3.amain())
+if __name__ == "__main__":
+    asyncio.run(RaiseM1M3.amain())

@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.auxtel.standardscripts import Shutdown
 
-asyncio.run(Shutdown.amain())
+if __name__ == "__main__":
+    asyncio.run(Shutdown.amain())

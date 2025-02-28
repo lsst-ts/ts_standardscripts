@@ -39,4 +39,5 @@ class MTSchedulerStandby(SetDesiredState):
         )
 
 
-asyncio.run(MTSchedulerStandby.amain())
+if __name__ == "__main__":
+    asyncio.run(MTSchedulerStandby.amain())

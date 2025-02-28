@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts.calibration import PowerOnTunableLaser
 
-asyncio.run(PowerOnTunableLaser.amain())
+if __name__ == "__main__":
+    asyncio.run(PowerOnTunableLaser.amain())

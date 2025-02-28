@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts import TakeStutteredLSSTCam
 
-asyncio.run(TakeStutteredLSSTCam.amain())
+if __name__ == "__main__":
+    asyncio.run(TakeStutteredLSSTCam.amain())

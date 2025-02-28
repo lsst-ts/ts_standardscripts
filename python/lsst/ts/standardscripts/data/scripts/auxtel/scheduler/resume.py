@@ -36,4 +36,5 @@ class ATSchedulerResume(Resume):
         )
 
 
-asyncio.run(ATSchedulerResume.amain())
+if __name__ == "__main__":
+    asyncio.run(ATSchedulerResume.amain())

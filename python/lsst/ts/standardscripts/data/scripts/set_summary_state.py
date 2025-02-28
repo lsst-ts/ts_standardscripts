@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.standardscripts import SetSummaryState
 
-asyncio.run(SetSummaryState.amain())
+if __name__ == "__main__":
+    asyncio.run(SetSummaryState.amain())

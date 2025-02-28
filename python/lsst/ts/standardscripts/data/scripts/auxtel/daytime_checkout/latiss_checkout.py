@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.auxtel.standardscripts.daytime_checkout import LatissCheckout
 
-asyncio.run(LatissCheckout.amain())
+if __name__ == "__main__":
+    asyncio.run(LatissCheckout.amain())

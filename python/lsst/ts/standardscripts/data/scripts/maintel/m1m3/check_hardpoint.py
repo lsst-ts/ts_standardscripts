@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts.m1m3 import CheckHardpoint
 
-asyncio.run(CheckHardpoint.amain())
+if __name__ == "__main__":
+    asyncio.run(CheckHardpoint.amain())

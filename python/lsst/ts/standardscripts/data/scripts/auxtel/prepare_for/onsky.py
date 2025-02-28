@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.auxtel.standardscripts.prepare_for import PrepareForOnSky
 
-asyncio.run(PrepareForOnSky.amain())
+if __name__ == "__main__":
+    asyncio.run(PrepareForOnSky.amain())

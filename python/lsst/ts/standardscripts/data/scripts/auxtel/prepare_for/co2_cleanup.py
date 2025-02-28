@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.auxtel.standardscripts.prepare_for import PrepareForCO2Cleanup
 
-asyncio.run(PrepareForCO2Cleanup.amain())
+if __name__ == "__main__":
+    asyncio.run(PrepareForCO2Cleanup.amain())

@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.auxtel.standardscripts.calibrations import PowerOffATCalSys
 
-asyncio.run(PowerOffATCalSys.amain())
+if __name__ == "__main__":
+    asyncio.run(PowerOffATCalSys.amain())

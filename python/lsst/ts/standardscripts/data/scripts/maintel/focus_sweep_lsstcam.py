@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.maintel.standardscripts import FocusSweepLSSTCam
 
-asyncio.run(FocusSweepLSSTCam.amain())
+if __name__ == "__main__":
+    asyncio.run(FocusSweepLSSTCam.amain())

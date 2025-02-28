@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.auxtel.standardscripts import TakeStutteredLatiss
 
-asyncio.run(TakeStutteredLatiss.amain())
+if __name__ == "__main__":
+    asyncio.run(TakeStutteredLatiss.amain())
