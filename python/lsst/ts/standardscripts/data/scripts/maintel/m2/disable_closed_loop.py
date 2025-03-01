@@ -21,6 +21,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.m2 import DisableM2ClosedLoop
+from lsst.ts.maintel.standardscripts.m2 import DisableM2ClosedLoop
 
-asyncio.run(DisableM2ClosedLoop.amain())
+if __name__ == "__main__":
+    asyncio.run(DisableM2ClosedLoop.amain())

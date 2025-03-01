@@ -36,4 +36,5 @@ class ATSchedulerAddBlock(AddBlock):
         )
 
 
-asyncio.run(ATSchedulerAddBlock.amain())
+if __name__ == "__main__":
+    asyncio.run(ATSchedulerAddBlock.amain())

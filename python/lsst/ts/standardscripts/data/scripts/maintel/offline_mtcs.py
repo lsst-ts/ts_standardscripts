@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import OfflineMTCS
+from lsst.ts.maintel.standardscripts import OfflineMTCS
 
-asyncio.run(OfflineMTCS.amain())
+if __name__ == "__main__":
+    asyncio.run(OfflineMTCS.amain())

@@ -36,4 +36,5 @@ class MTSchedulerResume(Resume):
         )
 
 
-asyncio.run(MTSchedulerResume.amain())
+if __name__ == "__main__":
+    asyncio.run(MTSchedulerResume.amain())

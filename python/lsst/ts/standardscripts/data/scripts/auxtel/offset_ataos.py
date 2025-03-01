@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import OffsetATAOS
+from lsst.ts.auxtel.standardscripts import OffsetATAOS
 
-asyncio.run(OffsetATAOS.amain())
+if __name__ == "__main__":
+    asyncio.run(OffsetATAOS.amain())

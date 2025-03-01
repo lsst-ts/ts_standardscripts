@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import Stop
+from lsst.ts.maintel.standardscripts import Stop
 
-asyncio.run(Stop.amain())
+if __name__ == "__main__":
+    asyncio.run(Stop.amain())

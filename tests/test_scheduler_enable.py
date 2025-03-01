@@ -268,16 +268,6 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
                 expected_csc_state=salobj.State.ENABLED,
             )
 
-    async def test_auxtel_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "scheduler" / "enable.py"
-        await self.check_executable(script_path)
-
-    async def test_maintel_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "scheduler" / "enable.py"
-        await self.check_executable(script_path)
-
     async def test_ocs_executable(self):
         scripts_dir = get_scripts_dir()
         script_path = scripts_dir / "ocs" / "scheduler" / "enable.py"

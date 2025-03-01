@@ -36,4 +36,5 @@ class ATSchedulerLoadSnapshot(LoadSnapshot):
         )
 
 
-asyncio.run(ATSchedulerLoadSnapshot.amain())
+if __name__ == "__main__":
+    asyncio.run(ATSchedulerLoadSnapshot.amain())

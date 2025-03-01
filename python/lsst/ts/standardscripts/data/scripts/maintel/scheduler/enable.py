@@ -36,4 +36,5 @@ class MTSchedulerEnable(Enable):
         )
 
 
-asyncio.run(MTSchedulerEnable.amain())
+if __name__ == "__main__":
+    asyncio.run(MTSchedulerEnable.amain())

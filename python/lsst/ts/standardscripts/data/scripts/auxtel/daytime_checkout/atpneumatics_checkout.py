@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.daytime_checkout import ATPneumaticsCheckout
+from lsst.ts.auxtel.standardscripts.daytime_checkout import ATPneumaticsCheckout
 
-asyncio.run(ATPneumaticsCheckout.amain())
+if __name__ == "__main__":
+    asyncio.run(ATPneumaticsCheckout.amain())

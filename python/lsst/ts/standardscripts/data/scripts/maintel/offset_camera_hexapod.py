@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import OffsetCameraHexapod
+from lsst.ts.maintel.standardscripts import OffsetCameraHexapod
 
-asyncio.run(OffsetCameraHexapod.amain())
+if __name__ == "__main__":
+    asyncio.run(OffsetCameraHexapod.amain())

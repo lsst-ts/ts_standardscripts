@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.mtdome import CrawlAz
+from lsst.ts.maintel.standardscripts.mtdome import CrawlAz
 
-asyncio.run(CrawlAz.amain())
+if __name__ == "__main__":
+    asyncio.run(CrawlAz.amain())

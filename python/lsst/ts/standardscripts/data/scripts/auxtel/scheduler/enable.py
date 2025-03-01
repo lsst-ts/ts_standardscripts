@@ -36,4 +36,5 @@ class ATSchedulerEnable(Enable):
         )
 
 
-asyncio.run(ATSchedulerEnable.amain())
+if __name__ == "__main__":
+    asyncio.run(ATSchedulerEnable.amain())

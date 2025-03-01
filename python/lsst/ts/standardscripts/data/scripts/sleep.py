@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.standardscripts import Sleep
 
-asyncio.run(Sleep.amain())
+if __name__ == "__main__":
+    asyncio.run(Sleep.amain())

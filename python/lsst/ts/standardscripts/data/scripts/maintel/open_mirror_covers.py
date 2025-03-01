@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import OpenMirrorCovers
+from lsst.ts.maintel.standardscripts import OpenMirrorCovers
 
-asyncio.run(OpenMirrorCovers.amain())
+if __name__ == "__main__":
+    asyncio.run(OpenMirrorCovers.amain())

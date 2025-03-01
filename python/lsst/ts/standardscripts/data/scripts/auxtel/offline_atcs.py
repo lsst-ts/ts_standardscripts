@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import OfflineATCS
+from lsst.ts.auxtel.standardscripts import OfflineATCS
 
-asyncio.run(OfflineATCS.amain())
+if __name__ == "__main__":
+    asyncio.run(OfflineATCS.amain())

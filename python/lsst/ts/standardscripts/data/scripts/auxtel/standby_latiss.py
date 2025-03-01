@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import StandbyLATISS
+from lsst.ts.auxtel.standardscripts import StandbyLATISS
 
-asyncio.run(StandbyLATISS.amain())
+if __name__ == "__main__":
+    asyncio.run(StandbyLATISS.amain())

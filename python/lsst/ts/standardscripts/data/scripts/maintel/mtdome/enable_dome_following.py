@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.mtdome import EnableDomeFollowing
+from lsst.ts.maintel.standardscripts.mtdome import EnableDomeFollowing
 
-asyncio.run(EnableDomeFollowing.amain())
+if __name__ == "__main__":
+    asyncio.run(EnableDomeFollowing.amain())

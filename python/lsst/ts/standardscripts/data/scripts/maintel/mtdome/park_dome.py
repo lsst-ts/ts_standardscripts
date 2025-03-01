@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.mtdome import ParkDome
+from lsst.ts.maintel.standardscripts.mtdome import ParkDome
 
-asyncio.run(ParkDome.amain())
+if __name__ == "__main__":
+    asyncio.run(ParkDome.amain())

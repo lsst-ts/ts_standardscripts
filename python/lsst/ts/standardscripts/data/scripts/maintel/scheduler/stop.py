@@ -36,4 +36,5 @@ class MTSchedulerStop(Stop):
         )
 
 
-asyncio.run(MTSchedulerStop.amain())
+if __name__ == "__main__":
+    asyncio.run(MTSchedulerStop.amain())

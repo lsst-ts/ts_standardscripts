@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.laser_tracker import Measure
+from lsst.ts.maintel.standardscripts.laser_tracker import Measure
 
-asyncio.run(Measure.amain())
+if __name__ == "__main__":
+    asyncio.run(Measure.amain())

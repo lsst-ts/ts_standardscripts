@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.prepare_for import PrepareForAlign
+from lsst.ts.maintel.standardscripts.prepare_for import PrepareForAlign
 
-asyncio.run(PrepareForAlign.amain())
+if __name__ == "__main__":
+    asyncio.run(PrepareForAlign.amain())
