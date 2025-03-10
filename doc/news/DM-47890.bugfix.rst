@@ -1,1 +1,0 @@
-In `auxtel/daytime_checkout/slew_and_take_image_checkout.py`, fix how TCS readiness is configured.
