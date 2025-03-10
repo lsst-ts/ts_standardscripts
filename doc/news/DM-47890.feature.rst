@@ -1,1 +1,0 @@
-In `maintel/m1m3/enable_m1m3_slew_controller_flags.py`, update `run_block`` method to use new `m1m3_in_engineering_mode`` context manager to enter/exit engineering mode when setting slew controller settings.

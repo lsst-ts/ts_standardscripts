@@ -1,1 +1,0 @@
-Fix unit tests for TakeImageLatiss and ATGetStdFlatDataset to work with new take_image command procedure.
