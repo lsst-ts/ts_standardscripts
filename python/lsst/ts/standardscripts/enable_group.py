@@ -117,22 +117,13 @@ class EnableGroup(salobj.BaseScript, metaclass=abc.ABCMeta):
 
     async def configure(self, config):
         self.config = config
+        if hasattr(config, "ignore"):
+            self.group.disable_checks_for_components(components=config.ignore)
 
     def set_metadata(self, metadata):
         metadata.duration = 60.0
 
     async def run(self):
-        if hasattr(self.config, "ignore"):
-            for comp in self.config.ignore:
-                if comp not in self.components():
-                    self.log.warning(
-                        f"Component {comp} not in CSC Group. "
-                        f"Must be one of {self.components()}. Ignoring."
-                    )
-                else:
-                    self.log.debug(f"Ignoring component {comp}.")
-                    setattr(self.group.check, comp, False)
-
         overrides = (
             dict([(comp, getattr(self.config, comp, "")) for comp in self.components()])
             if self.config is not None

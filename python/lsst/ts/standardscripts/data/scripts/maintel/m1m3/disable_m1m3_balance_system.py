@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.m1m3 import DisableM1M3BalanceSystem
+from lsst.ts.maintel.standardscripts.m1m3 import DisableM1M3BalanceSystem
 
-asyncio.run(DisableM1M3BalanceSystem.amain())
+if __name__ == "__main__":
+    asyncio.run(DisableM1M3BalanceSystem.amain())

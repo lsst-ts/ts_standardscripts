@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import SetupMTCS
+from lsst.ts.maintel.standardscripts import SetupMTCS
 
-asyncio.run(SetupMTCS.amain())
+if __name__ == "__main__":
+    asyncio.run(SetupMTCS.amain())

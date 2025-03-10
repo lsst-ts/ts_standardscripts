@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import DisableATAOSCorrections
+from lsst.ts.auxtel.standardscripts import DisableATAOSCorrections
 
-asyncio.run(DisableATAOSCorrections.amain())
+if __name__ == "__main__":
+    asyncio.run(DisableATAOSCorrections.amain())

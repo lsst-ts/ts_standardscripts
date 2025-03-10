@@ -24,4 +24,5 @@ import asyncio
 
 from lsst.ts.standardscripts import PauseQueue
 
-asyncio.run(PauseQueue.amain())
+if __name__ == "__main__":
+    asyncio.run(PauseQueue.amain())

@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel import StandbyComCam
+from lsst.ts.maintel.standardscripts import StandbyComCam
 
-asyncio.run(StandbyComCam.amain())
+if __name__ == "__main__":
+    asyncio.run(StandbyComCam.amain())

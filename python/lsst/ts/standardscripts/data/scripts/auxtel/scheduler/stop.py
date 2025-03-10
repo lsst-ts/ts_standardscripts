@@ -36,4 +36,5 @@ class ATSchedulerStop(Stop):
         )
 
 
-asyncio.run(ATSchedulerStop.amain())
+if __name__ == "__main__":
+    asyncio.run(ATSchedulerStop.amain())

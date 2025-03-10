@@ -39,4 +39,5 @@ class ATSchedulerStandby(SetDesiredState):
         )
 
 
-asyncio.run(ATSchedulerStandby.amain())
+if __name__ == "__main__":
+    asyncio.run(ATSchedulerStandby.amain())

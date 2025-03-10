@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.maintel.laser_tracker import ShutDown
+from lsst.ts.maintel.standardscripts.laser_tracker import ShutDown
 
-asyncio.run(ShutDown.amain())
+if __name__ == "__main__":
+    asyncio.run(ShutDown.amain())

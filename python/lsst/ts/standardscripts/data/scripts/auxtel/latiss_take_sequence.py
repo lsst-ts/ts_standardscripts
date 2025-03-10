@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import LatissTakeSequence
+from lsst.ts.auxtel.standardscripts import LatissTakeSequence
 
-asyncio.run(LatissTakeSequence.amain())
+if __name__ == "__main__":
+    asyncio.run(LatissTakeSequence.amain())

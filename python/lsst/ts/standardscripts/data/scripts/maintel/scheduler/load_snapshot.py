@@ -36,4 +36,5 @@ class MTSchedulerLoadSnapshot(LoadSnapshot):
         )
 
 
-asyncio.run(MTSchedulerLoadSnapshot.amain())
+if __name__ == "__main__":
+    asyncio.run(MTSchedulerLoadSnapshot.amain())

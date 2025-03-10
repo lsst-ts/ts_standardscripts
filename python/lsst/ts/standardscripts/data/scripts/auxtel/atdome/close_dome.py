@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel.atdome import CloseDome
+from lsst.ts.auxtel.standardscripts.atdome import CloseDome
 
-asyncio.run(CloseDome.amain())
+if __name__ == "__main__":
+    asyncio.run(CloseDome.amain())

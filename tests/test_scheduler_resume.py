@@ -43,16 +43,6 @@ class TestSchedulerBaseResume(BaseSchedulerTestCase):
 
             assert self.controller.running
 
-    async def test_auxtel_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "auxtel" / "scheduler" / "resume.py"
-        await self.check_executable(script_path)
-
-    async def test_maintel_executable(self):
-        scripts_dir = get_scripts_dir()
-        script_path = scripts_dir / "maintel" / "scheduler" / "resume.py"
-        await self.check_executable(script_path)
-
     async def test_ocs_executable(self):
         scripts_dir = get_scripts_dir()
         script_path = scripts_dir / "ocs" / "scheduler" / "resume.py"

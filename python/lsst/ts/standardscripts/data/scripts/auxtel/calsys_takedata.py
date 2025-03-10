@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import CalSysTakeData
+from lsst.ts.auxtel.standardscripts import CalSysTakeData
 
-asyncio.run(CalSysTakeData.amain())
+if __name__ == "__main__":
+    asyncio.run(CalSysTakeData.amain())

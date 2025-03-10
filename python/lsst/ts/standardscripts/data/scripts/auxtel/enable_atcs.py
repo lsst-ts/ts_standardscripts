@@ -22,6 +22,7 @@
 
 import asyncio
 
-from lsst.ts.standardscripts.auxtel import EnableATTCS
+from lsst.ts.auxtel.standardscripts import EnableATTCS
 
-asyncio.run(EnableATTCS.amain())
+if __name__ == "__main__":
+    asyncio.run(EnableATTCS.amain())
