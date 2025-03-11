@@ -179,10 +179,27 @@ class SetDesiredState(salobj.BaseScript):
 
     async def set_state_to_standby(self) -> None:
         """Set Scheduler state to standby."""
+        self.scheduler_remote.evt_summaryState.flush()
         await salobj.set_summary_state(
             self.scheduler_remote,
             salobj.State.STANDBY,
         )
+        try:
+            summary_state = await self.scheduler_remote.evt_summaryState.next(
+                flush=False, timeout=self.timeout_start
+            )
+            summary_state = salobj.State(summary_state.summaryState)
+            while summary_state != salobj.State.STANDBY:
+                self.log.debug(
+                    f"CSC in {summary_state.name}, waiting for it to be in STANDBY."
+                )
+                summary_state = await self.scheduler_remote.evt_summaryState.next(
+                    flush=False, timeout=self.timeout_start
+                )
+                summary_state = salobj.State(summary_state.summaryState)
+
+        except asyncio.TimeoutError:
+            self.log.warning("Timeout waiting for summary state. Continuing.")
 
     async def set_desired_state(self) -> None:
         """Enable CSC."""
@@ -208,12 +225,14 @@ class SetDesiredState(salobj.BaseScript):
             and self.desired_state != salobj.State.STANDBY
         ):
             await self.checkpoint(
-                f"Reset summary state to STANDBY before setting to {self.desired_state}"
+                f"Reset summary state to STANDBY before setting to {self.desired_state!r}"
             )
             self.log.warning(
-                f"Scheduler in {current_summary_state}, sending CSC to STANDBY then to {self.desired_state}."
+                f"Scheduler in {current_summary_state!r}, "
+                f"sending CSC to STANDBY then to {self.desired_state!r}."
             )
             await self.set_state_to_standby()
+            await self.checkpoint(f"Setting desired state: {self.desired_state!r}")
             await self.set_desired_state()
         else:
             await self.checkpoint(
