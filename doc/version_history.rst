@@ -8,6 +8,15 @@ Version History
 
 .. towncrier release notes start
 
+v2.0.1 (2025-03-11)
+===================
+
+New Features
+------------
+
+- Updates the ``SetDesiredState.set_state_to_standby`` method to wait for summary state event after sending the CSC to Standby. (`DM-49122 <https://rubinobs.atlassian.net/browse/DM-49122>`_)
+
+
 v2.0.0 (2025-03-10)
 ===================
 

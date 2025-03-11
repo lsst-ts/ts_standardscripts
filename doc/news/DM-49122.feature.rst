@@ -1,1 +1,0 @@
-Updates the ``SetDesiredState.set_state_to_standby`` method to wait for summary state event after sending the CSC to Standby.
