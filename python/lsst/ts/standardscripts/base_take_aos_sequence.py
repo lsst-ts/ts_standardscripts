@@ -315,7 +315,7 @@ class BaseTakeAOSSequence(BaseBlockScript):
                     )
                     break
             self.log.info("Send processing request to RA OCPS.")
-            instrument = await self.get_instrument_name()
+            instrument = self.get_instrument_name()
             config = {
                 f"{instrument}-FROM-OCS_DONUTPAIR": f"{intra_visit_id[0]},{extra_visit_id[0]}"
             }
