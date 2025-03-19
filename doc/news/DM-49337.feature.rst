@@ -1,0 +1,1 @@
+Add script to track target and take image with LSSTCam.
