@@ -32,6 +32,8 @@ import types
 
 import astropy.time
 import yaml
+from confluent_kafka.admin import AdminClient
+from confluent_kafka.schema_registry import SchemaRegistryClient
 from lsst.ts import salobj, utils
 from lsst.ts.idl.enums import Script
 
@@ -60,6 +62,48 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
     """
 
     _index_iter = utils.index_generator()
+
+    _broker_configuration = None
+    _schema_registry_url = None
+
+    def tearDown(self) -> None:
+        """Runs when the test is done.
+
+        This will delete all the topics and schema from the
+        kafka cluster.
+        """
+        if self._broker_configuration is not None:
+            admin_client = AdminClient(self._broker_configuration)
+            topics_list = admin_client.list_topics()
+            topics_to_delete = [
+                topic
+                for topic in topics_list.topics
+                if os.environ["LSST_TOPIC_SUBNAME"] in topic
+            ]
+            delete_futures = admin_client.delete_topics(
+                topics_to_delete, operation_timeout=60
+            )
+            for topic, future in delete_futures.items():
+                try:
+                    future.result()
+                except Exception as e:
+                    print(f"Failed to delete {topic=}: {e}")
+
+        if self._schema_registry_url is not None:
+            schema_registry_client = SchemaRegistryClient(
+                dict(url=self._schema_registry_url)
+            )
+            subjects = schema_registry_client.get_subjects()
+            schemas_do_delete = [
+                topic for topic in subjects if os.environ["LSST_TOPIC_SUBNAME"] in topic
+            ]
+            for subject in schemas_do_delete:
+                try:
+                    schema_registry_client.delete_subject(subject, permanent=True)
+                except Exception as e:
+                    print(f"Failed to delete {subject=}: {e}")
+
+        super().tearDown()  # type: ignore
 
     @abc.abstractmethod
     async def basic_make_script(self, index):
@@ -207,6 +251,13 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
             description="self.basic_make_script()",
             verbose=verbose,
         )
+        if self._broker_configuration is None:
+            self._broker_configuration = (
+                self.script.salinfo.get_broker_client_configuration()
+            )
+        if self._schema_registry_url is None:
+            self._schema_registry_url = self.script.salinfo.schema_registry_url
+
         try:
             await self.wait_for(
                 asyncio.gather(*[item.start_task for item in items_to_await]),
