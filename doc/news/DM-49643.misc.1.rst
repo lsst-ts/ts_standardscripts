@@ -1,0 +1,1 @@
+Updates the check_executable method in BaseScriptTestCase to add a flag that controls whether it will fully test the executables or just do a quick check.
