@@ -80,14 +80,15 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
                 for topic in topics_list.topics
                 if os.environ["LSST_TOPIC_SUBNAME"] in topic
             ]
-            delete_futures = admin_client.delete_topics(
-                topics_to_delete, operation_timeout=60
-            )
-            for topic, future in delete_futures.items():
-                try:
-                    future.result()
-                except Exception as e:
-                    print(f"Failed to delete {topic=}: {e}")
+            if topics_to_delete:
+                delete_futures = admin_client.delete_topics(
+                    topics_to_delete, operation_timeout=60
+                )
+                for topic, future in delete_futures.items():
+                    try:
+                        future.result()
+                    except Exception as e:
+                        print(f"Failed to delete {topic=}: {e}")
 
         if self._schema_registry_url is not None:
             schema_registry_client = SchemaRegistryClient(
