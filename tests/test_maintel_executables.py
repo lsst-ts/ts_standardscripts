@@ -272,6 +272,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "take_aos_sequence_comcam.py"
         await self.check_executable(script_path)
 
+    async def test_take_aos_sequence_lsstcam(self):
+        script_path = self.scripts_dir / "take_aos_sequence_lsstcam.py"
+        await self.check_executable(script_path)
+
     async def test_take_image_anycam(self):
         script_path = self.scripts_dir / "take_image_anycam.py"
         await self.check_executable(script_path)
