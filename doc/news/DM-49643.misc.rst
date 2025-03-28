@@ -1,0 +1,1 @@
+Adds a tearDown method to the BaseScriptTestCase class that cleans up the broker after the test is executed.
