@@ -145,6 +145,9 @@ properties:
       - type: string
       - type: "null"
     default: null
+  note:
+    description: A descriptive note about the image being taken.
+    type: string
   camera_playlist:
     description: >-
       Optional name a camera playlist to load before running the script.
@@ -256,6 +259,10 @@ required:
             f"rot={self.config.rot_sky:0.2f}]::"
             "done"
         )
+
+    @property
+    def note(self):
+        return getattr(self.config, "note", None) if self.config is not None else None
 
     @property
     @abc.abstractmethod
