@@ -184,6 +184,10 @@ class BaseScriptTestCase(metaclass=abc.ABCMeta):
         script_path = pathlib.Path(script_path).resolve()
 
         assert script_path.is_file()
+        assert os.access(script_path, os.X_OK)
+
+        if "LSST_SAL_SCRIPT_CHECK_BIN" not in os.environ:
+            return
 
         async with salobj.Domain() as domain, salobj.Remote(
             domain=domain, name="Script", index=index
