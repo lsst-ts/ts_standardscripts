@@ -144,12 +144,20 @@ class TestExecutables(
         script_path = self.scripts_dir / "move_p2p.py"
         await self.check_executable(script_path)
 
+    async def test_mtdome_close_dome(self):
+        script_path = self.scripts_dir / "mtdome" / "close_dome.py"
+        await self.check_executable(script_path)
+
     async def test_mtdome_crawl_az(self):
         script_path = self.scripts_dir / "mtdome" / "crawl_az.py"
         await self.check_executable(script_path)
 
     async def test_mtdome_home_dome(self):
         script_path = self.scripts_dir / "mtdome" / "home_dome.py"
+        await self.check_executable(script_path)
+
+    async def test_mtdome_open_dome(self):
+        script_path = self.scripts_dir / "mtdome" / "open_dome.py"
         await self.check_executable(script_path)
 
     async def test_mtdome_slew_dome(self):
