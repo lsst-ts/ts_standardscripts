@@ -52,6 +52,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "close_mirror_covers.py"
         await self.check_executable(script_path)
 
+    async def test_disable_aos_closed_loop(self):
+        script_path = self.scripts_dir / "disable_aos_closed_loop.py"
+        await self.check_executable(script_path)
+
     async def test_disable_dome_following(self):
         script_path = self.scripts_dir / "mtdome" / "disable_dome_following.py"
         await self.check_executable(script_path)
@@ -62,6 +66,10 @@ class TestExecutables(
 
     async def test_disable_m1m3_balance_system(self):
         script_path = self.scripts_dir / "m1m3" / "disable_m1m3_balance_system.py"
+        await self.check_executable(script_path)
+
+    async def test_enable_aos_closed_loop(self):
+        script_path = self.scripts_dir / "enable_aos_closed_loop.py"
         await self.check_executable(script_path)
 
     async def test_enable_comcam(self):
