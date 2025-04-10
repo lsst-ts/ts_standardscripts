@@ -323,3 +323,7 @@ class TestExecutables(
     async def test_unpark_dome(self):
         script_path = self.scripts_dir / "mtdome" / "unpark_dome.py"
         await self.check_executable(script_path)
+
+    async def test_change_filter_lsstcam(self):
+        script_path = self.scripts_dir / "change_filter_lsstcam.py"
+        await self.check_executable(script_path)
