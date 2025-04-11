@@ -23,17 +23,10 @@ __all__ = ["BaseBlockScript"]
 
 import abc
 import contextlib
-import hashlib
-import io
-import json
-import os
-import re
-from datetime import datetime
+import warnings
 
 import yaml
 from lsst.ts import salobj, utils
-
-from .utils import get_s3_bucket
 
 IMAGE_SERVER_URL = dict(
     tucson="http://comcam-mcm.tu.lsst.org",
@@ -43,13 +36,27 @@ IMAGE_SERVER_URL = dict(
 
 
 class BaseBlockScript(salobj.BaseScript, metaclass=abc.ABCMeta):
-    """Extend BaseScript to add support for executing blocks.
+    """(Deprecated) Extend BaseScript to add support for executing blocks.
 
     This base class adds a default configuration with reason and program that
     can be provided when executing the script.
+
+    Deprecated:
+        This class is deprecated. BaseScript now supports block metadata
+        directly.
+        Future development should use BaseScript and its built-in block
+        support.
     """
 
     def __init__(self, index: int, descr: str, help: str = "") -> None:
+        warnings.warn(
+            "BaseBlockScript is deprecated. salobj.BaseScript now supports"
+            + " block metadata directly. "
+            + "Future development should use salobj.BaseScript instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         super().__init__(index, descr, help)
 
         self.program = None
@@ -125,6 +132,13 @@ class BaseBlockScript(salobj.BaseScript, metaclass=abc.ABCMeta):
         self.program = getattr(config, "program", None)
         self.reason = getattr(config, "reason", None)
         self.test_case = getattr(config, "test_case", None)
+        if self.test_case is not None:
+            warnings.warn(
+                "The test_case functionality in BaseBlockScript is deprecated and"
+                + " will be removed.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         self.step_counter = (
             utils.index_generator(imin=self.test_case.get("initial_step", 1))
             if self.test_case is not None
@@ -142,63 +156,23 @@ class BaseBlockScript(salobj.BaseScript, metaclass=abc.ABCMeta):
     async def get_obs_id(self) -> str | None:
         """Get obs id from camera obs id server.
 
+        Deprecated:
+            This method no longer will generate obs_id values.
+            The obs_id should now be provided by the script queue.
+
         Returns
         -------
         `str` or None
             Id generated from camera server.
         """
-        block_regex = re.compile(
-            r"(?P<block_test_case>BLOCK-T)?(?P<block>BLOCK-)?(?P<id>[0-9]*)"
+        warnings.warn(
+            "The get_obs_id method in BaseBlockScript is deprecated. "
+            "The obs_id should now be provided by the script queue.",
+            DeprecationWarning,
+            stacklevel=2,
         )
-        match = block_regex.match(self.program)
 
-        if match.span()[1] == 0:
-            raise RuntimeError(
-                f"{self.program} has the wrong format, should be BLOCK-N or BLOCK-TN..."
-            )
-
-        block_id = match.groupdict()["id"]
-
-        site = os.environ.get("LSST_SITE")
-        if (
-            site is None
-            or site not in IMAGE_SERVER_URL
-            or not self.program.startswith("BLOCK")
-        ):
-            message = (
-                "LSST_SITE environment variable not defined"
-                if site is None
-                else (
-                    f"No image server url for {site=}."
-                    if site not in IMAGE_SERVER_URL
-                    else f"Ids are only generated for BLOCK programs, got {self.program}."
-                )
-            )
-            self.log.warning(f"Not generating obs id. {message}")
-            return None
-
-        try:
-            ticket_id = abs(int(block_id))
-            image_server_url = IMAGE_SERVER_URL[site]
-
-            # Determine if it's a Block test case or Block ticket
-            if match.groupdict()["block_test_case"] is not None:
-                block_type = "BlockT"
-            else:
-                block_type = "Block"
-
-            image_server_client = utils.ImageNameServiceClient(
-                image_server_url, ticket_id, block_type
-            )
-            _, data = await image_server_client.get_next_obs_id(num_images=1)
-            return data[0]
-        except ValueError:
-            raise RuntimeError(
-                f"Invalid {block_type} id. Got {block_id}, expected an integer type id."
-            )
-        except Exception:
-            self.log.exception(f"Failed to generate obs id for {self.program}.")
-            return None
+        return None
 
     @contextlib.asynccontextmanager
     async def program_reason(self):
@@ -217,82 +191,32 @@ class BaseBlockScript(salobj.BaseScript, metaclass=abc.ABCMeta):
 
     @contextlib.asynccontextmanager
     async def test_case_step(self, comment: str | None = None) -> None:
-        """Context manager to handle test case steps."""
+        """Context manager to handle test case steps.
 
-        if self.step_counter is None:
-            yield dict()
-        else:
-            step_result = dict(
-                id=next(self.step_counter),
-                executionTime=datetime.now().isoformat(),
-            )
-            if comment is not None:
-                step_result["comment"] = comment
-            try:
-                yield step_result
-            except Exception:
-                step_result["status"] = "FAILED"
-                self.step_results.append(step_result)
-                raise
-            else:
-                step_result["status"] = "PASSED"
-                self.step_results.append(step_result)
+        Deprecated:
+            The test_case functionality is deprecated and will be removed.
+        """
+        warnings.warn(
+            "The test_case_step method in BaseBlockScript is deprecated and"
+            + " will be removed.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        yield dict()
 
     async def save_test_case(self) -> None:
-        """Save test case to the LFA."""
+        """Save test case to the LFA.
 
-        if self.test_case is None:
-            return
-
-        if len(self.step_results) == 0:
-            self.log.warning(
-                "No test case step registered, no test case results to store. Skipping."
-            )
-            return
-
-        self.log.info("Saving test case metadata to LFA.")
-
-        test_case_payload = json.dumps(
-            dict(
-                projectId=self.test_case.get("project", "LVV"),
-                issueId=self.test_case["name"],
-                executionId=self.test_case["execution"],
-                versionId=self.test_case["version"],
-                stepResults=self.step_results,
-            )
-        ).encode()
-
-        test_case_output = io.BytesIO()
-        byte_size = test_case_output.write(test_case_payload)
-        test_case_output.seek(0)
-
-        s3bucket = get_s3_bucket()
-
-        key = s3bucket.make_key(
-            salname=self.salinfo.name,
-            salindexname=self.salinfo.index,
-            generator=self.test_case["name"],
-            date=utils.astropy_time_from_tai_unix(utils.current_tai()),
-            other=self.obs_id,
-            suffix=".json",
+        Deprecated:
+            The test_case functionality is deprecated and will be removed.
+        """
+        warnings.warn(
+            "The save_test_case method in BaseBlockScript is deprecated and"
+            + " will be removed.",
+            DeprecationWarning,
+            stacklevel=2,
         )
-
-        await s3bucket.upload(fileobj=test_case_output, key=key)
-
-        url = f"{s3bucket.service_resource.meta.client.meta.endpoint_url}/{s3bucket.name}/{key}"
-
-        md5 = hashlib.md5()
-        md5.update(test_case_payload)
-
-        await self.evt_largeFileObjectAvailable.set_write(
-            id=self.obs_id,
-            url=url,
-            generator=self.test_case["name"],
-            mimeType="JSON",
-            byteSize=byte_size,
-            checkSum=md5.hexdigest(),
-            version=1,
-        )
+        return
 
     async def run(self):
         """Override base script run to encapsulate execution with appropriate
