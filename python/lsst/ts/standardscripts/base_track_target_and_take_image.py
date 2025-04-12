@@ -157,6 +157,13 @@ properties:
       - type: string
       - type: "null"
     default: null
+  ignore:
+    description: >-
+      CSCs from the group to ignore in status check. Name must
+      match those in self.group.components, e.g.; hexapod_1.
+    type: array
+    items:
+      type: string
 required:
   - ra
   - dec
@@ -183,6 +190,11 @@ required:
         self.config.az_wrap_strategy = getattr(
             self.tcs.WrapStrategy, self.config.az_wrap_strategy
         )
+
+        if hasattr(self.config, "ignore"):
+            self.tcs.disable_checks_for_components(components=config.ignore)
+        else:
+            self.log.info(f"Not ignoring TCS components: {self.tcs.components_attr}.")
 
     def set_metadata(self, metadata):
         """Compute estimated duration.
