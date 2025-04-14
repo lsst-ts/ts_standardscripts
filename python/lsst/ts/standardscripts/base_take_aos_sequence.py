@@ -79,6 +79,12 @@ class BaseTakeAOSSequence(BaseBlockScript):
         """Abstract method to configure the Camera."""
         raise NotImplementedError()
 
+    @property
+    @abc.abstractmethod
+    async def oods(self):
+        """Abstract method to get OODS."""
+        raise NotImplementedError()
+
     async def configure_tcs(self) -> None:
         """Handle creating MTCS object and waiting for remote to start."""
         if self.mtcs is None:
@@ -250,7 +256,7 @@ class BaseTakeAOSSequence(BaseBlockScript):
             self.current_z_position = -self.dz
 
             self.log.info("Taking in-focus image")
-            self.camera.rem.ccoods.evt_imageInOODS.flush()
+            self.oods.evt_imageInOODS.flush()
             intra_visit_id = await self.camera.take_cwfs(
                 exptime=self.exposure_time,
                 n=1,
@@ -275,7 +281,7 @@ class BaseTakeAOSSequence(BaseBlockScript):
 
             self.log.info("Taking extra-focal image")
 
-            self.camera.rem.ccoods.evt_imageInOODS.flush()
+            self.oods.evt_imageInOODS.flush()
             extra_visit_id = await self.camera.take_cwfs(
                 exptime=self.exposure_time,
                 n=1,
@@ -291,7 +297,7 @@ class BaseTakeAOSSequence(BaseBlockScript):
             extra_image_ingested = False
             while not extra_image_ingested:
                 try:
-                    image_in_oods = await self.camera.rem.ccoods.evt_imageInOODS.next(
+                    image_in_oods = await self.oods.evt_imageInOODS.next(
                         flush=False, timeout=self.exposure_time
                     )
                     try:
@@ -335,7 +341,7 @@ class BaseTakeAOSSequence(BaseBlockScript):
 
         if self.mode != Mode.PAIR:
             self.log.info("Taking in-focus image")
-            self.camera.rem.ccoods.evt_imageInOODS.flush()
+            self.oods.evt_imageInOODS.flush()
             await self.camera.take_acq(
                 exptime=self.exposure_time,
                 n=1,
