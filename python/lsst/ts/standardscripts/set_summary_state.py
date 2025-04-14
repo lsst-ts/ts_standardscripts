@@ -94,7 +94,7 @@ class SetSummaryState(salobj.BaseScript):
               mute_alarms:
                 description: If true, temporarily mute watcher alarms for components being sent to Offline.
                 type: boolean
-                default: false
+                default: true
               mute_duration:
                 description: Duration in minutes to mute the alarms. Default is 30.0 minutes.
                 type: number
