@@ -141,10 +141,8 @@ properties:
     default: null
   program:
     description: Optional name of the program this data belongs to, e.g. WFD, DD, etc.
-    anyOf:
-      - type: string
-      - type: "null"
-    default: null
+    type: string
+    default: ""
   note:
     description: A descriptive note about the image being taken.
     type: string
