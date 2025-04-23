@@ -141,10 +141,8 @@ properties:
     default: null
   program:
     description: Optional name of the program this data belongs to, e.g. WFD, DD, etc.
-    anyOf:
-      - type: string
-      - type: "null"
-    default: null
+    type: string
+    default: ""
   note:
     description: A descriptive note about the image being taken.
     type: string
@@ -157,6 +155,13 @@ properties:
       - type: string
       - type: "null"
     default: null
+  ignore:
+    description: >-
+      CSCs from the group to ignore in status check. Name must
+      match those in self.group.components, e.g.; hexapod_1.
+    type: array
+    items:
+      type: string
 required:
   - ra
   - dec
@@ -183,6 +188,11 @@ required:
         self.config.az_wrap_strategy = getattr(
             self.tcs.WrapStrategy, self.config.az_wrap_strategy
         )
+
+        if hasattr(self.config, "ignore"):
+            self.tcs.disable_checks_for_components(components=config.ignore)
+        else:
+            self.log.info(f"Not ignoring TCS components: {self.tcs.components_attr}.")
 
     def set_metadata(self, metadata):
         """Compute estimated duration.
