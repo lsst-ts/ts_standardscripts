@@ -112,6 +112,3 @@ class TestBaseTakeImage(
             self.script.tcs.disable_checks_for_components.assert_called_once_with(
                 components=configuration_basic_with_ignore["ignore"]
             )
-            self.script.camera.disable_checks_for_components.assert_called_once_with(
-                components=configuration_basic_with_ignore["ignore"]
-            )

@@ -166,8 +166,7 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
               ignore:
                   description: >-
                     CSCs from the groups to ignore in status check. Name must
-                    match those in self.tcs.components or self.camera.components,
-                    e.g.; mthexapod_1, mtheaderservice, atdome, atspectrograph
+                    match those in self.tcs.components, e.g.; mthexapod_1, atdome.
                   type: array
                   items:
                     type: string
@@ -205,8 +204,6 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
         if hasattr(config, "ignore"):
             self.log.debug("Ignoring TCS components.")
             self.tcs.disable_checks_for_components(components=config.ignore)
-            self.log.debug("Ignoring Camera components.")
-            self.camera.disable_checks_for_components(components=config.ignore)
 
     def set_metadata(self, metadata):
         nimages = len(self.config.exp_times)
