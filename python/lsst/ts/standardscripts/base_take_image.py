@@ -57,6 +57,11 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
+    def tcs(self):
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
     def camera(self):
         raise NotImplementedError()
 
@@ -158,6 +163,13 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
                       in the images. Note this is ONLY used for script queue metadata.
                     type: number
                 required: [ra, dec, rot_sky]
+              ignore:
+                  description: >-
+                    CSCs from the groups to ignore in status check. Name must
+                    match those in self.tcs.components, e.g.; mthexapod_1, atdome.
+                  type: array
+                  items:
+                    type: string
             required: [image_type]
             additionalProperties: false
         """
@@ -188,6 +200,10 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
             if nimages is None:
                 nimages = 1
             self.config.exp_times = [self.config.exp_times] * nimages
+
+        if hasattr(config, "ignore"):
+            self.log.debug("Ignoring TCS components.")
+            self.tcs.disable_checks_for_components(components=config.ignore)
 
     def set_metadata(self, metadata):
         nimages = len(self.config.exp_times)
