@@ -72,6 +72,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "enable_aos_closed_loop.py"
         await self.check_executable(script_path)
 
+    async def test_wait_aos_closed_loop_ready(self):
+        script_path = self.scripts_dir / "wait_aos_closed_loop_ready.py"
+        await self.check_executable(script_path)
+
     async def test_enable_comcam(self):
         script_path = self.scripts_dir / "enable_comcam.py"
         await self.check_executable(script_path)
