@@ -1,0 +1,1 @@
+Added executable for the wait_aos_closed_loop_ready script.
