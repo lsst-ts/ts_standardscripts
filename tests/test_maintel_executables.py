@@ -40,6 +40,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "apply_dof.py"
         await self.check_executable(script_path)
 
+    async def test_change_filter_lsstcam(self):
+        script_path = self.scripts_dir / "change_filter_lsstcam.py"
+        await self.check_executable(script_path)
+
     async def test_close_loop_lsstcam(self):
         script_path = self.scripts_dir / "close_loop_lsstcam.py"
         await self.check_executable(script_path)
@@ -50,6 +54,10 @@ class TestExecutables(
 
     async def test_close_mirror_covers(self):
         script_path = self.scripts_dir / "close_mirror_covers.py"
+        await self.check_executable(script_path)
+
+    async def test_csc_end_of_night(self):
+        script_path = self.scripts_dir / "csc_end_of_night.py"
         await self.check_executable(script_path)
 
     async def test_disable_aos_closed_loop(self):
@@ -322,8 +330,4 @@ class TestExecutables(
 
     async def test_unpark_dome(self):
         script_path = self.scripts_dir / "mtdome" / "unpark_dome.py"
-        await self.check_executable(script_path)
-
-    async def test_change_filter_lsstcam(self):
-        script_path = self.scripts_dir / "change_filter_lsstcam.py"
         await self.check_executable(script_path)
