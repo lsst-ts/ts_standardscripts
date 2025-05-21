@@ -28,13 +28,18 @@ from lsst.ts.standardscripts.utils import format_grid
 
 
 class DummyBlockScript(BaseBlockScript):
-    """This script replaces the maintel MoveP2P, which was used
-     a test bed to extend BaseBlockScript.
+    """(Deprecated) This script replaces the maintel MoveP2P.
+       It was used a test bed to extend BaseBlockScript
        minimal stand-in for MoveP2P that extends BaseBlockScript.
 
     This script mimics the essential interface needed by the
     core tests, such as `move_p2p_radec` used in MoveP2P. Which
     now lives in ts_maintel_standardscripts
+
+    Deprecated:
+        This class is deprecated as it inherits from BaseBlockScript,
+        which is being deprecated. Future implementations should use
+        BaseScript directly.
     """
 
     def __init__(self, index=None):
