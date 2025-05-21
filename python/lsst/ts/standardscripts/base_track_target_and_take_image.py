@@ -73,14 +73,20 @@ properties:
     description: Id of the target.
     type: integer
   ra:
-    description: ICRS right ascension (hour).
+    description: >-
+        ICRS right ascension (hour). This coordinate can be passed
+        as either decimal hours e.g. 12.50 or as a sexagesimal string
+        e.g "12:30:00.0".
     anyOf:
       - type: number
         minimum: 0
         maximum: 24
       - type: string
   dec:
-    description: ICRS declination (deg).
+    description: >-
+        ICRS declination (deg). This coordinate can be passed
+        as either decimal degrees e.g. -30.50 or as a sexagesimal string
+        e.g "-30:30:00.0".
     anyOf:
       - type: number
         minimum: -90
