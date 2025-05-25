@@ -140,6 +140,10 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
                 description: Emulate a slewttime by sleeping before taking data.
                 type: number
                 default: 0
+              sleep_for:
+                description: Add a sleep time in between exposures.
+                type: number
+                default: 0
               visit_metadata:
                 type: object
                 properties:
@@ -208,11 +212,15 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
     def set_metadata(self, metadata):
         nimages = len(self.config.exp_times)
         mean_exptime = np.mean(self.config.exp_times)
+        sleep_time = self.config.sleep_for
         metadata.duration = (
             self.instrument_setup_time
             + self.config.slew_time
             + (
-                mean_exptime + self.camera.read_out_time + self.camera.shutter_time * 2
+                mean_exptime
+                + sleep_time
+                + self.camera.read_out_time
+                + self.camera.shutter_time * 2
                 if self.camera.shutter_time
                 else 0
             )
@@ -272,3 +280,9 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
                 group_id=self.group_id,
                 note=note,
             )
+
+            if self.config.sleep_for > 0:
+                self.log.info(
+                    f"Sleeping for {self.config.sleep_for}s before next image."
+                )
+                await asyncio.sleep(self.config.sleep_for)
