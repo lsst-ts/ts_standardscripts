@@ -136,6 +136,7 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
               note:
                 description: A descriptive note about the image being taken.
                 type: string
+                maxLength: 62
               slew_time:
                 description: Emulate a slewttime by sleeping before taking data.
                 type: number
