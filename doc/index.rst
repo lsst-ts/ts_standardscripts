@@ -32,12 +32,22 @@ Developer Documentation
 =======================
 
 .. toctree::
-    developer_guide
     :maxdepth: 1
+    
+    developer_guide
+
+SAL Scripts
+===========
+
+.. toctree::
+    :maxdepth: 1
+    
+    available_scripts
 
 Version History
 ===============
 
 .. toctree::
-    version_history
-    :maxdepth: 1
+   :maxdepth: 1
+   
+   version_history
