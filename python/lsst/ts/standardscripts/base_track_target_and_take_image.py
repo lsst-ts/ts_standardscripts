@@ -28,7 +28,7 @@ import astropy.units
 import yaml
 from astropy.coordinates import ICRS, Angle
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Script import (
+from lsst.ts.xml.enums.Script import (
     MetadataCoordSys,
     MetadataDome,
     MetadataRotSys,

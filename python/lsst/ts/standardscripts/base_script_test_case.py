@@ -35,7 +35,7 @@ import yaml
 from confluent_kafka.admin import AdminClient
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from lsst.ts import salobj, utils
-from lsst.ts.idl.enums import Script
+from lsst.ts.xml.enums import Script
 
 MAKE_TIMEOUT = 90  # Default time for make_script (seconds)
 

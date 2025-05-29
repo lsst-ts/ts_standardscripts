@@ -26,9 +26,9 @@ import asyncio
 import enum
 
 import yaml
-from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.utils import RotType
 from lsst.ts.xml.enums.MTPtg import Planets
+from lsst.ts.xml.enums.Script import ScriptState
 
 from .base_block_script import BaseBlockScript
 

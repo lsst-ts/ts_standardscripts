@@ -27,7 +27,7 @@ import typing
 import unittest
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts.xml.enums.Script import ScriptState
 
 from ...base_script_test_case import BaseScriptTestCase
 from .mock_scheduler import MockScheduler

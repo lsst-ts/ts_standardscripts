@@ -26,7 +26,7 @@ import typing
 
 import yaml
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Scheduler import SalIndex
+from lsst.ts.xml.enums.Scheduler import SalIndex
 
 from .set_desired_state import SetDesiredState
 

@@ -22,9 +22,9 @@
 import types
 import unittest
 
-from lsst.ts.idl.enums.ScriptQueue import SalIndex
 from lsst.ts.standardscripts import BaseScriptTestCase, get_scripts_dir
 from lsst.ts.standardscripts.pause_queue import PauseQueue
+from lsst.ts.xml.enums.ScriptQueue import SalIndex
 
 
 class TestPauseQueue(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):

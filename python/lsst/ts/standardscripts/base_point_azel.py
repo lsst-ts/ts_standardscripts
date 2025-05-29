@@ -26,7 +26,7 @@ import asyncio
 import time
 
 import yaml
-from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts.xml.enums.Script import ScriptState
 
 from .base_block_script import BaseBlockScript
 
