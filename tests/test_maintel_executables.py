@@ -172,6 +172,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "mtdome" / "home_dome.py"
         await self.check_executable(script_path)
 
+    async def test_mtdome_offset_dome(self):
+        script_path = self.scripts_dir / "mtdome" / "offset_dome.py"
+        await self.check_executable(script_path)
+
     async def test_mtdome_open_dome(self):
         script_path = self.scripts_dir / "mtdome" / "open_dome.py"
         await self.check_executable(script_path)
