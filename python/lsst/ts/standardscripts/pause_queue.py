@@ -24,9 +24,9 @@ __all__ = ["PauseQueue"]
 import types
 
 import yaml
-from lsst.ts.idl.enums.ScriptQueue import SalIndex
 from lsst.ts.observatory.control.script_queue import ScriptQueue
 from lsst.ts.salobj import BaseScript
+from lsst.ts.xml.enums.ScriptQueue import SalIndex
 
 
 class PauseQueue(BaseScript):

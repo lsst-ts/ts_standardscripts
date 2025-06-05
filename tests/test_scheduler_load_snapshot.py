@@ -21,10 +21,10 @@
 
 import pytest
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Scheduler import SalIndex
 from lsst.ts.standardscripts import get_scripts_dir
 from lsst.ts.standardscripts.scheduler.load_snapshot import LoadSnapshot
 from lsst.ts.standardscripts.scheduler.testutils import BaseSchedulerTestCase
+from lsst.ts.xml.enums.Scheduler import SalIndex
 
 
 class TestSchedulerBaseLoadSnapshot(BaseSchedulerTestCase):

@@ -22,8 +22,8 @@
 
 import asyncio
 
-from lsst.ts.idl.enums.Scheduler import SalIndex
 from lsst.ts.standardscripts.scheduler.load_snapshot import LoadSnapshot
+from lsst.ts.xml.enums.Scheduler import SalIndex
 
 
 class ATSchedulerLoadSnapshot(LoadSnapshot):

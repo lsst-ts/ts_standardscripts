@@ -22,11 +22,11 @@
 import unittest
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Scheduler import SalIndex
-from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.standardscripts import get_scripts_dir
 from lsst.ts.standardscripts.scheduler import SetDesiredState
 from lsst.ts.standardscripts.scheduler.testutils import BaseSchedulerTestCase
+from lsst.ts.xml.enums.Scheduler import SalIndex
+from lsst.ts.xml.enums.Script import ScriptState
 
 
 class TestSchedulerBaseStandBy(BaseSchedulerTestCase):

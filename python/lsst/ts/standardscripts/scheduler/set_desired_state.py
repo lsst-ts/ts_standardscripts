@@ -26,7 +26,7 @@ import types
 import typing
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Scheduler import SalIndex
+from lsst.ts.xml.enums.Scheduler import SalIndex
 
 
 class SetDesiredState(salobj.BaseScript):

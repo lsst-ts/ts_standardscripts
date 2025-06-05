@@ -25,7 +25,7 @@ import types
 
 import yaml
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Scheduler import SalIndex
+from lsst.ts.xml.enums.Scheduler import SalIndex
 
 
 class AddBlock(salobj.BaseScript):
