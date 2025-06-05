@@ -149,11 +149,11 @@ class TestExecutables(
         await self.check_executable(script_path)
 
     async def test_m2_disable_closed_loop(self):
-        script_path = self.scripts_dir / "m2" / "disable_closed_loop.py"
+        script_path = self.scripts_dir / "m2" / "disable_m2_closed_loop.py"
         await self.check_executable(script_path)
 
     async def test_m2_enable_closed_loop(self):
-        script_path = self.scripts_dir / "m2" / "enable_closed_loop.py"
+        script_path = self.scripts_dir / "m2" / "enable_m2_closed_loop.py"
         await self.check_executable(script_path)
 
     async def test_move_p2p(self):
