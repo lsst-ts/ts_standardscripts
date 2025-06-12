@@ -1,0 +1,1 @@
+Add `offset_dome` script that performs a relative movement of the MTDome.
