@@ -100,6 +100,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "enable_mtcs.py"
         await self.check_executable(script_path)
 
+    async def test_focus_telescope(self):
+        script_path = self.scripts_dir / "focus_telescope.py"
+        await self.check_executable(script_path)
+
     async def test_focus_sweep_comcam(self):
         script_path = self.scripts_dir / "focus_sweep_comcam.py"
         await self.check_executable(script_path)

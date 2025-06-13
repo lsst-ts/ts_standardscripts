@@ -1,0 +1,1 @@
+In `test_maintel_executables.py` add `focus_telescope.py` script
