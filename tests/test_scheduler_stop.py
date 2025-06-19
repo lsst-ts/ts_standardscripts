@@ -29,7 +29,7 @@ from lsst.ts.xml.enums.Scheduler import SalIndex
 class TestSchedulerBaseStop(BaseSchedulerTestCase):
     async def basic_make_script(self, index):
         self.script = Stop(
-            index=index,
+            index=index + 100000,
             scheduler_index=SalIndex.MAIN_TEL,
         )
         return [self.script]
@@ -63,6 +63,27 @@ class TestSchedulerBaseStop(BaseSchedulerTestCase):
 
             assert len(self.controller.abort_observations) == 1
             assert self.controller.abort_observations[0]
+
+    async def test_correct_queue(self) -> None:
+        async with self.make_script(), self.make_controller(
+            initial_state=salobj.State.ENABLED, publish_initial_state=True
+        ):
+            await self.configure_script(stop=True)
+            await self.run_script()
+
+            assert len(self.controller.abort_observations) == 1
+            assert self.controller.abort_observations[0]
+
+    async def test_wrong_queue(self) -> None:
+        async with self.make_script(), self.make_controller(
+            initial_state=salobj.State.ENABLED, publish_initial_state=True
+        ):
+            self.script.salinfo.index = 200100
+            await self.configure_script(stop=True)
+            with self.assertRaises(AssertionError):
+                await self.run_script()
+
+            assert len(self.controller.abort_observations) == 0
 
     async def test_ocs_executable(self):
         scripts_dir = get_scripts_dir()
