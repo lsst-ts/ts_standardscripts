@@ -34,7 +34,7 @@ from lsst.ts.xml.enums.Script import ScriptState
 class TestSchedulerBaseEnable(BaseSchedulerTestCase):
     async def basic_make_script(self, index):
         self.script = Enable(
-            index=index,
+            index=index + 100000,
             scheduler_index=SalIndex.MAIN_TEL,
         )
         return [self.script]
@@ -267,6 +267,34 @@ class TestSchedulerBaseEnable(BaseSchedulerTestCase):
                 expected_script_state=ScriptState.DONE,
                 expected_csc_state=salobj.State.ENABLED,
             )
+
+    async def test_correct_queue(self) -> None:
+        async with self.make_script(), self.make_controller(
+            initial_state=salobj.State.ENABLED, publish_initial_state=True
+        ):
+            await self.configure_script(config="valid_test_config.yaml")
+            await self.run_script()
+
+            self.assert_run(
+                expected_commands=dict(
+                    standby=1,
+                    start=1,
+                    enable=1,
+                    disable=1,
+                ),
+                expected_overrides=["valid_test_config.yaml"],
+                expected_script_state=ScriptState.DONE,
+                expected_csc_state=salobj.State.ENABLED,
+            )
+
+    async def test_wrong_queue(self) -> None:
+        async with self.make_script(), self.make_controller(
+            initial_state=salobj.State.ENABLED, publish_initial_state=True
+        ):
+            self.script.salinfo.index = 200100
+            await self.configure_script(config="valid_test_config.yaml")
+            with self.assertRaises(AssertionError):
+                await self.run_script()
 
     async def test_ocs_executable(self):
         scripts_dir = get_scripts_dir()
