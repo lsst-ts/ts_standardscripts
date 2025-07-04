@@ -1,0 +1,3 @@
+Added executable for daytime camera checkout/readiness scripts:
+-  ``maintel/daytime_checkout/lsstcam_checkout.py``.
+-  ``maintel/daytime_checkout/lsstcam_fes_exercise.py``.
