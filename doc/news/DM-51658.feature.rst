@@ -1,0 +1,1 @@
+Added executable for the `maintel/daytime_checkout/lsstcam_checkout.py` script.
