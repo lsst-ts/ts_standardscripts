@@ -70,13 +70,15 @@ class BasePointAzEl(BaseBlockScript, metaclass=abc.ABCMeta):
                     description: >-
                         Target Azimuth in degrees. If no value is specified,
                         the current azimuth will be used with the provided
-                        target elevation.
+                        target elevation. At least one of `az` or `el` must be
+                        provided.
                     type: number
                 el:
                     description: >-
                         Target Elevation in degrees. If no value is specified,
                         the current elevation will be used with the provided
-                        target azimuth.
+                        target azimuth. At least one of `az` or `el` must be
+                        provided.
                     type: number
                     minimum: 0.0
                     maximum: 90.0
