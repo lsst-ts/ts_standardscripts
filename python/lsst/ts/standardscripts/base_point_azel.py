@@ -68,11 +68,17 @@ class BasePointAzEl(BaseBlockScript, metaclass=abc.ABCMeta):
             properties:
                 az:
                     description: >-
-                        Target Azimuth in degrees.
+                        Target Azimuth in degrees. If no value is specified,
+                        the current azimuth will be used with the provided
+                        target elevation. At least one of `az` or `el` must be
+                        provided.
                     type: number
                 el:
                     description: >-
-                        Target Elevation in degrees.
+                        Target Elevation in degrees. If no value is specified,
+                        the current elevation will be used with the provided
+                        target azimuth. At least one of `az` or `el` must be
+                        provided.
                     type: number
                     minimum: 0.0
                     maximum: 90.0
@@ -101,9 +107,9 @@ class BasePointAzEl(BaseBlockScript, metaclass=abc.ABCMeta):
                     type: array
                     items:
                         type: string
-            required:
-                - az
-                - el
+            anyOf:
+                - required: [az]
+                - required: [el]
             additionalProperties: false
         """
         schema_dict = yaml.safe_load(schema_yaml)
@@ -132,7 +138,25 @@ class BasePointAzEl(BaseBlockScript, metaclass=abc.ABCMeta):
         if hasattr(self.config, "ignore"):
             self.tcs.disable_checks_for_components(components=config.ignore)
 
+        if not hasattr(config, "az"):
+            config.az = await self.get_current_azimuth()
+            self.log.info(f"No azimuth specified. Using current azimuth: {config.az}")
+
+        if not hasattr(config, "el"):
+            config.el = await self.get_current_elevation()
+            self.log.info(
+                f"No elevation specified. Using current elevation: {config.el}"
+            )
+
         await super().configure(config=config)
+
+    async def get_current_azimuth(self):
+        """Abstract method to retrieve the current azimuth from the TCS."""
+        raise NotImplementedError()
+
+    async def get_current_elevation(self):
+        """Abstract method to retrieve the current elevation from the TCS."""
+        raise NotImplementedError()
 
     async def assert_feasibility(self) -> None:
         """Verify that the telescope is in a feasible state to
