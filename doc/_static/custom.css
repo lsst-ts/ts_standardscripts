@@ -1,0 +1,77 @@
+/* Custom CSS for ts_standardscripts documentation */
+
+/* Improve TOC appearance in sidebar - ensure main headers are bold */
+.sphinxsidebar .toctree-l1,
+div.sphinxsidebar ul > li > a,
+div.sphinxsidebar li.current > a,
+div.sphinxsidebarwrapper ul > li > a,
+div.sphinxsidebarwrapper > ul > li > a,
+.sphinxsidebar > .sphinxsidebarwrapper > ul > li > a {
+    font-weight: bold !important;
+}
+
+/* More specific targeting for sidebar headers */
+div.sphinxsidebar h3,
+div.sphinxsidebar h4,
+div.sphinxsidebar p.topless,
+div.sphinxsidebar ul > li {
+    font-weight: bold !important;
+}
+
+.sphinxsidebar .toctree-l2, 
+.sphinxsidebar li.toctree-l1 li,
+.sphinxsidebar ul ul li,
+div.sphinxsidebar ul > li > ul > li > a,
+div.sphinxsidebarwrapper > ul > li > ul > li > a {
+    font-weight: normal !important;
+    margin-left: 0.5em !important;
+    padding-left: 0.5em !important;
+}
+
+.sphinxsidebar .toctree-l3,
+.sphinxsidebar li.toctree-l2 li,
+.sphinxsidebar ul ul ul li {
+    margin-left: 1em !important;
+    padding-left: 0.5em !important;
+}
+
+/* Style for sidebar navigation */
+div.sphinxsidebar ul ul {
+    margin-left: 0.6em !important;
+}
+
+div.sphinxsidebar ul ul ul {
+    margin-left: 0.8em !important;
+}
+
+/* Improve indentation in local table of contents */
+.contents ul ul {
+    margin-left: 1.5em !important;
+}
+
+.contents > ul > li {
+    font-weight: bold !important;
+}
+
+.contents ul ul > li {
+    font-weight: normal !important;
+}
+
+/* Custom formatting for script listings */
+.toctree-wrapper ul {
+    margin-left: 1.5em !important;
+}
+
+/* Ensure script category index has proper indentation */
+#script-category-index + ul > li > ul {
+    margin-left: 1.5em !important;
+}
+
+/* Force indentation for nested items in all navigation contexts */
+ul li ul li {
+    margin-left: 1em !important;
+}
+
+ul li ul li ul li {
+    margin-left: 1.5em !important;
+} 
