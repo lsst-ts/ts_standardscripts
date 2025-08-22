@@ -245,7 +245,17 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
         if self.get_instrument_filter() is not None:
             metadata.filters = str(self.get_instrument_filter())
 
+    async def assert_feasibility(self):
+        """Hook to assert preconditions before running.
+
+        By default this does nothing. Subclasses may override to enforce
+        instrument- or environment-specific feasibility checks (e.g., CSC
+        states) prior to taking data.
+        """
+        return None
+
     async def run(self):
+        await self.assert_feasibility()
         nimages = len(self.config.exp_times)
         note = getattr(self.config, "note", None)
         reason = getattr(self.config, "reason", None)

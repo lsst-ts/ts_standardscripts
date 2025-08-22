@@ -112,3 +112,43 @@ class TestBaseTakeImage(
             self.script.tcs.disable_checks_for_components.assert_called_once_with(
                 components=configuration_basic_with_ignore["ignore"]
             )
+
+    async def test_assert_feasibility_called(self):
+        async with self.make_script():
+            await self.configure_script(
+                exp_times=0,
+                image_type="BIAS",
+                nimages=1,
+            )
+
+            # Mock camera interactions to allow run to proceed
+            self.script.camera.setup_instrument = unittest.mock.AsyncMock()
+            self.script.camera.take_imgtype = unittest.mock.AsyncMock()
+
+            # Spy on feasibility hook
+            self.script.assert_feasibility = unittest.mock.AsyncMock()
+
+            await self.run_script()
+
+            self.script.assert_feasibility.assert_awaited_once()
+
+    async def test_assert_feasibility_failure(self):
+        from lsst.ts.xml.enums import Script as ScriptEnums
+
+        async with self.make_script():
+            await self.configure_script(
+                exp_times=0,
+                image_type="BIAS",
+                nimages=1,
+            )
+
+            # Mock camera interactions
+            self.script.camera.setup_instrument = unittest.mock.AsyncMock()
+            self.script.camera.take_imgtype = unittest.mock.AsyncMock()
+
+            # Make feasibility fail
+            self.script.assert_feasibility = unittest.mock.AsyncMock(
+                side_effect=RuntimeError("Not feasible")
+            )
+
+            await self.run_script(expected_final_state=ScriptEnums.ScriptState.FAILED)
