@@ -1,1 +1,0 @@
-Create a documentation list of SAL scripts with a short description

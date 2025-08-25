@@ -1,1 +1,0 @@
-Add SAL script to perform a filter-change operation for LSSTCam.

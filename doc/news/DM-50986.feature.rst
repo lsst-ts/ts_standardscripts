@@ -1,1 +1,0 @@
-In base_track_target.py and base_track_target_and_take_images.py, update schema description to include examples for valid ra/dec coordinates.

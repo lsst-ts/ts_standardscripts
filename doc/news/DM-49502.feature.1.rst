@@ -1,1 +1,0 @@
-Add abstract ``tcs`` property to ``BaseTakeImage`` to provide access to the script's TCS instance.
