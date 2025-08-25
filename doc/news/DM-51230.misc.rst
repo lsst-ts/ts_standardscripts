@@ -1,0 +1,3 @@
+In maintel/m2:
+- Rename enable_closed_loop.py to enable_m2_closed_loop.py
+- Rename disable_closed_loop.py to disable_m2_closed_loop.py

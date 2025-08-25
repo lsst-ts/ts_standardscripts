@@ -22,11 +22,12 @@
 __all__ = ["SetDesiredState"]
 
 import asyncio
+import math
 import types
 import typing
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Scheduler import SalIndex
+from lsst.ts.xml.enums.Scheduler import SalIndex
 
 
 class SetDesiredState(salobj.BaseScript):
@@ -211,6 +212,14 @@ class SetDesiredState(salobj.BaseScript):
 
     async def run(self) -> None:
         """Enable the Scheduler and exit."""
+
+        # Prevent script from running on different queues
+        script_queue_index = math.floor(self.salinfo.index / 100000)
+        if script_queue_index != self.scheduler_remote.salinfo.index.value:
+            raise RuntimeError(
+                f"Script with index {self.salinfo.index} cannot run in"
+                f" {self.scheduler_remote.salinfo.index.name} queue."
+            )
 
         await self.checkpoint("Assert liveliness")
         await self.assert_liveliness()

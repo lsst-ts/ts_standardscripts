@@ -1,0 +1,1 @@
+Allow ``base_point_azel.py`` script to receive only one axis.

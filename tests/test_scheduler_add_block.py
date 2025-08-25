@@ -20,16 +20,16 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Scheduler import SalIndex
 from lsst.ts.standardscripts import get_scripts_dir
 from lsst.ts.standardscripts.scheduler.add_block import AddBlock
 from lsst.ts.standardscripts.scheduler.testutils import BaseSchedulerTestCase
+from lsst.ts.xml.enums.Scheduler import SalIndex
 
 
 class TestSchedulerAddBlock(BaseSchedulerTestCase):
     async def basic_make_script(self, index):
         self.script = AddBlock(
-            index=index,
+            index=index + 100000,
             scheduler_index=SalIndex.MAIN_TEL,
         )
         return [self.script]
@@ -54,6 +54,26 @@ class TestSchedulerAddBlock(BaseSchedulerTestCase):
             with self.assertRaises(AssertionError):
                 await self.run_script()
 
+            self.assert_loaded_observing_blocks(observing_blocks=[])
+
+    async def test_correct_queue(self) -> None:
+        async with self.make_script(), self.make_controller(
+            initial_state=salobj.State.ENABLED, publish_initial_state=True
+        ):
+            await self.configure_script(id=self.controller.valid_observing_block_id)
+            await self.run_script()
+            self.assert_loaded_observing_blocks(
+                observing_blocks=[self.controller.valid_observing_block_id]
+            )
+
+    async def test_wrong_queue(self) -> None:
+        async with self.make_script(), self.make_controller(
+            initial_state=salobj.State.ENABLED, publish_initial_state=True
+        ):
+            self.script.salinfo.index = 200100
+            await self.configure_script(id=self.controller.valid_observing_block_id)
+            with self.assertRaises(AssertionError):
+                await self.run_script()
             self.assert_loaded_observing_blocks(observing_blocks=[])
 
     async def test_ocs_executable(self):

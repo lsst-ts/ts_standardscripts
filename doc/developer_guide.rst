@@ -26,11 +26,145 @@ You can find Jira issues for this package using `project=DM and labels=ts_standa
 Python API reference
 ====================
 
+Standard Scripts Core
+---------------------
 .. automodapi:: lsst.ts.standardscripts
    :no-main-docstr:
 
-.. automodapi:: lsst.ts.standardscripts.auxtel
+.. automodapi:: lsst.ts.standardscripts.scheduler
    :no-main-docstr:
 
-.. automodapi:: lsst.ts.standardscripts.maintel
+.. automodapi:: lsst.ts.standardscripts.calibration
    :no-main-docstr:
+
+.. _ocs_scripts_api:
+
+OCS Script Classes
+------------------
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.ocs.scheduler.add_block
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.ocs.scheduler.enable
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.ocs.scheduler.load_snapshot
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.ocs.scheduler.resume
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.ocs.scheduler.standby
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.ocs.scheduler.stop
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+Auxiliary Telescope Standardscripts
+-----------------------------------
+.. automodapi:: lsst.ts.auxtel.standardscripts
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.auxtel.standardscripts.atdome
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.auxtel.standardscripts.calibrations
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.auxtel.standardscripts.daytime_checkout
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.auxtel.standardscripts.detector_characterization
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.auxtel.standardscripts.prepare_for
+   :no-main-docstr:
+
+AuxTel Scheduler Scripts
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.auxtel.scheduler.add_block
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.auxtel.scheduler.enable
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.auxtel.scheduler.load_snapshot
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.auxtel.scheduler.resume
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.auxtel.scheduler.standby
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.auxtel.scheduler.stop
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+Main Telescope Standardscripts
+------------------------------
+.. automodapi:: lsst.ts.maintel.standardscripts
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.maintel.standardscripts.calibration
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.maintel.standardscripts.laser_tracker
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.maintel.standardscripts.m1m3
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.maintel.standardscripts.m2
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.maintel.standardscripts.mtdome
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.maintel.standardscripts.mtmount
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.maintel.standardscripts.mtrotator
+   :no-main-docstr:
+
+.. automodapi:: lsst.ts.maintel.standardscripts.prepare_for
+   :no-main-docstr:
+
+MainTel Scheduler Scripts
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.maintel.scheduler.add_block
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.maintel.scheduler.enable
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.maintel.scheduler.load_snapshot
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.maintel.scheduler.resume
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.maintel.scheduler.standby
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.standardscripts.data.scripts.maintel.scheduler.stop
+   :no-main-docstr:
+   :no-inheritance-diagram:

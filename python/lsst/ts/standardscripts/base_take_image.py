@@ -57,6 +57,11 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
+    def tcs(self):
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
     def camera(self):
         raise NotImplementedError()
 
@@ -135,6 +140,10 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
                 description: Emulate a slewttime by sleeping before taking data.
                 type: number
                 default: 0
+              sleep_between_exposures:
+                description: Add a sleep time in between exposures.
+                type: number
+                default: 0
               visit_metadata:
                 type: object
                 properties:
@@ -158,6 +167,13 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
                       in the images. Note this is ONLY used for script queue metadata.
                     type: number
                 required: [ra, dec, rot_sky]
+              ignore:
+                  description: >-
+                    CSCs from the groups to ignore in status check. Name must
+                    match those in self.tcs.components, e.g.; mthexapod_1, atdome.
+                  type: array
+                  items:
+                    type: string
             required: [image_type]
             additionalProperties: false
         """
@@ -189,14 +205,22 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
                 nimages = 1
             self.config.exp_times = [self.config.exp_times] * nimages
 
+        if hasattr(config, "ignore"):
+            self.log.debug("Ignoring TCS components.")
+            self.tcs.disable_checks_for_components(components=config.ignore)
+
     def set_metadata(self, metadata):
         nimages = len(self.config.exp_times)
         mean_exptime = np.mean(self.config.exp_times)
+        sleep_time = self.config.sleep_between_exposures
         metadata.duration = (
             self.instrument_setup_time
             + self.config.slew_time
             + (
-                mean_exptime + self.camera.read_out_time + self.camera.shutter_time * 2
+                mean_exptime
+                + sleep_time
+                + self.camera.read_out_time
+                + self.camera.shutter_time * 2
                 if self.camera.shutter_time
                 else 0
             )
@@ -221,7 +245,17 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
         if self.get_instrument_filter() is not None:
             metadata.filters = str(self.get_instrument_filter())
 
+    async def assert_feasibility(self):
+        """Hook to assert preconditions before running.
+
+        By default this does nothing. Subclasses may override to enforce
+        instrument- or environment-specific feasibility checks (e.g., CSC
+        states) prior to taking data.
+        """
+        return None
+
     async def run(self):
+        await self.assert_feasibility()
         nimages = len(self.config.exp_times)
         note = getattr(self.config, "note", None)
         reason = getattr(self.config, "reason", None)
@@ -256,3 +290,9 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
                 group_id=self.group_id,
                 note=note,
             )
+
+            if self.config.sleep_between_exposures > 0:
+                self.log.info(
+                    f"Sleeping for {self.config.sleep_between_exposures}s before next image."
+                )
+                await asyncio.sleep(self.config.sleep_between_exposures)

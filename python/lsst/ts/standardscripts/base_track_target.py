@@ -26,9 +26,9 @@ import asyncio
 import enum
 
 import yaml
-from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.utils import RotType
 from lsst.ts.xml.enums.MTPtg import Planets
+from lsst.ts.xml.enums.Script import ScriptState
 
 from .base_block_script import BaseBlockScript
 
@@ -104,14 +104,20 @@ class BaseTrackTarget(BaseBlockScript, metaclass=abc.ABCMeta):
                     - dec
                 properties:
                   ra:
-                    description: ICRS right ascension (hour).
+                    description: >-
+                        ICRS right ascension (hour). This coordinate can be passed
+                        as either decimal hours e.g. 12.50 or as a sexagesimal string
+                        e.g "12:30:00.0".
                     anyOf:
                       - type: number
                         minimum: 0
                         maximum: 24
                       - type: string
                   dec:
-                    description: ICRS declination (deg).
+                    description: >-
+                        ICRS declination (deg). This coordinate can be passed
+                        as either decimal degrees e.g. -30.50 or as a sexagesimal string
+                        e.g "-30:30:00.0".
                     anyOf:
                       - type: number
                         minimum: -90

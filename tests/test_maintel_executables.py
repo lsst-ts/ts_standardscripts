@@ -40,6 +40,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "apply_dof.py"
         await self.check_executable(script_path)
 
+    async def test_change_filter_lsstcam(self):
+        script_path = self.scripts_dir / "change_filter_lsstcam.py"
+        await self.check_executable(script_path)
+
     async def test_close_loop_lsstcam(self):
         script_path = self.scripts_dir / "close_loop_lsstcam.py"
         await self.check_executable(script_path)
@@ -52,6 +56,14 @@ class TestExecutables(
         script_path = self.scripts_dir / "close_mirror_covers.py"
         await self.check_executable(script_path)
 
+    async def test_csc_end_of_night(self):
+        script_path = self.scripts_dir / "csc_end_of_night.py"
+        await self.check_executable(script_path)
+
+    async def test_disable_aos_closed_loop(self):
+        script_path = self.scripts_dir / "disable_aos_closed_loop.py"
+        await self.check_executable(script_path)
+
     async def test_disable_dome_following(self):
         script_path = self.scripts_dir / "mtdome" / "disable_dome_following.py"
         await self.check_executable(script_path)
@@ -62,6 +74,10 @@ class TestExecutables(
 
     async def test_disable_m1m3_balance_system(self):
         script_path = self.scripts_dir / "m1m3" / "disable_m1m3_balance_system.py"
+        await self.check_executable(script_path)
+
+    async def test_enable_aos_closed_loop(self):
+        script_path = self.scripts_dir / "enable_aos_closed_loop.py"
         await self.check_executable(script_path)
 
     async def test_enable_comcam(self):
@@ -82,6 +98,10 @@ class TestExecutables(
 
     async def test_enable_mtcs(self):
         script_path = self.scripts_dir / "enable_mtcs.py"
+        await self.check_executable(script_path)
+
+    async def test_ensure_onsky_readiness(self):
+        script_path = self.scripts_dir / "ensure_onsky_readiness.py"
         await self.check_executable(script_path)
 
     async def test_focus_sweep_comcam(self):
@@ -133,15 +153,19 @@ class TestExecutables(
         await self.check_executable(script_path)
 
     async def test_m2_disable_closed_loop(self):
-        script_path = self.scripts_dir / "m2" / "disable_closed_loop.py"
+        script_path = self.scripts_dir / "m2" / "disable_m2_closed_loop.py"
         await self.check_executable(script_path)
 
     async def test_m2_enable_closed_loop(self):
-        script_path = self.scripts_dir / "m2" / "enable_closed_loop.py"
+        script_path = self.scripts_dir / "m2" / "enable_m2_closed_loop.py"
         await self.check_executable(script_path)
 
     async def test_move_p2p(self):
         script_path = self.scripts_dir / "move_p2p.py"
+        await self.check_executable(script_path)
+
+    async def test_mtdome_close_dome(self):
+        script_path = self.scripts_dir / "mtdome" / "close_dome.py"
         await self.check_executable(script_path)
 
     async def test_mtdome_crawl_az(self):
@@ -150,6 +174,14 @@ class TestExecutables(
 
     async def test_mtdome_home_dome(self):
         script_path = self.scripts_dir / "mtdome" / "home_dome.py"
+        await self.check_executable(script_path)
+
+    async def test_mtdome_offset_dome(self):
+        script_path = self.scripts_dir / "mtdome" / "offset_dome.py"
+        await self.check_executable(script_path)
+
+    async def test_mtdome_open_dome(self):
+        script_path = self.scripts_dir / "mtdome" / "open_dome.py"
         await self.check_executable(script_path)
 
     async def test_mtdome_slew_dome(self):
@@ -270,6 +302,10 @@ class TestExecutables(
 
     async def test_take_aos_sequence_comcam(self):
         script_path = self.scripts_dir / "take_aos_sequence_comcam.py"
+        await self.check_executable(script_path)
+
+    async def test_take_aos_sequence_lsstcam(self):
+        script_path = self.scripts_dir / "take_aos_sequence_lsstcam.py"
         await self.check_executable(script_path)
 
     async def test_take_image_anycam(self):

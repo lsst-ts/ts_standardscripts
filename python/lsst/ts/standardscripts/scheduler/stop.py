@@ -21,12 +21,13 @@
 
 __all__ = ["Stop"]
 
+import math
 import types
 import typing
 
 import yaml
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Scheduler import SalIndex
+from lsst.ts.xml.enums.Scheduler import SalIndex
 
 
 class Stop(salobj.BaseScript):
@@ -103,6 +104,14 @@ additionalProperties: false
         metadata.duration = self.timeout_start
 
     async def run(self) -> None:
+        # Prevent script from running on different queues
+        script_queue_index = math.floor(self.salinfo.index / 100000)
+        if script_queue_index != self.scheduler_remote.salinfo.index.value:
+            raise RuntimeError(
+                f"Script with index {self.salinfo.index} cannot run in"
+                f" {self.scheduler_remote.salinfo.index.name} queue."
+            )
+
         await self.checkpoint("Stopping scheduler")
         await self.scheduler_remote.cmd_stop.set_start(
             abort=self.stop, timeout=self.timeout_start

@@ -21,11 +21,12 @@
 
 __all__ = ["Resume"]
 
+import math
 import types
 import typing
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Scheduler import SalIndex
+from lsst.ts.xml.enums.Scheduler import SalIndex
 
 
 class Resume(salobj.BaseScript):
@@ -86,4 +87,12 @@ class Resume(salobj.BaseScript):
         metadata.duration = self.timeout_start
 
     async def run(self) -> None:
+        # Prevent script from running on different queues
+        script_queue_index = math.floor(self.salinfo.index / 100000)
+        if script_queue_index != self.scheduler_remote.salinfo.index.value:
+            raise RuntimeError(
+                f"Script with index {self.salinfo.index} cannot run in"
+                f" {self.scheduler_remote.salinfo.index.name} queue."
+            )
+
         await self.scheduler_remote.cmd_resume.set_start(timeout=self.timeout_start)

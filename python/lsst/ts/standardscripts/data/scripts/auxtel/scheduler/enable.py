@@ -22,8 +22,8 @@
 
 import asyncio
 
-from lsst.ts.idl.enums.Scheduler import SalIndex
 from lsst.ts.standardscripts.scheduler.enable import Enable
+from lsst.ts.xml.enums.Scheduler import SalIndex
 
 
 class ATSchedulerEnable(Enable):
