@@ -1,1 +1,0 @@
-Add executables to open and close the MTDome shutter.

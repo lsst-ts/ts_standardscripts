@@ -8,6 +8,65 @@ Version History
 
 .. towncrier release notes start
 
+v2.1.0 (2025-08-25)
+===================
+
+New Features
+------------
+
+- Prepare BaseBlockScript for deprecation (`DM-46469 <https://rubinobs.atlassian.net/browse/DM-46469>`_)
+- Add script to send ``MTCS`` and ``LSSTCam`` CSCs to End-of-Night State (`DM-48225 <https://rubinobs.atlassian.net/browse/DM-48225>`_)
+- Add SAL script to perform a filter-change operation for LSSTCam. (`DM-49257 <https://rubinobs.atlassian.net/browse/DM-49257>`_)
+- Add script to track target and take image with LSSTCam. (`DM-49337 <https://rubinobs.atlassian.net/browse/DM-49337>`_)
+- Add test for the ignore feature of ``BaseTrackTargetAndTakeImage``. (`DM-49502 <https://rubinobs.atlassian.net/browse/DM-49502>`_)
+- Add abstract ``tcs`` property to ``BaseTakeImage`` to provide access to the script's TCS instance. (`DM-49502 <https://rubinobs.atlassian.net/browse/DM-49502>`_)
+- Add ignore feature to ``BaseTakeImage``. (`DM-49502 <https://rubinobs.atlassian.net/browse/DM-49502>`_)
+- Add executables to open and close the MTDome shutter. (`DM-49506 <https://rubinobs.atlassian.net/browse/DM-49506>`_)
+- Add `enable_aos_closed_loop.py` and `disable_aos_closed_loop.py` maintel executable tests. (`DM-49527 <https://rubinobs.atlassian.net/browse/DM-49527>`_)
+- In ``base_track_target_and_take_image.py``, add option to pass ``note`` to configuration. (`DM-49700 <https://rubinobs.atlassian.net/browse/DM-49700>`_)
+- Add script to enable LSSTCam components. (`DM-49921 <https://rubinobs.atlassian.net/browse/DM-49921>`_)
+- In set_summary_sate, make muting alarms when sending CSCs to offsline the default. (`DM-49954 <https://rubinobs.atlassian.net/browse/DM-49954>`_)
+- Abstract oods in take_aos_sequence. (`DM-49954 <https://rubinobs.atlassian.net/browse/DM-49954>`_)
+- Add ignore feature to `base_track_target_and_take_image.py` (`DM-49954 <https://rubinobs.atlassian.net/browse/DM-49954>`_)
+- Added executable for the `maintel/ensure_onsky_readiness.py` script. (`DM-50862 <https://rubinobs.atlassian.net/browse/DM-50862>`_)
+- In base_track_target.py and base_track_target_and_take_images.py, update schema description to include examples for valid ra/dec coordinates. (`DM-50986 <https://rubinobs.atlassian.net/browse/DM-50986>`_)
+- Create a documentation list of SAL scripts with a short description (`DM-51012 <https://rubinobs.atlassian.net/browse/DM-51012>`_)
+- In ``base_take_image.py``, add configurable option to sleep in between images. (`DM-51095 <https://rubinobs.atlassian.net/browse/DM-51095>`_)
+- Allow ``base_point_azel.py`` script to receive only one axis. (`DM-51170 <https://rubinobs.atlassian.net/browse/DM-51170>`_)
+- Add `offset_dome` script that performs a relative movement of the MTDome. (`DM-51171 <https://rubinobs.atlassian.net/browse/DM-51171>`_)
+- Add check to prevent scheduler scripts to run on different queues. (`DM-51469 <https://rubinobs.atlassian.net/browse/DM-51469>`_)
+- Ensure scripts used to take calibrations for SimonyiTel are enforcing the required MTCS state. (`OSW-897 <https://rubinobs.atlassian.net/browse/OSW-897>`_)
+
+
+Bug Fixes
+---------
+
+- In base_track_target_and_take_image.py, fix type for the program field in the configuration. (`DM-49954 <https://rubinobs.atlassian.net/browse/DM-49954>`_)
+- Limited resources used by ``MTCS`` in ``base_take_aos_sequence.py``. (`DM-52162 <https://rubinobs.atlassian.net/browse/DM-52162>`_)
+
+
+Performance Enhancement
+-----------------------
+
+- Abstracting AOS sequences in base_take_aos_sequence.py (`DM-49514 <https://rubinobs.atlassian.net/browse/DM-49514>`_)
+
+
+API Removal or Deprecation
+--------------------------
+
+- Remove dependencies on ``lsst.ts.idl`` and use ``lsst.ts.xml`` instead. (`DM-50775 <https://rubinobs.atlassian.net/browse/DM-50775>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Adds a tearDown method to the BaseScriptTestCase class that cleans up the broker after the test is executed. (`DM-49643 <https://rubinobs.atlassian.net/browse/DM-49643>`_)
+- Updates the check_executable method in BaseScriptTestCase to add a flag that controls whether it will fully test the executables or just do a quick check. (`DM-49643 <https://rubinobs.atlassian.net/browse/DM-49643>`_)
+- In maintel/m2:
+  - Rename enable_closed_loop.py to enable_m2_closed_loop.py
+  - Rename disable_closed_loop.py to disable_m2_closed_loop.py (`DM-51230 <https://rubinobs.atlassian.net/browse/DM-51230>`_)
+
+
 v2.0.1 (2025-03-11)
 ===================
 

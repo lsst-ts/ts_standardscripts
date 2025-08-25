@@ -1,1 +1,0 @@
-Added executable for the `maintel/ensure_onsky_readiness.py` script.

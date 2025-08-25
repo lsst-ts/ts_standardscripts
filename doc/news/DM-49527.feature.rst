@@ -1,1 +1,0 @@
-Add `enable_aos_closed_loop.py` and `disable_aos_closed_loop.py` maintel executable tests.
