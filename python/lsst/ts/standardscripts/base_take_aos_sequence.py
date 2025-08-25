@@ -29,7 +29,7 @@ import types
 
 import yaml
 from lsst.ts import salobj
-from lsst.ts.observatory.control.maintel.mtcs import MTCS
+from lsst.ts.observatory.control.maintel.mtcs import MTCS, MTCSUsages
 
 from .base_block_script import BaseBlockScript
 
@@ -92,6 +92,7 @@ class BaseTakeAOSSequence(BaseBlockScript):
             self.mtcs = MTCS(
                 domain=self.domain,
                 log=self.log,
+                intended_usage=MTCSUsages.Slew | MTCSUsages.AOS,
             )
             await self.mtcs.start_task
         else:
