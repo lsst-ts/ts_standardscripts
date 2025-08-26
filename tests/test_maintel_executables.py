@@ -136,6 +136,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "m1m3" / "lower_m1m3.py"
         await self.check_executable(script_path)
 
+    async def test_lsstcam_checkout(self):
+        script_path = self.scripts_dir / "daytime_checkout" / "lsstcam_checkout.py"
+        await self.check_executable(script_path)
+
     async def test_m1m3_check_actuators(self):
         script_path = self.scripts_dir / "m1m3" / "check_actuators.py"
         await self.check_executable(script_path)
