@@ -248,6 +248,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "m1m3" / "raise_m1m3.py"
         await self.check_executable(script_path)
 
+    async def test_recover_from_controller_fault(self):
+        script_path = self.scripts_dir / "mtdome" / "recover_from_controller_fault.py"
+        await self.check_executable(script_path)
+
     async def test_scheduler_add_block(self):
         script_path = self.scripts_dir / "scheduler" / "add_block.py"
         await self.check_executable(script_path)
