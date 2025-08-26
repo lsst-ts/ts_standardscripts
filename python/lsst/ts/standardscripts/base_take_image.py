@@ -65,6 +65,11 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
     def camera(self):
         raise NotImplementedError()
 
+    @staticmethod
+    @abc.abstractmethod
+    def get_available_imgtypes():
+        raise NotImplementedError()
+
     @abc.abstractmethod
     def get_instrument_configuration(self):
         """Get instrument configuration.
@@ -96,7 +101,7 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
 
     @classmethod
     def get_schema(cls):
-        schema_yaml = """
+        schema_yaml = f"""
             $schema: http://json-schema.org/draft-07/schema#
             $id: https://github.com/lsst-ts/ts_standardscripts/auxtel/LatissTakeImage.yaml
             title: BaseTakeImage v2
@@ -126,7 +131,7 @@ class BaseTakeImage(salobj.BaseScript, metaclass=abc.ABCMeta):
               image_type:
                 description: Image type (a.k.a. IMGTYPE) (e.g. BIAS, DARK, FLAT, OBJECT)
                 type: string
-                enum: ["BIAS", "DARK", "FLAT", "OBJECT", "ENGTEST", "ACQ", "SPOT", "CWFS", "FOCUS"]
+                enum: {cls.get_available_imgtypes()!r}
               reason:
                 description: Optional reason for taking the data.
                 type: string

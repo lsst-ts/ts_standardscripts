@@ -1,0 +1,1 @@
+Update ``BaseTakeImage`` to retrieve allowed image types for schema enumeration via the new static abstract method ``get_available_imgtypes``.
