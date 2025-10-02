@@ -84,4 +84,5 @@ class Sleep(BaseScript):
 
     async def run(self):
         self.log.info(f"Sleep queue for {self.sleep_for} seconds...")
+        await self.checkpoint(f"Sleep for {self.sleep_for} seconds...")
         await asyncio.sleep(self.sleep_for)
