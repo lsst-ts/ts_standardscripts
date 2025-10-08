@@ -1,0 +1,1 @@
+Add script to recover the ``MTDome`` from a low-level controller fault that prevents movement.
