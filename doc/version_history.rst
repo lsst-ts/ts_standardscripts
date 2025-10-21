@@ -8,6 +8,18 @@ Version History
 
 .. towncrier release notes start
 
+v2.2.0 (2025-10-20)
+===================
+
+New Features
+------------
+
+- Add script to recover the ``MTDome`` from a low-level controller fault that prevents movement. (`DM-50444 <https://rubinobs.atlassian.net/browse/DM-50444>`_)
+- Added executable for the `maintel/prepare_for/onsky.py` script. (`DM-51325 <https://rubinobs.atlassian.net/browse/DM-51325>`_)
+- Update ``BaseTakeImage`` to retrieve allowed image types for schema enumeration via the new static abstract method ``get_available_imgtypes``. (`DM-51409 <https://rubinobs.atlassian.net/browse/DM-51409>`_)
+- Add checkpoint to the sleep script. (`DM-52592 <https://rubinobs.atlassian.net/browse/DM-52592>`_)
+
+
 v2.1.0 (2025-08-25)
 ===================
 
