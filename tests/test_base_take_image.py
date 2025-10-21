@@ -22,6 +22,7 @@
 import unittest
 
 from lsst.ts import standardscripts
+from lsst.ts.observatory.control.maintel.lsstcam import LSSTCam
 from lsst.ts.standardscripts.base_take_image import BaseTakeImage
 
 
@@ -44,6 +45,10 @@ class GenericTakeImage(BaseTakeImage):
     @property
     def camera(self):
         return self.lsstcam
+
+    @staticmethod
+    def get_available_imgtypes():
+        return LSSTCam.get_image_types()
 
     def get_instrument_configuration(self):
         """Get instrument configuration.

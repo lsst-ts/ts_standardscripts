@@ -244,8 +244,16 @@ class TestExecutables(
         script_path = self.scripts_dir / "prepare_for" / "align.py"
         await self.check_executable(script_path)
 
+    async def test_prepare_for_onsky(self):
+        script_path = self.scripts_dir / "prepare_for" / "onsky.py"
+        await self.check_executable(script_path)
+
     async def test_raise_m1m3(self):
         script_path = self.scripts_dir / "m1m3" / "raise_m1m3.py"
+        await self.check_executable(script_path)
+
+    async def test_recover_from_controller_fault(self):
+        script_path = self.scripts_dir / "mtdome" / "recover_from_controller_fault.py"
         await self.check_executable(script_path)
 
     async def test_scheduler_add_block(self):
