@@ -288,6 +288,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "setup_mtcs.py"
         await self.check_executable(script_path)
 
+    async def test_shutdown(self):
+        script_path = self.scripts_dir / "shutdown.py"
+        await self.check_executable(script_path)
+
     async def test_standby_comcam(self):
         script_path = self.scripts_dir / "standby_comcam.py"
         await self.check_executable(script_path)
