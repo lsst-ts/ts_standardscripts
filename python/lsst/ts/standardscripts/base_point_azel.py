@@ -40,6 +40,12 @@ class BasePointAzEl(BaseBlockScript, metaclass=abc.ABCMeta):
     index : `int`
         Index of Script SAL component.
 
+    Notes
+    -----
+    By default, the script slews azimuth and elevation sequentially
+    (one axis at a time). This can be disabled by setting the
+    `slew_sequentially` configuration parameter to false.
+
     """
 
     def __init__(self, index, descr):
@@ -100,6 +106,12 @@ class BasePointAzEl(BaseBlockScript, metaclass=abc.ABCMeta):
                     description: Timeout for slew procedure (in seconds).
                     type: number
                     default: 240.0
+                slew_sequentially:
+                    description: >-
+                        Slew azimuth and elevation axes sequentially (one at a time).
+                        If false, slew both axes simultaneously.
+                    type: boolean
+                    default: true
                 ignore:
                     description: >-
                         CSCs from the group to ignore in status check. Name must
@@ -169,19 +181,51 @@ class BasePointAzEl(BaseBlockScript, metaclass=abc.ABCMeta):
         await self.assert_feasibility()
 
         start_time = time.monotonic()
-        self.log.info(
-            f"Start slew to Az: {self.config.az},  El: {self.config.el} and "
-            f"Rot: {self.config.rot_tel}"
-        )
 
-        await self.tcs.point_azel(
-            az=self.config.az,
-            el=self.config.el,
-            rot_tel=self.config.rot_tel,
-            target_name=self.config.target_name,
-            wait_dome=self.config.wait_dome,
-            slew_timeout=self.config.slew_timeout,
-        )
+        slew_sequentially = getattr(self.config, "slew_sequentially", True)
+
+        if slew_sequentially:
+            self.log.info(
+                f"Start sequential slew to Az: {self.config.az},  El: {self.config.el} and "
+                f"Rot: {self.config.rot_tel}."
+            )
+
+            current_el = await self.get_current_elevation()
+
+            self.log.info(f"Step 1: Slewing azimuth to {self.config.az} deg.")
+            await self.tcs.point_azel(
+                az=self.config.az,
+                el=current_el,
+                rot_tel=self.config.rot_tel,
+                target_name=self.config.target_name,
+                wait_dome=self.config.wait_dome,
+                slew_timeout=self.config.slew_timeout,
+            )
+
+            self.log.info(f"Step 2: Slewing elevation to {self.config.el} deg.")
+            await self.tcs.point_azel(
+                az=self.config.az,
+                el=self.config.el,
+                rot_tel=self.config.rot_tel,
+                target_name=self.config.target_name,
+                wait_dome=self.config.wait_dome,
+                slew_timeout=self.config.slew_timeout,
+            )
+        else:
+            self.log.info(
+                f"Start simultaneous slew to Az: {self.config.az},  El: {self.config.el} and "
+                f"Rot: {self.config.rot_tel}."
+            )
+
+            await self.tcs.point_azel(
+                az=self.config.az,
+                el=self.config.el,
+                rot_tel=self.config.rot_tel,
+                target_name=self.config.target_name,
+                wait_dome=self.config.wait_dome,
+                slew_timeout=self.config.slew_timeout,
+            )
+
         await self.tcs.stop_tracking()
 
         elapsed_time = time.monotonic() - start_time
