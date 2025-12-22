@@ -104,6 +104,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "ensure_onsky_readiness.py"
         await self.check_executable(script_path)
 
+    async def test_exit_fault_dome(self):
+        script_path = self.scripts_dir / "mtdome" / "exit_fault_dome.py"
+        await self.check_executable(script_path)
+
     async def test_focus_sweep_comcam(self):
         script_path = self.scripts_dir / "focus_sweep_comcam.py"
         await self.check_executable(script_path)
