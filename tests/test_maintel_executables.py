@@ -232,6 +232,12 @@ class TestExecutables(
         script_path = self.scripts_dir / "mtdome" / "park_dome.py"
         await self.check_executable(script_path)
 
+    async def test_partially_open_and_close_shutter(self):
+        script_path = (
+            self.scripts_dir / "mtdome" / "partially_open_and_close_shutter.py"
+        )
+        await self.check_executable(script_path)
+
     async def test_point_azel(self):
         script_path = self.scripts_dir / "point_azel.py"
         await self.check_executable(script_path)
