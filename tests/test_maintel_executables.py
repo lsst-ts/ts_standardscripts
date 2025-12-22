@@ -292,6 +292,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "set_dof.py"
         await self.check_executable(script_path)
 
+    async def test_set_operational_mode_dome(self):
+        script_path = self.scripts_dir / "mtdome" / "set_operational_mode_dome.py"
+        await self.check_executable(script_path)
+
     async def test_setup_mtcs(self):
         script_path = self.scripts_dir / "setup_mtcs.py"
         await self.check_executable(script_path)
