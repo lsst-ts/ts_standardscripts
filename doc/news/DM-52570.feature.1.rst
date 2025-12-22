@@ -1,0 +1,1 @@
+Add executable for ``maintel/mtdome/set_operational_mode_dome.py`` script.
