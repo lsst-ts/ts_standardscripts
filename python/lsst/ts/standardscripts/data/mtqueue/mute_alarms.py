@@ -1,0 +1,1 @@
+../scripts/mute_alarms.py
