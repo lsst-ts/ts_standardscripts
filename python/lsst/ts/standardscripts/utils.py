@@ -21,6 +21,8 @@
 
 __all__ = [
     "get_scripts_dir",
+    "get_atqueue_scripts_dir",
+    "get_mtqueue_scripts_dir",
     "get_s3_bucket",
     "get_topic_time_utc",
     "format_as_list",
@@ -56,6 +58,28 @@ def get_scripts_dir():
 
     """
     return pathlib.Path(__file__).resolve().parent / "data" / "scripts"
+
+
+def get_atqueue_scripts_dir():
+    """Get the absolute path to the ATQueue scripts directory.
+
+    Returns
+    -------
+    scripts_dir : `pathlib.Path`
+        Absolute path to the ATQueue scripts directory.
+    """
+    return pathlib.Path(__file__).resolve().parent / "data" / "atqueue"
+
+
+def get_mtqueue_scripts_dir():
+    """Get the absolute path to the MTQueue scripts directory.
+
+    Returns
+    -------
+    scripts_dir : `pathlib.Path`
+        Absolute path to the MTQueue scripts directory.
+    """
+    return pathlib.Path(__file__).resolve().parent / "data" / "mtqueue"
 
 
 def get_s3_bucket() -> salobj.AsyncS3Bucket:
