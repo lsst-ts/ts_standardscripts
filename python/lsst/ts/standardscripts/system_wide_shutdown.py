@@ -28,6 +28,7 @@ import typing
 import yaml
 from lsst.ts import salobj, xml
 from lsst.ts.standardscripts.utils import find_running_instances
+from lsst.ts.xml.component_info import ComponentInfo
 
 
 class SystemWideShutdown(salobj.BaseScript):
@@ -80,7 +81,14 @@ properties:
         description: Reason for running the system wide shutdown.
         type: string
     ignore:
-        description: CSCs to ignore.
+        description: >
+            CSCs to ignore. Can specify a whole CSC (e.g., "Test") or an
+            indexed CSC (e.g., "Test:1"). Requesting a whole CSC and an
+            indexed CSC of the same type will cause the script to fail.
+            Adding an index to a non-indexed CSC will also cause the
+            script to fail. Ignoring a CSC[:index] that is not running,
+            is a no-op. If the index is mistyped (e.g. "Test:a") the
+            request is skipped.
         type: array
         items:
             type: string
@@ -109,6 +117,8 @@ additionalProperties: false
         metadata.duration = 60.0
 
     async def run(self) -> None:
+        await self.check_ignored_components()
+
         components_running = await self.discover_components()
 
         self.log.info(
@@ -123,7 +133,25 @@ additionalProperties: false
         )
 
         for component in self.config.ignore:
-            if component in components_running:
+            if ":" in component:
+                component_name, index_str = component.rsplit(":", 1)
+                try:
+                    index = int(index_str)
+                except ValueError:
+                    self.log.warning(
+                        f"Invalid index '{index_str}' in ignore list: {component}. "
+                        "Skipping."
+                    )
+                    continue
+                if component_name in components_running:
+                    if index in components_running[component_name]:
+                        self.log.debug(
+                            f"Excluding {component_name}:{index} from the list."
+                        )
+                        components_running[component_name].remove(index)
+                        if not components_running[component_name]:
+                            del components_running[component_name]
+            elif component in components_running:
                 self.log.debug(f"Excluding {component} from the list.")
                 components_running.pop(component)
 
@@ -161,6 +189,77 @@ additionalProperties: false
             self.log.error(error_message)
             raise RuntimeError(
                 f"A total of {len(self.failed)} components failed to transition to offline."
+            )
+
+    async def check_ignored_components(self) -> None:
+        """Validate the ignore configuration.
+
+        Ensures that:
+        - Indexed components are only specified with a valid index
+        - Non-indexed components are not specified with an index
+        - A component is not specified both with and without an index
+
+        Raises
+        ------
+        ValueError
+            If the ignore configuration is invalid.
+        """
+        indexed_full = set()
+        indexed_specific = set()
+        non_indexed_components = set()
+        invalid_index = set()
+        non_indexed_with_index = set()
+
+        for component in self.config.ignore:
+            if ":" in component:
+                component_name, index_str = component.rsplit(":", 1)
+                try:
+                    int(index_str)
+                except ValueError:
+                    invalid_index.add(component)
+
+                component_info = ComponentInfo(component_name, "sal")
+                if not component_info.indexed:
+                    non_indexed_with_index.add(component)
+
+                indexed_specific.add(component_name)
+            else:
+                component_info = ComponentInfo(component, "sal")
+                if component_info.indexed:
+                    indexed_full.add(component)
+                else:
+                    non_indexed_components.add(component)
+
+        errors = []
+
+        if invalid_index:
+            invalid_index_str = ",".join(invalid_index)
+            errors.append(
+                f"The following components indexes are invalid: {invalid_index_str}. "
+                "Indices must be integers."
+            )
+
+        if non_indexed_with_index:
+            non_indexed_with_index_str = ",".join(non_indexed_with_index)
+            errors.append(
+                f"The following components are not indexed: {non_indexed_with_index_str}. "
+                "Make sure non-indexed components are not requiring index."
+            )
+
+        conflicts = indexed_full & indexed_specific
+
+        if conflicts:
+            conflict_list = ", ".join(conflicts)
+            errors.append(
+                f"Cannot ignore both all instances and specific indices for "
+                f"the same component: {conflict_list}. "
+                f"Remove either '{conflict_list}' or '{conflict_list}:N' from the ignore list."
+            )
+
+        if errors:
+            error_message = "\n".join(errors)
+            raise RuntimeError(
+                f"Found {len(errors)} with the requested components to ignore:\n{error_message}"
             )
 
     async def discover_components(self) -> dict[str, list[int]]:
