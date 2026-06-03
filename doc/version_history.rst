@@ -8,6 +8,18 @@ Version History
 
 .. towncrier release notes start
 
+v2.2.1 (2026-06-03)
+===================
+
+New Features
+------------
+
+- Added executable for the ``maintel/prepare_for/flat.py`` script. (`DM-51803 <https://rubinobs.atlassian.net/browse/DM-51803>`_)
+- Add ``data/atqueue/`` and ``data/mtqueue/`` directories with symlinks to the queue-specific executable scripts. (`OSW-1783 <https://rubinobs.atlassian.net/browse/OSW-1783>`_)
+- Updated ``BasePointAzEl`` to slew azimuth and elevation sequentially (one axis at a time).
+  This feature can be disabled, falling back to the standard simultaneously slew via configuration. (`RSO-42 <https://rubinobs.atlassian.net/browse/RSO-42>`_)
+
+
 v2.2.0 (2025-10-20)
 ===================
 
