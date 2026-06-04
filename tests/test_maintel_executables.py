@@ -168,6 +168,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "mtdome" / "close_dome.py"
         await self.check_executable(script_path)
 
+    async def test_mtdome_close_dome_louvers(self):
+        script_path = self.scripts_dir / "mtdome" / "close_dome_louvers.py"
+        await self.check_executable(script_path)
+
     async def test_mtdome_crawl_az(self):
         script_path = self.scripts_dir / "mtdome" / "crawl_az.py"
         await self.check_executable(script_path)
@@ -182,6 +186,10 @@ class TestExecutables(
 
     async def test_mtdome_open_dome(self):
         script_path = self.scripts_dir / "mtdome" / "open_dome.py"
+        await self.check_executable(script_path)
+
+    async def test_mtdome_open_dome_louvers(self):
+        script_path = self.scripts_dir / "mtdome" / "open_dome_louvers.py"
         await self.check_executable(script_path)
 
     async def test_mtdome_slew_dome(self):
