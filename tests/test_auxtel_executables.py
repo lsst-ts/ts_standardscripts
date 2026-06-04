@@ -39,6 +39,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "daytime_checkout" / "atpneumatics_checkout.py"
         await self.check_executable(script_path)
 
+    async def test_atvent_start(self):
+        script_path = self.scripts_dir / "atvent_start.py"
+        await self.check_executable(script_path)
+
     async def test_calsys_takedata(self):
         script_path = self.scripts_dir / "calsys_takedata.py"
         await self.check_executable(script_path)
