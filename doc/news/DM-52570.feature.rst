@@ -1,0 +1,1 @@
+Add executable for ``maintel/mtdome/exit_fault_dome.py`` script.
