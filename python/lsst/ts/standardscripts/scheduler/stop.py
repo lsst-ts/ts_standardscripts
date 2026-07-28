@@ -59,8 +59,7 @@ class Stop(salobj.BaseScript):
 
     @classmethod
     def get_schema(cls) -> typing.Optional[typing.Dict[str, typing.Any]]:
-        return yaml.safe_load(
-            """
+        return yaml.safe_load("""
 $schema: http://json-schema.org/draft-07/schema#
 $id: https://github.com/lsst-ts/ts_standardscripts/scheduler/base_stop.py
 title: BaseStop v2
@@ -73,8 +72,7 @@ properties:
         type: boolean
         default: false
 additionalProperties: false
-        """
-        )
+        """)
 
     async def configure(self, config: types.SimpleNamespace) -> None:
         """Configure the script.
