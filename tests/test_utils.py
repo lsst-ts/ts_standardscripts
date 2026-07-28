@@ -38,6 +38,19 @@ class TestUtils(
         salobj.set_random_lsst_dds_partition_prefix()
         os.environ["LSST_SITE"] = "test"
 
+    async def asyncTearDown(self) -> None:
+        """Runs when the test is done.
+
+        This will delete all the topics and schema from the
+        kafka cluster.
+        """
+        if hasattr(self, "mock_cscs"):
+            for mock_csc in self.mock_cscs:
+                await mock_csc.close()
+
+        await salobj.testutils.delete_kafka_topics()
+        await super().asyncTearDown()  # type: ignore
+
     async def add_test_cscs(self, initial_state=salobj.State.STANDBY):
         """Add a Test controller"""
         if not hasattr(self, "mock_cscs"):
