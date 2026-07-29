@@ -1,0 +1,1 @@
+Add executable for ``maintel/mtdome/partially_open_and_close_shutter.py`` script.
