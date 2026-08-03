@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import SetDOF
+from lsst.ts.maintel.standardscripts.set_dof import SetDOF
 
 if __name__ == "__main__":
     asyncio.run(SetDOF.amain())

@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import TakeStutteredComCam
+from lsst.ts.maintel.standardscripts.take_stuttered_comcam import TakeStutteredComCam
 
 if __name__ == "__main__":
     asyncio.run(TakeStutteredComCam.amain())

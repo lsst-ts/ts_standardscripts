@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import OffsetM2Hexapod
+from lsst.ts.maintel.standardscripts.offset_m2_hexapod import OffsetM2Hexapod
 
 if __name__ == "__main__":
     asyncio.run(OffsetM2Hexapod.amain())

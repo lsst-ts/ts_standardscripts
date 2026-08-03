@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import PointAzEl
+from lsst.ts.maintel.standardscripts.point_azel import PointAzEl
 
 if __name__ == "__main__":
     asyncio.run(PointAzEl.amain())

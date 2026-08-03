@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import OffsetMTCS
+from lsst.ts.maintel.standardscripts.offset_mtcs import OffsetMTCS
 
 if __name__ == "__main__":
     asyncio.run(OffsetMTCS.amain())

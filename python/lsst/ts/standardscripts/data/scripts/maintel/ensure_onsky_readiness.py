@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import EnsureOnSkyReadiness
+from lsst.ts.maintel.standardscripts.ensure_onsky_readiness import EnsureOnSkyReadiness
 
 if __name__ == "__main__":
     asyncio.run(EnsureOnSkyReadiness.amain())

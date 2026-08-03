@@ -22,7 +22,9 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import TrackTargetAndTakeImageComCam
+from lsst.ts.maintel.standardscripts.track_target_and_take_image_comcam import (
+    TrackTargetAndTakeImageComCam,
+)
 
 if __name__ == "__main__":
     asyncio.run(TrackTargetAndTakeImageComCam.amain())

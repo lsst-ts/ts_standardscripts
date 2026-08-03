@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import TakeImageComCam
+from lsst.ts.maintel.standardscripts.take_image_comcam import TakeImageComCam
 
 if __name__ == "__main__":
     asyncio.run(TakeImageComCam.amain())

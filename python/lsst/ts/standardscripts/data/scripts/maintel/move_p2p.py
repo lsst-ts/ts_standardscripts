@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import MoveP2P
+from lsst.ts.maintel.standardscripts.move_p2p import MoveP2P
 
 if __name__ == "__main__":
     asyncio.run(MoveP2P.amain())

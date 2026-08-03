@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import DisableAOSClosedLoop
+from lsst.ts.maintel.standardscripts.disable_aos_closed_loop import DisableAOSClosedLoop
 
 if __name__ == "__main__":
     asyncio.run(DisableAOSClosedLoop.amain())

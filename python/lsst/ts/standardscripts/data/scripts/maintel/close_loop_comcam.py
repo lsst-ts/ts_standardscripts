@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import CloseLoopComCam
+from lsst.ts.maintel.standardscripts.close_loop_comcam import CloseLoopComCam
 
 if __name__ == "__main__":
     asyncio.run(CloseLoopComCam.amain())

@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import TrackTarget
+from lsst.ts.maintel.standardscripts.track_target import TrackTarget
 
 if __name__ == "__main__":
     asyncio.run(TrackTarget.amain())

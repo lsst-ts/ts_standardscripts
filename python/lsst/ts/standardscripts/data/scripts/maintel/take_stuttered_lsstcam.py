@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import TakeStutteredLSSTCam
+from lsst.ts.maintel.standardscripts.take_stuttered_lsstcam import TakeStutteredLSSTCam
 
 if __name__ == "__main__":
     asyncio.run(TakeStutteredLSSTCam.amain())

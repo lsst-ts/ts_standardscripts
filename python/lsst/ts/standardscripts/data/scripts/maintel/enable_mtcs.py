@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import EnableMTCS
+from lsst.ts.maintel.standardscripts.enable_mtcs import EnableMTCS
 
 if __name__ == "__main__":
     asyncio.run(EnableMTCS.amain())

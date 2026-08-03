@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import EnableLSSTCam
+from lsst.ts.maintel.standardscripts.enable_lsstcam import EnableLSSTCam
 
 if __name__ == "__main__":
     asyncio.run(EnableLSSTCam.amain())

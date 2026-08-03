@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import OfflineComCam
+from lsst.ts.maintel.standardscripts.offline_comcam import OfflineComCam
 
 if __name__ == "__main__":
     asyncio.run(OfflineComCam.amain())

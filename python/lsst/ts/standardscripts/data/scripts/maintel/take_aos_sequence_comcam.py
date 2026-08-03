@@ -22,7 +22,9 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import TakeAOSSequenceComCam
+from lsst.ts.maintel.standardscripts.take_aos_sequence_comcam import (
+    TakeAOSSequenceComCam,
+)
 
 if __name__ == "__main__":
     asyncio.run(TakeAOSSequenceComCam.amain())

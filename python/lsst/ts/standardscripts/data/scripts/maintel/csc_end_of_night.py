@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import CscEndOfNight
+from lsst.ts.maintel.standardscripts.csc_end_of_night import CscEndOfNight
 
 if __name__ == "__main__":
     asyncio.run(CscEndOfNight.amain())

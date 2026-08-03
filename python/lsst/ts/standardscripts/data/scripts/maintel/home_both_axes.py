@@ -22,7 +22,7 @@
 
 import asyncio
 
-from lsst.ts.maintel.standardscripts import HomeBothAxes
+from lsst.ts.maintel.standardscripts.home_both_axes import HomeBothAxes
 
 if __name__ == "__main__":
     asyncio.run(HomeBothAxes.amain())
