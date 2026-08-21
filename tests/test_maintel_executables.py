@@ -336,6 +336,16 @@ class TestExecutables(
         script_path = self.scripts_dir / "take_stuttered_lsstcam.py"
         await self.check_executable(script_path)
 
+    async def test_telescope_and_dome_checkout(self):
+        script_path = (
+            self.scripts_dir / "daytime_checkout" / "telescope_and_dome_checkout.py"
+        )
+        await self.check_executable(script_path)
+
+    async def test_telescope_checkout(self):
+        script_path = self.scripts_dir / "daytime_checkout" / "telescope_checkout.py"
+        await self.check_executable(script_path)
+
     async def test_track_target(self):
         script_path = self.scripts_dir / "track_target.py"
         await self.check_executable(script_path)
