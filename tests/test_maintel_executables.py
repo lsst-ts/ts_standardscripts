@@ -252,6 +252,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "prepare_for" / "flat.py"
         await self.check_executable(script_path)
 
+    async def test_prepare_for_vent(self):
+        script_path = self.scripts_dir / "prepare_for" / "vent.py"
+        await self.check_executable(script_path)
+
     async def test_raise_m1m3(self):
         script_path = self.scripts_dir / "m1m3" / "raise_m1m3.py"
         await self.check_executable(script_path)
