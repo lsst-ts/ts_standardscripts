@@ -1,0 +1,1 @@
+Added an executable for the ``telescope_and_dome_checkout.py`` script.
