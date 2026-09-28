@@ -1,0 +1,1 @@
+Added executable for the new maintel PrepareForVent script, which automates the Simonyi evening venting protocol.
