@@ -8,6 +8,34 @@ Version History
 
 .. towncrier release notes start
 
+v2.3.0 (2026-09-30)
+===================
+
+New Features
+------------
+
+- Added executables for LSSTCam checkout and readiness scripts:
+  -  ``maintel/daytime_checkout/lsstcam_checkout.py``.
+  -  ``maintel/lsstcam_night_ingestion_checkout.py``.
+  -  ``maintel/daytime_checkout/lsstcam_fes_exercise.py``. (`DM-51658 <https://rubinobs.atlassian.net/browse/DM-51658>`_)
+- Added new wait_for_sun_elevation.py script to sleep the queue until solar elevation is reached. (`OSW-2467 <https://rubinobs.atlassian.net/browse/OSW-2467>`_)
+- Added executable for the new maintel PrepareForVent script, which automates the Simonyi evening venting protocol. (`OSW-2759 <https://rubinobs.atlassian.net/browse/OSW-2759>`_)
+- Added an executable for the ``telescope_checkout.py`` script. (`RSO-875 <https://rubinobs.atlassian.net/browse/RSO-875>`_)
+- Added an executable for the ``telescope_and_dome_checkout.py`` script. (`RSO-875 <https://rubinobs.atlassian.net/browse/RSO-875>`_)
+
+
+Bug Fixes
+---------
+
+- In ``tests/test_utils.py``, added an asyncTearDown method to ensure all resources are properly cleaned up. (`OSW-2467 <https://rubinobs.atlassian.net/browse/OSW-2467>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Updated license header in all files and updated ts-pre-commit configuration to include new license check. (`RSO-875 <https://rubinobs.atlassian.net/browse/RSO-875>`_)
+
+
 v2.2.1 (2026-06-03)
 ===================
 
