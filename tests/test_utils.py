@@ -1,6 +1,6 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_standardscripts.
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for the Vera C. Rubin Observatory Telescope and Site Systems.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -13,7 +13,7 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -37,6 +37,19 @@ class TestUtils(
     def setUpClass(cls) -> None:
         salobj.set_random_lsst_dds_partition_prefix()
         os.environ["LSST_SITE"] = "test"
+
+    async def asyncTearDown(self) -> None:
+        """Runs when the test is done.
+
+        This will delete all the topics and schema from the
+        kafka cluster.
+        """
+        if hasattr(self, "mock_cscs"):
+            for mock_csc in self.mock_cscs:
+                await mock_csc.close()
+
+        await salobj.testutils.delete_kafka_topics()
+        await super().asyncTearDown()  # type: ignore
 
     async def add_test_cscs(self, initial_state=salobj.State.STANDBY):
         """Add a Test controller"""

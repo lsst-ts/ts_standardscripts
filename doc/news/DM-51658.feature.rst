@@ -1,0 +1,4 @@
+Added executables for LSSTCam checkout and readiness scripts:
+-  ``maintel/daytime_checkout/lsstcam_checkout.py``.
+-  ``maintel/lsstcam_night_ingestion_checkout.py``.
+-  ``maintel/daytime_checkout/lsstcam_fes_exercise.py``.

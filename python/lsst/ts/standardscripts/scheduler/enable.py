@@ -1,6 +1,6 @@
-# This file is part of ts_standardscripts
+# This file is part of ts_standardscripts.
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for the Vera C. Rubin Observatory Telescope and Site Systems.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -13,7 +13,7 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -53,8 +53,7 @@ class Enable(SetDesiredState):
 
     @classmethod
     def get_schema(cls) -> typing.Optional[typing.Dict[str, typing.Any]]:
-        return yaml.safe_load(
-            """
+        return yaml.safe_load("""
 $schema: http://json-schema.org/draft-07/schema#
 $id: https://github.com/lsst-ts/ts_standardscripts/scheduler/base_enable.py
 title: BaseEnable v1
@@ -67,8 +66,7 @@ properties:
 required:
     - config
 additionalProperties: false
-        """
-        )
+        """)
 
     async def configure(self, config: types.SimpleNamespace) -> None:
         """Configure the script.

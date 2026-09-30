@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# This file is part of ts_maintel_standardscripts.
+# This file is part of ts_standardscripts.
 #
 # Developed for the Vera C. Rubin Observatory Telescope and Site Systems.
 # This product includes software developed by the LSST Project
@@ -14,11 +14,11 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import unittest
 
@@ -134,6 +134,18 @@ class TestExecutables(
 
     async def test_lower_m1m3(self):
         script_path = self.scripts_dir / "m1m3" / "lower_m1m3.py"
+        await self.check_executable(script_path)
+
+    async def test_lsstcam_checkout(self):
+        script_path = self.scripts_dir / "daytime_checkout" / "lsstcam_checkout.py"
+        await self.check_executable(script_path)
+
+    async def test_lsstcam_night_ingestion_checkout(self):
+        script_path = self.scripts_dir / "lsstcam_night_ingestion_checkout.py"
+        await self.check_executable(script_path)
+
+    async def test_lsstcam_fes_exercise(self):
+        script_path = self.scripts_dir / "daytime_checkout" / "lsstcam_fes_exercise.py"
         await self.check_executable(script_path)
 
     async def test_m1m3_check_actuators(self):
@@ -252,6 +264,10 @@ class TestExecutables(
         script_path = self.scripts_dir / "prepare_for" / "flat.py"
         await self.check_executable(script_path)
 
+    async def test_prepare_for_vent(self):
+        script_path = self.scripts_dir / "prepare_for" / "vent.py"
+        await self.check_executable(script_path)
+
     async def test_raise_m1m3(self):
         script_path = self.scripts_dir / "m1m3" / "raise_m1m3.py"
         await self.check_executable(script_path)
@@ -334,6 +350,16 @@ class TestExecutables(
 
     async def test_take_stuttered_lsstcam(self):
         script_path = self.scripts_dir / "take_stuttered_lsstcam.py"
+        await self.check_executable(script_path)
+
+    async def test_telescope_and_dome_checkout(self):
+        script_path = (
+            self.scripts_dir / "daytime_checkout" / "telescope_and_dome_checkout.py"
+        )
+        await self.check_executable(script_path)
+
+    async def test_telescope_checkout(self):
+        script_path = self.scripts_dir / "daytime_checkout" / "telescope_checkout.py"
         await self.check_executable(script_path)
 
     async def test_track_target(self):
