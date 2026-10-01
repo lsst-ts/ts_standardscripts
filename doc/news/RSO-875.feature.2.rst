@@ -1,1 +1,0 @@
-Added an executable for the ``telescope_checkout.py`` script.
