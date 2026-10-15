@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_standardscripts.
 #
 # Developed for the Vera C. Rubin Observatory Telescope and Site Systems.
