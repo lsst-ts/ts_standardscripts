@@ -8,6 +8,15 @@ Version History
 
 .. towncrier release notes start
 
+v2.3.1 (2026-10-16)
+===================
+
+Bug Fixes
+---------
+
+- In ``prepare_for/vent.py``, added missing env line. (`OSW-2759 <https://rubinobs.atlassian.net/browse/OSW-2759>`_)
+
+
 v2.3.0 (2026-09-30)
 ===================
 
