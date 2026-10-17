@@ -1,0 +1,1 @@
+Add executables for the ``maintel/mtdome/open_dome_louvers.py`` and ``maintel/mtdome/close_dome_louvers.py`` scripts.
