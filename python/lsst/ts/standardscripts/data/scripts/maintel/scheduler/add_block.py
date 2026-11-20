@@ -24,6 +24,7 @@ import asyncio
 
 from lsst.ts.standardscripts.scheduler.add_block import AddBlock
 from lsst.ts.xml.enums.Scheduler import SalIndex
+from lsst.ts.xml.enums.Watcher import AlarmSeverity
 
 
 class MTSchedulerAddBlock(AddBlock):
@@ -33,6 +34,9 @@ class MTSchedulerAddBlock(AddBlock):
         super().__init__(
             index,
             scheduler_index=SalIndex.MAIN_TEL,
+            mute_alarms=[
+                ("ClosedLoopDisabled", AlarmSeverity.WARNING),
+            ],
         )
 
 
