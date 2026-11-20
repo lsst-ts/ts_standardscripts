@@ -8,6 +8,24 @@ Version History
 
 .. towncrier release notes start
 
+v2.3.2 (2026-11-20)
+===================
+
+New Features
+------------
+
+- In ``scheduler/add_block.py``, added feature to allow muting a specified set of watcher alarms before adding blocks. (`SSW-3237 <https://rubinobs.atlassian.net//browse/SSW-3237>`_)
+- Configured the MTScheduler add block script to mute the 'ClosedLoopDisabled' alarm at a warning level. (`SSW-3237 <https://rubinobs.atlassian.net//browse/SSW-3237>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Removed towncrier configuration from ``pyproject.toml``. (`SSW-3237 <https://rubinobs.atlassian.net//browse/SSW-3237>`_)
+- Enabled towncrier in ts-pre-commit-config. (`SSW-3237 <https://rubinobs.atlassian.net//browse/SSW-3237>`_)
+- Updated news creation workflow to use the tssw worflow. (`SSW-3237 <https://rubinobs.atlassian.net//browse/SSW-3237>`_)
+
+
 v2.3.1 (2026-10-16)
 ===================
 

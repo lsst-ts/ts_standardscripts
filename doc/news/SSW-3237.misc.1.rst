@@ -1,1 +1,0 @@
-Enabled towncrier in ts-pre-commit-config.

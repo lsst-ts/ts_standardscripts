@@ -1,1 +1,0 @@
-Removed towncrier configuration from ``pyproject.toml``.
