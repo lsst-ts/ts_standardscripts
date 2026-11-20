@@ -1,1 +1,0 @@
-In ``scheduler/add_block.py``, added feature to allow muting a specified set of watcher alarms before adding blocks.
