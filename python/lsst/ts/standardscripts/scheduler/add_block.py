@@ -21,12 +21,15 @@
 
 __all__ = ["AddBlock"]
 
+import asyncio
 import math
 import types
 
 import yaml
 from lsst.ts import salobj
 from lsst.ts.xml.enums.Scheduler import SalIndex
+from lsst.ts.xml.enums.Watcher import AlarmSeverity
+from lsst.ts.xml.sal_enums import State
 
 
 class AddBlock(salobj.BaseScript):
@@ -38,9 +41,16 @@ class AddBlock(salobj.BaseScript):
         Index of Script SAL component.
     scheduler_index : `int`
         Index of the Scheduler to enable.
+    mute_alarms : `list`[`tuple`[`str`, `AlarmSeverity`]], optional.
+        List of Watcher alarm names to mute.
     """
 
-    def __init__(self, index: int, scheduler_index: SalIndex) -> None:
+    def __init__(
+        self,
+        index: int,
+        scheduler_index: SalIndex,
+        mute_alarms: list[tuple[str, AlarmSeverity]] | None = None,
+    ) -> None:
         super().__init__(
             index=index,
             descr=f"Load block to the {scheduler_index.name} Scheduler",
@@ -51,6 +61,9 @@ class AddBlock(salobj.BaseScript):
             name="Scheduler",
             index=scheduler_index,
         )
+
+        self.mute_alarms = mute_alarms
+        self.short_timeout = 5.0
 
     @classmethod
     def get_schema(cls):
@@ -115,6 +128,12 @@ class AddBlock(salobj.BaseScript):
                 f" {self.scheduler_remote.salinfo.index.name} queue."
             )
 
+        if self.mute_alarms is not None and self.mute_alarms:
+            mute_alarms_str = ", ".join(
+                [f"({name}: {level!r})" for name, level in self.mute_alarms]
+            )
+            await self.checkpoint(f"Muting watcher alarms: {mute_alarms_str}.")
+            await self._handle_watcher_alarms()
         await self.checkpoint(f"Loading {self.id} into scheduler")
         await self.scheduler_remote.cmd_addBlock.set_start(
             id=self.id,
@@ -122,3 +141,55 @@ class AddBlock(salobj.BaseScript):
             timeout=self.timeout_start,
         )
         await self.checkpoint("BLOCK successfully loaded")
+
+    async def _handle_watcher_alarms(self):
+        """Handle muting watcher alarms."""
+
+        if self.mute_alarms is None or not self.mute_alarms:
+            self.log.info("No alarms to mute.")
+            return
+
+        async with salobj.Remote(
+            self.domain, "Watcher", include=["summaryState", "heartbeat"]
+        ) as watcher_remote:
+            try:
+                await watcher_remote.evt_heartbeat.next(
+                    flush=True, timeout=self.short_timeout
+                )
+            except asyncio.TimeoutError:
+                self.log.info(
+                    f"No heartbeat from watcher in the past {self.short_timeout}s; "
+                    "will not mute alarms."
+                )
+                return
+
+            try:
+                watcher_summary_state = await watcher_remote.evt_summaryState.aget(
+                    timeout=self.timeout_start
+                )
+            except asyncio.TimeoutError:
+                self.log.info(
+                    "Cannot determine watcher summary state; will not mute alarms."
+                )
+                return
+            else:
+                if watcher_summary_state.summaryState != State.ENABLED:
+                    self.log.info(
+                        f"Watcher summary state {State(watcher_summary_state.summaryState)!r}, "
+                        "not enabled. Nothing to do."
+                    )
+                    return
+
+            for name, severity in self.mute_alarms:
+                try:
+                    await watcher_remote.cmd_mute.set_start(
+                        name=name,
+                        duration=30.0,
+                        severity=severity,
+                        mutedBy="AddBlock Script",
+                        timeout=self.timeout_start,
+                    )
+                except asyncio.TimeoutError:
+                    self.log.info("Timeout muting alarm; ignoring.")
+                except salobj.AckError:
+                    self.log.info("Command failed; ignoring.", exc_info=True)
